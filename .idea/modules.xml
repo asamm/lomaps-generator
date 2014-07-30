@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/OsmTools.iml" filepath="$PROJECT_DIR$/OsmTools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" filepath="$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" filepath="$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" filepath="$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/osmToolsCore/osmToolsCore.iml" filepath="$PROJECT_DIR$/osmToolsCore/osmToolsCore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/osmToolsDataWriter/osmToolsDataWriter.iml" filepath="$PROJECT_DIR$/osmToolsDataWriter/osmToolsDataWriter.iml" />
+    </modules>
+  </component>
+</project>
+

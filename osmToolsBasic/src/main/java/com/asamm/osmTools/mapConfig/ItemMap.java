@@ -1,0 +1,376 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.asamm.osmTools.mapConfig;
+
+import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.sea.Boundaries;
+import com.asamm.osmTools.utils.Consts;
+import com.asamm.osmTools.utils.Utils;
+
+import org.kxml2.io.KXmlParser;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
+/**
+ *
+ * @author volda
+ */
+public class ItemMap extends AItemMap {
+
+    // CONSTANTS
+
+    private static final String DIR_COASTLINES =
+            Consts.fixDirectoryPath("_coastlines");
+    private static final String DIR_CONTOURS =
+            Consts.fixDirectoryPath("_contours");
+    private static final String DIR_DOWNLOAD =
+            Consts.fixDirectoryPath("_download");
+    private static final String DIR_EXTRACT =
+            Consts.fixDirectoryPath("_extract");
+    private static final String DIR_GRAPHHOPPER =
+            Consts.fixDirectoryPath("_graphHopper");
+    private static final String DIR_ADDRESS_POI_DB =
+            Consts.fixDirectoryPath("_address_poi_db");
+    private static final String DIR_GENERATE =
+            Consts.fixDirectoryPath("_generate");
+    private static final String DIR_MERGE =
+            Consts.fixDirectoryPath("_merge");
+    private static final String DIR_POLYGONS =
+            Consts.fixDirectoryPath("polygons");
+    private static final String DIR_RESULT =
+            Consts.fixDirectoryPath("_result");
+    private static final String DIR_TOURIST =
+            Consts.fixDirectoryPath("_tourist");
+
+    // BASIC PARAMETERS
+
+    // unique ID of item
+    private String mId;
+    // name of item
+    private String mName;
+    // name of item for generating (useful for separating languages)
+    private String mNameGen;
+    // prefered language for generating
+    private String mPrefLang;
+
+    // PATH PARAMETERS
+
+    // path to local source file
+    private String mPathSource;
+    // path where map will be generated
+    private String mPathGenerate;
+    // path where will be generated contours
+    private String mPathGenerateContour;
+    // path where results from GraphHopper should be placed
+    private String mPathGraphHopper;
+    // path to store generated Address/POI databases
+    private String mPathAddressPoiDb;
+    // path where generated pdf files should be merged
+    private String mPathMerge;
+    // path to polygon file
+    private String mPathPolygon;
+    // path to file with generated contours
+    private String mPathContour;
+    // path where should be placed generated result (zipped)
+    private String mPathResult;
+    // path for tourist data
+    private String mPathTourist;
+    // path to file with coastlines
+    private String mPathCoastline;
+    // path to shp files
+    private String mPathShp;
+
+
+    private String mResultMD5hash;
+    // bounds of this map generated from polygon file
+    private Boundaries mBounds;
+    public boolean isMerged;
+
+    // MAIN PART
+
+    public ItemMap(ItemMapPack mpParent) {
+        super(mpParent);
+        isMerged = false;
+    }
+    
+    public String getRelativeResultsPath(){
+        if (mPathResult != null){
+            int lastIndex = (Consts.DIR_BASE + "_result").length();
+            if (lastIndex == -1){
+                return null;
+            }
+            return  mPathResult.substring(lastIndex + 1);
+        }
+        return null;
+    }
+    
+    /**
+     * Function create relative path which define where will be file
+     * stored after downloading into Locus.
+     * @return relative path in Locus
+     */
+    public String getClientDestinationPath () {
+        return Utils.changeSlashToUnix("mapsVector/" + getDirGen());
+    }
+
+    public String getGeneratedFileNamePart(){
+        File file = new File(mPathResult);
+        String fileName = file.getName();
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex != -1){
+            // delete file extension
+            return fileName.substring(0, lastDotIndex);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isValid() {
+        // check base parameters
+        if (mName == null || mName.length() == 0) {
+            throw new IllegalArgumentException("Input XML is not valid. " +
+                    "Invalid argument file: " + mName );
+        }
+        return super.isValid();
+    }
+
+    public void setPaths(){
+        String subPath = Parameters.getVersionDir() + getDir() + mName;
+
+        // define extract and generation path and also create directory structure if is needed
+        if (hasAction(Parameters.Action.DOWNLOAD)) {
+            mPathSource = Consts.DIR_BASE + DIR_DOWNLOAD +
+                    subPath + "." + Parameters.mapOutputFormat;
+        } else {
+            mPathSource = Consts.DIR_BASE + DIR_EXTRACT +
+                    subPath + "." + Parameters.mapOutputFormat;
+        }
+        mPathPolygon = Consts.DIR_BASE + DIR_POLYGONS +
+                getDir() + mName + ".poly";
+        mPathGraphHopper = Consts.DIR_BASE + DIR_GRAPHHOPPER +
+                subPath + "-gh.zip";
+        mPathAddressPoiDb = Consts.DIR_BASE + DIR_ADDRESS_POI_DB +
+                subPath + ".db.zip";
+
+        // parameters for generating
+        if (hasAction(Parameters.Action.GENERATE)) {
+            mPathGenerate = Consts.DIR_BASE + DIR_GENERATE +
+                    Parameters.getVersionDir() + getDirGen();
+            mPathResult = Consts.DIR_BASE + DIR_RESULT +
+                    Parameters.getVersionDir() + getDirGen();
+            
+            mPathGenerateContour = Consts.DIR_BASE + DIR_CONTOURS +
+                    getDir() + mName + ".osm.map" ;
+            
+            if (mNameGen != null && mNameGen.length() > 0) {
+                mPathGenerate += mNameGen +".osm.map";
+                mPathResult += mNameGen + ".zip";
+            } else {
+                mPathGenerate += mName +".osm.map";
+                mPathResult += mName + ".zip";
+            }       
+        }
+
+        // directories for contours
+        if (hasAction(Parameters.Action.CONTOUR)){
+            mPathContour = Consts.DIR_BASE + DIR_CONTOURS +
+                    getDir() + mName + ".osm.pbf" ;
+            mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
+                    subPath + "."+ Parameters.mapOutputFormat;
+        }
+
+        // directories for tourist data
+        if (hasAction(Parameters.Action.TOURIST)){
+            mPathTourist = Consts.DIR_BASE + DIR_TOURIST +
+                    subPath + ".osm.xml";
+
+            // only for save set mergePath
+            if (mPathMerge == null || mPathMerge.length() == 0){
+                mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
+                        subPath + "."+ Parameters.mapOutputFormat;
+            }
+        }
+
+        // parameters for handling with coastline
+        if (requireCoastline()){
+            mPathCoastline = Consts.DIR_BASE + DIR_COASTLINES +
+                    getDir() + mName + ".osm.pbf";
+            mPathShp = Consts.DIR_BASE + DIR_COASTLINES +
+                    "shp" + Consts.FILE_SEP + getDir() + mName + ".shp";
+
+            // only for save set mergePath
+            if (mPathMerge == null || mPathMerge.isEmpty()){
+                mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
+                        subPath + "."+ Parameters.mapOutputFormat;
+            }
+        }
+    }
+
+    /**************************************************/
+    /*               GETTERS & SETTERS                */
+    /**************************************************/
+
+    // BASIC PARAMETERS
+
+    public String getId() {
+        return mId;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public String getPrefLang() {
+        return mPrefLang;
+    }
+
+    // PATH PARAMETERS
+
+    public String getPathSource() {
+        return mPathSource;
+    }
+
+    public String getPathGenerate() {
+        return mPathGenerate;
+    }
+
+    public String getPathGenerateContour() {
+        return mPathGenerateContour;
+    }
+
+    public String getPathGraphHopper() {
+        return mPathGraphHopper;
+    }
+
+    public String getPathAddressPoiDb() {
+        return mPathAddressPoiDb;
+    }
+
+    public String getPathMerge() {
+        return mPathMerge;
+    }
+
+    public String getPathPolygon() {
+        return mPathPolygon;
+    }
+
+    public String getPathContour() {
+        return mPathContour;
+    }
+
+    public String getPathResult() {
+        return mPathResult;
+    }
+
+    public String getPathTourist() {
+        return mPathTourist;
+    }
+
+    public String getPathCoastline() {
+        return mPathCoastline;
+    }
+
+    public String getPathShp() {
+        return mPathShp;
+    }
+
+    public Boundaries getBoundary() {
+        return mBounds;
+    }
+
+    public String getResultMD5Hash() {
+        return mResultMD5hash;
+    }
+
+    public void setResultMD5hash(String resultMD5hash) {
+        this.mResultMD5hash = resultMD5hash;
+    }
+
+    /**************************************************/
+    /*                PARSE FUNCTIONS                 */
+    /**************************************************/
+
+    public void fillAttributes(KXmlParser parser) {
+        // fill base parameters
+        super.fillAttributes(parser);
+
+        // set other private values
+        if (parser.getAttributeValue(null, "id") != null) {
+            mId = parser.getAttributeValue(null, "id");
+        }
+        if (parser.getAttributeValue(null, "file") != null) {
+            mName = Utils.changeSlash(parser.getAttributeValue(null, "file"));
+        }
+        if (parser.getAttributeValue(null, "fileGen") != null) {
+            mNameGen = Utils.changeSlash(parser.getAttributeValue(null, "fileGen"));
+        }
+        if (parser.getAttributeValue(null, "prefLang") != null) {
+            mPrefLang = parser.getAttributeValue(null, "prefLang");
+        }
+
+        // test if MAP are valid
+        if (!this.isValid()){
+            throw new IllegalArgumentException("Input XML is not valid");
+        }
+    }
+
+    /**************************************************/
+    /*                  VARIOUS TOOLS                 */
+    /**************************************************/
+
+    public void setBoundsFromPolygon() throws IOException {
+        if (mPathPolygon == null ){
+            mBounds = null;
+            return;
+        }
+        File polyFile =  new File(mPathPolygon);
+        if (!polyFile.exists()){
+            mBounds = null;
+            return;
+        }
+
+        double maxLatitude = -90.0;
+        double maxLongitude = -180.0;
+        double minLatitude = 90.0;
+        double minLongitude = 180.0;
+
+        //Scanner scan = null;
+        BufferedReader br = null;
+        try {
+            //scan = new Scanner (new BufferedReader(new FileReader(polyFile)));
+            br = new BufferedReader(new FileReader(polyFile));
+            String line;
+            while ((line = br.readLine()) != null){
+                //remove white space before and ond end of string line then
+                // split string based on whitespace (regular expresion \\s+
+                String[] cols = line.trim().split("\\s+");
+                if (cols.length != 2){
+                    continue;
+                }
+                if (Utils.isNumeric(cols[0]) && Utils.isNumeric(cols[1])){
+                    Double lon = Double.parseDouble(cols[0]);
+                    Double lat = Double.parseDouble(cols[1]);
+
+                    maxLongitude = Math.max(lon, maxLongitude);
+                    maxLatitude = Math.max(lat, maxLatitude);
+                    minLongitude = Math.min(lon, minLongitude);
+                    minLatitude = Math.min(lat, minLatitude);
+                }
+            }
+            mBounds = new Boundaries();
+            mBounds.setMinLon(minLongitude);
+            mBounds.setMinLat(minLatitude);
+            mBounds.setMaxLon(maxLongitude);
+            mBounds.setMaxLat(maxLatitude);
+        } finally {
+            if (br != null){
+                br.close();
+            }
+        }
+    }
+}

@@ -1,0 +1,37 @@
+configurations { providedCompile }
+
+dependencies {
+    compile project(":osmToolsCore")
+    compile 'org.xerial:sqlite-jdbc:3.7.2'
+    providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
+}
+
+sourceSets.main.compileClasspath += configurations.providedCompile
+sourceSets.test.compileClasspath += configurations.providedCompile
+sourceSets.test.runtimeClasspath += configurations.providedCompile
+
+def versionCode = 0.1
+def newArchiveName = "osmToolsDataWriter_${versionCode}.jar"
+
+jar {
+    archiveName = newArchiveName;
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    from('src/main/config/') {
+        include 'plugin.xml'
+    }
+}
+
+def releaseTask = tasks.create(name: '_releaseOsmToolsDataWriter') {
+    doLast {
+        println("Copy " + tasks.getAt("jar").archivePath)
+        copy {
+            from tasks.getAt("jar").archivePath
+            into "../_work/osmosis/plugins"
+        }
+    }
+}
+releaseTask.dependsOn jar

@@ -1,0 +1,27 @@
+configurations { providedCompile }
+
+dependencies {
+    compile project(":osmToolsCore")
+    compile project(":osmToolsDataWriter")
+
+    compile 'org.apache.httpcomponents:httpclient:4.3.4'
+    compile 'org.apache.httpcomponents:httpcore:4.3.2'
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile 'javax.mail:javax.mail-api:1.4.7'
+    providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
+}
+
+def versionCode = 0.1
+def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
+
+jar {
+    archiveName = newArchiveName;
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    from('src/main/config/') {
+        include 'plugin.xml'
+    }
+}
