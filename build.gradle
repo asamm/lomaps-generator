@@ -1,0 +1,36 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+// Configuration for all plain Java projects
+
+project.ext.javaprojects = ["mapsforge-core", "mapsforge-map-writer", "osmToolsBasic", "osmToolsDataWriter"]
+
+configure(filterProjects(project.javaprojects)) {
+    apply plugin: 'java'
+    apply plugin: 'checkstyle'
+    apply plugin: 'pmd'
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+    }
+
+    checkstyle {
+        showViolations = false  // turn on for reporting
+        configFile = new File("config/checkstyle/checkstyle.xml")
+    }
+
+    // set java source encoding, otherwise some tests fail
+    [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+    pmd {
+        ruleSetFiles = files("../config/pmd/pmd_ruleset.xml")
+        ignoreFailures = true
+    }
+}
+
+def filterProjects(filter) {
+    return subprojects.findAll { project -> filter.contains(project.name) }
+}

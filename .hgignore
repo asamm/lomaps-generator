@@ -1,0 +1,12 @@
+syntax: glob
+
+.gradle/
+.idea/workspace.xml
+.idea/libraries
+_archive/*
+_backup/*
+_work/*
+
+build/
+*/build
+*.iml

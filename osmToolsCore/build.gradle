@@ -1,0 +1,7 @@
+apply plugin: 'java'
+
+dependencies {
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.apache.commons:commons-lang3:3.1'
+    compile 'net.sf.kxml:kxml2:2.2.2'
+}
