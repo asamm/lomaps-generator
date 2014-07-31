@@ -227,8 +227,9 @@ class Actions {
 Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         // create hashTable where identificator is sourceId of map and values is an list of
         // all map with same sourceId
-        Hashtable<String, List<ItemMap>> mapTableBySourceId =
-                new Hashtable<String, List<ItemMap>>();
+        Map<String, List<ItemMap>> mapTableBySourceId = new Hashtable<>();
+
+        // TODO here is serious issue that happen in Asia.
 
         // fill hash table with values
         for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
@@ -237,17 +238,13 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
             if (actualMap.hasAction(Parameters.Action.EXTRACT)) {
                 List<ItemMap> ar = mapTableBySourceId.get(actualMap.getSourceId());
                 if (ar == null) {
-                    ar = new ArrayList<ItemMap>();
+                    ar = new ArrayList<>();
                     mapTableBySourceId.put(actualMap.getSourceId(), ar);
                 }
 
                 // test if file for extract exist. If yes don't add it into ar
                 String writeFileLocation = actualMap.getPathSource();
                 if (!new File(writeFileLocation).exists()){
-                    // create dir for extracted map
-                    FileUtils.forceMkdir(new File(actualMap.getPathSource()).getParentFile());
-
-                    // add to container
                     ar.add(actualMap);
                 } else {
 //                    Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
@@ -256,10 +253,10 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         }
 
         // create cmd line from hashtable
-        Enumeration<String> keys = mapTableBySourceId.keys();
-        while (keys.hasMoreElements()) {
+        Iterator<String> keys = mapTableBySourceId.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
 
-            String key = keys.nextElement();
             // list of all maps with same sourceId
             List<ItemMap> ar = mapTableBySourceId.get(key);
 
