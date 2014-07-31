@@ -15,6 +15,8 @@ import com.asamm.osmTools.utils.*;
  */
 public class Main {
 
+    private static final String TAG = Main.class.getSimpleName();
+
     public static final Logger LOG = com.asamm.osmTools.utils.Logger.create();
     public static final MyLogger mySimpleLog
             = new MyLogger(Consts.DIR_LOGS + Consts.FILE_SEP + "osm2vec_simple.log");
@@ -64,29 +66,29 @@ public class Main {
                 }
             }
         } catch (Exception e) {
-            String zipRunTimeLog = "osm2vec_runTime.zip";
-            try {
-                Main.LOG.severe(e.toString());
-                myRunTimeLog.print(e.toString());
-                e.printStackTrace();
-
-                myRunTimeLog.closeWriter();
-                // compress runTime log            
-                Utils.compressFile(myRunTimeLog.getPath(), zipRunTimeLog);
-
-                if (Parameters.isMailing()) {
-
-                    String emailTo = "petr.voldan@gmail.com";
-                    String subject = "OSM Tools ERROR on " + Utils.getHostname();
-                    String text = "Exception heppend when run: \n" + e.toString();
-                    MailHandler mh = new MailHandler();
-                    System.out.println("Sending email ...");
-                    mh.sendEmail(emailTo, subject, text, zipRunTimeLog);
-                }
-            } catch (Exception mailExcep) {
-                mailExcep.printStackTrace();
-            }
-
+            com.asamm.osmTools.utils.Logger.e(TAG, "main()", e);
+//            String zipRunTimeLog = Consts.DIR_BASE + "osm2vec_runTime.zip";
+//            try {
+//                Main.LOG.severe(e.toString());
+//                myRunTimeLog.print(e.toString());
+//                e.printStackTrace();
+//
+//                myRunTimeLog.closeWriter();
+//                // compress runTime log
+//                Utils.compressFile(myRunTimeLog.getPath(), zipRunTimeLog);
+//
+//                if (Parameters.isMailing()) {
+//
+//                    String emailTo = "petr.voldan@gmail.com";
+//                    String subject = "OSM Tools ERROR on " + Utils.getHostname();
+//                    String text = "Exception heppend when run: \n" + e.toString();
+//                    MailHandler mh = new MailHandler();
+//                    System.out.println("Sending email ...");
+//                    mh.sendEmail(emailTo, subject, text, zipRunTimeLog);
+//                }
+//            } catch (Exception mailExcep) {
+//                mailExcep.printStackTrace();
+//            }
         } finally {
             mySimpleLog.closeWriter();
             myRunTimeLog.closeWriter();

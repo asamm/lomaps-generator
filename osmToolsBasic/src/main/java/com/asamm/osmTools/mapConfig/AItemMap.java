@@ -34,6 +34,7 @@ public class AItemMap {
     private String mCycleNode;
     private String mContourSep;
     private String mForceType;
+    // define internal for map file used during generating
     private String mForceInterval;
     // parameter if we need coastline
     private boolean mRequireCoastline;
@@ -125,6 +126,13 @@ public class AItemMap {
             // parse data
             String actions = parser.getAttributeValue(null, "type");
             String[] sepActions = actions.split("\\|");
+
+            // clear previous actions if any new exists
+            if (sepActions.length > 0 && !sepActions[0].equals("&")) {
+                mActions.clear();
+            }
+
+            // add new actions
             for (int i = 0, m = sepActions.length; i < m; i++) {
 
                 // search for correct action

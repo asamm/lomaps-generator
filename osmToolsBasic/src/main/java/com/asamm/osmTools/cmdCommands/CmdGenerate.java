@@ -167,9 +167,8 @@ public class CmdGenerate extends Cmd {
         //addCommand("zoom-interval-conf=5,0,6,8,7,9,11,10,12,15,13,21");
         
         if (getMap().getForceInterval() != null && !getMap().getForceInterval().isEmpty()){
-            addCommand("zoom-interval-conf="+getMap().getForceInterval());
+            addCommand("zoom-interval-conf=" + getMap().getForceInterval());
         }
-        
     }
     
     private void addBbox(Boundaries bounds){
