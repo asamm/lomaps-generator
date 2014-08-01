@@ -2,7 +2,8 @@ configurations { providedCompile }
 
 dependencies {
     compile project(":osmToolsCore")
-    compile 'org.xerial:sqlite-jdbc:3.7.2'
+    //compile 'org.xerial:sqlite-jdbc:3.8.2'
+    compile fileTree(dir: 'libs', include: '*.jar')
     providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
 }
 
