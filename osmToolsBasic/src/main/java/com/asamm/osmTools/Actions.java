@@ -119,11 +119,7 @@ class Actions {
                         Parameters.setRewriteFiles(
                                 rewriteFiles != null && rewriteFiles.equalsIgnoreCase("yes"));
                     } else if (tagName.equalsIgnoreCase("mapPack")) {
-                        if (mapPack == null) {
-                            mapPack = new ItemMapPack();
-                        } else {
-                            mapPack = new ItemMapPack(mapPack);
-                        }
+                        mapPack = new ItemMapPack(mapPack);
                         mapPack.fillAttributes(parser);
                     } else if (tagName.equalsIgnoreCase("map")) {
                         ItemMap map = new ItemMap(mapPack);
@@ -149,7 +145,7 @@ class Actions {
                         if (mapPack.getParent() != null) {
                             mapPack.getParent().addMapPack(mapPack);
                             mapPack = mapPack.getParent();
-                        } else if (mapPack.isValid()) {
+                        } else {
                             // validate mapPack and place it into list
                             mMapSource.addMapPack(mapPack);
                             mapPack = null;
@@ -222,14 +218,12 @@ class Actions {
 
     // ACTION EXTRACT
 
-    public void actionExtract(ItemMapPack mp, MapSource ms)
+    public void actionExtract(ItemMapPack mp, final MapSource ms)
             throws IOException, InterruptedException {
 Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         // create hashTable where identificator is sourceId of map and values is an list of
         // all map with same sourceId
         Map<String, List<ItemMap>> mapTableBySourceId = new Hashtable<>();
-
-        // TODO here is serious issue that happen in Asia.
 
         // fill hash table with values
         for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
@@ -252,44 +246,79 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
             }
         }
 
-        // create cmd line from hashtable
+        // get valid sources and sort them by availability
         Iterator<String> keys = mapTableBySourceId.keySet().iterator();
+        List<String> sources = new ArrayList<>();
         while (keys.hasNext()) {
+            // get content and check if we need to process any maps
             String key = keys.next();
-
-            // list of all maps with same sourceId
             List<ItemMap> ar = mapTableBySourceId.get(key);
-
-            // key is equal to sourceId
-            // cmd has an List named cmdList; following cycle fill cmd parameters into List
-            // if ar is Empty there is no map for generation
-            if (!ar.isEmpty()) {
-                CmdExtract ce =  new CmdExtract(ms, key);
-                ce.addReadSource();
-                ce.addTee(ar.size());
-                ce.addBuffer();
-
-                // add all maps
-                for (ItemMap map : ar) {
-                    ce.addBoundingPolygon(map);
-                    ce.addWritePbf(map.getPathSource(), true);
-                }
-
-                // write to log and start stop watch
-                TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Extracting maps from source: "+key);
-                Main.mySimpleLog.print("\nExtract Maps from: "+key+" ...");
-
-                // now create simple array
-                ce.execute();
-                Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+            if (ar.isEmpty()) {
+                continue;
             }
+
+            // add to list
+            sources.add(key);
+        }
+
+        // sort by availability
+        Collections.sort(sources, new Comparator<String>() {
+
+            @Override
+            public int compare(String source1, String source2) {
+                // get required parameters
+                String file1 = ms.getMapById(source1).getPathSource();
+                boolean ex1 = new File(file1).exists();
+                String file2 = ms.getMapById(source2).getPathSource();
+                boolean ex2 = new File(file2).exists();
+
+                // compare data
+                if (ex1) {
+                    return -1;
+                } else if (ex2) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+
+        // finally handle data
+        for (int i = 0, m = sources.size(); i < m; i++) {
+            String sourceId = sources.get(i);
+            List<ItemMap> ar = mapTableBySourceId.get(sourceId);
+
+            CmdExtract ce =  new CmdExtract(ms, sourceId);
+            ce.addReadSource();
+            ce.addTee(ar.size());
+            ce.addBuffer();
+
+            // add all maps
+            for (ItemMap map : ar) {
+                ce.addBoundingPolygon(map);
+                ce.addWritePbf(map.getPathSource(), true);
+            }
+
+            // write to log and start stop watch
+            TimeWatch time = new TimeWatch();
+            Logger.i(TAG, "Extracting maps from source: " + sourceId);
+            Main.mySimpleLog.print("\nExtract Maps from: " + sourceId + " ...");
+
+            // now create simple array
+            ce.execute();
+            Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
         }
 
         // execute extract also on sub-packs
         for (int i = 0, m = mp.getMapPackCount(); i < m; i++) {
             actionExtract(mp.getMapPack(i), ms);
         }
+    }
+
+    private class PackForExtract {
+
+        String sourceId;
+        List<ItemMap> maps;
     }
 
     // ACTION DOWNLOAD

@@ -63,7 +63,7 @@ public class AItemMap {
     private void setDefaults() {
         mParent = null;
         mName = "";
-        mActions = new ArrayList<Parameters.Action>();
+        mActions = new ArrayList<>();
         mSourceId = "";
         mRegionId = "";
         mDir = "";
@@ -76,10 +76,10 @@ public class AItemMap {
         mRequireCoastline = false;
     }
 
-    public boolean isValid() {
+    public void validate() {
         // check actions
         if (mActions.size() == 0) {
-            return false;
+            throw new IllegalArgumentException("No defined parameters, name:" + mName);
         }
 
         // check name
@@ -90,29 +90,28 @@ public class AItemMap {
         // check dir
         if (mDir.length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. " +
-                    "Invalid argument dir: " + mDir);
+                    "Invalid argument dir: " + mDir + ", name:" + mName);
         }
 
         // check extract action
         if (hasAction(Parameters.Action.EXTRACT) && (getSourceId() == null)) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
-                    + getName() + " sourceId is empty");
+                    + getName() + " sourceId is empty, name:" + mName);
         }
 
         // check download action
         if (hasAction(Parameters.Action.DOWNLOAD) && getUrl().length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
-                    + getName() + " - url is empty");
+                    + getName() + " - url is empty, name:" + mName);
         }
 
         // check contour action
         if (hasAction(Parameters.Action.CONTOUR)){
             if (getContourSep().length() == 0) {
                 throw new IllegalArgumentException("Input XML is not valid - map "
-                        + getName() + " has not tag contourSep" );
+                        + getName() + " has not tag contourSep, name:" + mName);
             }
         }
-        return true;
     }
 
     public void fillAttributes(KXmlParser parser) {
@@ -226,7 +225,7 @@ public class AItemMap {
     }
 
     public List<Parameters.Action> getActionsCopy() {
-        return new ArrayList<Parameters.Action>(mActions);
+        return new ArrayList<>(mActions);
     }
 
     public String getSourceId() {

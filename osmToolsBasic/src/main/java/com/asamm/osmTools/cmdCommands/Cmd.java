@@ -83,6 +83,10 @@ abstract class Cmd {
     }
 
     public void addReadPbf(String readPath) {
+        // test new "fast method"
+//        addCommand("--read-pbf-fast");
+//        addCommand(readPath);
+//        addCommand("workers=4");
         addCommand("--read-pbf");
         addCommand(readPath);
     }

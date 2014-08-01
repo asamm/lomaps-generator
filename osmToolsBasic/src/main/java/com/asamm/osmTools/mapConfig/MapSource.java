@@ -26,6 +26,7 @@ public class MapSource {
     }
 
     public void addMapPack(ItemMapPack mapPack) {
+        mapPack.validate();
         this.mMapPackList.add(mapPack);
     }
 
