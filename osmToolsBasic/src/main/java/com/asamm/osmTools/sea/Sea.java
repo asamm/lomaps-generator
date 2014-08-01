@@ -33,11 +33,10 @@ public class Sea {
     
     public Sea(ItemMap map) throws IOException, InterruptedException {
         this.map = map;
-        this.tmpBorderPath = Consts.DIR_TMP + Consts.FILE_SEP + "seaBorder_"
+        this.tmpBorderPath = Consts.DIR_TMP + "seaBorder_"
                 + map.getName() + ".osm.xml";
-        this.tmpCoastPath = Consts.DIR_TMP + Consts.FILE_SEP + "seaCoastline_"
+        this.tmpCoastPath = Consts.DIR_TMP + "seaCoastline_"
                 + map.getName() + ".osm.xml";
-               
     }
     
     public void create () throws IOException, InterruptedException{
@@ -48,25 +47,25 @@ public class Sea {
             createCoastShp();
         }
         else {
-            Main.LOG.info("Shape File with coastlines for map: "+map.getName()+" already exist.");
+            Main.LOG.info("Shape File with coastlines for map: " +
+                    map.getName() + " already exist.");
         }
         //test if osm file with coastline exist
-        if (!new File(map.getPathCoastline()).exists()){
-            Main.LOG.info("Starting convert shape file with coastlines to OSM file: "+map.getPathCoastline());
-            
+        if (!new File(map.getPathCoastline()).exists()) {
+            Main.LOG.info("Starting convert shape file with coastlines to OSM file: " + map.getPathCoastline());
+
             createCoastOsm();
-            
+
             // vytvor hranici more
             createBoundSeaXml();
-            
-            // merge tmp convert shp file with border 
-            mergeBoundsToCoast();        
-            
+
+            // merge tmp convert shp file with border
+            mergeBoundsToCoast();
+
             //clean tmp directory
             cleanTmp();
-        }
-        else {
-            Main.LOG.info("OSM File with coastlines for map: "+map.getName()+" already exist.");
+        } else {
+            Main.LOG.info("OSM File with coastlines for map: " + map.getName() + " already exist.");
         }
     }
     private void createCoastShp() throws IOException, InterruptedException{
@@ -143,9 +142,6 @@ public class Sea {
         // write to the file
         Main.LOG.info("Writing sea(map) borders into file: "+tmpBorderPath);
         FileUtils.writeStringToFile(new File(tmpBorderPath), sb.toString(), false);
-        
-        
-        
     }
 
     private void mergeBoundsToCoast() throws IOException, InterruptedException {

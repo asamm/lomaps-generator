@@ -54,7 +54,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("accept-ways");
         addListOfTags(definition, Consts.EntityType.WAYS);
         addCommand("--used-node");
-        addCommand("idTrackerType=Dynamic");
+//        addCommand("idTrackerType=Dynamic");
         addCommand("outPipe.0=Ways");
 
         // add merge task

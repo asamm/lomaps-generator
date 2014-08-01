@@ -25,7 +25,7 @@ public class ItemMap extends AItemMap {
     // CONSTANTS
 
     private static final String DIR_COASTLINES =
-            Consts.fixDirectoryPath("_coastlines");
+            Consts.fixDirectoryPath("coastlines");
     private static final String DIR_CONTOURS =
             Consts.fixDirectoryPath("_contours");
     private static final String DIR_DOWNLOAD =
@@ -130,13 +130,15 @@ public class ItemMap extends AItemMap {
     }
 
     @Override
-    public boolean isValid() {
+    public void validate() {
+        // validate parent data
+        super.validate();
+
         // check base parameters
         if (mName == null || mName.length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. " +
                     "Invalid argument file: " + mName );
         }
-        return super.isValid();
     }
 
     public void setPaths(){
@@ -314,9 +316,7 @@ public class ItemMap extends AItemMap {
         }
 
         // test if MAP are valid
-        if (!this.isValid()){
-            throw new IllegalArgumentException("Input XML is not valid");
-        }
+        validate();
     }
 
     /**************************************************/

@@ -20,10 +20,10 @@ public class ItemMapPack extends AItemMap {
     // list of child mapPacks
     private List<ItemMapPack> mMapPacks;
 
-    public ItemMapPack() {
-        super(null);
-        initialize();
-    }
+//    public ItemMapPack() {
+//        super(null);
+//        initialize();
+//    }
 
     public ItemMapPack(ItemMapPack mpParent) {
         super(mpParent);
@@ -31,8 +31,8 @@ public class ItemMapPack extends AItemMap {
     }
 
     private void initialize() {
-        mMaps = new ArrayList<ItemMap>();
-        mMapPacks = new ArrayList<ItemMapPack>();
+        mMaps = new ArrayList<>();
+        mMapPacks = new ArrayList<>();
     }
 
     protected ItemMap getMapById(String mapId) {
@@ -80,9 +80,8 @@ public class ItemMapPack extends AItemMap {
     }
 
     public void addMapPack(ItemMapPack mpSub) {
-        if (mpSub.isValid()) {
-            mMapPacks.add(mpSub);
-        }
+        mpSub.validate();
+        mMapPacks.add(mpSub);
     }
 
     public ItemMapPack getMapPack(int index) {

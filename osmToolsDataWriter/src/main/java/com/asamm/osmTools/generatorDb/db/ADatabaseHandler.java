@@ -52,7 +52,9 @@ public abstract class ADatabaseHandler {
 		stmt.setQueryTimeout(30); 
 
 		// loading SpatiaLite
-        executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
+//        executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
+//        executeStatement("SELECT load_extension('mod_spatialite')");
+        executeStatement("SELECT load_extension('spatialite')");
 
 		// enabling Spatial Metadata using v.2.4.0 this automatically
 		// initializes SPATIAL_REF_SYS and GEOMETRY_COLUMNS
