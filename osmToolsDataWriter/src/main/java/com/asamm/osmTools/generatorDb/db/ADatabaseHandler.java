@@ -53,8 +53,11 @@ public abstract class ADatabaseHandler {
 
 		// loading SpatiaLite
 //        executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
+//        executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libspatialite.so.5')");
+//        executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6')");
+        executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
 //        executeStatement("SELECT load_extension('mod_spatialite')");
-        executeStatement("SELECT load_extension('spatialite')");
+//        executeStatement("SELECT load_extension('spatialite')");
 
 		// enabling Spatial Metadata using v.2.4.0 this automatically
 		// initializes SPATIAL_REF_SYS and GEOMETRY_COLUMNS
