@@ -14,39 +14,28 @@
  */
 package org.mapsforge.map.writer;
 
+import com.asamm.osmTools.utils.Logger;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.hash.TLongHashSet;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.mapsforge.map.writer.model.MapWriterConfiguration;
-import org.mapsforge.map.writer.model.TDNode;
-import org.mapsforge.map.writer.model.TDRelation;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileCoordinate;
-import org.mapsforge.map.writer.model.TileData;
-import org.mapsforge.map.writer.model.TileInfo;
+import org.mapsforge.map.writer.model.*;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
-import org.openstreetmap.osmosis.core.store.IndexedObjectStore;
-import org.openstreetmap.osmosis.core.store.IndexedObjectStoreReader;
-import org.openstreetmap.osmosis.core.store.NoSuchIndexElementException;
-import org.openstreetmap.osmosis.core.store.SimpleObjectStore;
-import org.openstreetmap.osmosis.core.store.SingleClassObjectSerializationFactory;
+import org.openstreetmap.osmosis.core.store.*;
+
+import java.util.*;
 
 /**
  * A TileBasedDataStore that uses the hard disk as storage device for temporary data structures.
  */
 public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
+
+    private static final String TAG = HDTileBasedDataProcessor.class.getSimpleName();
+
 	/**
 	 * Creates a new {@link HDTileBasedDataProcessor}.
 	 * 
@@ -114,7 +103,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 	// TODO add accounting of average number of tiles per way
 	@Override
 	public void complete() {
-        LOGGER.info("complete(), step 1");
+        Logger.i(TAG, "complete(), step 1");
 		this.indexedNodeStore.complete();
 		this.nodeIndexReader = this.indexedNodeStore.createReader();
 
@@ -122,7 +111,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		this.wayIndexReader = this.indexedWayStore.createReader();
 
 		// handle relations
-        LOGGER.info("complete(), step 2");
+        Logger.i(TAG, "complete(), step 2");
 		ReleasableIterator<Relation> relationReader = this.relationStore.iterate();
 		RelationHandler relationHandler = new RelationHandler();
 		while (relationReader.hasNext()) {
@@ -132,7 +121,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		}
 
 		// handle ways
-        LOGGER.info("complete(), step 3");
+        Logger.i(TAG, "complete(), step 3");
 		ReleasableIterator<Way> wayReader = this.wayStore.iterate();
 		WayHandler wayHandler = new WayHandler();
 		while (wayReader.hasNext()) {
@@ -151,7 +140,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 			wayHandler.execute(tdWay);
 		}
 
-        LOGGER.info("complete(), step 4");
+        Logger.i(TAG, "complete(), step 4");
 		OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
 		OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
 	}
@@ -180,7 +169,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 			try {
 				tdWay = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguage);
 			} catch (NoSuchIndexElementException e) {
-				LOGGER.finer("coastline way non-existing" + id);
+				Logger.e(TAG,  "coastline way non-existing" + id);
 			}
 			if (tdWay != null) {
 				coastlinesAsTDWay.add(tdWay);
@@ -207,7 +196,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		try {
 			return TDNode.fromNode(this.nodeIndexReader.get(id), this.preferredLanguage);
 		} catch (NoSuchIndexElementException e) {
-			LOGGER.finer("node cannot be found in index: " + id);
+			Logger.e(TAG,  "node cannot be found in index: " + id);
 			return null;
 		}
 	}
@@ -231,7 +220,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		try {
 			return TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguage);
 		} catch (NoSuchIndexElementException e) {
-			LOGGER.finer("way cannot be found in index: " + id);
+			Logger.e(TAG,  "way cannot be found in index: " + id);
 			return null;
 		}
 	}
@@ -303,7 +292,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 				if (way != null) {
 					td.addWay(way);
 				} else {
-					LOGGER.finer("referenced way non-existing" + id);
+					Logger.e(TAG,  "referenced way non-existing" + id);
 				}
 			}
 
@@ -336,7 +325,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 			} catch (NoSuchIndexElementException e) {
 				current = this.virtualWays.get(id);
 				if (current == null) {
-					LOGGER.fine("multipolygon with outer way id " + id + " references non-existing inner way " + id);
+                    Logger.w(TAG, "multipolygon with outer way id " + id + " references non-existing inner way " + id);
 					continue;
 				}
 			}

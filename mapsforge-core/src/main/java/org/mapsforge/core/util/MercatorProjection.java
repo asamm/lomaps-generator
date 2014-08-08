@@ -45,12 +45,6 @@ public final class MercatorProjection {
 	 */
 	public static final double LATITUDE_MIN = -LATITUDE_MAX;
 
-	// TODO some operations actually do not rely on the tile size, but are composited
-	// from operations that require a tileSize parameter (which is effectively cancelled
-	// out). A shortcut version of those operations should be implemented and then this
-	// variable be removed.
-	private static final int DUMMY_TILE_SIZE = 256;
-
 	/**
 	 * Calculates the distance on the ground that is represented by a single pixel on the map.
 	 * 
@@ -125,7 +119,7 @@ public final class MercatorProjection {
 		if (zoomLevel < 0) {
 			throw new IllegalArgumentException("zoom level must not be negative: " + zoomLevel);
 		}
-		return (long) tileSize << zoomLevel;
+		return (long) Math.pow(2, zoomLevel + 8);
 	}
 
 	public static Point getPixel(LatLong latLong, double scaleFactor, int tileSize) {
@@ -183,8 +177,8 @@ public final class MercatorProjection {
 	 *            the scale factor at which the coordinate should be converted.
 	 * @return the tile Y number of the latitude value.
 	 */
-	public static long latitudeToTileY(double latitude, double scaleFactor) {
-		return pixelYToTileY(latitudeToPixelY(latitude, scaleFactor, DUMMY_TILE_SIZE), scaleFactor, DUMMY_TILE_SIZE);
+	public static long latitudeToTileY(double latitude, double scaleFactor, int tileSize) {
+		return pixelYToTileY(latitudeToPixelY(latitude, scaleFactor, tileSize), scaleFactor, tileSize);
 	}
 
 	/**
@@ -196,8 +190,8 @@ public final class MercatorProjection {
 	 *            the zoom level at which the coordinate should be converted.
 	 * @return the tile Y number of the latitude value.
 	 */
-	public static long latitudeToTileY(double latitude, byte zoomLevel) {
-		return pixelYToTileY(latitudeToPixelY(latitude, zoomLevel, DUMMY_TILE_SIZE), zoomLevel, DUMMY_TILE_SIZE);
+	public static long latitudeToTileY(double latitude, byte zoomLevel, int tileSize) {
+		return pixelYToTileY(latitudeToPixelY(latitude, zoomLevel, tileSize), zoomLevel, tileSize);
 	}
 
 	/**
@@ -237,8 +231,8 @@ public final class MercatorProjection {
 	 *            the scale factor at which the coordinate should be converted.
 	 * @return the tile X number of the longitude value.
 	 */
-	public static long longitudeToTileX(double longitude, double scaleFactor) {
-		return pixelXToTileX(longitudeToPixelX(longitude, scaleFactor, DUMMY_TILE_SIZE), scaleFactor, DUMMY_TILE_SIZE);
+	public static long longitudeToTileX(double longitude, double scaleFactor, int tileSize) {
+		return pixelXToTileX(longitudeToPixelX(longitude, scaleFactor, tileSize), scaleFactor, tileSize);
 	}
 
 	/**
@@ -250,8 +244,8 @@ public final class MercatorProjection {
 	 *            the zoom level at which the coordinate should be converted.
 	 * @return the tile X number of the longitude value.
 	 */
-	public static long longitudeToTileX(double longitude, byte zoomLevel) {
-		return pixelXToTileX(longitudeToPixelX(longitude, zoomLevel, DUMMY_TILE_SIZE), zoomLevel, DUMMY_TILE_SIZE);
+	public static long longitudeToTileX(double longitude, byte zoomLevel, int tileSize) {
+		return pixelXToTileX(longitudeToPixelX(longitude, zoomLevel, tileSize), zoomLevel, tileSize);
 	}
 
 	/**
@@ -445,8 +439,8 @@ public final class MercatorProjection {
 	 *            the scale factor at which the number should be converted.
 	 * @return the longitude value of the tile X number.
 	 */
-	public static double tileXToLongitude(long tileX, double scaleFactor) {
-		return pixelXToLongitude(tileX * DUMMY_TILE_SIZE, scaleFactor, DUMMY_TILE_SIZE);
+	public static double tileXToLongitude(long tileX, double scaleFactor, int tileSize) {
+		return pixelXToLongitude(tileX * tileSize, scaleFactor, tileSize);
 	}
 
 	/**
@@ -458,8 +452,8 @@ public final class MercatorProjection {
 	 *            the zoom level at which the number should be converted.
 	 * @return the longitude value of the tile X number.
 	 */
-	public static double tileXToLongitude(long tileX, byte zoomLevel) {
-		return pixelXToLongitude(tileX * DUMMY_TILE_SIZE, zoomLevel, DUMMY_TILE_SIZE);
+	public static double tileXToLongitude(long tileX, byte zoomLevel, int tileSize) {
+		return pixelXToLongitude(tileX * tileSize, zoomLevel, tileSize);
 	}
 
 	/**
@@ -471,8 +465,8 @@ public final class MercatorProjection {
 	 *            the scale factor at which the number should be converted.
 	 * @return the latitude value of the tile Y number.
 	 */
-	public static double tileYToLatitude(long tileY, double scaleFactor) {
-		return pixelYToLatitude(tileY * DUMMY_TILE_SIZE, scaleFactor, DUMMY_TILE_SIZE);
+	public static double tileYToLatitude(long tileY, double scaleFactor, int tileSize) {
+		return pixelYToLatitude(tileY * tileSize, scaleFactor, tileSize);
 	}
 
 	/**
@@ -484,8 +478,8 @@ public final class MercatorProjection {
 	 *            the zoom level at which the number should be converted.
 	 * @return the latitude value of the tile Y number.
 	 */
-	public static double tileYToLatitude(long tileY, byte zoomLevel) {
-		return pixelYToLatitude(tileY * DUMMY_TILE_SIZE, zoomLevel, DUMMY_TILE_SIZE);
+	public static double tileYToLatitude(long tileY, byte zoomLevel, int tileSize) {
+		return pixelYToLatitude(tileY * tileSize, zoomLevel, tileSize);
 	}
 
 	/**
