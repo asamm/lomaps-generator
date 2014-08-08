@@ -159,7 +159,7 @@ class Actions {
     }
 
     private void printLogHeader(Parameters.Action action) {
-        String line = "\n================ " + action.getLabel().toUpperCase() + " ================\n";
+        String line = "================ " + action.getLabel().toUpperCase() + " ================\n";
         Logger.i(TAG, line);
         Main.mySimpleLog.print("\n" + line);
     }

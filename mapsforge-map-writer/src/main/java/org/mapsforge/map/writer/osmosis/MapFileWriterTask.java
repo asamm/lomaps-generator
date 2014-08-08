@@ -18,9 +18,8 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import com.asamm.osmTools.utils.Logger;
 import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.map.writer.HDTileBasedDataProcessor;
 import org.mapsforge.map.writer.MapFileWriter;
@@ -40,7 +39,14 @@ import org.openstreetmap.osmosis.core.task.v0_6.Sink;
  * An Osmosis plugin that reads OpenStreetMap data and converts it to a mapsforge binary file.
  */
 public class MapFileWriterTask implements Sink {
-	private static final Logger LOGGER = Logger.getLogger(MapFileWriterTask.class.getName());
+
+    private static final String TAG = MapFileWriterTask.class.getSimpleName();
+
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(MapFileWriterTask.class.getName());
+    static {
+        LOGGER.setUseParentHandlers(false);
+    }
 
 	// Accounting
 	private int amountOfNodesProcessed = 0;
@@ -61,8 +67,8 @@ public class MapFileWriterTask implements Sink {
 			configuration.setFileSpecificationVersion(Integer.parseInt(properties
 					.getProperty(Constants.PROPERTY_NAME_FILE_SPECIFICATION_VERSION)));
 
-			LOGGER.info("mapfile-writer version: " + configuration.getWriterVersion());
-			LOGGER.info("mapfile format specification version: " + configuration.getFileSpecificationVersion());
+			Logger.d(TAG, "mapfile-writer version: " + configuration.getWriterVersion());
+			Logger.d(TAG, "mapfile format specification version: " + configuration.getFileSpecificationVersion());
 		} catch (IOException e) {
 			throw new RuntimeException("could not find default properties", e);
 		} catch (NumberFormatException e) {
@@ -71,6 +77,7 @@ public class MapFileWriterTask implements Sink {
 
 		// CREATE DATASTORE IF BBOX IS DEFINED
 		if (this.configuration.getBboxConfiguration() != null) {
+            Logger.d(TAG, "processorType:" + configuration.getDataProcessorType());
 			if ("ram".equalsIgnoreCase(configuration.getDataProcessorType())) {
 				this.tileBasedGeoObjectStore = RAMTileBasedDataProcessor.newInstance(configuration);
 			} else {
@@ -86,27 +93,26 @@ public class MapFileWriterTask implements Sink {
 		nfCounts.setGroupingUsed(true);
 		nfMegabyte.setMaximumFractionDigits(2);
 
-		LOGGER.info("completing read...");
+		Logger.d(TAG, "completing read...");
 		this.tileBasedGeoObjectStore.complete();
 
-		LOGGER.info("start writing file...");
-
+		Logger.d(TAG, "start writing file...");
 		try {
 			if (this.configuration.getOutputFile().exists()) {
-				LOGGER.info("overwriting file " + this.configuration.getOutputFile().getAbsolutePath());
+				Logger.d(TAG, "overwriting file " + this.configuration.getOutputFile().getAbsolutePath());
 				this.configuration.getOutputFile().delete();
 			}
 			MapFileWriter.writeFile(this.configuration, this.tileBasedGeoObjectStore);
 		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, "error while writing file", e);
+			Logger.e(TAG, "error while writing file", e);
 		}
 
-		LOGGER.info("finished...");
+		Logger.d(TAG, "finished...");
 		LOGGER.fine("total processed nodes: " + nfCounts.format(this.amountOfNodesProcessed));
 		LOGGER.fine("total processed ways: " + nfCounts.format(this.amountOfWaysProcessed));
 		LOGGER.fine("total processed relations: " + nfCounts.format(this.amountOfRelationsProcessed));
 
-		LOGGER.info("estimated memory consumption: "
+		Logger.d(TAG, "estimated memory consumption: "
 				+ nfMegabyte.format(+((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / Math
 						.pow(1024, 2))) + "MB");
 	}
@@ -138,7 +144,7 @@ public class MapFileWriterTask implements Sink {
 						this.tileBasedGeoObjectStore = HDTileBasedDataProcessor.newInstance(this.configuration);
 					}
 				}
-				LOGGER.info("start reading data...");
+				Logger.d(TAG, "start reading data...");
 				break;
 
 			// *******************************************************

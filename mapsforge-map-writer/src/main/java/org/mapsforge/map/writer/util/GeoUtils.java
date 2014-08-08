@@ -76,37 +76,41 @@ public final class GeoUtils {
 	 *            the way
 	 * @param geometry
 	 *            the geometry
-	 * @param tileCoordinate
+	 * @param tileAsGeom
 	 *            the tile coordinate
-	 * @param enlargementInMeters
-	 *            the bounding box buffer
 	 * @return the clipped geometry
 	 */
-	public static Geometry clipToTile(TDWay way, Geometry geometry, TileCoordinate tileCoordinate,
-			int enlargementInMeters) {
-		Geometry tileBBJTS = null;
-		Geometry ret = null;
-
-		// create tile bounding box
-		tileBBJTS = tileToJTSGeometry(tileCoordinate.getX(), tileCoordinate.getY(), tileCoordinate.getZoomlevel(),
-				enlargementInMeters);
+	public static Geometry clipToTile(TDWay way, Geometry geometry, Geometry tileAsGeom) {
+		Geometry ret;
 
 		// clip the geometry by intersection with the bounding box of the tile
 		// may throw a TopologyException
 		try {
-			ret = tileBBJTS.intersection(geometry);
-			// according to Ludwig (see issue332) valid polygons may become invalid by clipping (at least
-			// in the Python shapely library
-			// we need to investigate this more closely and write approriate test cases
-			// for now, I check whether the resulting polygon is valid and if not try to repair it
-			if ((ret instanceof Polygon || ret instanceof MultiPolygon) && !ret.isValid()) {
-				LOGGER.log(Level.WARNING, "clipped way is not valid, trying to repair it: " + way.getId());
-				ret = JTSUtils.repairInvalidPolygon(ret);
-				if (ret == null) {
-					way.setInvalid(true);
-					LOGGER.log(Level.WARNING, "could not repait invalid polygon: " + way.getId());
-				}
-			}
+            // perform quick check
+            Envelope envGeom = geometry.getEnvelopeInternal();
+            Envelope envTile = tileAsGeom.getEnvelopeInternal();
+            if (envGeom.getMinX() > envTile.getMaxX() ||
+                    envGeom.getMaxX() < envTile.getMinX() ||
+                    envGeom.getMinY() > envTile.getMaxY() ||
+                    envGeom.getMaxY() < envTile.getMinY()) {
+                return null;
+            }
+
+
+			ret = tileAsGeom.intersection(geometry);
+            // TODO really needed?
+//			// according to Ludwig (see issue332) valid polygons may become invalid by clipping (at least
+//			// in the Python shapely library
+//			// we need to investigate this more closely and write appropriate test cases
+//			// for now, I check whether the resulting polygon is valid and if not try to repair it
+//			if ((ret instanceof Polygon || ret instanceof MultiPolygon) && !ret.isValid()) {
+//				LOGGER.log(Level.WARNING, "clipped way is not valid, trying to repair it: " + way.getId());
+//				ret = JTSUtils.repairInvalidPolygon(ret);
+//				if (ret == null) {
+//					way.setInvalid(true);
+//					LOGGER.log(Level.WARNING, "could not repair invalid polygon: " + way.getId());
+//				}
+//			}
 		} catch (TopologyException e) {
 			LOGGER.log(Level.WARNING, "JTS cannot clip way, not storing it in data file: " + way.getId(), e);
 			way.setInvalid(true);
@@ -166,18 +170,14 @@ public final class GeoUtils {
 	/**
 	 * @param geometry
 	 *            a JTS {@link Geometry} object representing the OSM entity
-	 * @param tile
+	 * @param tileAsGeom
 	 *            the tile
-	 * @param enlargementInMeter
-	 *            the enlargement of the tile in meters
 	 * @return true, if the geometry is covered completely by this tile
 	 */
-	public static boolean coveredByTile(final Geometry geometry, final TileCoordinate tile, final int enlargementInMeter) {
-		Geometry bbox = tileToJTSGeometry(tile.getX(), tile.getY(), tile.getZoomlevel(), enlargementInMeter);
-		if (bbox.covers(geometry)) {
+	public static boolean coveredByTile(final Geometry geometry, Geometry tileAsGeom) {
+		if (tileAsGeom.covers(geometry)) {
 			return true;
 		}
-
 		return false;
 	}
 
@@ -392,7 +392,7 @@ public final class GeoUtils {
 		return bbox;
 	}
 
-	private static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
+	public static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
 		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom);
 		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom);
 		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom);

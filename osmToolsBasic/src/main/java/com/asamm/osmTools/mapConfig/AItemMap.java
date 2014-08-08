@@ -79,7 +79,7 @@ public class AItemMap {
     public void validate() {
         // check actions
         if (mActions.size() == 0) {
-            throw new IllegalArgumentException("No defined parameters, name:" + mName);
+            throw new IllegalArgumentException("No defined actions for '" + mName + "'");
         }
 
         // check name
@@ -127,12 +127,19 @@ public class AItemMap {
             String[] sepActions = actions.split("\\|");
 
             // clear previous actions if any new exists
-            if (sepActions.length > 0 && !sepActions[0].equals("&")) {
-                mActions.clear();
+            int startIndex = 0;
+            if (sepActions.length > 0) {
+                if (sepActions[0].equals("+")) {
+                    // keep old actions
+                    startIndex = 1;
+                } else {
+                    // clear parent actions
+                    mActions.clear();
+                }
             }
 
             // add new actions
-            for (int i = 0, m = sepActions.length; i < m; i++) {
+            for (int i = startIndex, m = sepActions.length; i < m; i++) {
 
                 // search for correct action
                 boolean added = false;

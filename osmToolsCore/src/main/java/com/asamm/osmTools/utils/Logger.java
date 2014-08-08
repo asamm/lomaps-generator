@@ -1,8 +1,10 @@
 package com.asamm.osmTools.utils;
 
 import java.io.File;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.*;
 
 /**
  * Created by menion on 19. 7. 2014.
@@ -11,6 +13,16 @@ import java.util.logging.Level;
 public class Logger {
 
     private static final java.util.logging.Logger LOG = create();
+
+    static {
+        LOG.setUseParentHandlers(false);
+
+        // set custom format
+        MyFormatter formatter = new MyFormatter();
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(formatter);
+        LOG.addHandler(handler);
+    }
 
     /**
      * Log an INFO message.
@@ -84,6 +96,31 @@ public class Logger {
         File logDirF = new File(Consts.DIR_LOGS);
         if (!logDirF.exists()) {
             logDirF.mkdirs();
+        }
+    }
+
+    private static class MyFormatter extends Formatter {
+
+        // create a DateFormat to format the logger timestamp.
+        private static final DateFormat df = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS");
+
+        public String format(LogRecord record) {
+            StringBuilder builder = new StringBuilder(1000);
+            builder.append(df.format(new Date(record.getMillis()))).append(" | ");
+            builder.append(record.getLevel()).append(" - ");
+            builder.append("[").append(record.getSourceClassName()).append(".");
+            builder.append(record.getSourceMethodName()).append("] - ");
+            builder.append(formatMessage(record));
+            builder.append("\n");
+            return builder.toString();
+        }
+
+        public String getHead(Handler h) {
+            return super.getHead(h);
+        }
+
+        public String getTail(Handler h) {
+            return super.getTail(h);
         }
     }
 }
