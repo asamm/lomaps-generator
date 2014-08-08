@@ -114,6 +114,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 	// TODO add accounting of average number of tiles per way
 	@Override
 	public void complete() {
+        LOGGER.info("complete(), step 1");
 		this.indexedNodeStore.complete();
 		this.nodeIndexReader = this.indexedNodeStore.createReader();
 
@@ -121,6 +122,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		this.wayIndexReader = this.indexedWayStore.createReader();
 
 		// handle relations
+        LOGGER.info("complete(), step 2");
 		ReleasableIterator<Relation> relationReader = this.relationStore.iterate();
 		RelationHandler relationHandler = new RelationHandler();
 		while (relationReader.hasNext()) {
@@ -130,6 +132,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		}
 
 		// handle ways
+        LOGGER.info("complete(), step 3");
 		ReleasableIterator<Way> wayReader = this.wayStore.iterate();
 		WayHandler wayHandler = new WayHandler();
 		while (wayReader.hasNext()) {
@@ -148,6 +151,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 			wayHandler.execute(tdWay);
 		}
 
+        LOGGER.info("complete(), step 4");
 		OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
 		OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
 	}

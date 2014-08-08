@@ -1,4 +1,4 @@
-apply plugin: 'java'
+configurations { providedCompile }
 
 dependencies {
     compile 'commons-io:commons-io:2.4'

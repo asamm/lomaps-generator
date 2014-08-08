@@ -62,7 +62,9 @@ import com.vividsolutions.jts.geom.Polygon;
  * Writes the binary file format for mapsforge maps.
  */
 public final class MapFileWriter {
+
 	private static class JTSGeometryCacheLoader extends CacheLoader<TDWay, Geometry> {
+
 		private final TileBasedDataProcessor datastore;
 
 		JTSGeometryCacheLoader(TileBasedDataProcessor datastore) {
@@ -86,10 +88,12 @@ public final class MapFileWriter {
 	}
 
 	private static class WayPreprocessingCallable implements Callable<WayPreprocessingResult> {
-		private final MapWriterConfiguration configuration;
+
+        private final MapWriterConfiguration configuration;
 		private final LoadingCache<TDWay, Geometry> jtsGeometryCache;
 		private final byte maxZoomInterval;
-		private final TileCoordinate tile;
+		private final TileCoordinate mTile;
+        private final Geometry mTileAsGeometry;
 		private final TDWay way;
 
 		/**
@@ -104,11 +108,13 @@ public final class MapFileWriter {
 		 * @param configuration
 		 *            the {@link MapWriterConfiguration}
 		 */
-		WayPreprocessingCallable(TDWay way, TileCoordinate tile, byte maxZoomInterval,
-				LoadingCache<TDWay, Geometry> jtsGeometryCache, MapWriterConfiguration configuration) {
+		WayPreprocessingCallable(TDWay way, TileCoordinate tile, Geometry tileAsGeometry,
+                                 byte maxZoomInterval, LoadingCache<TDWay, Geometry> jtsGeometryCache,
+                                 MapWriterConfiguration configuration) {
 			super();
 			this.way = way;
-			this.tile = tile;
+			this.mTile = tile;
+            this.mTileAsGeometry = tileAsGeometry;
 			this.maxZoomInterval = maxZoomInterval;
 			this.jtsGeometryCache = jtsGeometryCache;
 			this.configuration = configuration;
@@ -142,22 +148,22 @@ public final class MapFileWriter {
 			if (originalGeometry instanceof Polygon && this.configuration.isPolygonClipping()
 					|| (originalGeometry instanceof LineString || originalGeometry instanceof MultiLineString)
 					&& this.configuration.isWayClipping()) {
-				processedGeometry = GeoUtils.clipToTile(this.way, originalGeometry, this.tile,
-						this.configuration.getBboxEnlargement());
+				processedGeometry = GeoUtils.clipToTile(this.way, originalGeometry, this.mTileAsGeometry);
 				if (processedGeometry == null) {
 					return null;
 				}
 			}
 
-			// TODO is this the right place to simplify, or is it better before clipping?
-			if (this.configuration.getSimplification() > 0
-					&& this.tile.getZoomlevel() <= Constants.MAX_SIMPLIFICATION_BASE_ZOOM) {
-				processedGeometry = GeoUtils.simplifyGeometry(this.way, processedGeometry, this.maxZoomInterval,
-						tileSize, this.configuration.getSimplification());
-				if (processedGeometry == null) {
-					return null;
-				}
-			}
+            // simplify geometry
+            // TODO is this the right place to simplify, or is it better before clipping?
+            if (this.configuration.getSimplification() > 0
+                    && this.mTile.getZoomlevel() <= Constants.MAX_SIMPLIFICATION_BASE_ZOOM) {
+                processedGeometry = GeoUtils.simplifyGeometry(this.way, processedGeometry, this.maxZoomInterval,
+                        tileSize, this.configuration.getSimplification());
+                if (processedGeometry == null) {
+                    return null;
+                }
+            }
 
 			List<WayDataBlock> blocks = GeoUtils.toWayDataBlockList(processedGeometry);
 			if (blocks == null) {
@@ -167,7 +173,7 @@ public final class MapFileWriter {
 				LOGGER.finer("empty list of way data blocks after preprocessing way: " + this.way.getId());
 				return null;
 			}
-			short subtileMask = GeoUtils.computeBitmask(processedGeometry, this.tile,
+			short subtileMask = GeoUtils.computeBitmask(processedGeometry, this.mTile,
 					this.configuration.getBboxEnlargement());
 
 			// check if the original polygon is completely contained in the current tile
@@ -179,9 +185,9 @@ public final class MapFileWriter {
 			// this way, we can make sure that a label position is attached only once to a clipped polygon
 			LatLong centroidCoordinate = null;
 			if (this.configuration.isLabelPosition() && this.way.isValidClosedLine()
-					&& !GeoUtils.coveredByTile(originalGeometry, this.tile, this.configuration.getBboxEnlargement())) {
+					&& !GeoUtils.coveredByTile(originalGeometry, this.mTileAsGeometry)) {
 				Point centroidPoint = originalGeometry.getCentroid();
-				if (GeoUtils.coveredByTile(centroidPoint, this.tile, this.configuration.getBboxEnlargement())) {
+				if (GeoUtils.coveredByTile(centroidPoint, this.mTileAsGeometry)) {
 					centroidCoordinate = new LatLong(centroidPoint.getY(), centroidPoint.getX());
 				}
 			}
@@ -333,6 +339,7 @@ public final class MapFileWriter {
 	 */
 	public static void writeFile(MapWriterConfiguration configuration, TileBasedDataProcessor dataProcessor)
 			throws IOException {
+        LOGGER.info("writeFile(), step 1");
 		RandomAccessFile randomAccessFile = new RandomAccessFile(configuration.getOutputFile(), "rw");
 
 		int amountOfZoomIntervals = dataProcessor.getZoomIntervalConfiguration().getNumberOfZoomIntervals();
@@ -343,15 +350,18 @@ public final class MapFileWriter {
 		// set to mark where zoomIntervalConfig starts
 		containerHeaderBuffer.reset();
 
-		final LoadingCache<TDWay, Geometry> jtsGeometryCache = CacheBuilder.newBuilder()
-				.maximumSize(JTS_GEOMETRY_CACHE_SIZE).concurrencyLevel(Runtime.getRuntime().availableProcessors() * 2)
-				.build(new JTSGeometryCacheLoader(dataProcessor));
+		final LoadingCache<TDWay, Geometry> jtsGeometryCache = CacheBuilder.newBuilder().
+                maximumSize(JTS_GEOMETRY_CACHE_SIZE).
+                concurrencyLevel(Runtime.getRuntime().availableProcessors() * 2).
+                build(new JTSGeometryCacheLoader(dataProcessor));
 
 		// SUB FILES
 		// for each zoom interval write a sub file
+        LOGGER.info("writeFile(), step 2");
 		long currentFileSize = totalHeaderSize;
 		for (int i = 0; i < amountOfZoomIntervals; i++) {
 			// SUB FILE INDEX AND DATA
+            LOGGER.info("writeFile(), step 2 - " + i);
 			long subfileSize = writeSubfile(currentFileSize, i, dataProcessor, jtsGeometryCache, randomAccessFile,
 					configuration);
 			// SUB FILE META DATA IN CONTAINER HEADER
@@ -360,6 +370,7 @@ public final class MapFileWriter {
 			currentFileSize += subfileSize;
 		}
 
+        LOGGER.info("writeFile(), step 3");
 		randomAccessFile.seek(0);
 		randomAccessFile.write(containerHeaderBuffer.array(), 0, totalHeaderSize);
 
@@ -373,7 +384,6 @@ public final class MapFileWriter {
 		CacheStats stats = jtsGeometryCache.stats();
 		LOGGER.info("JTS Geometry cache hit rate: " + stats.hitRate());
 		LOGGER.info("JTS Geometry total load time: " + stats.totalLoadTime() / 1000);
-
 		LOGGER.info("Finished writing file.");
 	}
 
@@ -759,79 +769,96 @@ public final class MapFileWriter {
 		Map<Byte, List<TDWay>> waysByZoomlevel = currentTile.waysByZoomlevel(minZoomCurrentInterval,
 				maxZoomCurrentInterval);
 
-		if (!poisByZoomlevel.isEmpty() || !waysByZoomlevel.isEmpty()) {
-			if (configuration.isDebugStrings()) {
-				writeTileSignature(tileCoordinate, tileBuffer);
-			}
 
-			int amountZoomLevels = maxZoomCurrentInterval - minZoomCurrentInterval + 1;
-			int[][] entitiesPerZoomLevel = new int[amountZoomLevels][2];
+        // check if we have any data
+        if (poisByZoomlevel.isEmpty() && waysByZoomlevel.isEmpty()) {
+            return;
+        }
 
-			// WRITE POIS
-			for (byte zoomlevel = minZoomCurrentInterval; zoomlevel <= maxZoomCurrentInterval; zoomlevel++) {
-				int indexEntitiesPerZoomLevelTable = zoomlevel - minZoomCurrentInterval;
-				List<TDNode> pois = poisByZoomlevel.get(Byte.valueOf(zoomlevel));
-				if (pois != null) {
-					for (TDNode poi : pois) {
-						processPOI(poi, currentTileLat, currentTileLon, configuration.isDebugStrings(), poiDataBuffer);
-					}
-					// increment count of POIs on this zoom level
-					entitiesPerZoomLevel[indexEntitiesPerZoomLevelTable][0] += pois.size();
-				}
-			}
+        // write signature in debug mode
+        if (configuration.isDebugStrings()) {
+            writeTileSignature(tileCoordinate, tileBuffer);
+        }
 
-			// WRITE WAYS
-			for (byte zoomlevel = minZoomCurrentInterval; zoomlevel <= maxZoomCurrentInterval; zoomlevel++) {
-				int indexEntitiesPerZoomLevelTable = zoomlevel - minZoomCurrentInterval;
+        // prepare basic parameters
+        int amountZoomLevels = maxZoomCurrentInterval - minZoomCurrentInterval + 1;
+        int[][] entitiesPerZoomLevel = new int[amountZoomLevels][2];
 
-				List<TDWay> ways = waysByZoomlevel.get(Byte.valueOf(zoomlevel));
-				if (ways != null) {
-					List<WayPreprocessingCallable> callables = new ArrayList<>();
-					for (TDWay way : ways) {
-						if (!way.isInvalid()) {
-							callables.add(new WayPreprocessingCallable(way, tileCoordinate, maxZoomCurrentInterval,
-									jtsGeometryCache, configuration));
-						}
-					}
-					try {
-						List<Future<WayPreprocessingResult>> futures = EXECUTOR_SERVICE.invokeAll(callables);
-						for (Future<WayPreprocessingResult> wprFuture : futures) {
-							WayPreprocessingResult wpr;
-							try {
-								wpr = wprFuture.get();
-							} catch (ExecutionException e) {
-								LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
-								continue;
-							}
-							if (wpr != null) {
-								wayBuffer.clear();
-								// increment count of ways on this zoom level
-								entitiesPerZoomLevel[indexEntitiesPerZoomLevelTable][1]++;
-								if (configuration.isDebugStrings()) {
-									writeWaySignature(wpr.getWay(), wayDataBuffer);
-								}
-								processWay(wpr, wpr.getWay(), currentTileLat, currentTileLon, wayBuffer);
-								// write size of way to way data buffer
-								wayDataBuffer.put(Serializer.getVariableByteUnsigned(wayBuffer.position()));
-								// write way data to way data buffer
-								wayDataBuffer.put(wayBuffer.array(), 0, wayBuffer.position());
-							}
-						}
-					} catch (InterruptedException e) {
-						LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
-					}
-				}
-			}
+        // WRITE POIS
 
-			// write zoom table
-			writeZoomLevelTable(entitiesPerZoomLevel, tileBuffer);
-			// write offset to first way in the tile header
-			tileBuffer.put(Serializer.getVariableByteUnsigned(poiDataBuffer.position()));
-			// write POI data to buffer
-			tileBuffer.put(poiDataBuffer.array(), 0, poiDataBuffer.position());
-			// write way data to buffer
-			tileBuffer.put(wayDataBuffer.array(), 0, wayDataBuffer.position());
-		}
+        for (byte zoomlevel = minZoomCurrentInterval; zoomlevel <= maxZoomCurrentInterval; zoomlevel++) {
+            int indexEntitiesPerZoomLevelTable = zoomlevel - minZoomCurrentInterval;
+            List<TDNode> pois = poisByZoomlevel.get(zoomlevel);
+            if (pois != null) {
+                for (int i = 0, m = pois.size(); i < m; i++) {
+                    processPOI(pois.get(i), currentTileLat, currentTileLon,
+                            configuration.isDebugStrings(), poiDataBuffer);
+                }
+
+                // increment count of POIs on this zoom level
+                entitiesPerZoomLevel[indexEntitiesPerZoomLevelTable][0] += pois.size();
+            }
+        }
+
+        // WRITE WAYS
+
+        for (byte zoomlevel = minZoomCurrentInterval; zoomlevel <= maxZoomCurrentInterval; zoomlevel++) {
+            int indexEntitiesPerZoomLevelTable = zoomlevel - minZoomCurrentInterval;
+
+            // prepare tile as Geometry object
+            Geometry tileAsGeometry = GeoUtils.tileToJTSGeometry(tileCoordinate.getX(), tileCoordinate.getY(),
+                    tileCoordinate.getZoomlevel(), configuration.getBboxEnlargement());
+
+
+            List<TDWay> ways = waysByZoomlevel.get(zoomlevel);
+            if (ways != null) {
+                List<WayPreprocessingCallable> callables = new ArrayList<>();
+                for (int i = 0, m = ways.size(); i < m; i++) {
+                    TDWay way = ways.get(i);
+                    if (!way.isInvalid()) {
+                        callables.add(new WayPreprocessingCallable(way, tileCoordinate, tileAsGeometry,
+                                maxZoomCurrentInterval, jtsGeometryCache, configuration));
+                    }
+                }
+
+                try {
+                    List<Future<WayPreprocessingResult>> futures = EXECUTOR_SERVICE.invokeAll(callables);
+                    for (int i = 0, m = futures.size(); i < m; i++) {
+                        WayPreprocessingResult wpr;
+                        try {
+                            wpr = futures.get(i).get();
+                        } catch (ExecutionException e) {
+                            LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
+                            continue;
+                        }
+                        if (wpr != null) {
+                            wayBuffer.clear();
+                            // increment count of ways on this zoom level
+                            entitiesPerZoomLevel[indexEntitiesPerZoomLevelTable][1]++;
+                            if (configuration.isDebugStrings()) {
+                                writeWaySignature(wpr.getWay(), wayDataBuffer);
+                            }
+                            processWay(wpr, wpr.getWay(), currentTileLat, currentTileLon, wayBuffer);
+                            // write size of way to way data buffer
+                            wayDataBuffer.put(Serializer.getVariableByteUnsigned(wayBuffer.position()));
+                            // write way data to way data buffer
+                            wayDataBuffer.put(wayBuffer.array(), 0, wayBuffer.position());
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
+                }
+            }
+        }
+
+        // write zoom table
+        writeZoomLevelTable(entitiesPerZoomLevel, tileBuffer);
+        // write offset to first way in the tile header
+        tileBuffer.put(Serializer.getVariableByteUnsigned(poiDataBuffer.position()));
+        // write POI data to buffer
+        tileBuffer.put(poiDataBuffer.array(), 0, poiDataBuffer.position());
+        // write way data to buffer
+        tileBuffer.put(wayDataBuffer.array(), 0, wayDataBuffer.position());
 	}
 
 	private static void writeIndex(ByteBuffer indexBuffer, long startPositionSubfile, long subFileSize,

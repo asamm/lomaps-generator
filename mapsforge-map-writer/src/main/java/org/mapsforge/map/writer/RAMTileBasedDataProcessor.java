@@ -14,6 +14,7 @@
  */
 package org.mapsforge.map.writer;
 
+import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.procedure.TLongProcedure;
@@ -43,6 +44,9 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Way;
  * A TileBasedDataStore that uses the RAM as storage device for temporary data structures.
  */
 public final class RAMTileBasedDataProcessor extends BaseTileBasedDataProcessor {
+
+    private static final String TAG = RAMTileBasedDataProcessor.class.getSimpleName();
+
 	/**
 	 * Creates a new instance of a {@link RAMTileBasedDataProcessor}.
 	 * 
@@ -115,12 +119,15 @@ public final class RAMTileBasedDataProcessor extends BaseTileBasedDataProcessor 
 	@Override
 	public void complete() {
 		// Polygonize multipolygon
+        Logger.d(TAG, "complete(), step 1");
 		RelationHandler relationHandler = new RelationHandler();
 		this.multipolygons.forEachValue(relationHandler);
 
+        Logger.d(TAG, "complete(), step 2");
 		WayHandler wayHandler = new WayHandler();
 		this.ways.forEachValue(wayHandler);
 
+        Logger.d(TAG, "complete(), step 3");
 		OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
 		OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
 	}

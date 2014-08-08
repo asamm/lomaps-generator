@@ -32,8 +32,11 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Polygon;
 
 public final class JTSUtils {
+
+    private static final Logger LOGGER = Logger.getLogger(GeoUtils.class.getName());
+
 	private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
-	private static final Logger LOGGER = Logger.getLogger(GeoUtils.class.getName());
+
 
 	/**
 	 * Translates a {@link TDNode} object to a JTS {@link Coordinate}.
@@ -94,6 +97,8 @@ public final class JTSUtils {
 			if (polygon.isValid()) {
 				return polygon;
 			}
+
+            //LOGGER.warning("toJtsGeometry(), attempt to create invalid polygon:" + way.getId());
 			return repairInvalidPolygon(polygon);
 		}
 		// not a closed line

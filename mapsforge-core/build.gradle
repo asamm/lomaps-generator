@@ -1,1 +1,5 @@
 configurations { providedCompile }
+
+dependencies {
+    compile project(":osmToolsCore")
+}

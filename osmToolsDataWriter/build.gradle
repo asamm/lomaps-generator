@@ -36,3 +36,14 @@ def releaseTask = tasks.create(name: '_releaseOsmToolsDataWriter') {
     }
 }
 releaseTask.dependsOn jar
+
+//task proguard(type: proguard.gradle.ProGuardTask) {
+//    injars(project.jar.archivePath.getPath())
+////    outjars(libsDir.path + "/" + project.name + "_obfuscated.jar")
+////    injars  '../../lib/proguard.jar', filter: '!proguard/ant/**,!proguard/gradle/**,!proguard/wtk/**'
+//    outjars 'proguard_out.jar'
+//
+//    libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+//}
+//
+//proguard.dependsOn assemble
