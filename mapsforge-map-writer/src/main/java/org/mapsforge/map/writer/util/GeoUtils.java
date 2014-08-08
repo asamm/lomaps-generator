@@ -242,10 +242,10 @@ public final class GeoUtils {
 			return false;
 		}
 
-		double lon1 = MercatorProjection.tileXToLongitude(tile.getX(), tile.getZoomlevel());
-		double lon2 = MercatorProjection.tileXToLongitude(tile.getX() + 1, tile.getZoomlevel());
-		double lat1 = MercatorProjection.tileYToLatitude(tile.getY(), tile.getZoomlevel());
-		double lat2 = MercatorProjection.tileYToLatitude(tile.getY() + 1, tile.getZoomlevel());
+		double lon1 = MercatorProjection.tileXToLongitude(tile.getX(), tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
+		double lon2 = MercatorProjection.tileXToLongitude(tile.getX() + 1, tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
+		double lat1 = MercatorProjection.tileYToLatitude(tile.getY(), tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
+		double lat2 = MercatorProjection.tileYToLatitude(tile.getY() + 1, tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
 		return latLong.latitude <= lat1 && latLong.latitude >= lat2 && latLong.longitude >= lon1
 				&& latLong.longitude <= lon2;
 	}
@@ -340,7 +340,7 @@ public final class GeoUtils {
 		}
 
 		double[] epsilons = new double[2];
-		double lat = MercatorProjection.tileYToLatitude(tileY, zoom);
+		double lat = MercatorProjection.tileYToLatitude(tileY, zoom, Constants.DEFAULT_TILE_SIZE);
 		epsilons[0] = LatLongUtils.latitudeDistance(enlargementInMeter);
 		epsilons[1] = LatLongUtils.longitudeDistance(enlargementInMeter, lat);
 
@@ -383,20 +383,20 @@ public final class GeoUtils {
 		double[] epsilonsBottomRight = computeTileEnlargement(miny, enlargementInPixel);
 
 		TileCoordinate[] bbox = new TileCoordinate[2];
-		bbox[0] = new TileCoordinate((int) MercatorProjection.longitudeToTileX(minx - epsilonsTopLeft[1], zoomlevel),
-				(int) MercatorProjection.latitudeToTileY(maxy + epsilonsTopLeft[0], zoomlevel), zoomlevel);
+		bbox[0] = new TileCoordinate((int) MercatorProjection.longitudeToTileX(minx - epsilonsTopLeft[1], zoomlevel, Constants.DEFAULT_TILE_SIZE),
+				(int) MercatorProjection.latitudeToTileY(maxy + epsilonsTopLeft[0], zoomlevel, Constants.DEFAULT_TILE_SIZE), zoomlevel);
 		bbox[1] = new TileCoordinate(
-				(int) MercatorProjection.longitudeToTileX(maxx + epsilonsBottomRight[1], zoomlevel),
-				(int) MercatorProjection.latitudeToTileY(miny - epsilonsBottomRight[0], zoomlevel), zoomlevel);
+				(int) MercatorProjection.longitudeToTileX(maxx + epsilonsBottomRight[1], zoomlevel, Constants.DEFAULT_TILE_SIZE),
+				(int) MercatorProjection.latitudeToTileY(miny - epsilonsBottomRight[0], zoomlevel, Constants.DEFAULT_TILE_SIZE), zoomlevel);
 
 		return bbox;
 	}
 
 	public static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
-		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom);
-		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom);
-		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom);
-		double maxLon = MercatorProjection.tileXToLongitude(tileX + 1, zoom);
+		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom, Constants.DEFAULT_TILE_SIZE);
+		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom, Constants.DEFAULT_TILE_SIZE);
+		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom, Constants.DEFAULT_TILE_SIZE);
+		double maxLon = MercatorProjection.tileXToLongitude(tileX + 1, zoom, Constants.DEFAULT_TILE_SIZE);
 
 		double[] epsilons = bufferInDegrees(tileY, zoom, enlargementInMeter);
 

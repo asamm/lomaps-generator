@@ -14,6 +14,20 @@
  */
 package org.mapsforge.map.writer;
 
+import com.asamm.osmTools.utils.Logger;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
+import com.vividsolutions.jts.geom.*;
+import org.mapsforge.core.model.LatLong;
+import org.mapsforge.core.util.LatLongUtils;
+import org.mapsforge.core.util.MercatorProjection;
+import org.mapsforge.map.writer.model.*;
+import org.mapsforge.map.writer.util.Constants;
+import org.mapsforge.map.writer.util.GeoUtils;
+import org.mapsforge.map.writer.util.JTSUtils;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -22,46 +36,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.mapsforge.core.model.LatLong;
-import org.mapsforge.core.util.LatLongUtils;
-import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.writer.model.Encoding;
-import org.mapsforge.map.writer.model.MapWriterConfiguration;
-import org.mapsforge.map.writer.model.OSMTag;
-import org.mapsforge.map.writer.model.TDNode;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileBasedDataProcessor;
-import org.mapsforge.map.writer.model.TileCoordinate;
-import org.mapsforge.map.writer.model.TileData;
-import org.mapsforge.map.writer.model.TileInfo;
-import org.mapsforge.map.writer.model.WayDataBlock;
-import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
-import org.mapsforge.map.writer.util.Constants;
-import org.mapsforge.map.writer.util.GeoUtils;
-import org.mapsforge.map.writer.util.JTSUtils;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import java.util.concurrent.*;
 
 /**
  * Writes the binary file format for mapsforge maps.
  */
 public final class MapFileWriter {
+
+    private static final String TAG = MapFileWriter.class.getSimpleName();
 
 	private static class JTSGeometryCacheLoader extends CacheLoader<TDWay, Geometry> {
 
@@ -159,7 +141,7 @@ public final class MapFileWriter {
             if (this.configuration.getSimplification() > 0
                     && this.mTile.getZoomlevel() <= Constants.MAX_SIMPLIFICATION_BASE_ZOOM) {
                 processedGeometry = GeoUtils.simplifyGeometry(this.way, processedGeometry, this.maxZoomInterval,
-                        tileSize, this.configuration.getSimplification());
+                        Constants.DEFAULT_TILE_SIZE, this.configuration.getSimplification());
                 if (processedGeometry == null) {
                     return null;
                 }
@@ -170,7 +152,7 @@ public final class MapFileWriter {
 				return null;
 			}
 			if (blocks.isEmpty()) {
-				LOGGER.finer("empty list of way data blocks after preprocessing way: " + this.way.getId());
+                Logger.w(TAG, "empty list of way data blocks after preprocessing way: " + this.way.getId());
 				return null;
 			}
 			short subtileMask = GeoUtils.computeBitmask(processedGeometry, this.mTile,
@@ -250,8 +232,6 @@ public final class MapFileWriter {
 	// IO
 	static final int HEADER_BUFFER_SIZE = 0x100000; // 1MB
 
-	static final Logger LOGGER = Logger.getLogger(MapFileWriter.class.getName());
-
 	static final int MIN_TILE_BUFFER_SIZE = 0xF00000; // 15MB
 
 	static final int POI_DATA_BUFFER_SIZE = 0x100000; // 1MB
@@ -323,8 +303,6 @@ public final class MapFileWriter {
 
 	private static final TileInfo TILE_INFO = TileInfo.getInstance();
 
-	private static final int tileSize = 256; // needed for optimal simplification, but set to constant here TODO
-
 	private static final Charset UTF8_CHARSET = Charset.forName("utf8");
 
 	/**
@@ -339,12 +317,14 @@ public final class MapFileWriter {
 	 */
 	public static void writeFile(MapWriterConfiguration configuration, TileBasedDataProcessor dataProcessor)
 			throws IOException {
-        LOGGER.info("writeFile(), step 1");
-		RandomAccessFile randomAccessFile = new RandomAccessFile(configuration.getOutputFile(), "rw");
+        // create output file
+		RandomAccessFile randomAccessFile = new RandomAccessFile(
+                configuration.getOutputFile(), "rw");
 
-		int amountOfZoomIntervals = dataProcessor.getZoomIntervalConfiguration().getNumberOfZoomIntervals();
+        // basic parameters
+		int amountOfZoomIntervals = dataProcessor.
+                getZoomIntervalConfiguration().getNumberOfZoomIntervals();
 		ByteBuffer containerHeaderBuffer = ByteBuffer.allocate(HEADER_BUFFER_SIZE);
-		// CONTAINER HEADER
 		int totalHeaderSize = writeHeaderBuffer(configuration, dataProcessor, containerHeaderBuffer);
 
 		// set to mark where zoomIntervalConfig starts
@@ -355,22 +335,20 @@ public final class MapFileWriter {
                 concurrencyLevel(Runtime.getRuntime().availableProcessors() * 2).
                 build(new JTSGeometryCacheLoader(dataProcessor));
 
-		// SUB FILES
 		// for each zoom interval write a sub file
-        LOGGER.info("writeFile(), step 2");
 		long currentFileSize = totalHeaderSize;
 		for (int i = 0; i < amountOfZoomIntervals; i++) {
-			// SUB FILE INDEX AND DATA
-            LOGGER.info("writeFile(), step 2 - " + i);
-			long subfileSize = writeSubfile(currentFileSize, i, dataProcessor, jtsGeometryCache, randomAccessFile,
-					configuration);
-			// SUB FILE META DATA IN CONTAINER HEADER
-			writeSubfileMetaDataToContainerHeader(dataProcessor.getZoomIntervalConfiguration(), i, currentFileSize,
-					subfileSize, containerHeaderBuffer);
+            Logger.i(TAG, "writeFile(), write subfile, zoom index: " + i);
+			long subfileSize = writeSubfile(currentFileSize, i, dataProcessor,
+                    jtsGeometryCache, randomAccessFile, configuration);
+
+            // write subfile parameters to header
+			writeSubfileMetaDataToContainerHeader(dataProcessor.getZoomIntervalConfiguration(),
+                    i, currentFileSize, subfileSize, containerHeaderBuffer);
 			currentFileSize += subfileSize;
 		}
 
-        LOGGER.info("writeFile(), step 3");
+        Logger.i(TAG, "writeFile(), step 3");
 		randomAccessFile.seek(0);
 		randomAccessFile.write(containerHeaderBuffer.array(), 0, totalHeaderSize);
 
@@ -382,9 +360,9 @@ public final class MapFileWriter {
 		randomAccessFile.close();
 
 		CacheStats stats = jtsGeometryCache.stats();
-		LOGGER.info("JTS Geometry cache hit rate: " + stats.hitRate());
-		LOGGER.info("JTS Geometry total load time: " + stats.totalLoadTime() / 1000);
-		LOGGER.info("Finished writing file.");
+		Logger.i(TAG, "JTS Geometry cache hit rate: " + stats.hitRate());
+		Logger.i(TAG, "JTS Geometry total load time: " + stats.totalLoadTime() / 1000);
+		Logger.i(TAG, "Finished writing file.");
 	}
 
 	static byte infoByteOptmizationParams(MapWriterConfiguration configuration) {
@@ -603,8 +581,8 @@ public final class MapFileWriter {
 
 	static int writeHeaderBuffer(final MapWriterConfiguration configuration,
 			final TileBasedDataProcessor dataProcessor, final ByteBuffer containerHeaderBuffer) {
-		LOGGER.fine("writing header");
-		LOGGER.fine("Bounding box for file: " + dataProcessor.getBoundingBox().toString());
+		Logger.d(TAG, "writing header");
+		Logger.d(TAG, "Bounding box for file: " + dataProcessor.getBoundingBox().toString());
 
 		// write file header
 		// MAGIC BYTE
@@ -756,9 +734,9 @@ public final class MapFileWriter {
 				tileCoordinate.getY());
 
 		final int currentTileLat = LatLongUtils.degreesToMicrodegrees(MercatorProjection.tileYToLatitude(
-				tileCoordinate.getY(), tileCoordinate.getZoomlevel()));
+				tileCoordinate.getY(), tileCoordinate.getZoomlevel(), Constants.DEFAULT_TILE_SIZE));
 		final int currentTileLon = LatLongUtils.degreesToMicrodegrees(MercatorProjection.tileXToLongitude(
-				tileCoordinate.getX(), tileCoordinate.getZoomlevel()));
+				tileCoordinate.getX(), tileCoordinate.getZoomlevel(), Constants.DEFAULT_TILE_SIZE));
 
 		final byte minZoomCurrentInterval = dataProcessor.getZoomIntervalConfiguration().getMinZoom(zoomIntervalIndex);
 		final byte maxZoomCurrentInterval = dataProcessor.getZoomIntervalConfiguration().getMaxZoom(zoomIntervalIndex);
@@ -828,7 +806,7 @@ public final class MapFileWriter {
                         try {
                             wpr = futures.get(i).get();
                         } catch (ExecutionException e) {
-                            LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
+                            Logger.w(TAG, "error in parallel preprocessing of ways", e);
                             continue;
                         }
                         if (wpr != null) {
@@ -846,7 +824,7 @@ public final class MapFileWriter {
                         }
                     }
                 } catch (InterruptedException e) {
-                    LOGGER.log(Level.WARNING, "error in parallel preprocessing of ways", e);
+                    Logger.w(TAG, "error in parallel preprocessing of ways", e);
                 }
             }
         }
@@ -871,9 +849,9 @@ public final class MapFileWriter {
 	private static long writeSubfile(final long startPositionSubfile, final int zoomIntervalIndex,
 			final TileBasedDataProcessor dataStore, final LoadingCache<TDWay, Geometry> jtsGeometryCache,
 			final RandomAccessFile randomAccessFile, final MapWriterConfiguration configuration) throws IOException {
-		LOGGER.fine("writing data for zoom interval " + zoomIntervalIndex + ", number of tiles: "
-				+ dataStore.getTileGridLayout(zoomIntervalIndex).getAmountTilesHorizontal()
-				* dataStore.getTileGridLayout(zoomIntervalIndex).getAmountTilesVertical());
+		Logger.w(TAG, "writing data for zoom interval " + zoomIntervalIndex + ", number of tiles: "
+                + dataStore.getTileGridLayout(zoomIntervalIndex).getAmountTilesHorizontal()
+                * dataStore.getTileGridLayout(zoomIntervalIndex).getAmountTilesVertical());
 
 		final TileCoordinate upperLeft = dataStore.getTileGridLayout(zoomIntervalIndex).getUpperLeft();
 		final int lengthX = dataStore.getTileGridLayout(zoomIntervalIndex).getAmountTilesHorizontal();
@@ -909,9 +887,10 @@ public final class MapFileWriter {
 
 		long currentSubfileOffset = indexBufferSize;
 		randomAccessFile.seek(startPositionSubfile + indexBufferSize);
-
+        int tiles = 0;
 		for (int tileY = upperLeft.getY(); tileY < upperLeft.getY() + lengthY; tileY++) {
 			for (int tileX = upperLeft.getX(); tileX < upperLeft.getX() + lengthX; tileX++) {
+                tiles++;
 				TileCoordinate tileCoordinate = new TileCoordinate(tileX, tileY, baseZoomCurrentInterval);
 
 				processIndexEntry(tileCoordinate, indexBuffer, currentSubfileOffset);
@@ -923,16 +902,17 @@ public final class MapFileWriter {
 
 				if (++processedTiles % amountOfTilesInPercentStep == 0) {
 					if (processedTiles == amountTiles) {
-						LOGGER.info("written 100% of sub file for zoom interval index " + zoomIntervalIndex);
+						Logger.i(TAG, "written 100% of sub file for zoom interval index " + zoomIntervalIndex);
 					} else {
-						LOGGER.info("written " + (processedTiles / amountOfTilesInPercentStep) * PROGRESS_PERCENT_STEP
+						Logger.i(TAG, "written " + (processedTiles / amountOfTilesInPercentStep) * PROGRESS_PERCENT_STEP
 								+ "% of sub file for zoom interval index " + zoomIntervalIndex);
 					}
 				}
 
 				// TODO accounting for progress information
-			} // end for loop over tile columns
-		} // /end for loop over tile rows
+			}
+		}
+Logger.e(TAG, "subfile tiles:" + tiles);
 
 		// write remaining tiles
 		if (multipleTilesBuffer.position() > 0) {
