@@ -14,7 +14,6 @@ public class GeneratorAddress extends AGenerator {
 	private static final String TAG = GeneratorAddress.class.getSimpleName();
 	
 	public GeneratorAddress() throws SQLException {
-		super();
         Logger.d(TAG, "Prepared GeneratorAddress");
 	}
 

@@ -4,9 +4,9 @@ import com.asamm.osmTools.generatorDb.AGenerator;
 import com.asamm.osmTools.generatorDb.GeneratorAddress;
 import com.asamm.osmTools.generatorDb.GeneratorPoi;
 import com.asamm.osmTools.generatorDb.DataWriterDefinition;
-import com.asamm.osmTools.generatorDb.db.ADataContainer;
-import com.asamm.osmTools.generatorDb.db.DataContainerHdd;
-import com.asamm.osmTools.generatorDb.db.DataContainerRam;
+import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
+import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
+import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;
 import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
@@ -30,9 +30,9 @@ public class DataGeneratorTask implements Sink {
 	private Configuration conf;
 	
 	// container for all data
-	ADataContainer dc = null;
+	private ADataContainer dc = null;
 	// generator for result database
-	AGenerator generator = null;
+    private AGenerator generator = null;
 
 	DataGeneratorTask(Configuration config) {
         Logger.d(TAG, "DataGeneratorTask(), start");
@@ -72,15 +72,34 @@ public class DataGeneratorTask implements Sink {
 		}
 	}
 
+    @Override
 	public void initialize(Map<String, Object> metadata) {
 		// nothing to do
 	}
 
+    @Override
+    public final void process(EntityContainer entityContainer) {
+        Entity entity = entityContainer.getEntity();
+
+        switch (entity.getType()) {
+            case Bound:
+                break;
+            case Node:
+                Node node = (Node) entity;
+                dc.addNode(node);
+                break;
+            case Way:
+                Way way = (Way) entity;
+                dc.addWay(way);
+                break;
+            case Relation:
+                break;
+        }
+    }
+
+    @Override
 	public final void complete() {
 		Logger.d(TAG, "complete reading, start generating");
-
-		// finish loading of data container
-		dc.finishLoading();
 
 		// generate database
 		generator.proceedData(dc);
@@ -92,24 +111,5 @@ public class DataGeneratorTask implements Sink {
 
 	public final void release() {
 		// nothing to do
-	}
-
-	public final void process(EntityContainer entityContainer) {
-		Entity entity = entityContainer.getEntity();
-
-		switch (entity.getType()) {
-			case Bound:
-				break;
-			case Node:
-				Node node = (Node) entity;
-				dc.addNode(node);
-				break;
-			case Way:
-				Way way = (Way) entity;
-				dc.addWay(way);
-				break;
-			case Relation:
-				break;
-		}
 	}
 }

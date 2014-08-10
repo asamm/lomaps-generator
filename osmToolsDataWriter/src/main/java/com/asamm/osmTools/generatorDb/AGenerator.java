@@ -2,7 +2,7 @@ package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.WayEx;
-import com.asamm.osmTools.generatorDb.db.ADataContainer;
+import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -15,8 +15,6 @@ public abstract class AGenerator {
 
 	private ADatabaseHandler db;
 	
-	public AGenerator() {}
-
 	// prepare database
 	protected void initialize() throws Exception {
 		db = prepareDatabase();
@@ -43,14 +41,14 @@ public abstract class AGenerator {
 	public void proceedData(ADataContainer dc) {
 		// handle nodes
         List<Node> nodes = dc.getNodes();
-		for (Node node : nodes) {
-			addNodeImpl(node, db);
+		for (int i = 0, m = nodes.size(); i < m; i++) {
+			addNodeImpl(nodes.get(i), db);
 		}
 		
 		// handle ways
         List<WayEx> ways = dc.getWays();
-		for (WayEx way : ways) {
-			addWayImp(way, db);
+        for (int i = 0, m = ways.size(); i < m; i++) {
+			addWayImp(ways.get(i), db);
 		}
 	}
 

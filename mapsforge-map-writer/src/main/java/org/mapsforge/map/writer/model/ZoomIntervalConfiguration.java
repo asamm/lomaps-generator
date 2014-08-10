@@ -19,7 +19,8 @@ package org.mapsforge.map.writer.model;
  * and a maximum zoom level.
  */
 public final class ZoomIntervalConfiguration {
-	/**
+
+    /**
 	 * Create a new ZoomIntervalConfiguration from the given string representation. Checks for validity.
 	 * 
 	 * @param confString
@@ -62,12 +63,7 @@ public final class ZoomIntervalConfiguration {
 	}
 
 	private final byte[] baseZoom;
-	private final byte maxMaxZoom;
-
 	private final byte[] maxZoom;
-
-	private final byte minMinZoom;
-
 	private final byte[] minZoom;
 
 	private ZoomIntervalConfiguration(byte[][] intervals) {
@@ -99,8 +95,6 @@ public final class ZoomIntervalConfiguration {
 			this.minZoom[i - 1] = interval[1];
 			this.maxZoom[i - 1] = interval[2];
 		}
-		this.minMinZoom = this.minZoom[0];
-		this.maxMaxZoom = this.maxZoom[this.maxZoom.length - 1];
 	}
 
 	/**
@@ -114,13 +108,6 @@ public final class ZoomIntervalConfiguration {
 	}
 
 	/**
-	 * @return the maxMaxZoom
-	 */
-	public byte getMaxMaxZoom() {
-		return this.maxMaxZoom;
-	}
-
-	/**
 	 * @param index
 	 *            the index
 	 * @return the corresponding max zoom level
@@ -128,13 +115,6 @@ public final class ZoomIntervalConfiguration {
 	public byte getMaxZoom(int index) {
 		checkValidIndex(index);
 		return this.maxZoom[index];
-	}
-
-	/**
-	 * @return the minMinZoom
-	 */
-	public byte getMinMinZoom() {
-		return this.minMinZoom;
 	}
 
 	/**
@@ -151,10 +131,7 @@ public final class ZoomIntervalConfiguration {
 	 * @return the number of zoom intervals
 	 */
 	public int getNumberOfZoomIntervals() {
-		if (this.baseZoom == null) {
-			return 0;
-		}
-		return this.baseZoom.length;
+        return this.baseZoom.length;
 	}
 
 	private void checkValidIndex(int index) {

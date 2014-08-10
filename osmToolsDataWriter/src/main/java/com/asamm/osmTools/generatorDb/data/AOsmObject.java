@@ -21,9 +21,7 @@ public abstract class AOsmObject {
 	
 	// name of POI
 	private String name;
-	// entity elevation
-	private short elevation = 0;
-	
+
 	public AOsmObject(Entity entity) {
 		this.entity = entity;
 		
@@ -45,10 +43,6 @@ public abstract class AOsmObject {
 		}
 	}
 	
-	public short getAlt() {
-		return elevation;
-	}
-
 	protected boolean isValid() {
 		return isValidPrivate();
 	}
@@ -62,19 +56,17 @@ public abstract class AOsmObject {
 			String value = tag.getValue();
 			
 			// check values
-			if (key == null || key.length() == 0 ||
-					value == null || value.length() == 0) {
+			if (key.length() == 0 || value == null || value.length() == 0) {
 				// invalid tag
 				continue;
 			}
-			
+
+            // handle specific tags
 			if (key.startsWith("name")) {
 				// check alternative languages
 				if ("name".equals(key)) {
 					setName(value);	
 				}
-			} else if ("ele".equals(key)) {
-				elevation = parseElevation(tag);
 			} else if (handleTag(key, value)) {
 				// tag consumed
 			} else {
@@ -87,37 +79,37 @@ public abstract class AOsmObject {
 	
 	protected abstract boolean handleTag(String key, String value);
 	
-	protected short parseElevation(Tag tag) {
-		double testElevation = 0.0;
-		try {
-			// parse elevation value
-			String strElevation = tag.getValue().toLowerCase();
-			strElevation = strElevation.replace(",", ".");
-			strElevation = strElevation.replace(";", "");
-			strElevation = strElevation.replace("?", "");
-			strElevation = strElevation.replace("meter", "");
-			strElevation = strElevation.replace("m.n.m", "");
-			strElevation = strElevation.replace("m (msl)", "");
-			strElevation = strElevation.trim();
-			
-			if (strElevation.endsWith("'")) {
-				strElevation = strElevation.replace("'", "");
-				testElevation = Double.parseDouble(strElevation) * 3.2808;
-			} else {
-				if (strElevation.endsWith("m")) {
-					strElevation = strElevation.replace("m", "");
-				}
-				testElevation = Double.parseDouble(strElevation);
-			}
-			 
-			if (testElevation < Consts.MAX_ELEVATION) {
-				return (short) testElevation;
-			}
-		} catch (NumberFormatException e) {
-            Logger.w(TAG, "could not parse elevation information to double value: '" + tag.getValue() +
-                    "', entity-id: '" + entity.getId() +
-                    "', entity-type: '" + entity.getType().name() + "'");
-		}
-		return Short.MIN_VALUE;
-	}
+//	protected short parseElevation(Tag tag) {
+//		double testElevation = 0.0;
+//		try {
+//			// parse elevation value
+//			String strElevation = tag.getValue().toLowerCase();
+//			strElevation = strElevation.replace(",", ".");
+//			strElevation = strElevation.replace(";", "");
+//			strElevation = strElevation.replace("?", "");
+//			strElevation = strElevation.replace("meter", "");
+//			strElevation = strElevation.replace("m.n.m", "");
+//			strElevation = strElevation.replace("m (msl)", "");
+//			strElevation = strElevation.trim();
+//
+//			if (strElevation.endsWith("'")) {
+//				strElevation = strElevation.replace("'", "");
+//				testElevation = Double.parseDouble(strElevation) * 3.2808;
+//			} else {
+//				if (strElevation.endsWith("m")) {
+//					strElevation = strElevation.replace("m", "");
+//				}
+//				testElevation = Double.parseDouble(strElevation);
+//			}
+//
+//			if (testElevation < Consts.MAX_ELEVATION) {
+//				return (short) testElevation;
+//			}
+//		} catch (NumberFormatException e) {
+//            Logger.w(TAG, "could not parse elevation information to double value: '" + tag.getValue() +
+//                    "', entity-id: '" + entity.getId() +
+//                    "', entity-type: '" + entity.getType().name() + "'");
+//		}
+//		return Short.MIN_VALUE;
+//	}
 }

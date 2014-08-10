@@ -21,7 +21,6 @@ public class GeneratorPoi extends AGenerator {
 	private DataWriterDefinition nodeHandler;
 	
 	public GeneratorPoi(File outputDbFile, DataWriterDefinition nodeHandler) throws Exception {
-		super();
 		this.outputDb = outputDbFile;
 		this.nodeHandler = nodeHandler; 
 		
@@ -52,9 +51,7 @@ public class GeneratorPoi extends AGenerator {
 		}
 
 		// add to database
-		if (db != null) {
-			((DatabasePoi) db).insertObject(poi);
-		} 
+		((DatabasePoi) db).insertObject(poi);
 		return poi;
 	}
 }
