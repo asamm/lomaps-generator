@@ -5,7 +5,7 @@ import com.asamm.osmTools.generatorDb.DataWriterDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.utils.Logger;
 
-import static com.asamm.locus.data.spatialite.DbPoiConst.*;
+import static com.asamm.locus.features.dbPoi.DbPoiConst.*;
 
 import java.io.File;
 import java.sql.Connection;
@@ -75,12 +75,13 @@ public class DatabasePoi extends ADatabaseHandler {
 		
 		// creating a POINT table
 		sql = "CREATE TABLE " + TN_POINTS + " (";
-		sql += COL_ID + " INTEGER NOT NULL PRIMARY KEY,";
+		sql += COL_ID + " INTEGER NOT NULL,";
+        sql += COL_TYPE + " TEXT NOT NULL,";
 		sql += COL_NAME + " TEXT)";
 		executeStatement(sql);
 		
 		// creating a POINT Geometry column
-		sql = "SELECT AddGeometryColumn('" + TN_POINTS + "', 'geom', 4326, 'POINT', 'XY')";
+		sql = "SELECT AddGeometryColumn('" + TN_POINTS + "', '" + COL_GEOM + "', 4326, 'POINT', 'XY')";
 		executeStatement(sql);
 		
 		// STATEMENTS
@@ -92,8 +93,9 @@ public class DatabasePoi extends ADatabaseHandler {
 		
 		// prepare statements
 		StringBuilder sbP = new StringBuilder();
-		sbP.append("INSERT INTO " + TN_POINTS + 
-				" (name, geom) VALUES (?, GeomFromText(?, 4326))");
+		sbP.append("INSERT INTO " + TN_POINTS + " " +
+                "(" + COL_ID + ", " + COL_TYPE + ", " + COL_NAME + ", " + COL_GEOM + ") " +
+                "VALUES (?, ?, ?, GeomFromText(?, 4326))");
 		psInsertP = conn.prepareStatement(sbP.toString(),
 				Statement.RETURN_GENERATED_KEYS);
 		
@@ -182,15 +184,16 @@ public class DatabasePoi extends ADatabaseHandler {
 
 		// get types ID
 		OsmPoi poi = (OsmPoi) obj;
-		long poiId;
-		StringBuilder sb = new StringBuilder();
+		long poiRowId;
 		try {
 			// insert values
+            psInsertP.setLong(1, poi.getId());
+            psInsertP.setString(2, poi.getEntityType().getCode());
 			if (poi.getName() != null && poi.getName().length() > 0) {
-				psInsertP.setString(1, getEscapedText(poi.getName()));
+				psInsertP.setString(3, getEscapedText(poi.getName()));
 			}
 			String geom = String.format("POINT (%f %f)", poi.getLon(), poi.getLat());
-			psInsertP.setString(2, getEscapedText(geom));
+			psInsertP.setString(4, getEscapedText(geom));
 
 			// insert data
 			int affectedRows = psInsertP.executeUpdate();
@@ -198,10 +201,10 @@ public class DatabasePoi extends ADatabaseHandler {
 	            throw new SQLException("inserting value failed, no rows affected.");
 	        }
 
-			// execute query
+			// obtain new POI id - this method is not anymore needed, as POIs keep its OSM values
 	        ResultSet generatedKeys = psInsertP.getGeneratedKeys();
 	        if (generatedKeys.next()) {
-	        	poiId = generatedKeys.getLong(1);
+	        	poiRowId = generatedKeys.getLong(1);
 	        	generatedKeys.close();
 	        } else {
 	            throw new SQLException("Creating user failed, no generated key obtained.");
@@ -216,8 +219,6 @@ public class DatabasePoi extends ADatabaseHandler {
 	        		throw new IllegalArgumentException("insertObject(), " +
 	        				"unable to obtain ID for mainKey:" + tag.key);
 	        	}
-//log.debug("insertObject(), mainKey:" + mainKey + ", mainValue:" + mainValue + 
-//		", mainKeyId:" + mainKeyId + ", tagValues:" + tagValues + ", size:" + tagValues.size());
 
 	        	Long mainValueId = tagValues.get(tag.value);
 	        	if (mainValueId == null || mainValueId < 0) {
@@ -228,7 +229,7 @@ public class DatabasePoi extends ADatabaseHandler {
 	        				"unable to obtain ID for mainValue:" + tag.value);
 	        	}
 	        	
-	        	psInsertPKV.setLong(1, poiId);
+	        	psInsertPKV.setLong(1, poiRowId);
 	        	psInsertPKV.setLong(2, mainKeyId);
 	        	psInsertPKV.setLong(3, mainValueId);
 		     
@@ -242,7 +243,7 @@ public class DatabasePoi extends ADatabaseHandler {
             List<DataWriterDefinition.DbRootSubContainer> containers = poi.getRootSubContainers();
 	        for (int i = 0, m = containers.size(); i < m; i++) {
                 DataWriterDefinition.DbRootSubContainer nc = containers.get(i);
-	        	psInsertPRS.setLong(1, poiId);
+	        	psInsertPRS.setLong(1, poiRowId);
 	        	psInsertPRS.setLong(2, foldersRoot.get(nc.folRoot));
 	        	psInsertPRS.setLong(3, foldersSub.get(nc.folSub));
 		     
@@ -255,7 +256,8 @@ public class DatabasePoi extends ADatabaseHandler {
 	        // clear defined values
 	        psInsertP.clearParameters();
 		} catch (SQLException e) {
-            Logger.e(TAG, "insertPoi(), problem with query:" + sb.toString(), e);
+            Logger.e(TAG, "insertPoi(), problem with query", e);
+            e.printStackTrace();
 		}
 	}
 

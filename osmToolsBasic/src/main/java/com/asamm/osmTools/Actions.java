@@ -392,8 +392,8 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
 
         // check if file exits and we should overwrite it
         if (!Parameters.isRewriteFiles() && new File(map.getPathAddressPoiDb()).exists()) {
-//            Logger.i(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
-//                    "' already exist - skipped." );
+            Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
+                    "' already exist - skipped." );
             return;
         }
 
@@ -414,6 +414,9 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         // after generating, pack file and delete original
         File generatedDb = cmdGen.getFileTempDb();
         Utils.compressFile(generatedDb.getAbsolutePath(), map.getPathAddressPoiDb());
+
+        // delete generated db
+        FileUtils.deleteQuietly(generatedDb);
     }
 
     // ACTION COASTLINE

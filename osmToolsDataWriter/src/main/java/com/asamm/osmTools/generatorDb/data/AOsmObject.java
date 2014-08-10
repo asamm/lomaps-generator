@@ -1,8 +1,7 @@
 package com.asamm.osmTools.generatorDb.data;
 
+import com.asamm.locus.features.dbPoi.DbPoiConst;
 import com.asamm.osmTools.generatorDb.utils.OsmTagUsage;
-import com.asamm.osmTools.utils.Consts;
-import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -15,31 +14,44 @@ public abstract class AOsmObject {
 	private static final String TAG = AOsmObject.class.getSimpleName();
 	
 	// current node
-	protected Entity entity;
+    private Entity entity;
 	// type of entity
-	protected Consts.EntityType entityType;
-	
+    private DbPoiConst.EntityType mEntityType;
+
+    // object ID
+    private long mId;
 	// name of POI
-	private String name;
+	private String mName;
 
 	public AOsmObject(Entity entity) {
 		this.entity = entity;
-		
+
+        // store id
+        this.mId = entity.getId();
+
 		// define entity type
 		if (entity instanceof Node) {
-			entityType = Consts.EntityType.POIS;
+			mEntityType = DbPoiConst.EntityType.POIS;
 		} else if (entity instanceof Way) {
-			entityType = Consts.EntityType.WAYS;
+			mEntityType = DbPoiConst.EntityType.WAYS;
 		}
 	}
-	
+
+    public DbPoiConst.EntityType getEntityType() {
+        return mEntityType;
+    }
+
+    public long getId() {
+        return mId;
+    }
+
 	public String getName() {
-		return name;
+		return mName;
 	}
 	
 	protected void setName(String name) {
 		if (name != null && name.length() > 0) {
-			this.name = name;
+			this.mName = name;
 		}
 	}
 	

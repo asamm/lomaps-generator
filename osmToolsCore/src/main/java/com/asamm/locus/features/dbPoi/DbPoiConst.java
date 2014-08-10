@@ -1,4 +1,4 @@
-package com.asamm.locus.data.spatialite;
+package com.asamm.locus.features.dbPoi;
 
 public class DbPoiConst {
 
@@ -12,7 +12,9 @@ public class DbPoiConst {
 	public static final String TN_POINTS_KEY_VALUE = "Points_Key_Value";
 	
 	public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
 	public static final String COL_NAME = "name";
+    public static final String COL_GEOM = "geom";
 	
 	public static final String COL_POINTS_ID = TN_POINTS + "_" + COL_ID;
 	public static final String COL_FOL_ROOT_ID = TN_FOLDERS_ROOT + "_" + COL_ID;
@@ -25,4 +27,24 @@ public class DbPoiConst {
 	public static final String COL_URL = "url";
 	
 	public static final String DATA_SEPARATOR = "|";
+
+    public enum EntityType {
+
+        UNKNOWN ("U"),
+
+        POIS("P"),
+
+        WAYS("W");
+
+        // code of entity used in database
+        private String mCode;
+
+        EntityType(String code) {
+            this.mCode = code;
+        }
+
+        public String getCode() {
+            return mCode;
+        }
+    }
 }

@@ -70,6 +70,7 @@ public class Logger {
      */
     public static void e(String TAG, String msg, Throwable e) {
         LOG.logp(Level.SEVERE, TAG, "", msg, e);
+        e.printStackTrace();
     }
 
 
