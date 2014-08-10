@@ -35,6 +35,7 @@ public class Configuration {
 	 * @param type
 	 */
 	public void setGenerateType(String type) {
+        // check parameter
 		if (type == null || type.length() == 0) {
 			throw new IllegalArgumentException(
 					"type parameter is empty");

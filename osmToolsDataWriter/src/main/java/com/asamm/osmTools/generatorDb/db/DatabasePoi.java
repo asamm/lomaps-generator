@@ -48,26 +48,6 @@ public class DatabasePoi extends ADatabaseHandler {
 	}
 	
 	@Override
-	public void destroy() throws SQLException {
-		// finish database
-		String sql = "SELECT CreateSpatialIndex('" + TN_POINTS + "', 'geom')";
-		executeStatement(sql);
-
-		sql = "CREATE INDEX idx_prs_points_id ON " + TN_POINTS_ROOT_SUB +
-				" (" + COL_POINTS_ID + ")";
-		executeStatement(sql);
-
-		sql = "CREATE INDEX idx_prs_root_sub ON " + TN_POINTS_ROOT_SUB + 
-				" (" + COL_FOL_ROOT_ID + ", " + COL_FOL_SUB_ID + ")";
-		executeStatement(sql);
-		
-		sql = "CREATE INDEX idx_pkv_points_id ON " + TN_POINTS_KEY_VALUE +
-				" (" + COL_POINTS_ID + ")";
-		executeStatement(sql);
-		super.destroy();
-	}
-
-	@Override
 	protected void setTables(Connection conn) throws SQLException, InvalidAttributesException {
 		// create table with types
 		foldersRoot = insertValueTable(
@@ -137,6 +117,26 @@ public class DatabasePoi extends ADatabaseHandler {
 		psInsertPKV = conn.prepareStatement(
 				sbPKV.toString(), Statement.RETURN_GENERATED_KEYS);
 	}
+
+    @Override
+    public void destroy() throws SQLException {
+        // finish database
+        String sql = "SELECT CreateSpatialIndex('" + TN_POINTS + "', 'geom')";
+        executeStatement(sql);
+
+        sql = "CREATE INDEX idx_prs_points_id ON " + TN_POINTS_ROOT_SUB +
+                " (" + COL_POINTS_ID + ")";
+        executeStatement(sql);
+
+        sql = "CREATE INDEX idx_prs_root_sub ON " + TN_POINTS_ROOT_SUB +
+                " (" + COL_FOL_ROOT_ID + ", " + COL_FOL_SUB_ID + ")";
+        executeStatement(sql);
+
+        sql = "CREATE INDEX idx_pkv_points_id ON " + TN_POINTS_KEY_VALUE +
+                " (" + COL_POINTS_ID + ")";
+        executeStatement(sql);
+        super.destroy();
+    }
 	
 	private Hashtable<String, Long> insertValueTable(Connection conn, String tableName, 
 			List<String> data) throws SQLException {
@@ -169,25 +169,11 @@ public class DatabasePoi extends ADatabaseHandler {
 		return newFolder;
 	}
 	
-	private long insertValueIntoValueTable(String value) throws SQLException {
-		psInsertTV.setString(1, value);
-		int affectedRows = psInsertTV.executeUpdate();
-		if (affectedRows == 0) {
-			throw new SQLException("inserting value failed, no rows affected.");
-		}
-			
-		ResultSet generatedKeys = psInsertTV.getGeneratedKeys();
-		long res = -1L;
-		if (generatedKeys.next()) {
-			res = generatedKeys.getLong(1);
-			tagValues.put(value, res);
-			generatedKeys.close();
-		} else {
-			throw new SQLException("insertValueTable() failed, no generated key obtained.");
-		}
-		return res;
-	}
-	
+
+    /**************************************************/
+    /*                  INSERT PART                   */
+    /**************************************************/
+
 	public void insertObject(AOsmObject obj) {
 		// check data
 		if (obj == null || !(obj instanceof OsmPoi)) {
@@ -222,8 +208,8 @@ public class DatabasePoi extends ADatabaseHandler {
 	        }
 	        
 	        // insert main keys into DB
-	        ArrayList<OsmPoi.Tag> tags = poi.getTags();
-	        for (int i = 0, n = tags.size(); i < n; i++) {
+	        List<OsmPoi.Tag> tags = poi.getTags();
+	        for (int i = 0, m = tags.size(); i < m; i++) {
 	        	OsmPoi.Tag tag = tags.get(i);
 	        	long mainKeyId = tagKeys.get(tag.key);
 	        	if (mainKeyId < 0) {
@@ -253,7 +239,9 @@ public class DatabasePoi extends ADatabaseHandler {
 	        }
 	        
 	        // insert types (Root/Sub folders) into DB
-	        for (DataWriterDefinition.DbRootSubContainer nc : poi.getRootSubContainers()) {
+            List<DataWriterDefinition.DbRootSubContainer> containers = poi.getRootSubContainers();
+	        for (int i = 0, m = containers.size(); i < m; i++) {
+                DataWriterDefinition.DbRootSubContainer nc = containers.get(i);
 	        	psInsertPRS.setLong(1, poiId);
 	        	psInsertPRS.setLong(2, foldersRoot.get(nc.folRoot));
 	        	psInsertPRS.setLong(3, foldersSub.get(nc.folSub));
@@ -270,4 +258,23 @@ public class DatabasePoi extends ADatabaseHandler {
             Logger.e(TAG, "insertPoi(), problem with query:" + sb.toString(), e);
 		}
 	}
+
+    private long insertValueIntoValueTable(String value) throws SQLException {
+        psInsertTV.setString(1, value);
+        int affectedRows = psInsertTV.executeUpdate();
+        if (affectedRows == 0) {
+            throw new SQLException("inserting value failed, no rows affected.");
+        }
+
+        ResultSet generatedKeys = psInsertTV.getGeneratedKeys();
+        long res = -1L;
+        if (generatedKeys.next()) {
+            res = generatedKeys.getLong(1);
+            tagValues.put(value, res);
+            generatedKeys.close();
+        } else {
+            throw new SQLException("insertValueTable() failed, no generated key obtained.");
+        }
+        return res;
+    }
 }

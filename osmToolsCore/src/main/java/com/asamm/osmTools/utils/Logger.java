@@ -108,8 +108,11 @@ public class Logger {
             StringBuilder builder = new StringBuilder(1000);
             builder.append(df.format(new Date(record.getMillis()))).append(" | ");
             builder.append(record.getLevel()).append(" - ");
-            builder.append("[").append(record.getSourceClassName()).append(".");
-            builder.append(record.getSourceMethodName()).append("] - ");
+            builder.append("[").append(record.getSourceClassName());
+            if (record.getSourceMethodName().length() > 0) {
+                builder.append(".").append(record.getSourceMethodName());
+            }
+            builder.append("] - ");
             builder.append(formatMessage(record));
             builder.append("\n");
             return builder.toString();

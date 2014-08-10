@@ -3,7 +3,7 @@ package com.asamm.osmTools.generatorDb.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.asamm.osmTools.generatorDb.db.ADataContainer;
+import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.CommonEntityData;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;

@@ -15,6 +15,7 @@
 package org.mapsforge.map.writer.model;
 
 public class TileGridLayout {
+
 	private final int amountTilesHorizontal;
 	private final int amountTilesVertical;
 	private final TileCoordinate upperLeft;

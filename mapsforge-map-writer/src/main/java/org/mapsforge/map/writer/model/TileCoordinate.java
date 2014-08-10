@@ -21,6 +21,7 @@ import java.util.List;
  * Represents a coordinate in the tile space.
  */
 public class TileCoordinate {
+
 	private final int x;
 	private final int y;
 	private final byte zoomlevel;

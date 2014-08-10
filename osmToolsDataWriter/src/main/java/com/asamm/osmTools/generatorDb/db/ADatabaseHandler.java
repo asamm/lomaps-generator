@@ -78,7 +78,7 @@ public abstract class ADatabaseHandler {
 		stmt.execute(sql);
 	}
 	
-	protected Statement getStmt() {
+	public Statement getStmt() {
 		return stmt;
 	}
 	

@@ -77,34 +77,23 @@ public class DataWriterDefinition {
 			return false;
 		}
 	}
-	
-	public class DbColumnDefinition {
-		
-		public String name;
-		public String type;
-		
-		private DbColumnDefinition(String name, String type) {
-			this.name = name;
-			this.type = type;
-		}
-	}
-	
+
 	public DataWriterDefinition(File file) throws Exception {
 		Logger.d(TAG, "NodeHandler(" + file.getAbsolutePath() + ")");
 		this.file = file;
-		this.nodes = new ArrayList<DbRootSubContainer>();
+		this.nodes = new ArrayList<>();
 		
 		
 		// data containers
-		this.foldersRoot = new ArrayList<String>();
-		this.foldersSub = new ArrayList<String>();
-		this.tagKeysMain = new ArrayList<String>();
-		this.tagValuesMain = new ArrayList<String>();
+		this.foldersRoot = new ArrayList<>();
+		this.foldersSub = new ArrayList<>();
+		this.tagKeysMain = new ArrayList<>();
+		this.tagValuesMain = new ArrayList<>();
 		
-		this.tagKeysExtra = new ArrayList<String>();
-		this.tagKeysEmail = new ArrayList<String>();
-		this.tagKeysPhone = new ArrayList<String>();
-		this.tagKeysUrl = new ArrayList<String>();
+		this.tagKeysExtra = new ArrayList<>();
+		this.tagKeysEmail = new ArrayList<>();
+		this.tagKeysPhone = new ArrayList<>();
+		this.tagKeysUrl = new ArrayList<>();
 		parseData();
 	}
 	
@@ -141,32 +130,54 @@ public class DataWriterDefinition {
 			return Consts.EntityType.UNKNOWN;
 		}
 	}
-	
+
+    /**
+     * Check if key is included in main keys or detail keys
+     * @param key that should be tested
+     * @return key itself if valid, otherwise return null
+     */
 	public String isKeySupportedSingle(String key) {
+        // check root keys
 		if (tagKeysMain.contains(key)) {
 			return key;
 		}
+
+        // check if key is in POI details
 		if (tagKeysExtra.contains(key)) {
 			return key;
 		}
+
+        // return "null"
 		return null;
 	}
-	
-	public String isKeySupportedMulti(String key) {
+
+    /**
+     * Check if key is included in emails, phones or urls
+     * @param key that should be tested
+     * @return key itself if valid, otherwise return null
+     */
+    public String isKeySupportedMulti(String key) {
+        // test emails
 		if (tagKeysEmail.contains(key)) {
 			return DbPoiConst.COL_EMAIL;
 		}
+
+        // test phones
 		if (tagKeysPhone.contains(key)) {
 			return DbPoiConst.COL_PHONE;
 		}
+
+        // test urls
 		if (tagKeysUrl.contains(key)) {
 			return DbPoiConst.COL_URL;
 		}
+
+        // return "null"
 		return null;
 	}
 	
 	public List<String> getSupportedKeysForDb() {
-        List<String> extra = new ArrayList<String>();
+        List<String> extra = new ArrayList<>();
 		
 		// add all root keys
 		for (String key : tagKeysMain) {
@@ -184,60 +195,6 @@ public class DataWriterDefinition {
 		extra.add(DbPoiConst.COL_URL);
 		return extra;
 	}
-	
-//	public ArrayList<String> getSupportedKeysForExtract() {
-//		ArrayList<String> extra = new ArrayList<String>();
-//		
-//		// add all root keys
-//		for (String key : tagKeysMain) {
-//			extra.add(key);
-//		}
-//		
-//		// add all details
-//		for (String key : tagKeysExtra) {
-//			extra.add(key);
-//		}
-//		
-//		// add extra columns
-//		for (String key : tagKeysEmail) {
-//			extra.add(key);
-//		}
-//		for (String key : tagKeysPhone) {
-//			extra.add(key);
-//		}
-//		for (String key : tagKeysUrl) {
-//			extra.add(key);
-//		}
-//		return extra;
-//	}
-	
-//	public ArrayList<String> getBaseColumns() {
-//		ArrayList<String> extra = new ArrayList<String>();
-//			
-//		// add all root keys
-//		for (DbNodeContainer locusNode : nodes) {
-//			if (!extra.contains(locusNode.key)) {
-//				extra.add(locusNode.key);
-//			}
-//		}
-//		return extra;
-//	}
-
-	
-//	public ArrayList<DbColumnDefinition> getDetailColumns() {
-//		ArrayList<DbColumnDefinition> extra = new ArrayList<DbColumnDefinition>();
-//		
-//		// add all details
-//		for (String key : tagExtraKeys) {
-//			extra.add(new DbColumnDefinition(key, "TEXT"));
-//		}
-//		
-//		// add extra columns
-//		extra.add(new DbColumnDefinition(DbPoiParameters.COL_EMAIL, "TEXT"));
-//		extra.add(new DbColumnDefinition(DbPoiParameters.COL_PHONE, "TEXT"));
-//		extra.add(new DbColumnDefinition(DbPoiParameters.COL_URL, "TEXT"));
-//		return extra;
-//	}
 
 	public DbRootSubContainer getNodeContainer(Consts.EntityType type,
 			String key, String value) {
@@ -247,33 +204,15 @@ public class DataWriterDefinition {
 		}
 		
 		// iterate over all data
-		for (DbRootSubContainer locusNode : nodes) {
+		for (int i = 0, m = nodes.size(); i < m; i++) {
+            DbRootSubContainer locusNode = nodes.get(i);
 			if (locusNode.isValidEntity(type, key, value)) {
 				return locusNode;
 			}
 		}
 		return null;
 	}
-	
-//	public String getDetailsKey(String key) {
-//		if (key == null || key.length() == 0) {
-//			return null;
-//		}
-//		if (tagExtraKeys.contains(key)) {
-//			return key;
-//		}
-//		if (tagEmail.contains(key)) {
-//			return "email";
-//		}
-//		if (tagPhone.contains(key)) {
-//			return "phone";
-//		}
-//		if (tagUrl.contains(key)) {
-//			return "url";
-//		}
-//		return null;
-//	}
-	
+
 	// PARSE PART
 	
 	private void parseData() throws Exception {
