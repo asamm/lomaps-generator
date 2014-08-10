@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generatorDb;
 
-import com.asamm.locus.data.spatialite.DbPoiConst;
-import com.asamm.osmTools.utils.Consts;
+import com.asamm.locus.features.dbPoi.DbPoiConst;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
@@ -44,23 +43,23 @@ public class DataWriterDefinition {
 		boolean entityPoi;
 		boolean entityWay;
 		
-		private boolean isValidEntity(Consts.EntityType type, Collection<Tag> tags) {
-			if (entityPoi && type == Consts.EntityType.POIS ||
-					entityWay && type == Consts.EntityType.WAYS) {
+		private boolean isValidEntity(DbPoiConst.EntityType type, Collection<Tag> tags) {
+			if (entityPoi && type == DbPoiConst.EntityType.POIS ||
+					entityWay && type == DbPoiConst.EntityType.WAYS) {
 				return checkTags(tags);
 			}
 			return false;
 		}
 		
-		public boolean isValidType(Consts.EntityType type) {
-			if (entityPoi && type == Consts.EntityType.POIS ||
-					entityWay && type == Consts.EntityType.WAYS) {
+		public boolean isValidType(DbPoiConst.EntityType type) {
+			if (entityPoi && type == DbPoiConst.EntityType.POIS ||
+					entityWay && type == DbPoiConst.EntityType.WAYS) {
 				return true;
 			}
 			return false;
 		}
 		
-		private boolean isValidEntity(Consts.EntityType type, String key, String value) {
+		private boolean isValidEntity(DbPoiConst.EntityType type, String key, String value) {
 			if (!isValidType(type)) {
 				return false;
 			}
@@ -103,8 +102,8 @@ public class DataWriterDefinition {
 			return false;
 		}
 
-		Consts.EntityType type = getTypeFromEntity(entity);
-		if (type == Consts.EntityType.UNKNOWN) {
+		DbPoiConst.EntityType type = getTypeFromEntity(entity);
+		if (type == DbPoiConst.EntityType.UNKNOWN) {
 			return false;
 		}
 		
@@ -121,13 +120,13 @@ public class DataWriterDefinition {
 		return nodes;
 	}
 	
-	private Consts.EntityType getTypeFromEntity(Entity entity) {
+	private DbPoiConst.EntityType getTypeFromEntity(Entity entity) {
 		if (entity instanceof Node) {
-			return Consts.EntityType.POIS;
+			return DbPoiConst.EntityType.POIS;
 		} else if (entity instanceof Way) {
-			return Consts.EntityType.WAYS;
+			return DbPoiConst.EntityType.WAYS;
 		} else {
-			return Consts.EntityType.UNKNOWN;
+			return DbPoiConst.EntityType.UNKNOWN;
 		}
 	}
 
@@ -196,10 +195,10 @@ public class DataWriterDefinition {
 		return extra;
 	}
 
-	public DbRootSubContainer getNodeContainer(Consts.EntityType type,
+	public DbRootSubContainer getNodeContainer(DbPoiConst.EntityType type,
 			String key, String value) {
 		// check source params
-		if (type == Consts.EntityType.UNKNOWN || key == null || value == null) {
+		if (type == DbPoiConst.EntityType.UNKNOWN || key == null || value == null) {
 			return null;
 		}
 		

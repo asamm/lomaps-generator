@@ -24,12 +24,4 @@ public class Consts {
         }
         return path;
     }
-
-    // BASIC PARAMETERS
-
-    public static final int MAX_ELEVATION = 9000;
-
-    public enum EntityType {
-        UNKNOWN, POIS, WAYS
-    }
 }

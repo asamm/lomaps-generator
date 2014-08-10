@@ -1,8 +1,7 @@
 package com.asamm.osmTools.generatorDb.data;
 
-import com.asamm.locus.data.spatialite.DbPoiConst;
+import com.asamm.locus.features.dbPoi.DbPoiConst;
 import com.asamm.osmTools.generatorDb.DataWriterDefinition;
-import com.asamm.osmTools.utils.Consts;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
@@ -36,10 +35,10 @@ public class OsmPoi extends AOsmObject {
 			return null;
 		}
 	}
-	
+
 	// location part
-	protected double lon = 0.0;
-	protected double lat = 0.0;
+    private double mLon = 0.0;
+    private double mLat = 0.0;
 	
 	// flag if it's a wanted poi
 	private List<DataWriterDefinition.DbRootSubContainer> rootSubContainer;
@@ -58,29 +57,51 @@ public class OsmPoi extends AOsmObject {
 		handleTags();
 		
 		// handle entity itself
-		if (entityType == Consts.EntityType.POIS) {
+		if (getEntityType() == DbPoiConst.EntityType.POIS) {
 			handleNode((Node) entity);
-		} else if (entityType == Consts.EntityType.WAYS) {
+		} else if (getEntityType() == DbPoiConst.EntityType.WAYS) {
 			handleWay((WayEx) entity);
 		}
 	}
 	
 	private void handleNode(Node node) {
-		lon = node.getLongitude();
-		lat = node.getLatitude();
+		mLon = node.getLongitude();
+		mLat = node.getLatitude();
 	}
 	
 	private void handleWay(WayEx way) {
-		lon = way.getCenterLongitude();
-		lat = way.getCenterLatitude();
+        int size = way.getNodes().size();
+        Node node = way.getNodes().get(0);
+        double longitudeMin = node.getLongitude();
+        double longitudeMax = node.getLongitude();
+        double latitudeMax = node.getLatitude();
+        double latitudeMin = node.getLatitude();
+
+        for (int i = 1; i < size; i++) {
+            node = way.getNodes().get(i);
+            if (node.getLongitude() < longitudeMin) {
+                longitudeMin = node.getLongitude();
+            } else if (node.getLongitude() > longitudeMax) {
+                longitudeMax = node.getLongitude();
+            }
+
+            if (node.getLatitude() < latitudeMin) {
+                latitudeMin = node.getLatitude();
+            } else if (node.getLatitude() > latitudeMax) {
+                latitudeMax = node.getLatitude();
+            }
+        }
+
+        mLon = (longitudeMin + longitudeMax) / 2;
+        mLat = (latitudeMax + latitudeMin) / 2;
 	}
 	
 	public double getLon() {
-		return lon;
+		return mLon;
 	}
 
 	public double getLat() {
-		return lat;
+		return mLat;
 	}
 	
 	public List<DataWriterDefinition.DbRootSubContainer> getRootSubContainers() {
@@ -103,13 +124,13 @@ public class OsmPoi extends AOsmObject {
 		}
 		
 		// check coordinates
-        return !(lon == 0.0 && lat == 0.0);
+        return !(mLon == 0.0 && mLat == 0.0);
     }
 
 	@Override
 	protected boolean handleTag(String key, String value) {
 		DataWriterDefinition.DbRootSubContainer node =
-                nodeHandler.getNodeContainer(entityType, key, value);
+                nodeHandler.getNodeContainer(getEntityType(), key, value);
 		if (node != null) {
 			rootSubContainer.add(node);
 			tags.add(new Tag(key, value));

@@ -1,5 +1,6 @@
 package com.asamm.osmTools.cmdCommands;
 
+import com.asamm.locus.features.dbPoi.DbPoiConst;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.generatorDb.DataWriterDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
@@ -41,7 +42,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-nodes");
-        addListOfTags(definition, Consts.EntityType.POIS);
+        addListOfTags(definition, DbPoiConst.EntityType.POIS);
         addCommand("--tf");
         addCommand("reject-ways");
         addCommand("outPipe.0=Nodes");
@@ -52,7 +53,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-ways");
-        addListOfTags(definition, Consts.EntityType.WAYS);
+        addListOfTags(definition, DbPoiConst.EntityType.WAYS);
         addCommand("--used-node");
 //        addCommand("idTrackerType=Dynamic");
         addCommand("outPipe.0=Ways");
@@ -76,7 +77,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("-fileConfig=" + Parameters.getConfigApDbPath());
     }
 
-    private void addListOfTags(DataWriterDefinition definition, Consts.EntityType type) {
+    private void addListOfTags(DataWriterDefinition definition, DbPoiConst.EntityType type) {
         // prepare list of tags
         List<DataWriterDefinition.DbRootSubContainer> nodes = definition.getRootSubContainers();
         Hashtable<String, String> nodesPrep = new Hashtable<String, String>();
