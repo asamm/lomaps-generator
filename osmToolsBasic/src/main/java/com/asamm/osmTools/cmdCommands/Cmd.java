@@ -110,9 +110,11 @@ abstract class Cmd {
         }
     }
     
-    public void addWriteXml(String pathToWrite) throws IOException {
+    public void addWriteXml(String pathToWrite, boolean checkDirectory) throws IOException {
         // prepare directory
-        prepareDirectory(pathToWrite);
+        if (checkDirectory) {
+            prepareDirectory(pathToWrite);
+        }
 
         // add required commands
         addCommand("--wx");

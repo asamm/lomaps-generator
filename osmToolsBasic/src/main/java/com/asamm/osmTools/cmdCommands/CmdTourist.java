@@ -23,6 +23,6 @@ public class CmdTourist extends Cmd {
         addReadPbf(getMap().getPathSource());
         addBoundingPolygon(getMap());
         addBuffer();
-        addWriteXml("-");
+        addWriteXml("-", false);
     }
 }

@@ -50,7 +50,7 @@ public class Tourist {
         xmlInputFile = new File(map.getPathSource());
        
         // where output will be stored
-        FileUtils.forceMkdir(new File(map.getPathTourist()));
+        FileUtils.forceMkdir(new File(map.getPathTourist()).getParentFile());
         xmlOutputFile = new File(map.getPathTourist());
         
         //create realtions obj
@@ -77,8 +77,6 @@ public class Tourist {
    
     
     public void parse() throws IOException, XmlPullParserException {
-         
-        
          try {
             CmdTourist ct  =  new CmdTourist(map);
             ct.createCmd();
@@ -163,16 +161,13 @@ public class Tourist {
             }
             stdInput.close();
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("exception happened: ");
             e.printStackTrace();
             System.exit(-1);
-        }   
-         
-         finally {
+        } finally {
             try {
                 stdInput.close();
-                
             } catch (IOException ex) {
                 Main.LOG.severe(ex.toString());
             }

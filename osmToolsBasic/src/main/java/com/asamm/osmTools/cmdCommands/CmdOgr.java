@@ -26,6 +26,7 @@ public class CmdOgr extends Cmd{
                     + Parameters.coastlineShpFile+" does not exist");
         }
 
+        // add base parameter
         addCommand(Parameters.ogr2ogr);
     }
     

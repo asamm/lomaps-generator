@@ -435,17 +435,8 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
             return;
         }
 
-        // write to log and start stop watch
-        TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nSea: " + map.getName() + " ...");
-
         // start Creation sea contourlines
-        Sea sea =  new Sea(map);
-        sea.create();
-
-        // notify about result
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-        time.stopCount();
+        new Sea(map).create();
     }
 
     // ACTION TOURIST
