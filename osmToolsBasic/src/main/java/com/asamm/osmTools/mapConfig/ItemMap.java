@@ -25,7 +25,7 @@ public class ItemMap extends AItemMap {
     // CONSTANTS
 
     private static final String DIR_COASTLINES =
-            Consts.fixDirectoryPath("coastlines");
+            Consts.fixDirectoryPath("_coastlines");
     private static final String DIR_CONTOURS =
             Consts.fixDirectoryPath("_contours");
     private static final String DIR_DOWNLOAD =
@@ -80,10 +80,10 @@ public class ItemMap extends AItemMap {
     private String mPathResult;
     // path for tourist data
     private String mPathTourist;
-    // path to file with coastlines
-    private String mPathCoastline;
     // path to shp files
     private String mPathShp;
+    // path to file with coastlines
+    private String mPathCoastline;
 
 
     private String mResultMD5hash;
@@ -152,12 +152,24 @@ public class ItemMap extends AItemMap {
             mPathSource = Consts.DIR_BASE + DIR_EXTRACT +
                     subPath + "." + Parameters.mapOutputFormat;
         }
+
+        // base paths
         mPathPolygon = Consts.DIR_BASE + DIR_POLYGONS +
                 getDir() + mName + ".poly";
         mPathGraphHopper = Consts.DIR_BASE + DIR_GRAPHHOPPER +
                 subPath + "-gh.zip";
         mPathAddressPoiDb = Consts.DIR_BASE + DIR_ADDRESS_POI_DB +
                 subPath + ".db.zip";
+        mPathContour = Consts.DIR_BASE + DIR_CONTOURS +
+                getDir() + mName + ".osm.pbf" ;
+        mPathTourist = Consts.DIR_BASE + DIR_TOURIST +
+                subPath + ".osm.xml";
+        mPathShp = Consts.DIR_BASE + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
+                getDir() + mName + ".shp";
+        mPathCoastline = Consts.DIR_BASE + DIR_COASTLINES +
+                subPath + ".osm.pbf";
+        mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
+                subPath + "." + Parameters.mapOutputFormat;
 
         // parameters for generating
         if (hasAction(Parameters.Action.GENERATE)) {
@@ -165,10 +177,10 @@ public class ItemMap extends AItemMap {
                     Parameters.getVersionDir() + getDirGen();
             mPathResult = Consts.DIR_BASE + DIR_RESULT +
                     Parameters.getVersionDir() + getDirGen();
-            
             mPathGenerateContour = Consts.DIR_BASE + DIR_CONTOURS +
                     getDir() + mName + ".osm.map" ;
-            
+
+            // improve names
             if (mNameGen != null && mNameGen.length() > 0) {
                 mPathGenerate += mNameGen +".osm.map";
                 mPathResult += mNameGen + ".zip";
@@ -176,40 +188,6 @@ public class ItemMap extends AItemMap {
                 mPathGenerate += mName +".osm.map";
                 mPathResult += mName + ".zip";
             }       
-        }
-
-        // directories for contours
-        if (hasAction(Parameters.Action.CONTOUR)){
-            mPathContour = Consts.DIR_BASE + DIR_CONTOURS +
-                    getDir() + mName + ".osm.pbf" ;
-            mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
-                    subPath + "."+ Parameters.mapOutputFormat;
-        }
-
-        // directories for tourist data
-        if (hasAction(Parameters.Action.TOURIST)){
-            mPathTourist = Consts.DIR_BASE + DIR_TOURIST +
-                    subPath + ".osm.xml";
-
-            // only for save set mergePath
-            if (mPathMerge == null || mPathMerge.length() == 0){
-                mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
-                        subPath + "."+ Parameters.mapOutputFormat;
-            }
-        }
-
-        // parameters for handling with coastline
-        if (requireCoastline()){
-            mPathCoastline = Consts.DIR_BASE + DIR_COASTLINES +
-                    getDir() + mName + ".osm.pbf";
-            mPathShp = Consts.DIR_BASE + DIR_COASTLINES +
-                    "shp" + Consts.FILE_SEP + getDir() + mName + ".shp";
-
-            // only for save set mergePath
-            if (mPathMerge == null || mPathMerge.isEmpty()){
-                mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
-                        subPath + "."+ Parameters.mapOutputFormat;
-            }
         }
     }
 
@@ -273,12 +251,12 @@ public class ItemMap extends AItemMap {
         return mPathTourist;
     }
 
-    public String getPathCoastline() {
-        return mPathCoastline;
-    }
-
     public String getPathShp() {
         return mPathShp;
+    }
+
+    public String getPathCoastline() {
+        return mPathCoastline;
     }
 
     public Boundaries getBoundary() {

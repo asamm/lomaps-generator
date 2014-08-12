@@ -43,7 +43,7 @@ public class Parameters {
 
         CONTOUR("contour", 'c'),
 
-        MERGE("merge", 'm'),
+        MERGE("merge", NO_SHORTCUT),
 
         GENERATE("generate", 'g'),
 
@@ -400,12 +400,6 @@ public class Parameters {
             addAction(Action.ADDRESS_POI_DB);
         }
 
-        // check if we need coastline
-        if (hasArgAction(cmdActions, Action.MERGE) ||
-                hasArgAction(cmdActions, Action.GENERATE)){
-            addAction(Action.COASTLINE);
-        }
-
         // handle action for generating tourist tracks
         if (hasArgAction(cmdActions, Action.TOURIST)) {
             addAction(Action.TOURIST);
@@ -418,9 +412,11 @@ public class Parameters {
 
         // handle generate action
         if (hasArgAction(cmdActions, Action.GENERATE)){
-            //add merge
+            // add merge and coastlines
+            addAction(Action.COASTLINE);
             addAction(Action.MERGE);
 
+            // finally add generate
             addAction(Action.GENERATE);
             addAction(Action.COMPRESS);
         }
@@ -494,11 +490,9 @@ public class Parameters {
         contourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
         
         // set path to water polygon shape file
-        coastlineShpFile = Consts.DIR_BASE
-                        + "_coastlines" + Consts.FILE_SEP + "shp"
-                        + Consts.FILE_SEP + "land-polygons" + Consts.FILE_SEP + "land_polygons.shp";
-                 //+ "_coastlines" + FILE_SEP + "malta.shp";
-        
+        coastlineShpFile = Consts.DIR_BASE + "coastlines" +
+                Consts.FILE_SEP + "land_polygons.shp";
+
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
 
@@ -512,7 +506,7 @@ public class Parameters {
         // TODO why you set mHgtDir variable again here, when it should be defined by argument during a start??
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
-            phyghtDir = "/usr/local/bin/phyghtmap";
+            phyghtDir = "/usr/bin/phyghtmap";
             mHgtDir = "/mnt/disk1/data/hgt";
             ogr2ogr = "/usr/bin/ogr2ogr";
             pythonDir = "/usr/bin/python";
@@ -528,7 +522,7 @@ public class Parameters {
             mPostShellCommand = "'";
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
-            phyghtDir = "/usr/local/bin/phyghtmap";
+            phyghtDir = "/usr/bin/phyghtmap";
             mHgtDir = "/mnt/disk1/data/hgt";
             ogr2ogr = "/usr/bin/ogr2ogr";
             pythonDir = "/usr/bin/python";

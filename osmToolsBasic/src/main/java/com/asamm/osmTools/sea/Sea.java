@@ -39,24 +39,24 @@ public class Sea {
                 + map.getName() + ".osm.xml";
     }
     
-    public void create () throws IOException, InterruptedException{
-          // test if shp file with land polygons exist. 
-        // For every map export bordered shpfile
+    public void create() throws IOException, InterruptedException{
+        // test if shp file with land polygons exist.
         if (!new File(map.getPathShp()).exists()){
             Main.LOG.info("Starting create shape file with coastlines: "+map.getPathShp());
             createCoastShp();
-        }
-        else {
+        } else {
             Main.LOG.info("Shape File with coastlines for map: " +
                     map.getName() + " already exist.");
         }
-        //test if osm file with coastline exist
+
+        // test if osm file with coastline exist
         if (!new File(map.getPathCoastline()).exists()) {
             Main.LOG.info("Starting convert shape file with coastlines to OSM file: " + map.getPathCoastline());
 
+            // create OSM boundary
             createCoastOsm();
 
-            // vytvor hranici more
+            // create sea border
             createBoundSeaXml();
 
             // merge tmp convert shp file with border
@@ -69,7 +69,10 @@ public class Sea {
         }
     }
     private void createCoastShp() throws IOException, InterruptedException{
-        FileUtils.forceMkdir(new File(map.getPathShp()));
+        // prepare directories
+        FileUtils.forceMkdir(new File(map.getPathShp()).getParentFile());
+
+        // execute generating
         CmdOgr co = new CmdOgr(map);
         co.createCmd();
         co.execute();
@@ -154,8 +157,9 @@ public class Sea {
         }
         
         // create directory for output
-        FileUtils.forceMkdir(new File(map.getPathCoastline()));
+        FileUtils.forceMkdir(new File(map.getPathCoastline()).getParentFile());
 
+        // execute merge
         Main.LOG.info("Merge map border and coastlines into file: "+ map.getPathCoastline());
         CmdMerge cm = new CmdMerge(map);
         cm.createSeaCmd(tmpCoastPath, tmpBorderPath);
