@@ -24,19 +24,19 @@ public class CmdShp2osm extends Cmd{
         this.output = output;
         
         // test if python is installed in defined dir
-        if (!new File(Parameters.pythonDir).exists()){
-            throw new IllegalArgumentException ("Python in location" + Parameters.pythonDir +"  does not exist!");
+        if (!new File(Parameters.getPythonDir()).exists()){
+            throw new IllegalArgumentException ("Python in location" + Parameters.getPythonDir() +"  does not exist!");
         }
         
         //test if shp2osm.py scripot exist
-        if (!new File (Parameters.shp2osmDir).exists()){
-            throw new IllegalArgumentException ("Shp2Osm script in location" + Parameters.shp2osmDir +"  does not exist!");
+        if (!new File (Parameters.getShp2osmDir()).exists()){
+            throw new IllegalArgumentException ("Shp2Osm script in location" + Parameters.getShp2osmDir() +"  does not exist!");
         }
     }
     
     public void createCmd(){
-        addCommand(Parameters.pythonDir);
-        addCommand(Parameters.shp2osmDir);
+        addCommand(Parameters.getPythonDir());
+        addCommand(Parameters.getShp2osmDir());
         addCommand(input);
         addCommand("--obj-count");
         addCommand("100000000");

@@ -20,22 +20,27 @@ import java.util.List;
 public class CmdAddressPoiDb extends Cmd {
 
     private File mFileTempMap;
-    private File mFileTempDb;
+
+    /**
+     * Definition where will be poiDb created
+     */
+    private File mFilePoiDb;
 
     public CmdAddressPoiDb(ItemMap map) {
         super(map, ExternalApp.OSMOSIS);
 
         // set parameters
         mFileTempMap = new File(Consts.DIR_TMP, "temp_map_simple.osm.pbf");
-        mFileTempDb = new File(Consts.DIR_TMP, map.getName() + ".osm.db");
+        //mFileTempDb = new File(Consts.DIR_TMP, map.getName() + ".osm.db");
+        mFilePoiDb = new File(map.getPathAddressPoiDb());
     }
 
     public File getFileTempDb() {
-        return mFileTempDb;
+        return mFilePoiDb;
     }
 
     public void addTaskSimplify(DataWriterDefinition definition) throws IOException {
-        FileUtils.deleteQuietly(mFileTempMap);
+        FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadSource();
         addCommand("--tf");
@@ -68,12 +73,12 @@ public class CmdAddressPoiDb extends Cmd {
     }
 
     public void addGeneratorDb() {
-        FileUtils.deleteQuietly(mFileTempDb);
+        FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadPbf(mFileTempMap.getAbsolutePath());
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=poi");
-        addCommand("-fileDb=" + mFileTempDb);
+        addCommand("-fileDb=" + mFilePoiDb);
         addCommand("-fileConfig=" + Parameters.getConfigApDbPath());
     }
 

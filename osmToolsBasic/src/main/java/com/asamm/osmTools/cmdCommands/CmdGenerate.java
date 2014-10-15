@@ -27,9 +27,9 @@ public class CmdGenerate extends Cmd {
                 throw new IllegalArgumentException("Source file "+getMap().getPathContour()
                         +" for genereation separeted contourlines maps does not exist");
             }
-            if (!new File(Parameters.contourTagMapping).exists()){
+            if (!new File(Parameters.getContourTagMapping()).exists()){
                 throw new IllegalArgumentException("Map writter definition file for contour lines:  "
-                        +Parameters.contourTagMapping+" does not exist.");
+                        +Parameters.getContourTagMapping() +" does not exist.");
             }
         }
         
@@ -40,9 +40,9 @@ public class CmdGenerate extends Cmd {
                         getMap().getPathMerge() + " does not exist!");
             }
             
-            if (!new File(Parameters.touristTagMapping).exists()){
+            if (!new File(Parameters.mTouristTagMapping).exists()){
                 throw new IllegalArgumentException("Map writter definition file:  "
-                        +Parameters.touristTagMapping+" does not exist.");
+                        +Parameters.mTouristTagMapping +" does not exist.");
             }
             
             if (!new File(getMap().getPathMerge()).exists() && new File(getMap().getPathMerge() + "."+Parameters.contourNoSRTM).exists()){
@@ -62,7 +62,7 @@ public class CmdGenerate extends Cmd {
         addType();
         addPrefLang();
         addBbox(getMap().getBoundary());
-        addTagConf(Parameters.contourTagMapping);
+        addTagConf(Parameters.getContourTagMapping());
         addZoomIntervalContour();
         addBboxEnlargement(1);
         //addMapComment();
@@ -84,7 +84,7 @@ public class CmdGenerate extends Cmd {
         addType();
         addPrefLang();
         addBbox(getMap().getBoundary());
-        addTagConf(Parameters.touristTagMapping);
+        addTagConf(Parameters.mTouristTagMapping);
         //addDebugFile();
         addZoomInterval();
         addBboxEnlargement(10);

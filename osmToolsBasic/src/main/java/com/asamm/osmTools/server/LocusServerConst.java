@@ -4,6 +4,8 @@
  */
 package com.asamm.osmTools.server;
 
+import java.util.HashMap;
+
 /**
  *
  * @author voldapet
@@ -65,26 +67,47 @@ public class LocusServerConst {
     public static final int PACKAGE_PRO                 = 1;
     
     // PRO versions
-    public static final int PACKAGE_PRO_MOBIROO 	= 2;
-    public static final int PACKAGE_PRO_SAMSUNG 	= 3;
+    public static final int PACKAGE_PRO_MOBIROO 	    = 2;
+    public static final int PACKAGE_PRO_SAMSUNG     	= 3;
     public static final int PACKAGE_PRO_AMAZON          = 4;
     public static final int PACKAGE_PRO_COMPUTER_BILD	= 5;
     
     // FREE versions
-    public static final int PACKAGE_FREE_SAMSUNG 	= 1003;
-    public static final int PACKAGE_FREE_AMAZON 	= 1004;
-    public static final int PACKAGE_FREE_UBINURI 	= 1005;
+    public static final int PACKAGE_FREE_SAMSUNG 	    = 1003;
+    public static final int PACKAGE_FREE_AMAZON 	    = 1004;
+    public static final int PACKAGE_FREE_UBINURI 	    = 1005;
 
     // GIS versions
-    public static final int PACKAGE_GIS			= 3001;
-    public static final int PACKAGE_GIS_T_VEKTOR	= 3002;
+    public static final int PACKAGE_GIS			        = 3001;
+    public static final int PACKAGE_GIS_T_VEKTOR	    = 3002;
     
     // AIR versions
     public static final int PACKAGE_AIR                 = 4001;
     
     // SPECIAL version for testing (act as a Pro)
-    public static final int PACKAGE_TESTING 		= 999;
+    public static final int PACKAGE_TESTING 		    = 999;
     
     // cracked version
     public static final int PACKAGE_CRACKED             = 2001;
+
+
+
+    public static final HashMap<Integer, Integer> supportedVersions = new HashMap<Integer, Integer>();
+    static {
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_TESTING, 236);
+
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_AMAZON, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_COMPUTER_BILD, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_MOBIROO, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_SAMSUNG, 236);
+
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_AMAZON, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_UBINURI, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_SAMSUNG, 236);
+
+        supportedVersions.put(LocusServerConst.PACKAGE_GIS, 1);
+
+    }
 }

@@ -21,13 +21,13 @@ public class CmdOgr extends Cmd{
 
         // test if shpfile for extracting exist
         this.map  =  map;
-        if (!new File(Parameters.coastlineShpFile).exists()){
+        if (!new File(Parameters.getCoastlineShpFile()).exists()){
             throw  new IllegalArgumentException("Shapefile with world polygons "
-                    + Parameters.coastlineShpFile+" does not exist");
+                    + Parameters.getCoastlineShpFile() +" does not exist");
         }
 
         // add base parameter
-        addCommand(Parameters.ogr2ogr);
+        addCommand(Parameters.getOgr2ogr());
     }
     
     public void createCmd(){
@@ -38,7 +38,7 @@ public class CmdOgr extends Cmd{
         addCommand(Double.toString(map.getBoundary().getMaxLon()));
         addCommand(Double.toString(map.getBoundary().getMaxLat()));
         addCommand(map.getPathShp());
-        addCommand(Parameters.coastlineShpFile);
+        addCommand(Parameters.getCoastlineShpFile());
         addCommand("-skipfailures");
     }
 }
