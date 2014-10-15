@@ -411,12 +411,13 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         cmdGen.addGeneratorDb();
         cmdGen.execute();
 
+        // edit - do not pack database it'll be packed together with map file itself
         // after generating, pack file and delete original
-        File generatedDb = cmdGen.getFileTempDb();
-        Utils.compressFile(generatedDb.getAbsolutePath(), map.getPathAddressPoiDb());
-
-        // delete generated db
-        FileUtils.deleteQuietly(generatedDb);
+//        File generatedDb = cmdGen.getFileTempDb();
+//        Utils.compressFile(generatedDb.getAbsolutePath(), map.getPathAddressPoiDb());
+//
+//        // delete generated db
+//        FileUtils.deleteQuietly(generatedDb);
     }
 
     // ACTION COASTLINE
@@ -674,36 +675,50 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
     // ACTION COMPRESS
 
     private void actionCompress(ItemMap map) throws IOException{
-        // check if wants compression
-        if (!map.hasAction(Parameters.Action.GENERATE)) {
+
+        if (!map.hasAction(Parameters.Action.GENERATE) || !map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+            // map hasn't any result file for compress
             return;
         }
 
-        if (!new File(map.getPathResult()).exists()){
-            Logger.i(TAG, "Compressing: " + map.getPathResult());
-            TimeWatch time = new TimeWatch();
-            Main.mySimpleLog.print("\nCompress: "+map.getName()+" ...");
+        if (!Parameters.isRewriteFiles() && new File(map.getPathResult()).exists()) {
+            Logger.d(TAG, "File with compressed result '" + map.getPathAddressPoiDb() +
+                    "' already exist - skipped." );
+            return;
+        }
 
-            // change lastChange attribute of generated file
-            // this workaround how to set date of map file in Locus
-            File source = new File(map.getPathGenerate());
-            if (!source.exists()){
-                throw new IllegalArgumentException("Source file for compression: "+source+" does not exist.");
+        Logger.i(TAG, "Compressing: " + map.getPathResult());
+        TimeWatch time = new TimeWatch();
+        Main.mySimpleLog.print("\nCompress: "+map.getName()+" ...");
+
+        // change lastChange attribute of generated file
+        // this workaround how to set date of map file in Locus
+        List<String> filesToCompress = new ArrayList<>();
+        if (map.hasAction(Parameters.Action.GENERATE)){
+            File mapFile = new File(map.getPathGenerate());
+            if (!mapFile.exists()){
+                throw new IllegalArgumentException("Map file for compression: " + map.getPathGenerate()+" does not exist.");
             }
-
             // rewrite bytes in header to set new creation date
-            // TODO is this really needed??
-            RandomAccessFile raf = new RandomAccessFile(source, "rw");
+            RandomAccessFile raf = new RandomAccessFile(mapFile, "rw");
             raf.seek(36);
             raf.writeLong(Parameters.getSourceDataLastModifyDate());
             raf.close();
 
-            // compress file
-            Utils.compressFile(map.getPathGenerate(), map.getPathResult());
-            Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
-        } else {
-            Logger.i(TAG, "Compressed file " + map.getPathResult() + " exists. No action");
+            filesToCompress.add(map.getPathGenerate());
         }
+
+        if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+            File poiDbFile = new File(map.getPathAddressPoiDb());
+            if (!poiDbFile.exists()) {
+                throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb()+" does not exist.");
+            }
+            filesToCompress.add(map.getPathAddressPoiDb());
+        }
+
+        // compress file
+        Utils.compressFiles(filesToCompress, map.getPathResult());
+        Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
 
     // ACTION UPLOAD

@@ -87,7 +87,7 @@ public class CreateXml {
     
     public void finish() throws IOException {
         sb.append("\n</maps>");
-        FileUtils.writeStringToFile(new File(Parameters.outputXml), sb.toString(), false);
+        FileUtils.writeStringToFile(new File(Parameters.getmOutputXml()), sb.toString(), false);
         Main.LOG.info("Maps xml generated succesfully");
     }
 }

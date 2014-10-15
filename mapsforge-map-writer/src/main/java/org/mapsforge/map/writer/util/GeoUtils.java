@@ -272,7 +272,6 @@ public final class GeoUtils {
 		// are on northern or southern hemisphere)
 		double latMax = Math.max(Math.abs(bbox.getMaxY()), Math.abs(bbox.getMinY()));
 		double deltaLat = deltaLat(simplificationFactor, latMax, zoomlevel, tileSize);
-
 		try {
 			ret = TopologyPreservingSimplifier.simplify(geometry, deltaLat);
 		} catch (TopologyException e) {
@@ -281,7 +280,6 @@ public final class GeoUtils {
 			way.setInvalid(true);
 			return geometry;
 		}
-
 		return ret;
 	}
 

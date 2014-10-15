@@ -4,7 +4,6 @@
  */
 package com.asamm.osmTools;
 
-import com.asamm.osmTools.server.LocusServerConst;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
@@ -79,9 +78,9 @@ public class Parameters {
     // DEFINED PARAMETERS FROM ARGUMENTS
 
     // path to base config file
-    private static String mConfigPath = Consts.DIR_BASE + "config.xml";
+    private static final String mConfigPath = Consts.DIR_BASE + "config.xml";
     // path to base config file for address/poi database
-    private static String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
+    private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
 
     // name of working (version) directory
     private static String mVersionDir;
@@ -111,9 +110,11 @@ public class Parameters {
 
     // path to osmosis command
     private static String mOsmosisExe;
-    public static String ogr2ogr;
-    public static String pythonDir;
-    public static String shp2osmDir;
+    private static String mOgr2ogr;
+    private static String mPythonDir;
+    private static String mShp2osmDir;
+
+    private static String mOutputXml;
     private static String mPreShellCommand;
     private static String mPostShellCommand;
     // path to graphHopper shell script
@@ -124,15 +125,11 @@ public class Parameters {
     public static final boolean CAN_BE_WELCOME_PRESENT = true;
 
    //  -------------- LOCUS STORE IDs --------           
-    public static final long[] VECTOR_IMAGES = new long[]{5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
+    public static final long[] VECTOR_IMAGES = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
     public static final long VECTOR_IC0N = 5414151014842368L;
    //  ----------------------------------------------- 
     
-//      // -------------- LOCAL HOST -------- 
-//    public static final long[] VECTOR_IMAGES = new long[]{5638295627235328l};  
-//    public static final long VECTOR_IC0N = 4934608185458688l;
-//    //-------------------------------------------
-    
+
     public static final String VECTOR_DESCRIPTION = "Vector maps work fully offline and are available for the whole world. These maps are placed directly in your device and for this reason you can " +
 						"change their appearance using built-in themes.\n"+
 						"\n<ul></ul>"+ 
@@ -143,25 +140,7 @@ public class Parameters {
 						"\n</ol>"+ 
 						"\n<h4>Locus Guarantee</h4>"+
 						"\nAll your vector maps you can repeatedly download for 1 year since your purchase in the same vector maps <b>version</b>.";
-    
-     public static final HashMap<Integer, Integer> supportedVersions = new HashMap<Integer, Integer>();
-    static {
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_TESTING, 236);
-        
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_AMAZON, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_COMPUTER_BILD, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_MOBIROO, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_SAMSUNG, 236);
-        
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_AMAZON, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_UBINURI, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_SAMSUNG, 236);
-        
-        supportedVersions.put(LocusServerConst.PACKAGE_GIS, 1);
-    
-    }                 
+
     
    
     public static String mapOutputFormat = "osm.pbf";  //posibilities: "osm" or "pbf"
@@ -169,11 +148,11 @@ public class Parameters {
     public static String phyghtDir;
     public static String contourStep = "20"; //meters;
     public static String contourNoSRTM = "noSRTMdata";
-    public static String touristTagMapping;
-    public static String contourTagMapping;
+    public static String mTouristTagMapping;
+    private static String mContourTagMapping;
     
     
-    public static String outputXml;
+
     public static String htmlMapHeaderFile = Consts.DIR_BASE + "config" +
             Consts.FILE_SEP + "maps_header.html";
     public static String htmlMapPath; 
@@ -191,12 +170,12 @@ public class Parameters {
     public static long contourWayId     = 20000000000L;
     public static long costlineBorderId = 22000000000L;
                                     
-    public static String coastlineShpFile;
+    private static String mCoastlineShpFile;
     
     // by this variable decide if print for every tags new way or only
     // find the phighest parent tags and print only one way with this highest tag 
     public static final boolean printHighestWay = false;
-    
+
     // the list of bycicle network type
     public static  Hashtable<String,Integer> bycicleNetworkType = new Hashtable<String, Integer>();
     public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<String, Integer>();
@@ -218,6 +197,7 @@ public class Parameters {
 
     // DEFINED PARAMETERS FROM ARGUMENTS
 
+
     public static boolean isRewriteFiles() {
         return mRewriteFiles;
     }
@@ -230,8 +210,16 @@ public class Parameters {
         return mConfigPath;
     }
 
+    public static String getCoastlineShpFile() {
+        return mCoastlineShpFile;
+    }
+
     public static String getConfigApDbPath() {
         return mConfigApDbPath;
+    }
+
+    public static String getContourTagMapping() {
+        return mContourTagMapping;
     }
 
     public static String getVersionDir() {
@@ -252,6 +240,21 @@ public class Parameters {
 
     public static String getHgtDir() {
         return mHgtDir;
+    }
+
+    public static String getmOutputXml() {
+        return mOutputXml;
+    }
+    public static String getOgr2ogr() {
+        return mOgr2ogr;
+    }
+
+    public static String getPythonDir() {
+        return mPythonDir;
+    }
+
+    public static String getShp2osmDir() {
+        return mShp2osmDir;
     }
 
     public static boolean isMailing() {
@@ -484,20 +487,20 @@ public class Parameters {
      */
     static void initialize() {
         // path for generated output XML
-        outputXml = Consts.DIR_BASE + "_result" + Consts.FILE_SEP + getVersionDir() + "maps.xml";
-        htmlMapPath = Consts.DIR_BASE + "_result" + Consts.FILE_SEP + getVersionDir() + "maps.html";
-        touristTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
-        contourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
-        
+
+        mOutputXml = Consts.DIR_BASE + "_result" + Consts.FILE_SEP + getVersionDir() + "maps.xml";
+        mTouristTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
+        mContourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
+
         // set path to water polygon shape file
-        coastlineShpFile = Consts.DIR_BASE + "coastlines" +
+        mCoastlineShpFile = Consts.DIR_BASE + "coastlines" +
                 Consts.FILE_SEP + "land_polygons.shp";
 
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
 
         // shp2osm script location
-        shp2osmDir = "shp2osm" + Consts.FILE_SEP + "shp2osm.py";
+        mShp2osmDir = "shp2osm" + Consts.FILE_SEP + "shp2osm.py";
 
         // graphHopper path
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
@@ -507,25 +510,26 @@ public class Parameters {
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/bin/phyghtmap";
-            mHgtDir = "/mnt/disk1/data/hgt";
-            ogr2ogr = "/usr/bin/ogr2ogr";
-            pythonDir = "/usr/bin/python";
+            //mHgtDir = "/mnt/disk1/data/hgt";
+            mHgtDir = "hgt";
+            mOgr2ogr = "/usr/bin/ogr2ogr";
+            mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
             mOsmosisExe = new File (osmosisPath + "osmosis.bat").getAbsolutePath();
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
             mHgtDir = "hgt";
-            ogr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
-            pythonDir = "C:\\Python27\\python.exe";
+            mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
+            mPythonDir = "C:\\Python27\\python.exe";
             mPreShellCommand = "c:\\work\\cygwin64\\bin\\bash.exe -c '";
             mPostShellCommand = "'";
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/bin/phyghtmap";
             mHgtDir = "/mnt/disk1/data/hgt";
-            ogr2ogr = "/usr/bin/ogr2ogr";
-            pythonDir = "/usr/bin/python";
+            mOgr2ogr = "/usr/bin/ogr2ogr";
+            mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
             mPostShellCommand = "";
         }

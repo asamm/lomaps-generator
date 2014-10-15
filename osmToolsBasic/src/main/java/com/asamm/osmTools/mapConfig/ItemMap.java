@@ -7,6 +7,7 @@ package com.asamm.osmTools.mapConfig;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Consts;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
 
 import org.kxml2.io.KXmlParser;
@@ -21,6 +22,9 @@ import java.io.IOException;
  * @author volda
  */
 public class ItemMap extends AItemMap {
+
+    private static final String TAG = ItemMap.class.getSimpleName();
+
 
     // CONSTANTS
 
@@ -68,7 +72,7 @@ public class ItemMap extends AItemMap {
     private String mPathGenerateContour;
     // path where results from GraphHopper should be placed
     private String mPathGraphHopper;
-    // path to store generated Address/POI databases
+    // path to store unzipped generated Address/POI databases
     private String mPathAddressPoiDb;
     // path where generated pdf files should be merged
     private String mPathMerge;
@@ -159,7 +163,7 @@ public class ItemMap extends AItemMap {
         mPathGraphHopper = Consts.DIR_BASE + DIR_GRAPHHOPPER +
                 subPath + "-gh.zip";
         mPathAddressPoiDb = Consts.DIR_BASE + DIR_ADDRESS_POI_DB +
-                subPath + ".db.zip";
+                subPath + ".osm.db";
         mPathContour = Consts.DIR_BASE + DIR_CONTOURS +
                 getDir() + mName + ".osm.pbf" ;
         mPathTourist = Consts.DIR_BASE + DIR_TOURIST +
@@ -350,5 +354,31 @@ public class ItemMap extends AItemMap {
                 br.close();
             }
         }
+    }
+
+
+    @Override
+    public String toString() {
+        return "ItemMap{" +
+                "mId='" + mId + '\'' +
+                ", mName='" + mName + '\'' +
+                ", mNameGen='" + mNameGen + '\'' +
+                ", mPrefLang='" + mPrefLang + '\'' +
+                ", mPathSource='" + mPathSource + '\'' +
+                ", mPathGenerate='" + mPathGenerate + '\'' +
+                ", mPathGenerateContour='" + mPathGenerateContour + '\'' +
+                ", mPathGraphHopper='" + mPathGraphHopper + '\'' +
+                ", mPathAddressPoiDb='" + mPathAddressPoiDb + '\'' +
+                ", mPathMerge='" + mPathMerge + '\'' +
+                ", mPathPolygon='" + mPathPolygon + '\'' +
+                ", mPathContour='" + mPathContour + '\'' +
+                ", mPathResult='" + mPathResult + '\'' +
+                ", mPathTourist='" + mPathTourist + '\'' +
+                ", mPathShp='" + mPathShp + '\'' +
+                ", mPathCoastline='" + mPathCoastline + '\'' +
+                ", mResultMD5hash='" + mResultMD5hash + '\'' +
+                ", mBounds=" + mBounds +
+                ", isMerged=" + isMerged +
+                '}';
     }
 }

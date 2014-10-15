@@ -750,7 +750,7 @@ public final class MapFileWriter {
         if (poi.getTags() != null) {
             for (short tagID : poi.getTags()) {
                 poiBuffer.put(Serializer.getVariableByteUnsigned(OSMTagMapping.getInstance().getOptimizedPoiIds()
-                        .get(Short.valueOf(tagID)).intValue()));
+                        .get(tagID).intValue()));
             }
         }
 
@@ -866,7 +866,7 @@ public final class MapFileWriter {
     }
 
     private static int mappedWayTagID(short original) {
-        return OSMTagMapping.getInstance().getOptimizedWayIds().get(Short.valueOf(original)).intValue();
+        return OSMTagMapping.getInstance().getOptimizedWayIds().get(original).intValue();
     }
 
     private static void writeWay(List<Integer> wayNodes, int currentTileLat, int currentTileLon, ByteBuffer buffer) {
@@ -884,11 +884,11 @@ public final class MapFileWriter {
     private static void writeWayNodes(List<Integer> waynodes, int currentTileLat, int currentTileLon, ByteBuffer buffer) {
         if (!waynodes.isEmpty() && waynodes.size() % 2 == 0) {
             Iterator<Integer> waynodeIterator = waynodes.iterator();
-            buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLat));
-            buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLon));
+            buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next() - currentTileLat));
+            buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next() - currentTileLon));
 
             while (waynodeIterator.hasNext()) {
-                buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue()));
+                buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next()));
             }
         }
     }

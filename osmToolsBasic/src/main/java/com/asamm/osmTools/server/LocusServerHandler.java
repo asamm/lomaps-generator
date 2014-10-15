@@ -135,9 +135,9 @@ public class LocusServerHandler {
         jsonObj.put(LocusServerConst.ACTION_DATA_REGION_ID, map.getRegionId());
         jsonObj.put(LocusServerConst.ACTION_DATA_PROVIDER_ID, LocusServerConst.STORE_DATA_PROVIDER_ID_ASAMMSW);
         jsonObj.put(LocusServerConst.ACTION_DATA_USAGE_ID, LocusServerConst.STORE_DATA_USAGE_ID_MAPS_VECTOR);
-        jsonObj.put(LocusServerConst.ACTION_DATA_SUPPORTED_APK, Parameters.supportedVersions);
+        jsonObj.put(LocusServerConst.ACTION_DATA_SUPPORTED_APK, LocusServerConst.supportedVersions);
         
-        jsonObj.put(LocusServerConst.ACTION_DATA_DESCRIPTION, Parameters.VECTOR_DESCRIPTION); 
+        jsonObj.put(LocusServerConst.ACTION_DATA_DESCRIPTION, Parameters.VECTOR_DESCRIPTION);
         jsonObj.put(LocusServerConst.ACTION_DATA_PREFERED_LANG, map.getPrefLang());
         
         // set welcome present based on the size of zip file
