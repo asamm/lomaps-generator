@@ -166,12 +166,11 @@ public class AItemMap {
 
         // regionId
         if (parser.getAttributeValue(null, "regionId") != null) {
-            if (mRegionId  != null){
+            if (mRegionId  != null && mRegionId.length() > 0){
                 mRegionId = mRegionId + "." + parser.getAttributeValue(null, "regionId");
             }else {
                 mRegionId = parser.getAttributeValue(null, "regionId");
             }
-
         }
 
         // dir

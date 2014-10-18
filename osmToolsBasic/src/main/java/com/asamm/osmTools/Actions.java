@@ -10,7 +10,7 @@ import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.sea.Sea;
-import com.asamm.osmTools.server.LocusServerHandler;
+import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.tourist.Tourist;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.io.ZipUtils;
@@ -73,21 +73,16 @@ class Actions {
                 actionAllInOne(mp, action);
             }
 
-            // perform remaining actions
-            if (action == Parameters.Action.CREATE_XML) {
-                CreateXml serverXml = new CreateXml();
-                CreateHtml mapHtml  = new CreateHtml();
-                serverXml.startWrite();
-                mapHtml.startString();
+            // needs to write definition JSON to file (in case that map was generated)
+            if (action == Parameters.Action.CREATE_JSON){
+                UploadDefinitionCreator.getInstace().writeToFile();
+            }
 
-                Iterator<ItemMapPack> packs2 = mMapSource.getMapPacksIterator();
-                while (packs2.hasNext()) {
-                    ItemMapPack mp = packs2.next();
-                    actionCreateXml(mp, mMapSource, serverXml, mapHtml);
-                }
-                serverXml.finish();
-                mapHtml.writeString();
-                Main.mySimpleLog.print("\nCreating maps xml - DONE");
+            // perform remaining actions
+            if (action == Parameters.Action.UPLOAD) {
+
+                // TODO create uplad usign python
+                //actionUpload(map);
             }
         }
     }
@@ -204,8 +199,8 @@ class Actions {
                 case COMPRESS:
                     actionCompress(map);
                     break;
-                case UPLOAD:
-                    actionUpload(map);
+                case CREATE_JSON:
+                    actionCreateJSON(map);
                     break;
             }
         }
@@ -749,28 +744,18 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
                 }
             }
 
-            LocusServerHandler lsh = LocusServerHandler.getInstance();
-            lsh.uploadInfoToLocusServer(map);
+//            LocusServerHandler lsh = LocusServerHandler.getInstance();
+//            lsh.uploadInfoToLocusServer(map);
         }
     }
 
     // ACTION CREATE XML
 
-    public void actionCreateXml(ItemMapPack mp, MapSource ms, CreateXml xml, CreateHtml html) throws IOException{
-        html.addDir(mp);
-        html.startUl();
-        for (int i = 0, m = mp.getMapPackCount(); i < m; i++) {
-            actionCreateXml(mp.getMapPack(i), ms, xml, html);
-        }
+    public void actionCreateJSON(ItemMap map) throws IOException{
+        UploadDefinitionCreator dc = UploadDefinitionCreator.getInstace();
 
-        for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
-            ItemMap map = mp.getMap(i);
-            if (map.hasAction(Parameters.Action.GENERATE)){
-                xml.addMap(ms, map);
-                html.addMap(map);
-            }
+        if (map.hasAction(Parameters.Action.GENERATE)){
+            dc.addMap(map);
         }
-        html.endUl();
-        html.endLi();
     }
 }
