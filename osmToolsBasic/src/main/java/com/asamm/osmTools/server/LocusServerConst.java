@@ -24,43 +24,80 @@ public class LocusServerConst {
     // URL parameter for main request action
     
     public static final String ACTION = "action";
-     public static final String TYPE = "type";
-    
-    
-    public static final String ACTION_DATA_ADD_ITEM_VECTOR = "addItemVector";
-    public static final int ITEM_TYPE_VECTOR = 1;
- 
-    
+//    public static final String ACTION_DATA_CREATE_ITEM = "createItem";
+//    public static final String ACTION_DATA_UPDATE_ITEM = "updateItem";
+
+    public static final String LOCATIONS = "location";
+
+
+    // ==================  VECTOR ITEM DEFINITION FOR JSON UPLOAD  ==================
+
+    public static final int VECTOR_ITEM_TYPE_UNIT = 1;  //define that it is item with file
+
+    public static final int VECTOR_VERSION_CODE = 103; //
+    public static final boolean VECTOR_CAN_BE_WELCOME_PRESENT = true;
+
+    public static final long[] VECTOR_IMAGE_IDS = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
+    public static final long VECTOR_IC0N_ID = 5414151014842368L;
+
+    public static final String[] VECTOR_USAGE_IDS = new String[] {"maps.universal.locus_vector"};
+    public static final String VECTOR_PROVIDER_ID = "asammsw";
+
+    public static final int VECTOR_AVAILABLE_FOR = 7; // STORE_ITEM_TIME_PERIOD_YEAR
+    //  -----------------------------------------------
+
+
+    public static final String VECTOR_DESCRIPTION = "Vector maps work fully offline and are available for the whole world. These maps are placed directly in your device and for this reason you can " +
+            "change their appearance using built-in themes.\n"+
+            "\n<ul></ul>"+
+            "\nAfter purchase of vector maps, follow please these instructions:"+
+            "\n<ol>"+
+            "\n<li>open Menu  - Maps - Vector tab </li>"+
+            "\n<li>select vector map in a list</li> "+
+            "\n</ol>"+
+            "\n<h4>Locus Guarantee</h4>"+
+            "\nAll your vector maps you can repeatedly download for 1 year since your purchase in the same vector maps <b>version</b>.";
+
+
     // ================== JSON STRINGS ==================
     public static final String JSON_DATA = "jsonData";
     public static final String STATUS = "status";
-    public static final String MSG = "msg";
-    
+    public static final String MESSAGE = "message";
+    public static final String JSON_ITEMS = "items";
+
     public static final String ACTION_DATA_NAME = "name";
-    public static final String ACTION_DATA_USAGE_ID = "usageId";
-    public static final String ACTION_DATA_REGION_ID = "regionId";
+    public static final String ACTION_DATA_CODE = "code";
+    public static final String ACTION_DATA_ICON = "iconId";
+    public static final String ACTION_DATA_IMAGE_IDS = "imageIds";
+    public static final String ACTION_DATA_LOCOINS = "loCoins";
+    public static final String ACTION_DATA_ENABLED = "enabled";
+    public static final String ACTION_DATA_ITEM_TYPE = "itemType";
+    public static final String ACTION_DATA_AVAILABLE_FOR = "availableFor";
+    public static final String ACTION_DATA_DESCRIPTION = "description";
+    public static final String ACTION_DATA_PREFERED_LANG = "preferedLang";
+    public static final String ACTION_DATA_CAN_BE_WELCOME_PRESENT = "canBeWelcomePresent";
+    public static final String ACTION_DATA_ITEM_AREA = "itemArea";
+
+    public static final String ACTION_DATA_VERSION = "version";
+    public static final String ACTION_DATA_USAGE_IDS = "usageIds";
+    public static final String ACTION_DATA_REGION_IDS = "regionIds";
     public static final String ACTION_DATA_PROVIDER_ID = "providerId";
+    public static final String ACTION_DATA_SUPPORTED_APK = "supportedApk";
+
+    public static final String ACTION_DATA_FILE = "file";
     public static final String ACTION_DATA_FILE_NAME = "fileName";
     public static final String ACTION_DATA_FILE_SIZE = "fileSize";
     public static final String ACTION_DATA_FILE_SIZE_FINAL = "fileSizeFinal";
     public static final String ACTION_DATA_FILE_MD5_HASH = "fileMD5hash";
-    public static final String ACTION_DATA_FILE_PATH = "filePath";
-    public static final String ACTION_DATA_FILE_ACTIONS = "fileActions"; // what happen after downloading to client
-    public static final String ACTION_DATA_VERSION_NAME = "versionName";
-    public static final String ACTION_DATA_VERSION_CODE = "versionCode";
+    public static final String ACTION_DATA_FILE_UNPACK = "clientFileUnpack";
+    public static final String ACTION_DATA_FILE_DELETE_SOURCE = "clientDeleteSource";
+    public static final String ACTION_DATA_FILE_REFRESH_MAPS = "clientRefreshMaps";
     public static final String ACTION_DATA_DESTINATION_PATH = "clientDestination";
-    public static final String ACTION_DATA_SUPPORTED_APK = "supportedApk";
-    public static final String ACTION_DATA_ICON = "vectorIcon";
-    public static final String ACTION_DATA_IMAGES = "vectorImages";
-    
-    public static final String ACTION_DATA_DESCRIPTION = "vectorDescription";
-    public static final String ACTION_DATA_PREFERED_LANG = "preferedLang";
-    public static final String ACTION_DATA_CAN_BE_WELCOME_PRESENT = "canBeWelcomePresent";    
-    
-    public static final String STORE_DATA_PROVIDER_ID_ASAMMSW = "asammsw";
-    public static final String STORE_DATA_USAGE_ID_MAPS_VECTOR = "maps.universal.locus_vector";    
-    
-  
+    public static final String ACTION_DATA_FILE_URL = "url";
+
+
+
+
     /******* LOCUS VERSION TYPE CODE ****************/
     
     public static final int PACKAGE_FREE                = 0;
@@ -110,4 +147,7 @@ public class LocusServerConst {
         supportedVersions.put(LocusServerConst.PACKAGE_GIS, 1);
 
     }
+
+
+
 }

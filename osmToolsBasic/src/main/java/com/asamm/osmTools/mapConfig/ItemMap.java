@@ -55,8 +55,10 @@ public class ItemMap extends AItemMap {
 
     // unique ID of item
     private String mId;
-    // name of item
+    // name of file
     private String mName;
+    // how will item called in the store
+    private String mNameReadable;
     // name of item for generating (useful for separating languages)
     private String mNameGen;
     // prefered language for generating
@@ -113,15 +115,6 @@ public class ItemMap extends AItemMap {
         return null;
     }
     
-    /**
-     * Function create relative path which define where will be file
-     * stored after downloading into Locus.
-     * @return relative path in Locus
-     */
-    public String getClientDestinationPath () {
-        return Utils.changeSlashToUnix("mapsVector/" + getDirGen());
-    }
-
     public String getGeneratedFileNamePart(){
         File file = new File(mPathResult);
         String fileName = file.getName();
@@ -209,6 +202,10 @@ public class ItemMap extends AItemMap {
         return mName;
     }
 
+    public String getNameReadable() {
+        return mNameReadable;
+    }
+
     public String getPrefLang() {
         return mPrefLang;
     }
@@ -241,6 +238,11 @@ public class ItemMap extends AItemMap {
 
     public String getPathPolygon() {
         return mPathPolygon;
+    }
+
+    public String getPathJsonPolygon () {
+        String str = mPathPolygon.substring(0, mPathPolygon.lastIndexOf("."));
+        return str + ".json";
     }
 
     public String getPathContour() {
@@ -289,6 +291,9 @@ public class ItemMap extends AItemMap {
         }
         if (parser.getAttributeValue(null, "file") != null) {
             mName = Utils.changeSlash(parser.getAttributeValue(null, "file"));
+        }
+        if (parser.getAttributeValue(null, "name") != null) {
+            mNameReadable = Utils.changeSlash(parser.getAttributeValue(null, "name"));
         }
         if (parser.getAttributeValue(null, "fileGen") != null) {
             mNameGen = Utils.changeSlash(parser.getAttributeValue(null, "fileGen"));
@@ -381,4 +386,6 @@ public class ItemMap extends AItemMap {
                 ", isMerged=" + isMerged +
                 '}';
     }
+
+
 }

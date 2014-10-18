@@ -54,7 +54,7 @@ public class Parameters {
 
         UPLOAD("upload", 'u'),
 
-        CREATE_XML("create_xml", NO_SHORTCUT);
+        CREATE_JSON("create_json", NO_SHORTCUT);
 
         // label of action defined in XML file
         private String mLabel;
@@ -81,6 +81,8 @@ public class Parameters {
     private static final String mConfigPath = Consts.DIR_BASE + "config.xml";
     // path to base config file for address/poi database
     private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
+
+    private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "upload_definition.json";
 
     // name of working (version) directory
     private static String mVersionDir;
@@ -120,29 +122,6 @@ public class Parameters {
     // path to graphHopper shell script
     private static String mGraphHopperExe;
 
-    // ****** VERSIONING *********
-    public static final int VERSION_CODE = 103; //
-    public static final boolean CAN_BE_WELCOME_PRESENT = true;
-
-   //  -------------- LOCUS STORE IDs --------           
-    public static final long[] VECTOR_IMAGES = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
-    public static final long VECTOR_IC0N = 5414151014842368L;
-   //  ----------------------------------------------- 
-    
-
-    public static final String VECTOR_DESCRIPTION = "Vector maps work fully offline and are available for the whole world. These maps are placed directly in your device and for this reason you can " +
-						"change their appearance using built-in themes.\n"+
-						"\n<ul></ul>"+ 
-						"\nAfter purchase of vector maps, follow please these instructions:"+ 
-						"\n<ol>"+
-						"\n<li>open Menu  - Maps - Vector tab </li>"+
-						"\n<li>select vector map in a list</li> "+
-						"\n</ol>"+ 
-						"\n<h4>Locus Guarantee</h4>"+
-						"\nAll your vector maps you can repeatedly download for 1 year since your purchase in the same vector maps <b>version</b>.";
-
-    
-   
     public static String mapOutputFormat = "osm.pbf";  //posibilities: "osm" or "pbf"
     //Contour lines definition 
     public static String phyghtDir;
@@ -216,6 +195,10 @@ public class Parameters {
 
     public static String getConfigApDbPath() {
         return mConfigApDbPath;
+    }
+
+    public static String getUploadDefinitionJsonPath() {
+        return mUploadDefinitionJsonPath;
     }
 
     public static String getContourTagMapping() {
@@ -422,12 +405,13 @@ public class Parameters {
             // finally add generate
             addAction(Action.GENERATE);
             addAction(Action.COMPRESS);
+            addAction(Action.CREATE_JSON);
         }
 
         // handle upload action
         if (cmdActions.contains("u")){
+            addAction(Action.CREATE_JSON);
             addAction(Action.UPLOAD);
-            addAction(Action.CREATE_XML);
         }
     }
 
