@@ -30,7 +30,9 @@ abstract class Cmd {
 
         OSMOSIS,
 
-        GRAPHOPPER
+        GRAPHOPPER,
+
+        STORE_UPLOAD
     }
 
     // current map item
@@ -46,7 +48,7 @@ abstract class Cmd {
         this.mCmdList = new ArrayList<String>();
 
         // check map
-        if (mMap == null) {
+        if (externalApp != ExternalApp.STORE_UPLOAD && mMap == null) {
             throw new IllegalArgumentException("Map object not valid");
         }
 
@@ -58,6 +60,13 @@ abstract class Cmd {
             addCommand(Parameters.getPreShellCommand());
             // add GraphHopper command
             addCommand(Parameters.getGraphHopperExe());
+        }
+        else if (mExternalApp == ExternalApp.STORE_UPLOAD) {
+            // add python
+            addCommand(Parameters.getPythonDir());
+
+            // add path to the script
+            addCommand(Parameters.getStoreUploadScr());
         }
     }
 

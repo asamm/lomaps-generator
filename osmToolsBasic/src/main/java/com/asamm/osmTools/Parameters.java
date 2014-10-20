@@ -82,7 +82,7 @@ public class Parameters {
     // path to base config file for address/poi database
     private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
 
-    private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "upload_definition.json";
+    private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUpload" + Consts.FILE_SEP + "upload_definition.json";
 
     // name of working (version) directory
     private static String mVersionDir;
@@ -121,6 +121,7 @@ public class Parameters {
     private static String mPostShellCommand;
     // path to graphHopper shell script
     private static String mGraphHopperExe;
+    private static String mStoreUploadScr;
 
     public static String mapOutputFormat = "osm.pbf";  //posibilities: "osm" or "pbf"
     //Contour lines definition 
@@ -238,6 +239,10 @@ public class Parameters {
 
     public static String getShp2osmDir() {
         return mShp2osmDir;
+    }
+
+    public static String getStoreUploadScr() {
+        return mStoreUploadScr;
     }
 
     public static boolean isMailing() {
@@ -410,7 +415,7 @@ public class Parameters {
 
         // handle upload action
         if (cmdActions.contains("u")){
-            addAction(Action.CREATE_JSON);
+            //addAction(Action.CREATE_JSON);
             addAction(Action.UPLOAD);
         }
     }
@@ -485,6 +490,9 @@ public class Parameters {
 
         // shp2osm script location
         mShp2osmDir = "shp2osm" + Consts.FILE_SEP + "shp2osm.py";
+
+        // location of script for uploading results
+        mStoreUploadScr = "storeUpload" + Consts.FILE_SEP + "upload.py";
 
         // graphHopper path
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
