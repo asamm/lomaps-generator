@@ -12,8 +12,6 @@ import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -29,6 +27,8 @@ public class UploadDefinitionCreator {
     private static final String ITEM_NAME_VECTOR_POSTFIX = " - offline vector map";
     // define folder that contains vector maps in client
     private static final String CLIENT_VECTOR_MAP_DESTINATION = "mapsVector/";
+    // define if created/updated version will be in the end set as active version
+    private static final boolean SET_NEW_VERSION_AS_ACTIVE = true;
 
 
     private static UploadDefinitionCreator instance = null;
@@ -58,7 +58,7 @@ public class UploadDefinitionCreator {
 
         JSONObject jsonItem = createJsonItem(map);
 
-        Logger.i(TAG, "Add json item into array " + jsonItem.toJSONString());
+        //Logger.i(TAG, "Add json item into array " + jsonItem.toJSONString());
 
         jsonItems.add(jsonItem);
     }
@@ -67,7 +67,7 @@ public class UploadDefinitionCreator {
     public void writeToFile() {
 
         String defString  =  getDefinitionJsonString();
-        Logger.i(TAG, defString);
+        //Logger.i(TAG, defString);
         File defFile = new File(Parameters.getUploadDefinitionJsonPath());
 
 
@@ -113,6 +113,9 @@ public class UploadDefinitionCreator {
         jsonItem.put(LocusServerConst.ACTION_DATA_AVAILABLE_FOR, LocusServerConst.VECTOR_AVAILABLE_FOR);
         jsonItem.put(LocusServerConst.ACTION_DATA_CAN_BE_WELCOME_PRESENT, canBeWelcomePresent(resultFile));
 
+        // compute loCoins
+        jsonItem.put(LocusServerConst.ACTION_DATA_LOCOINS, computeLocoins(resultFile) );
+
         jsonItem.put(LocusServerConst.ACTION_DATA_USAGE_IDS, getItemUsages());
         jsonItem.put(LocusServerConst.ACTION_DATA_PROVIDER_ID, LocusServerConst.VECTOR_PROVIDER_ID);
         jsonItem.put(LocusServerConst.ACTION_DATA_REGION_IDS, getItemRegion(map.getRegionId()));
@@ -138,6 +141,8 @@ public class UploadDefinitionCreator {
         jsonVersion.put(LocusServerConst.ACTION_DATA_NAME, Parameters.getVersionName());
         jsonVersion.put(LocusServerConst.ACTION_DATA_FILE, createJsonFile(map));
 
+        jsonVersion.put(LocusServerConst.ACTION_DATA_SET_ACTIVE, SET_NEW_VERSION_AS_ACTIVE);
+
         return jsonVersion;
     }
 
@@ -161,6 +166,22 @@ public class UploadDefinitionCreator {
         jsonFile.put(LocusServerConst.ACTION_DATA_DESTINATION_PATH, getClientDestinationPath(map));
 
         return jsonFile;
+    }
+
+    /**
+     * Define the price for map based on the size of result file
+     * @param resultFile
+     * @return the amounth of Locoins that will be set for item in store
+     */
+    private float computeLocoins (File resultFile){
+        // compute value of loCoins
+        long fileSize = resultFile.length();
+        double loCoins = fileSize/1024.0/1024.0 * 0.1;  //0.1 it is because 1MB costs about 0.1 Locoin
+        float locoinsRounded = (float) Math.ceil(loCoins);
+
+        //Logger.i(TAG, "File size: " + fileSize + ", Locoins computed: " + loCoins + ", loCoins rounded: " + locoinsRounded);
+
+        return locoinsRounded;
     }
 
     /**

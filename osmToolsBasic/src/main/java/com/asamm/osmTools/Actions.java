@@ -81,8 +81,7 @@ class Actions {
             // perform remaining actions
             if (action == Parameters.Action.UPLOAD) {
 
-                // TODO create uplad usign python
-                //actionUpload(map);
+                actionUpload();
             }
         }
     }
@@ -684,7 +683,7 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
 
         Logger.i(TAG, "Compressing: " + map.getPathResult());
         TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nCompress: "+map.getName()+" ...");
+        Main.mySimpleLog.print("\nCompress: " + map.getName() + " ...");
 
         // change lastChange attribute of generated file
         // this workaround how to set date of map file in Locus
@@ -718,35 +717,17 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
 
     // ACTION UPLOAD
 
-    private void actionUpload(ItemMap map) throws IOException{
-        // type of action do for all mappacks/maps
-        if (map.hasAction(Parameters.Action.GENERATE)){
-            // obtain rellative path from the direcotory results. If null breake script
-            String relPath;
-            if ((relPath = map.getRelativeResultsPath()) == null){
-                throw new IllegalArgumentException("Uplad AWS: no relative path for "+map.getName());
-            }
+    private void actionUpload() throws IOException, InterruptedException {
 
-            Logger.i(TAG, "Start action upload for map: "+map.getPathResult());
-            // compute MD5  hash for map
-            map.setResultMD5hash(Utils.generateMD5hash(map.getPathResult()));
-            relPath = Utils.changeSlashToUnix(relPath);
+        TimeWatch time = new TimeWatch();
+        Logger.i(TAG, "Start action upload ");
+        Main.mySimpleLog.print("Uplad data....");
 
-            //System.out.println(relPath);
+        CmdUpload cmdUpload = new CmdUpload(CmdUpload.UploadAction.UPDATE_ITEM);
+        cmdUpload.createCmd();
+        cmdUpload.execute();
 
-            AmazonHandler ah = AmazonHandler.getInstance();
-            if (!ah.isMapUploaded(map, relPath)){
-
-                Logger.i(TAG, "Map "+map.getPathResult()+" doesn't exists on AS3. Tryt to upload it");
-                // upload file to AMAZON
-                if (!ah.uploadToAws(map, relPath)){
-                    throw new IllegalArgumentException ("Uploading file"+ relPath +" aborted");
-                }
-            }
-
-//            LocusServerHandler lsh = LocusServerHandler.getInstance();
-//            lsh.uploadInfoToLocusServer(map);
-        }
+        Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
 
     // ACTION CREATE XML

@@ -83,6 +83,7 @@ public class LocusServerConst {
     public static final String ACTION_DATA_REGION_IDS = "regionIds";
     public static final String ACTION_DATA_PROVIDER_ID = "providerId";
     public static final String ACTION_DATA_SUPPORTED_APK = "supportedApk";
+    public static final String ACTION_DATA_SET_ACTIVE = "setActive";
 
     public static final String ACTION_DATA_FILE = "file";
     public static final String ACTION_DATA_FILE_NAME = "fileName";
