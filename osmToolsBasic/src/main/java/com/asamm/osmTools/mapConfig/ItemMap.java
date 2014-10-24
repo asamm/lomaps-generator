@@ -139,7 +139,7 @@ public class ItemMap extends AItemMap {
     }
 
     public void setPaths(){
-        String subPath = Parameters.getVersionDir() + getDir() + mName;
+        String subPath = Parameters.getVersionName() + Consts.FILE_SEP + getDir() + mName;
 
         // define extract and generation path and also create directory structure if is needed
         if (hasAction(Parameters.Action.DOWNLOAD)) {
@@ -171,11 +171,11 @@ public class ItemMap extends AItemMap {
         // parameters for generating
         if (hasAction(Parameters.Action.GENERATE)) {
             mPathGenerate = Consts.DIR_BASE + DIR_GENERATE +
-                    Parameters.getVersionDir() + getDirGen();
+                    Parameters.getVersionName() + Consts.FILE_SEP + getDirGen();
             mPathResult = Consts.DIR_BASE + DIR_RESULT +
-                    Parameters.getVersionDir() + getDirGen();
+                    Parameters.getVersionName() + Consts.FILE_SEP  + getDirGen();
             mPathGenerateContour = Consts.DIR_BASE + DIR_CONTOURS +
-                    getDir() + mName + ".osm.map" ;
+                    Consts.FILE_SEP + getDir() + mName + ".osm.map" ;
 
             // improve names
             if (mNameGen != null && mNameGen.length() > 0) {
