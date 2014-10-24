@@ -84,9 +84,7 @@ public class Parameters {
 
     private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUpload" + Consts.FILE_SEP + "upload_definition.json";
 
-    // name of working (version) directory
-    private static String mVersionDir;
-    // name of version itself (like "2014.06.10")
+    // name of version itself (like "2014.06.10") it also set the date to the file
     private static String mVersionName;
     // list of defined actions
     private static List<Action> mActionList;
@@ -94,18 +92,18 @@ public class Parameters {
     private static String mHgtDir;
     // flag if mailing results/errors is enabled
     private static boolean mIsMailing;
-    // date of last map modifications "yyyy-MM-dd"
+
+
+
+    // date of last map modifications which is defined by version name
     private static long mSourceDataLastModifyDate;
-    // you can change date in attribute line
 
     // set basic values
     static {
-        mVersionDir = "";
         mVersionName = "";
         mActionList = new ArrayList<Action>();
-        mHgtDir = "";
+        mHgtDir = "hgt"; // default location for SRTM files
         mIsMailing = false;
-        mSourceDataLastModifyDate = new Date().getTime();
     }
 
     // DIRECTORY PARAMETERS
@@ -116,7 +114,6 @@ public class Parameters {
     private static String mPythonDir;
     private static String mShp2osmDir;
 
-    private static String mOutputXml;
     private static String mPreShellCommand;
     private static String mPostShellCommand;
     // path to graphHopper shell script
@@ -206,12 +203,12 @@ public class Parameters {
         return mContourTagMapping;
     }
 
-    public static String getVersionDir() {
-        return mVersionDir;
-    }
-
     public static String getVersionName() {
         return mVersionName;
+    }
+
+    public static long getSourceDataLastModifyDate() {
+        return mSourceDataLastModifyDate;
     }
 
     public static boolean isActionRequired(Action action) {
@@ -226,9 +223,9 @@ public class Parameters {
         return mHgtDir;
     }
 
-    public static String getmOutputXml() {
-        return mOutputXml;
-    }
+//    public static String getmOutputXml() {
+//        return mOutputXml;
+//    }
     public static String getOgr2ogr() {
         return mOgr2ogr;
     }
@@ -247,10 +244,6 @@ public class Parameters {
 
     public static boolean isMailing() {
         return mIsMailing;
-    }
-
-    public static long getSourceDataLastModifyDate() {
-        return mSourceDataLastModifyDate;
     }
 
     public static String getPreShellCommand() {
@@ -284,7 +277,7 @@ public class Parameters {
         // do basic check
         if (args == null || args.length < 4) {
             String errorText = "Wrong parameter, please define parameters: "
-                   + "--dir <name_work_dir> --version <version_name> --actions <dectgu> "
+                   + "--version <version_name_in_format_ yyyy.MM.dd> --actions <adectgu> "
                    + "--email <true_or_false_if_send_email> --hgtdir <pathToSrtmData>";
             Logger.w(TAG, errorText);
             System.exit(1);
@@ -294,14 +287,21 @@ public class Parameters {
         // iterate over all arguments
         for (int i = 0; i < args.length; i++) {
 
-            // set main version directory name
-            if (args[i].equals("--dir") && !args[++i].startsWith("--") ){
-                mVersionDir = Consts.fixDirectoryPath(args[i]);
-            }
-
             // set version name
             if (args[i].equals("--version") && !args[++i].startsWith("--") ){
                 mVersionName = args[i] ;
+
+                // parse version to date
+                SimpleDateFormat sdf =  new SimpleDateFormat("yyyy.MM.dd");
+                Date date;
+
+                try {
+                    date = sdf.parse(mVersionName);
+                    mSourceDataLastModifyDate = date.getTime();
+                } catch (ParseException e){
+                    Logger.w(TAG, "Wrong data format. Use yyyy.MM.dd");
+                    System.exit(1);
+                }
             } 
 
             // set defined actions
@@ -330,31 +330,9 @@ public class Parameters {
                     Logger.w(TAG, "Wrong value for argument --email. Possible values yes|no");
                     System.exit(1);
                 }
-            }
+            }        }
 
-            // get predefined generate date
-            if (args[i].equals("--date") && !args[++i].startsWith("--") ){
-                String dateInput = args[i];
-                SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd");
-                
-                Date date;
-                try {
-                    date = sdf.parse(dateInput);
-                    mSourceDataLastModifyDate = date.getTime();
-                } catch (ParseException e){
-                    Logger.w(TAG, "Wrong data format. Use yyyy-MM-dd");
-                    System.exit(1);
-                }
-            }
-        }
-
-        // check parameter 'dir'
-        if (mVersionDir == null || mVersionDir.length() == 0) {
-            Logger.w(TAG, "parseArgs(), missing argument 'dir'");
-            System.exit(1);
-        }
-
-        // check parameter 'version'
+           // check parameter 'version'
         if (mVersionName == null || mVersionName.length() == 0) {
             Logger.w(TAG, "parseArgs(), missing argument 'version'");
             System.exit(1);
@@ -475,9 +453,8 @@ public class Parameters {
      * prepared parameters.
      */
     static void initialize() {
-        // path for generated output XML
 
-        mOutputXml = Consts.DIR_BASE + "_result" + Consts.FILE_SEP + getVersionDir() + "maps.xml";
+        // path to the mapsforge definition file for generation
         mTouristTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
         mContourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
 
@@ -498,12 +475,9 @@ public class Parameters {
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
                 getAbsolutePath();
 
-        // TODO why you set mHgtDir variable again here, when it should be defined by argument during a start??
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/bin/phyghtmap";
-            //mHgtDir = "/mnt/disk1/data/hgt";
-            mHgtDir = "hgt";
             mOgr2ogr = "/usr/bin/ogr2ogr";
             mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
@@ -511,7 +485,6 @@ public class Parameters {
         } else if (Utils.isSystemWindows()){
             mOsmosisExe = new File (osmosisPath + "osmosis.bat").getAbsolutePath();
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
-            mHgtDir = "hgt";
             mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
             mPythonDir = "C:\\Python27\\python.exe";
             mPreShellCommand = "c:\\work\\cygwin64\\bin\\bash.exe -c '";
@@ -519,7 +492,6 @@ public class Parameters {
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/bin/phyghtmap";
-            mHgtDir = "/mnt/disk1/data/hgt";
             mOgr2ogr = "/usr/bin/ogr2ogr";
             mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
