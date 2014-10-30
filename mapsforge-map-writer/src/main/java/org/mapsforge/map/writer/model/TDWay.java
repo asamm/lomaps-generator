@@ -94,7 +94,7 @@ public class TDWay {
 					}
 				}
 
-				return new TDWay(way.getId(), ster.getLayer(), ster.getName(), ster.getHousenumber(), ster.getRef(),
+                return new TDWay(way.getId(), ster.getLayer(), ster.getName(), ster.getHousenumber(), ster.getRef(),
 						knownWayTags, shape, waynodes);
 			}
 		}

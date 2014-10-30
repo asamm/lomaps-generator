@@ -93,9 +93,12 @@ public final class OSMUtils {
 		String name = null;
 		String ref = null;
 		String housenumber = null;
-		byte layer = 5;
+        byte layer = 5;
 		short elevation = 0;
 		String relationType = null;
+
+        boolean isTunnel = false;
+        boolean isHighwayOrRailway = false;
 
 		if (entity.getTags() != null) {
 			for (Tag tag : entity.getTags()) {
@@ -145,8 +148,26 @@ public final class OSMUtils {
 						}
 					}
 				}
+                else if ("tunnel".equals(key)){
+                    String value = tag.getValue();
+                    if ( value.equals("yes") || value.equals("true")){
+                        isTunnel = true;
+                    }
+                }
+                else if ("highway".equals(key)){
+                    isHighwayOrRailway = true;
+                }
+                else if ("railway".equals(key)){
+                    isHighwayOrRailway = true;
+                }
 			}
 		}
+
+        // in case that entity is tunnel move it to the base level because we want to render it as
+        // normal way
+        if (isTunnel && isHighwayOrRailway){
+            layer = 5;
+        }
 
 		return new SpecialTagExtractionResult(name, ref, housenumber, layer, elevation, relationType);
 	}
