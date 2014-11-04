@@ -134,6 +134,10 @@ public class DatabasePoi extends ADatabaseHandler {
                 " (" + COL_FOL_ROOT_ID + ", " + COL_FOL_SUB_ID + ")";
         executeStatement(sql);
 
+        sql = "CREATE INDEX idx_prs_root ON " + TN_POINTS_ROOT_SUB +
+                " (" + COL_FOL_ROOT_ID + ")";
+        executeStatement(sql);
+
         sql = "CREATE INDEX idx_pkv_points_id ON " + TN_POINTS_KEY_VALUE +
                 " (" + COL_POINTS_ID + ")";
         executeStatement(sql);
