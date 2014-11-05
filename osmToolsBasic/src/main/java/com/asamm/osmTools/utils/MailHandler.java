@@ -28,8 +28,8 @@ public class MailHandler {
     public MailHandler() {
         SMTP_HOST_NAME = "smtp.gmail.com";
         SMTP_HOST_PORT = 465;
-        SMTP_AUTH_USER = "petr.voldan@asamm.com";
-        SMTP_AUTH_PWD  = "Babi4ka1530";
+        SMTP_AUTH_USER = "no-reply@asamm.com";
+        SMTP_AUTH_PWD  = "JlTNiAjW5zesykEh";
     
     }
     

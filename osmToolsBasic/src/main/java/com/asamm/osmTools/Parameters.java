@@ -88,6 +88,9 @@ public class Parameters {
     private static String mVersionName;
     // list of defined actions
     private static List<Action> mActionList;
+
+    // directory where are stored static data that doesn't have to be stored on SSD disk (ContourLines, Coastline, etc)
+    private static String  mDataDir;
     // defined directory with HGT files
     private static String mHgtDir;
     // flag if mailing results/errors is enabled
@@ -188,7 +191,10 @@ public class Parameters {
     }
 
     public static String getCoastlineShpFile() {
-        return mCoastlineShpFile;
+
+        // set path to water polygon shape file
+        return getDataDir() + "coastlines" +
+                Consts.FILE_SEP + "land_polygons.shp";
     }
 
     public static String getConfigApDbPath() {
@@ -217,6 +223,18 @@ public class Parameters {
 
     protected static List<Action> getActions() {
         return mActionList;
+    }
+
+    /**
+     * Return defined path to the firectory with static data. If dir is not defined then
+     * working directory is returned
+     * @return
+     */
+    public static String getDataDir() {
+        if (mDataDir == null || mDataDir.length() == 0){
+            return Consts.DIR_BASE;
+        }
+        return mDataDir;
     }
 
     public static String getHgtDir() {
@@ -316,6 +334,18 @@ public class Parameters {
                 // check if dir exists
                 if (!new File(mHgtDir).exists()){
                     Logger.w(TAG, "Directory for hgt cache " + mHgtDir + " doesn't exist!");
+                    System.exit(1);
+                }
+            }
+
+            // static data that are not in the same working dir as result
+            if (args[i].equals("--datadir") && !args[++i].startsWith("--") ){
+
+                mDataDir = Consts.fixDirectoryPath(new File(args[i]).getAbsolutePath());
+
+                // check if dir exists
+                if (!new File(mDataDir).exists()){
+                    Logger.w(TAG, "Directory for static data " + mDataDir + " doesn't exist!");
                     System.exit(1);
                 }
             }
@@ -421,7 +451,7 @@ public class Parameters {
                         + "t \tcreate cyclo and hiking paths"
                         + "c \tcreate pbf files with contour lines\n"
                         + "g \tgenerate map files and also create zip archive generated files\n"
-                        + "u \tupload data to amazon server and crate xml definiton file");
+                        + "u \tupload data to GCS server");
                 throw new IllegalArgumentException("Actions '" + arg + "', are not valid");
             }
         }
@@ -457,10 +487,6 @@ public class Parameters {
         // path to the mapsforge definition file for generation
         mTouristTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
         mContourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
-
-        // set path to water polygon shape file
-        mCoastlineShpFile = Consts.DIR_BASE + "coastlines" +
-                Consts.FILE_SEP + "land_polygons.shp";
 
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
