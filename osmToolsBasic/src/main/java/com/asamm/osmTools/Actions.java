@@ -214,7 +214,7 @@ class Actions {
 
     public void actionExtract(ItemMapPack mp, final MapSource ms)
             throws IOException, InterruptedException {
-Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
+         Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
         // create hashTable where identificator is sourceId of map and values is an list of
         // all map with same sourceId
         Map<String, List<ItemMap>> mapTableBySourceId = new Hashtable<>();
@@ -235,7 +235,7 @@ Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
                 if (!new File(writeFileLocation).exists()){
                     ar.add(actualMap);
                 } else {
-//                    Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
+                    Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
                 }
             }
         }

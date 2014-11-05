@@ -29,7 +29,7 @@ public class ItemMap extends AItemMap {
     // CONSTANTS
 
     private static final String DIR_COASTLINES =
-            Consts.fixDirectoryPath("_coastlines");
+            Consts.fixDirectoryPath("coastlines");
     private static final String DIR_CONTOURS =
             Consts.fixDirectoryPath("_contours");
     private static final String DIR_DOWNLOAD =
@@ -143,10 +143,10 @@ public class ItemMap extends AItemMap {
 
         // define extract and generation path and also create directory structure if is needed
         if (hasAction(Parameters.Action.DOWNLOAD)) {
-            mPathSource = Consts.DIR_BASE + DIR_DOWNLOAD +
+            mPathSource = Parameters.getDataDir() + DIR_DOWNLOAD +
                     subPath + "." + Parameters.mapOutputFormat;
         } else {
-            mPathSource = Consts.DIR_BASE + DIR_EXTRACT +
+            mPathSource = Parameters.getDataDir() + DIR_EXTRACT +
                     subPath + "." + Parameters.mapOutputFormat;
         }
 
@@ -157,14 +157,14 @@ public class ItemMap extends AItemMap {
                 subPath + "-gh.zip";
         mPathAddressPoiDb = Consts.DIR_BASE + DIR_ADDRESS_POI_DB +
                 subPath + ".osm.db";
-        mPathContour = Consts.DIR_BASE + DIR_CONTOURS +
+        mPathContour = Parameters.getDataDir() + DIR_CONTOURS +
                 getDir() + mName + ".osm.pbf" ;
-        mPathTourist = Consts.DIR_BASE + DIR_TOURIST +
+        mPathTourist = Parameters.getDataDir() + DIR_TOURIST +
                 subPath + ".osm.xml";
-        mPathShp = Consts.DIR_BASE + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
+        mPathShp = Parameters.getDataDir() + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
                 getDir() + mName + ".shp";
-        mPathCoastline = Consts.DIR_BASE + DIR_COASTLINES +
-                subPath + ".osm.pbf";
+        mPathCoastline = Parameters.getDataDir() + DIR_COASTLINES + "_pbf" + Consts.FILE_SEP +
+                getDir() + mName + ".osm.pbf";
         mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
                 subPath + "." + Parameters.mapOutputFormat;
 
@@ -172,9 +172,9 @@ public class ItemMap extends AItemMap {
         if (hasAction(Parameters.Action.GENERATE)) {
             mPathGenerate = Consts.DIR_BASE + DIR_GENERATE +
                     Parameters.getVersionName() + Consts.FILE_SEP + getDirGen();
-            mPathResult = Consts.DIR_BASE + DIR_RESULT +
+            mPathResult = Parameters.getDataDir() + DIR_RESULT +
                     Parameters.getVersionName() + Consts.FILE_SEP  + getDirGen();
-            mPathGenerateContour = Consts.DIR_BASE + DIR_CONTOURS +
+            mPathGenerateContour = Parameters.getDataDir() + DIR_CONTOURS +
                     Consts.FILE_SEP + getDir() + mName + ".osm.map" ;
 
             // improve names

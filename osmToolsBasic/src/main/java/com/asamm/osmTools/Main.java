@@ -67,28 +67,28 @@ public class Main {
             }
         } catch (Exception e) {
             com.asamm.osmTools.utils.Logger.e(TAG, "main()", e);
-//            String zipRunTimeLog = Consts.DIR_BASE + "osm2vec_runTime.zip";
-//            try {
-//                Main.LOG.severe(e.toString());
-//                myRunTimeLog.print(e.toString());
-//                e.printStackTrace();
-//
-//                myRunTimeLog.closeWriter();
-//                // compress runTime log
-//                Utils.compressFile(myRunTimeLog.getPath(), zipRunTimeLog);
-//
-//                if (Parameters.isMailing()) {
-//
-//                    String emailTo = "petr.voldan@gmail.com";
-//                    String subject = "OSM Tools ERROR on " + Utils.getHostname();
-//                    String text = "Exception heppend when run: \n" + e.toString();
-//                    MailHandler mh = new MailHandler();
-//                    System.out.println("Sending email ...");
-//                    mh.sendEmail(emailTo, subject, text, zipRunTimeLog);
-//                }
-//            } catch (Exception mailExcep) {
-//                mailExcep.printStackTrace();
-//            }
+            String zipRunTimeLog = Consts.DIR_BASE + "osm2vec_runTime.zip";
+            try {
+                Main.LOG.severe(e.toString());
+                myRunTimeLog.print(e.toString());
+                e.printStackTrace();
+
+                myRunTimeLog.closeWriter();
+                // compress runTime log
+                Utils.compressFile(myRunTimeLog.getPath(), zipRunTimeLog);
+
+                if (Parameters.isMailing()) {
+
+                    String emailTo = "petr.voldan@gmail.com";
+                    String subject = "OSM Tools ERROR on " + Utils.getHostname();
+                    String text = "Exception heppend when run: \n" + e.toString();
+                    MailHandler mh = new MailHandler();
+                    System.out.println("Sending email ...");
+                    mh.sendEmail(emailTo, subject, text, zipRunTimeLog);
+                }
+            } catch (Exception mailExcep) {
+                mailExcep.printStackTrace();
+            }
         } finally {
             mySimpleLog.closeWriter();
             myRunTimeLog.closeWriter();
