@@ -172,7 +172,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		try {
 			return TDNode.fromNode(this.nodeIndexReader.get(id), this.preferredLanguage);
 		} catch (NoSuchIndexElementException e) {
-			Logger.w(TAG, "getNode(" + id + "), node cannot be found in index");
+			Logger.i(TAG, "getNode(" + id + "), node cannot be found in index");
 			return null;
 		}
 	}
