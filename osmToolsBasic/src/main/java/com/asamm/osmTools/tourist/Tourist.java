@@ -8,6 +8,7 @@ import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdTourist;
 import com.asamm.osmTools.mapConfig.ItemMap;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.SparseArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
  * @author volda
  */
 public class Tourist {
+
+    private static final String TAG = Tourist.class.getSimpleName();
 
     //Relations relations;
     SparseArray<Relation> relations;
@@ -66,6 +69,7 @@ public class Tourist {
         Main.LOG.info("Start parsing file "+map.getPathSource()+" for tourist path");
         //newParse();
         parse();
+
         reorganize();
         Main.LOG.info("Start writing tourist path to file "+map.getPathTourist());
         parseWays();
@@ -74,8 +78,13 @@ public class Tourist {
 //    public void converse() {
 //        //if (new)
 //    }
-   
-    
+
+
+    /**
+     * Create list of all Relations
+     * @throws IOException
+     * @throws XmlPullParserException
+     */
     public void parse() throws IOException, XmlPullParserException {
          try {
             CmdTourist ct  =  new CmdTourist(map);
@@ -279,14 +288,20 @@ public class Tourist {
             stdInput.close();
         }
     }
-    
+
+    /**
+     * Scan relation and check if tourist relation
+     */
     public void reorganize () {
-        
+
         Relation rel;
         for (int i = 0; i < relations.size(); i++){
-            
+
             rel = relations.valueAt(i);
-            
+
+            //Logger.i(TAG, "Testing if relation is tourist,  relation id: " + rel.id);
+
+
             if (rel.tags.isRegularBycicle() || rel.tags.isMtb() || rel.tags.isHiking()){
                
                 
@@ -301,7 +316,7 @@ public class Tourist {
                 // set parent tags. In this list is every cyclo relation parent for 
                 // its members
                 rel.parentTags = rel.tags;
-                rel.membersToList(relations,wl);
+                rel.membersToList(relations,wl,-1); // there is -1 because this relation has no parent relation
                 //System.out.println("Relation "+rel.id+" ma network: "+rel.tags.network);
             } 
         }
