@@ -172,7 +172,10 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		try {
 			return TDNode.fromNode(this.nodeIndexReader.get(id), this.preferredLanguage);
 		} catch (NoSuchIndexElementException e) {
-			Logger.i(TAG, "getNode(" + id + "), node cannot be found in index");
+
+			if (verboseLogging){
+                Logger.w(TAG, "getNode(" + id + "), node cannot be found in index");
+            }
 			return null;
 		}
 	}
@@ -196,7 +199,9 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 		try {
 			return TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguage);
 		} catch (NoSuchIndexElementException e) {
-			Logger.w(TAG, "getWay(" + id + "), way cannot be found in index");
+			if (verboseLogging){
+                Logger.w(TAG, "getWay(" + id + "), way cannot be found in index");
+            }
 			return null;
 		}
 	}

@@ -670,13 +670,13 @@ class Actions {
 
     private void actionCompress(ItemMap map) throws IOException{
 
-        if (!map.hasAction(Parameters.Action.GENERATE) || !map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+        if (!map.hasAction(Parameters.Action.GENERATE) && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
             // map hasn't any result file for compress
             return;
         }
 
         if (!Parameters.isRewriteFiles() && new File(map.getPathResult()).exists()) {
-            Logger.d(TAG, "File with compressed result '" + map.getPathAddressPoiDb() +
+            Logger.d(TAG, "File with compressed result '" + map.getPathResult() +
                     "' already exist - skipped." );
             return;
         }
@@ -730,7 +730,7 @@ class Actions {
         Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
 
-    // ACTION CREATE XML
+    // ACTION CREATE JSON UPLOAD DEFINITION
 
     public void actionCreateJSON(ItemMap map) throws IOException{
         UploadDefinitionCreator dc = UploadDefinitionCreator.getInstace();

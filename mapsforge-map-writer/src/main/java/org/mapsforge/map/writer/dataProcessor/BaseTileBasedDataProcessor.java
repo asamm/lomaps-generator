@@ -255,6 +255,8 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 
 	protected final ZoomIntervalConfiguration zoomIntervalConfiguration;
 
+    protected boolean verboseLogging;
+
 	public BaseTileBasedDataProcessor(MapWriterConfiguration configuration) {
 
         // prepare containers
@@ -274,6 +276,8 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 
 		this.histogramPoiTags = new TShortIntHashMap();
 		this.histogramWayTags = new TShortIntHashMap();
+
+        this.verboseLogging = configuration.isVerbose();
 
 		// compute horizontal and vertical tile coordinate offsets for all
 		// base zoom levels

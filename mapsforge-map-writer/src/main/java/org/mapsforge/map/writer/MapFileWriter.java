@@ -782,6 +782,8 @@ public final class MapFileWriter {
 
     private static void processWay(WayPreprocessingResult wpr, TDWay way, int currentTileLat, int currentTileLon,
                                    ByteBuffer wayBuffer) {
+        if (this.confi)
+
         // write subtile bitmask of way
         wayBuffer.putShort(wpr.getSubtileMask());
 

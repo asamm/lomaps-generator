@@ -6,6 +6,7 @@ package com.asamm.osmTools.tourist;
 
 import java.util.ArrayList;
 
+import com.asamm.osmTools.utils.Logger;
 import org.kxml2.io.KXmlParser;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.utils.SparseArray;
@@ -15,6 +16,9 @@ import com.asamm.osmTools.utils.SparseArray;
  * @author volda
  */
 public class Relation {
+
+    private static final String TAG = Relation.class.getSimpleName();
+
     public long id;
     public String visible;
     
@@ -48,7 +52,7 @@ public class Relation {
 //        return false;
 //    }
     
-    public void membersToList (SparseArray<Relation> relations, WayList wl){
+    public void membersToList (SparseArray<Relation> relations, WayList wl, long parentId){
        //counter ++;  
         if (!members.isEmpty()) {
           //  System.out.println("Pocet spusteni membersToList: " + counter);
@@ -70,11 +74,19 @@ public class Relation {
                     Relation rel = relations.get(mbr.ref);
                     if (rel == null) {
                         continue; // member linked with relation which is not in xml file
-                    } 
+                    }
+
+                    // test if child relation is not the parent relation > it cause cycling
+                    if (rel.id == parentId){
+                        //skip this relation
+                        Logger.w(TAG, "Relation id: " + this.id + " has child relation same as parent relation, parent relation id: " + parentId);
+                        continue;
+                    }
+
                     //copy parentTag from parent to children relation
                     rel.parentTags = this.parentTags;
                   
-                    rel.membersToList(relations, wl);
+                    rel.membersToList(relations, wl,this.id);
                 }
             }
             //System.out.println(wl.wayList.size());

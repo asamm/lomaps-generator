@@ -65,6 +65,9 @@ abstract class Cmd {
             // add python
             addCommand(Parameters.getPythonDir());
 
+            // stdout will not be buffered
+            addCommand("-u");
+
             // add path to the script
             addCommand(Parameters.getStoreUploadScr());
         }

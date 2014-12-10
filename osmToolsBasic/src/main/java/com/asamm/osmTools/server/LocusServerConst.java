@@ -34,7 +34,7 @@ public class LocusServerConst {
 
     public static final int VECTOR_ITEM_TYPE_UNIT = 1;  //define that it is item with file
 
-    public static final int VECTOR_VERSION_CODE = 103; //
+    public static final int VECTOR_VERSION_CODE = 121; //
     public static final boolean VECTOR_CAN_BE_WELCOME_PRESENT = true;
 
     public static final long[] VECTOR_IMAGE_IDS = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
@@ -114,6 +114,7 @@ public class LocusServerConst {
     public static final int PACKAGE_FREE_SAMSUNG 	    = 1003;
     public static final int PACKAGE_FREE_AMAZON 	    = 1004;
     public static final int PACKAGE_FREE_UBINURI 	    = 1005;
+    public static final int PACKAGE_FREE_XIAOMI 	    = 1006;
 
     // GIS versions
     public static final int PACKAGE_GIS			        = 3001;
@@ -132,20 +133,21 @@ public class LocusServerConst {
 
     public static final HashMap<Integer, Integer> supportedVersions = new HashMap<Integer, Integer>();
     static {
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_TESTING, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_TESTING, 338);
 
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_AMAZON, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_COMPUTER_BILD, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_MOBIROO, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_PRO_SAMSUNG, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_AMAZON, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_COMPUTER_BILD, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_MOBIROO, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_PRO_SAMSUNG, 338);
 
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_AMAZON, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_UBINURI, 236);
-        supportedVersions.put(LocusServerConst.PACKAGE_FREE_SAMSUNG, 236);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_AMAZON, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_UBINURI, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_SAMSUNG, 338);
+        supportedVersions.put(LocusServerConst.PACKAGE_FREE_XIAOMI, 338);
 
-        supportedVersions.put(LocusServerConst.PACKAGE_GIS, 1);
+        supportedVersions.put(LocusServerConst.PACKAGE_GIS, 6);
 
     }
 

@@ -28,7 +28,7 @@ public class UploadDefinitionCreator {
     // define folder that contains vector maps in client
     private static final String CLIENT_VECTOR_MAP_DESTINATION = "mapsVector/";
     // define if created/updated version will be in the end set as active version
-    private static final boolean SET_NEW_VERSION_AS_ACTIVE = true;
+    private static final boolean SET_NEW_VERSION_AS_ACTIVE = false;
 
 
     private static UploadDefinitionCreator instance = null;
@@ -176,10 +176,12 @@ public class UploadDefinitionCreator {
     private float computeLocoins (File resultFile){
         // compute value of loCoins
         long fileSize = resultFile.length();
-        double loCoins = fileSize/1024.0/1024.0 * 0.1;  //0.1 it is because 1MB costs about 0.1 Locoin
-        float locoinsRounded = (float) Math.ceil(loCoins);
+        double loCoins = fileSize/1024.0/1024.0 / 8;  // 8 it is because 1MB costed about 0.1 Locoin but we increase price
 
-        //Logger.i(TAG, "File size: " + fileSize + ", Locoins computed: " + loCoins + ", loCoins rounded: " + locoinsRounded);
+        float locoinsRounded = (float) Math.ceil(loCoins/5) * 5; // round up to number multiply by 5
+
+
+        //Logger.i(TAG, "File size in MB: " + fileSize/1024.0/1024.0 + ", Locoins computed: " + loCoins + ", loCoins rounded: " + locoinsRounded);
 
         return locoinsRounded;
     }
@@ -193,8 +195,11 @@ public class UploadDefinitionCreator {
     private boolean canBeWelcomePresent(File resultFile) {
 
         // set welcome present based on the size of zip file
-        long length1GB = 1024*1024*1024;
-        return resultFile.length() <= length1GB;
+        //long length1GB = 1024*1024*1024;
+        //return resultFile.length() <= length1GB;
+
+        //all vector maps can be welcome present
+        return true;
     }
 
     /**
