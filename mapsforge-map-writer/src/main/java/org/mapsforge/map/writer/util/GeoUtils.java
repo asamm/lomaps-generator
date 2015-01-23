@@ -209,12 +209,13 @@ public final class GeoUtils {
 			LOGGER.fine("unable to create geometry from way: " + way.getId());
 			return matchedTiles;
 		}
-
+        //System.out.println("--- process way : " + way.getId() + " ----" );
 		TileCoordinate[] bbox = getWayBoundingBox(way, baseZoomLevel, enlargementInMeter);
 		// calculate the tile coordinates and the corresponding bounding boxes
 		try {
 			for (int k = bbox[0].getX(); k <= bbox[1].getX(); k++) {
 				for (int l = bbox[0].getY(); l <= bbox[1].getY(); l++) {
+                    //System.out.println("Tile X: " + k + " Tile Y: " + l);
 					Geometry bboxGeometry = tileToJTSGeometry(k, l, baseZoomLevel, enlargementInMeter);
 					if (bboxGeometry.intersects(wayGeometry)) {
 						matchedTiles.add(new TileCoordinate(k, l, baseZoomLevel));
@@ -391,10 +392,13 @@ public final class GeoUtils {
 	}
 
 	public static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
+        //System.out.println("TileToJTSGeom: tileX: " + tileX);
 		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom, Constants.DEFAULT_TILE_SIZE);
 		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom, Constants.DEFAULT_TILE_SIZE);
 		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom, Constants.DEFAULT_TILE_SIZE);
+        //System.out.println("TileToJTSGeom: minLon: " + minLon);
 		double maxLon = MercatorProjection.tileXToLongitude(tileX + 1, zoom, Constants.DEFAULT_TILE_SIZE);
+        //System.out.println("TileToJTSGeom: maxLon: " + maxLon);
 
 		double[] epsilons = bufferInDegrees(tileY, zoom, enlargementInMeter);
 

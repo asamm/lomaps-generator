@@ -30,7 +30,7 @@ jar {
         include 'tag-mapping.xml'
         include 'osmosis-plugins.conf'
         filter {
-            line -> line.replace('${mapfile.writer.version}', '0.5.0')
+            line -> line.replace('${mapfile.writer.version}', '0.3.0')
         }
     }
 }

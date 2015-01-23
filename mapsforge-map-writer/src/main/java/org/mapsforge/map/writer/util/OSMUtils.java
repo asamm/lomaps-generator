@@ -99,9 +99,16 @@ public final class OSMUtils {
 
         boolean isTunnel = false;
         boolean isHighwayOrRailway = false;
+        boolean isWaterwayStream = false;
 
 		if (entity.getTags() != null) {
 			for (Tag tag : entity.getTags()) {
+
+                if (entity.getId() == 162329786){
+                    System.out.println ("Tag/value: " + tag.getKey() + " = " + tag.getValue());
+                }
+
+
 				String key = tag.getKey().toLowerCase(Locale.ENGLISH);
 				if ("name".equals(key) && !foundPreferredLanguageName) {
 					name = tag.getValue();
@@ -150,8 +157,14 @@ public final class OSMUtils {
 				}
                 else if ("tunnel".equals(key)){
                     String value = tag.getValue();
-                    if ( value.equals("yes") || value.equals("true")){
+                    if ( value.equals("yes") || value.equals("true") || value.equals("culvert")){
                         isTunnel = true;
+                    }
+                }
+                else if ("waterway".equals(key)){
+                    String value = tag.getValue();
+                    if ( value.equals("stream")){
+                        isWaterwayStream = true;
                     }
                 }
                 else if ("highway".equals(key)){
@@ -163,11 +176,21 @@ public final class OSMUtils {
 			}
 		}
 
-        // in case that entity is tunnel move it to the base level because we want to render it as
-        // normal way
+
+        // customize tags for Locus vector maps
+
+        // in case that entity is tunnel move it to the base level because we want to render it as normal way
         if (isTunnel && isHighwayOrRailway){
             layer = 5;
+            //System.out.println ("Set tunnel for id " + entity.getId());
         }
+        // in case that ways is stream but it is not in base lavel move it. It's workaround for streams in
+        // Slovakia that have layer=-1 but are normally visible in terrain.
+        if (isWaterwayStream && !isTunnel && layer == 4){
+            //System.out.println ("Set baselayer for stream " + entity.getId());
+            layer = 5;
+        }
+
 
 		return new SpecialTagExtractionResult(name, ref, housenumber, layer, elevation, relationType);
 	}
