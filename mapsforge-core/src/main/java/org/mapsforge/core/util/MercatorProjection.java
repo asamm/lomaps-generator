@@ -212,6 +212,8 @@ public final class MercatorProjection {
 	 * @return the tile X number of the longitude value.
 	 */
 	public static long longitudeToTileX(double longitude, byte zoomLevel, int tileSize) {
+
+        //System.out.println("longitudeToTileX:  longitude bounding box: " + longitude );
 		return pixelXToTileX(longitudeToPixelX(longitude, zoomLevel, tileSize), zoomLevel, tileSize);
 	}
 
@@ -278,7 +280,8 @@ public final class MercatorProjection {
 	public static double pixelXToLongitude(double pixelX, byte zoomLevel, int tileSize) {
 		long mapSize = getMapSize(zoomLevel, tileSize);
 		if (pixelX < 0 || pixelX > mapSize) {
-			throw new IllegalArgumentException("invalid pixelX coordinate at zoom level " + zoomLevel + ": " + pixelX);
+			throw new IllegalArgumentException("invalid pixelX coordinate at zoom level " + zoomLevel + ": " + pixelX
+                + " ; tileSize:  " +tileSize +" ; mapSize: " + mapSize);
 		}
 		return 360 * ((pixelX / mapSize) - 0.5);
 	}
