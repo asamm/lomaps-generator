@@ -87,6 +87,7 @@ public class CmdGenerate extends Cmd {
         addTagConf(Parameters.mTouristTagMapping);
         //addDebugFile();
         addZoomInterval();
+        addSimplificationFactor();
         addBboxEnlargement(10);
         addMapComment();
     }
@@ -156,6 +157,13 @@ public class CmdGenerate extends Cmd {
     private void addZoomIntervalContour () {
         addCommand("zoom-interval-conf=12,10,12,15,13,21"); 
     }
+
+    private void addSimplificationFactor () {
+        //default
+        //addCommand("simplification-factor=2.5");
+        addCommand("simplification-factor=4");
+    }
+
 
     private void addZoomInterval(){
         //default
