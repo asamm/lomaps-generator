@@ -22,6 +22,10 @@ public class Tags {
     public String natural;
     public String layer;
     public String whitesea;
+
+    // for polabska stezka
+    public String highway;
+    public String tracktype;
     
     
     // for cyclo nodetrack
@@ -77,6 +81,17 @@ public class Tags {
                 rcn = tag.val;
                 return;
             }
+
+            if (tag.key.equals("highway")){
+                System.out.println ("Parsw highway: " + tag.toString());
+                highway = tag.val;
+                return;
+            }
+            if (tag.key.equals("tracktype")){
+                tracktype = tag.val;
+                return;
+            }
+
             if (tag.key.equals("osmc:symbol")){
                 osmcsymbol = tag.val;
             }
@@ -310,6 +325,14 @@ public class Tags {
         }
         if (whitesea != null){
             str += "\n   <tag k=\"whitesea\" v=\""+StringEscapeUtils.escapeXml(whitesea)+"\"/>";
+        }
+
+        // for cyclo polabska
+        if (highway != null){
+            str += "\n   <tag k=\"highway\" v=\""+StringEscapeUtils.escapeXml(highway)+"\"/>";
+        }
+        if (tracktype != null){
+            str += "\n   <tag k=\"tracktype\" v=\""+StringEscapeUtils.escapeXml(tracktype)+"\"/>";
         }
 
         // for cyclo nodetrack

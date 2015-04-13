@@ -47,8 +47,10 @@ public class LocusServerConst {
     //  -----------------------------------------------
 
 
-    public static final String VECTOR_DESCRIPTION = "Vector maps work fully offline and are available for the whole world. These maps are placed directly in your device and for this reason you can " +
-            "change their appearance using built-in themes.\n"+
+    public static final String VECTOR_DESCRIPTION = "Locus maps work fully offline and are available for the whole world. " +
+            "These maps are placed directly in your device and for this reason you can change their appearance using built-in themes. " +
+            "Long tap on name of downloaded map (Menu > Maps > Vector) will populate dialog " +
+            "where it is possible to change the theme of the map..\n"+
             "\n<ul></ul>"+
             "\nAfter purchase of vector maps, follow please these instructions:"+
             "\n<ol>"+
