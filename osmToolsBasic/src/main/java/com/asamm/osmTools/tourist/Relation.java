@@ -55,8 +55,8 @@ public class Relation {
     public void membersToList (SparseArray<Relation> relations, WayList wl, long parentId){
        //counter ++;  
         if (!members.isEmpty()) {
-          //  System.out.println("Pocet spusteni membersToList: " + counter);
-          //  System.out.println("relation id: " + this.id);
+            //  System.out.println("Pocet spusteni membersToList: " + counter);
+            //  System.out.println("relation id: " + this.id);
 
             for (Member mbr : members ){
                 // test if member is not relations itselfs. if yes continue to next member
