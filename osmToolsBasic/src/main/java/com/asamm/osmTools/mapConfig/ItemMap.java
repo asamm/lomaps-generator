@@ -165,7 +165,7 @@ public class ItemMap extends AItemMap {
                 getDir() + mName + ".shp";
         mPathCoastline = Parameters.getDataDir() + DIR_COASTLINES + "_pbf" + Consts.FILE_SEP +
                 getDir() + mName + ".osm.pbf";
-        mPathMerge =  Consts.DIR_BASE + DIR_MERGE +
+        mPathMerge =  Parameters.getDataDir() + DIR_MERGE +
                 subPath + "." + Parameters.mapOutputFormat;
 
         // parameters for generating
