@@ -54,11 +54,11 @@ public class LocusServerConst {
             "\n<ul></ul>"+
             "\nAfter purchase of vector maps, follow please these instructions:"+
             "\n<ol>"+
-            "\n<li>open Menu  - Maps - Vector tab </li>"+
+            "\n<li>open Menu  - Maps - Offline tab </li>"+
             "\n<li>select vector map in a list</li> "+
             "\n</ol>"+
             "\n<h4>Locus Guarantee</h4>"+
-            "\nAll your vector maps you can repeatedly download for 1 year since your purchase in the same vector maps <b>version</b>.";
+            "\nLocus Map guarantees one year period when you can repeatedly download one version of your purchased vector map for free. The guarantee does not refer to map updates.";
 
 
     // ================== JSON STRINGS ==================
