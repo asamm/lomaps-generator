@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.map.writer.dataProcessor;
+package org.mapsforge.map.writer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,8 +23,9 @@ import java.util.Set;
 
 import org.mapsforge.map.writer.model.TDNode;
 import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileData;
 
-class RAMTileData extends TileData {
+public class RAMTileData extends TileData {
 	private final Set<TDNode> pois;
 	private final Set<TDWay> ways;
 
@@ -60,7 +61,7 @@ class RAMTileData extends TileData {
 				group = new ArrayList<>();
 			}
 			group.add(poi);
-			poisByZoomlevel.put(zoomlevel, group);
+			poisByZoomlevel.put(Byte.valueOf(zoomlevel), group);
 		}
 
 		return poisByZoomlevel;
@@ -82,7 +83,7 @@ class RAMTileData extends TileData {
 				group = new ArrayList<>();
 			}
 			group.add(way);
-			waysByZoomlevel.put(zoomlevel, group);
+			waysByZoomlevel.put(Byte.valueOf(zoomlevel), group);
 		}
 
 		return waysByZoomlevel;

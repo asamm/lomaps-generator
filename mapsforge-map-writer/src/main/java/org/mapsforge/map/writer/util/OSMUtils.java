@@ -26,6 +26,7 @@ import org.mapsforge.map.writer.model.OSMTag;
 import org.mapsforge.map.writer.model.SpecialTagExtractionResult;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
+import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 /**
  * OpenStreetMap related utility methods.
@@ -93,22 +94,12 @@ public final class OSMUtils {
 		String name = null;
 		String ref = null;
 		String housenumber = null;
-        byte layer = 5;
+		byte layer = 5;
 		short elevation = 0;
 		String relationType = null;
 
-        boolean isTunnel = false;
-        boolean isHighwayOrRailway = false;
-        boolean isWaterwayStream = false;
-
 		if (entity.getTags() != null) {
 			for (Tag tag : entity.getTags()) {
-
-                if (entity.getId() == 162329786){
-                    System.out.println ("Tag/value: " + tag.getKey() + " = " + tag.getValue());
-                }
-
-
 				String key = tag.getKey().toLowerCase(Locale.ENGLISH);
 				if ("name".equals(key) && !foundPreferredLanguageName) {
 					name = tag.getValue();
@@ -155,45 +146,62 @@ public final class OSMUtils {
 						}
 					}
 				}
-                else if ("tunnel".equals(key)){
-                    String value = tag.getValue();
-                    if ( value.equals("yes") || value.equals("true") || value.equals("culvert")){
-                        isTunnel = true;
-                    }
-                }
-                else if ("waterway".equals(key)){
-                    String value = tag.getValue();
-                    if ( value.equals("stream")){
-                        isWaterwayStream = true;
-                    }
-                }
-                else if ("highway".equals(key)){
-                    isHighwayOrRailway = true;
-                }
-                else if ("railway".equals(key)){
-                    isHighwayOrRailway = true;
-                }
 			}
 		}
 
-
-        // customize tags for Locus vector maps
-
-        // in case that entity is tunnel move it to the base level because we want to render it as normal way
-        if (isTunnel && isHighwayOrRailway){
-            layer = 5;
-            //System.out.println ("Set tunnel for id " + entity.getId());
-        }
-        // in case that ways is stream but it is not in base lavel move it. It's workaround for streams in
-        // Slovakia that have layer=-1 but are normally visible in terrain.
-        if (isWaterwayStream && !isTunnel && layer == 4){
-            //System.out.println ("Set baselayer for stream " + entity.getId());
-            layer = 5;
-        }
-
-
 		return new SpecialTagExtractionResult(name, ref, housenumber, layer, elevation, relationType);
 	}
+
+
+	/**
+	 * Heuristic to determine from attributes if a way is likely to be an area.
+	 * Precondition for this call is that the first and last node of a way are the
+	 * same, so that this method should only return false if it is known that the
+	 * feature should not be an area even if the geometry is a polygon.
+	 *
+	 * Determining what is an area is neigh impossible in OSM, this method inspects tag elements
+	 * to give a likely answer. See http://wiki.openstreetmap.org/wiki/The_Future_of_Areas and
+	 * http://wiki.openstreetmap.org/wiki/Way
+	 *
+	 * @param way
+	 *            the way (which is assumed to be closed and have enough nodes to be an area)
+	 * @return true if tags indicate this is an area, otherwise false.
+	 */
+	public static boolean isArea(Way way) {
+		boolean result = true;
+		if (way.getTags() != null) {
+			for (Tag tag : way.getTags()) {
+				String key = tag.getKey().toLowerCase(Locale.ENGLISH);
+				String value = tag.getValue().toLowerCase(Locale.ENGLISH);
+				if ("area".equals(key)) {
+					// obvious result
+					if (("yes").equals(value) || ("y").equals(value) || ("true").equals(value)) {
+						return true;
+					}
+					if (("no").equals(value) || ("n").equals(value) || ("false").equals(value)) {
+						return false;
+					}
+				}
+				if ("highway".equals(key) || "barrier".equals(key)) {
+					// false unless something else overrides this.
+					result = false;
+				}
+				if ("railway".equals(key)) {
+					// there is more to the railway tag then just rails, this excludes the
+					// most common railway lines from being detected as areas if they are closed.
+					// Since this method is only called if the first and last node are the same
+					// this should be safe
+					if ("rail".equals(value) || "tram".equals(value) || "subway".equals(value) ||
+						"monorail".equals(value) || "narrow_gauge".equals(value) || "preserved".equals(value)
+						|| "light_rail".equals(value) || "construction".equals(value)) {
+						result = false;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
 
 	private OSMUtils() {
 	}

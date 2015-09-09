@@ -1,9 +1,6 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
-import com.asamm.osmTools.generatorDb.AGenerator;
-import com.asamm.osmTools.generatorDb.GeneratorAddress;
-import com.asamm.osmTools.generatorDb.GeneratorPoi;
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
+import com.asamm.osmTools.generatorDb.*;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;
@@ -11,6 +8,7 @@ import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.openstreetmap.osmosis.core.task.v0_6.Sink;
 
@@ -28,7 +26,7 @@ public class DataGeneratorTask implements Sink {
 
 	// task configuration
 	private Configuration conf;
-	
+
 	// container for all data
 	private ADataContainer dc = null;
 	// generator for result database
@@ -43,7 +41,7 @@ public class DataGeneratorTask implements Sink {
 		// read all data
 		try {
 			if (conf.getGenerateType() == Configuration.GenerateType.POI) {
-				DataWriterDefinition nodeHandler = new DataWriterDefinition(config.getFileConfig());
+				WriterPoiDefinition nodeHandler = new WriterPoiDefinition(config.getFileConfig());
 
 				// prepare data container
 				int size = (int) (conf.getFileDatabase().length() / 1024L / 1024L);
@@ -57,8 +55,28 @@ public class DataGeneratorTask implements Sink {
 							new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
 				}
 				generator = new GeneratorPoi(conf.getFileDatabase(), nodeHandler);
-			} else if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS) {
-				generator = new GeneratorAddress();
+			}
+            else if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS) {
+                Logger.i(TAG, "Start address generator");
+                WriterAddressDefinition addressDefinition = new WriterAddressDefinition();
+
+                if (conf.getDataContainerType() == Configuration.DataContainerType.RAM) {
+//TODO Uncoment
+//                    Logger.i(TAG, "creating data container: RAM");
+//                    dc = new DataContainerRam(addressDefinition);
+
+                    Logger.i(TAG, "creating data container: HDD");
+                    dc = new DataContainerHdd(addressDefinition,
+                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
+                } else {
+                    Logger.i(TAG, "creating data container: HDD");
+                    dc = new DataContainerHdd(addressDefinition,
+                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
+                }
+
+                generator = new GeneratorAddress(
+                        addressDefinition,
+                        new File(config.getFileDatabase().getAbsolutePath()));
 			}
 		} catch (Exception e) {
             Logger.e(TAG, "DataGeneratorTask(), problem with preparations", e);
@@ -80,7 +98,6 @@ public class DataGeneratorTask implements Sink {
     @Override
     public final void process(EntityContainer entityContainer) {
         Entity entity = entityContainer.getEntity();
-
         switch (entity.getType()) {
             case Bound:
                 break;
@@ -93,12 +110,16 @@ public class DataGeneratorTask implements Sink {
                 dc.addWay(way);
                 break;
             case Relation:
+                Relation relation = (Relation) entity;
+                dc.addRelation(relation);
                 break;
         }
     }
 
     @Override
 	public final void complete() {
+
+        dc.finalizeCaching();
 		Logger.d(TAG, "complete reading, start generating");
 
 		// generate database

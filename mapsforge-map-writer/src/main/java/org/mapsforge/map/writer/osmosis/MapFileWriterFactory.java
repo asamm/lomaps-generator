@@ -44,10 +44,6 @@ class MapFileWriterFactory extends TaskManagerFactory {
 	private static final String PARAM_WAY_CLIPPING = "way-clipping";
 	private static final String PARAM_ZOOMINTERVAL_CONFIG = "zoom-interval-conf";
 
-    // verbose parameter from osmosis
-    private static final String PARAM_VEBOSE_SHORT = "v";
-    private static final String PARAM_VEBOSE_LONG = "verbose";
-
 	@Override
 	protected TaskManager createTaskManagerImpl(TaskConfiguration taskConfig) {
 		MapWriterConfiguration configuration = new MapWriterConfiguration();
@@ -77,14 +73,6 @@ class MapFileWriterFactory extends TaskManagerFactory {
 		configuration.setPreferredLanguage(getStringArgument(taskConfig, PARAM_PREFERRED_LANGUAGE, null));
 		configuration
 				.addEncodingChoice(getStringArgument(taskConfig, PARAM_ENCODING, Constants.DEFAULT_PARAM_ENCODING));
-
-        if (doesArgumentExist(taskConfig, PARAM_VEBOSE_SHORT) || doesArgumentExist(taskConfig, PARAM_VEBOSE_LONG)){
-            configuration.setVerbose(true);
-        }
-        else {
-            configuration.setVerbose(false);
-        }
-
 
 		configuration.validate();
 

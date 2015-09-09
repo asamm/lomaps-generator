@@ -1,7 +1,7 @@
 package com.asamm.osmTools.generatorDb.data;
 
 import com.asamm.locus.features.dbPoi.DbPoiConst;
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
+import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
@@ -21,7 +21,7 @@ public class OsmPoi extends AOsmObject {
 		}
 	}
 	
-	public static OsmPoi create(Entity entity, DataWriterDefinition nodeHandler) {
+	public static OsmPoi create(Entity entity, WriterPoiDefinition nodeHandler) {
 		// check type
 		if (!(entity instanceof Node || entity instanceof WayEx)) {
 			return null;
@@ -41,13 +41,13 @@ public class OsmPoi extends AOsmObject {
     private double mLat = 0.0;
 	
 	// flag if it's a wanted poi
-	private List<DataWriterDefinition.DbRootSubContainer> rootSubContainer;
+	private List<WriterPoiDefinition.DbRootSubContainer> rootSubContainer;
 	private List<Tag> tags;
 	
 	// handler for nodes (generated from XML)
-	private DataWriterDefinition nodeHandler;
+	private WriterPoiDefinition nodeHandler;
 		
-	private OsmPoi(Entity entity, DataWriterDefinition nodeHandler) {
+	private OsmPoi(Entity entity, WriterPoiDefinition nodeHandler) {
 		super(entity);
 		this.nodeHandler = nodeHandler;
 		this.rootSubContainer = new ArrayList<>();
@@ -104,7 +104,7 @@ public class OsmPoi extends AOsmObject {
 		return mLat;
 	}
 	
-	public List<DataWriterDefinition.DbRootSubContainer> getRootSubContainers() {
+	public List<WriterPoiDefinition.DbRootSubContainer> getRootSubContainers() {
 		return rootSubContainer;
 	}
 	
@@ -129,7 +129,7 @@ public class OsmPoi extends AOsmObject {
 
 	@Override
 	protected boolean handleTag(String key, String value) {
-		DataWriterDefinition.DbRootSubContainer node =
+		WriterPoiDefinition.DbRootSubContainer node =
                 nodeHandler.getNodeContainer(getEntityType(), key, value);
 		if (node != null) {
 			rootSubContainer.add(node);

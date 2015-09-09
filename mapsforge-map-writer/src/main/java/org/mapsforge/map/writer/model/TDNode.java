@@ -22,8 +22,11 @@ import org.mapsforge.map.writer.util.OSMUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
 public class TDNode {
+	// private static final Logger LOGGER = Logger.getLogger(TDNode.class.getName());
 
 	private static final byte ZOOM_HOUSENUMBER = (byte) 18;
+
+	// private static final byte ZOOM_NAME = (byte) 16;
 
 	/**
 	 * Constructs a new TDNode from a given osmosis node entity. Checks the validity of the entity.
@@ -35,19 +38,12 @@ public class TDNode {
 	 * @return a new TDNode
 	 */
 	public static TDNode fromNode(Node node, String preferredLanguage) {
-        // extract data
 		SpecialTagExtractionResult ster = OSMUtils.extractSpecialFields(node, preferredLanguage);
 		short[] knownWayTags = OSMUtils.extractKnownPOITags(node);
 
-        // create new node
-		return new TDNode(node.getId(),
-                LatLongUtils.degreesToMicrodegrees(node.getLatitude()),
-				LatLongUtils.degreesToMicrodegrees(node.getLongitude()),
-                ster.getElevation(),
-                ster.getLayer(),
-				ster.getHousenumber(),
-                ster.getName(),
-                knownWayTags);
+		return new TDNode(node.getId(), LatLongUtils.degreesToMicrodegrees(node.getLatitude()),
+				LatLongUtils.degreesToMicrodegrees(node.getLongitude()), ster.getElevation(), ster.getLayer(),
+				ster.getHousenumber(), ster.getName(), knownWayTags);
 	}
 
 	private final short elevation;
@@ -76,11 +72,37 @@ public class TDNode {
 	 *            the house number if existent
 	 * @param name
 	 *            the name if existent
+	 */
+	public TDNode(long id, int latitude, int longitude, short elevation, byte layer, String houseNumber, String name) {
+		this.id = id;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.elevation = elevation;
+		this.houseNumber = houseNumber;
+		this.layer = layer;
+		this.name = name;
+	}
+
+	/**
+	 * @param id
+	 *            the OSM id
+	 * @param latitude
+	 *            the latitude
+	 * @param longitude
+	 *            the longitude
+	 * @param elevation
+	 *            the elevation if existent
+	 * @param layer
+	 *            the layer if existent
+	 * @param houseNumber
+	 *            the house number if existent
+	 * @param name
+	 *            the name if existent
 	 * @param tags
 	 *            the
 	 */
-    private TDNode(long id, int latitude, int longitude, short elevation,
-                  byte layer, String houseNumber, String name, short[] tags) {
+	public TDNode(long id, int latitude, int longitude, short elevation, byte layer, String houseNumber, String name,
+			short[] tags) {
 		this.id = id;
 		this.latitude = latitude;
 		this.longitude = longitude;
@@ -103,8 +125,11 @@ public class TDNode {
 			return false;
 		}
 		TDNode other = (TDNode) obj;
-        return this.id == other.id;
-    }
+		if (this.id != other.id) {
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * @return the elevation
@@ -188,6 +213,14 @@ public class TDNode {
 	 */
 	public boolean isPOI() {
 		return this.houseNumber != null || this.elevation != 0 || this.tags.length > 0;
+	}
+
+	/**
+	 * @param tags
+	 *            the tags to set
+	 */
+	public void setTags(short[] tags) {
+		this.tags = tags;
 	}
 
 	@Override

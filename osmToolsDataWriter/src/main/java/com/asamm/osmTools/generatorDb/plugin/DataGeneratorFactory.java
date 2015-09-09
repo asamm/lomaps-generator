@@ -9,10 +9,11 @@ class DataGeneratorFactory extends TaskManagerFactory {
 
 	private static final String PARAM_TYPE = "-type";
 	private static final String PARAM_FILE_DB = "-fileDb";
-	private static final String PARAM_FILE_CONFIG = "-fileConfig";
+    private static final String PARAM_FILE_CONFIG = "-fileConfig";
 	private static final String PARAM_TESTING = "-testing";
 	private static final String PARAM_TESTING_REPORT_FROM = "-testingFrom";
 	private static final String PARAM_TESTING_REPORT_COUNT = "-testingCount";
+    private static final String PARAM_DATA_CONTAINER_TYPE = "-dataContainerType";
 
 	@Override
 	protected TaskManager createTaskManagerImpl(TaskConfiguration taskConfig) {
@@ -26,7 +27,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
 				taskConfig, PARAM_FILE_DB, "").trim());
 		conf.setFileConfig(getStringArgument(
 				taskConfig, PARAM_FILE_CONFIG, "").trim());
-		
+
 		// testing part (optional)
 		conf.testing = getBooleanArgument(
 				taskConfig, PARAM_TESTING, false);
@@ -34,7 +35,10 @@ class DataGeneratorFactory extends TaskManagerFactory {
 				taskConfig, PARAM_TESTING_REPORT_FROM, 0);
 		conf.reportCount = getIntegerArgument(
 				taskConfig, PARAM_TESTING_REPORT_COUNT, 0);
-		
+
+        conf.setDataContainerType(getStringArgument(
+                taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
+
 		// validate configuration
 		conf.validate();
 

@@ -1,54 +1,32 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
-import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
+import com.asamm.osmTools.generatorDb.AWriterDefinition;
+import com.asamm.osmTools.generatorDb.address.Street;
+import com.asamm.osmTools.generatorDb.db.DatabaseDataTmp;
 import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.base64.Base64;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-import org.openstreetmap.osmosis.core.store.DataInputStoreReader;
-import org.openstreetmap.osmosis.core.store.DataOutputStoreWriter;
-import org.openstreetmap.osmosis.core.store.DynamicStoreClassRegister;
 
-import javax.naming.directory.InvalidAttributesException;
 import java.io.*;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Hashtable;
+import java.util.HashSet;
+import java.util.List;
 
 public class DataContainerHdd extends ADataContainer {
 
     private static final String TAG = DataContainerHdd.class.getSimpleName();
 
-	private ADatabaseHandler dbHandler;
+	private DatabaseDataTmp dbData;
+
+
+
 	
-	private Hashtable<Long, Way> ways;
-	
-	// dynamic register for database
-	private ByteArrayOutputStream baos;
-	private DataOutputStoreWriter dosw;
-	private DynamicStoreClassRegister dynamicRegister;
-	
-	public DataContainerHdd(DataWriterDefinition nodeHandler, File tempFile) throws Exception {
-		super(nodeHandler);
-		this.ways = new Hashtable<>();
-		dbHandler = new ADatabaseHandler(tempFile, true) {
-			
-			@Override
-			protected void setTables(Connection conn) throws SQLException,
-					InvalidAttributesException {
-				// create table with types
-				String sql = "CREATE TABLE nodes (";
-				sql += "id INTEGER NOT NULL PRIMARY KEY,";
-				sql += "data BLOB NOT NULL)";
-				Statement stmt = conn.createStatement();
-				stmt.execute(sql);
-				stmt.close();
-			}
-		};
-	}
+	public DataContainerHdd(AWriterDefinition writerDefinition, File tempFile) throws Exception {
+		super(writerDefinition);
+        dbData = new DatabaseDataTmp(tempFile,true);
+
+        Logger.i(TAG, "HDD container created");
+    }
 
 	@Override
 	public void insertNodeToCache(Node node) {
@@ -56,66 +34,75 @@ public class DataContainerHdd extends ADataContainer {
 		if (node == null) {
 			return;
 		}
-		
-		baos.reset();
-		node.store(dosw, dynamicRegister);
-		try {
-			baos.flush();
-		} catch (IOException e1) {}
-		StringBuilder sb = new StringBuilder();
-		try {
-			// generate query
-			sb.append("INSERT INTO nodes (id, data) VALUES (");
-			sb.append("'").append(node.getId()).append("', ");
-			sb.append("'").append(Base64.encode(baos.toByteArray())).append("');");
-				
-			// execute query
-			dbHandler.getStmt().executeUpdate(sb.toString());
-		} catch (SQLException e) {
-            Logger.e(TAG, "insertPoi(), problem with query:" + sb.toString(), e);
-		}
+        dbData.insertNode(node.getId(), node);
 	}
 
 	@Override
 	public void insertWayToCache(Way way) {
-		ways.put(way.getId(), way);
+		//ways.put(way.getId(), way);
+        if (way == null){
+            return;
+        }
+        dbData.insertWay(way.getId(), way);
 	}
+
+    @Override
+    public void insertRelationToCache (Relation relation){
+        if (relation == null){
+            return;
+        }
+        dbData.insertRelation(relation.getId(), relation);
+    }
 
 	@Override
 	public Node getNodeFromCache(long id) {
-		// generate query
-		String query = "SELECT data FROM nodes WHERE id=" + id;
-						
-		// execute query
-		try {
-			ResultSet rs = dbHandler.getStmt().executeQuery(query);
-			if (rs.next()) {
-				byte[] nodeData = Base64.decode(rs.getString(1));
-				ByteArrayInputStream bais = new ByteArrayInputStream(nodeData);
-				DataInputStream dis = new DataInputStream(bais);
-				DataInputStoreReader disr = new DataInputStoreReader(dis);
-				Node node = new Node(disr, dynamicRegister);
-				dis.close();
-				return node;
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		return dbData.selectNode(id);
 	}
 
+    /**
+     * Get osm way from cache
+     * @param id osm id of way
+     * @return
+     */
 	@Override
 	public Way getWayFromCache(long id) {
-		return ways.get(id);
+        return dbData.selectWay(id);
 	}
-	
-	@Override
+
+    @Override
+    public Relation getRelationFromCache(long id) {
+        return dbData.selectRelation(id);
+    }
+
+    /**
+     * Flush not executed batch statement
+     */
+    @Override
+    public void finalizeCaching() {
+        dbData.finalizeBatchStatement();
+    }
+
+    public void finalizeWayStreetCaching () {
+        dbData.createStreetIndex();
+    }
+
+
+    @Override
+    public void insertWayStreetToCache(int hash, Street street) {
+        dbData.insertStreet(hash, street);
+    }
+
+    @Override
+    public List<Street> getWayStreetsFromCache(int hash) {
+        return dbData.selectStreets (hash);
+    }
+
+
+    @Override
 	public void destroy() {
 		super.destroy();
 		try {
-			dbHandler.destroy();
+            dbData.destroy();
 		} catch (Exception e) {}
 	}
-
 }

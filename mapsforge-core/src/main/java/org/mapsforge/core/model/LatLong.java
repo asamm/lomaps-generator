@@ -39,13 +39,21 @@ public class LatLong implements Comparable<LatLong>, Serializable {
 	 *            the latitude coordinate in degrees.
 	 * @param longitude
 	 *            the longitude coordinate in degrees.
+	 * @param validate
 	 * @throws IllegalArgumentException
 	 *             if a coordinate is invalid.
 	 */
-	public LatLong(double latitude, double longitude) {
-		LatLongUtils.validateLatitude(latitude);
-		LatLongUtils.validateLongitude(longitude);
+	public LatLong(double latitude, double longitude, boolean validate) {
+		if (validate) {
+			LatLongUtils.validateLatitude(latitude);
+			LatLongUtils.validateLongitude(longitude);
+		}
 
+		this.latitude = latitude;
+		this.longitude = longitude;
+	}
+
+	public LatLong(double latitude, double longitude) {
 		this.latitude = latitude;
 		this.longitude = longitude;
 	}
@@ -62,6 +70,10 @@ public class LatLong implements Comparable<LatLong>, Serializable {
 			return -1;
 		}
 		return 0;
+	}
+
+	public double distance(LatLong other) {
+		return Math.hypot(this.longitude - other.longitude, this.latitude - other.latitude);
 	}
 
 	@Override

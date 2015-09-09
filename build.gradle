@@ -1,6 +1,16 @@
+/*
+project('osmToolsDataWriter') {
+    repositories {
+        maven {
+            url "http://download.osgeo.org/webdav/geotools/"
+        }
+    }
+}
+*/
+
 allprojects {
     repositories {
-        mavenCentral()
+       mavenCentral()
     }
 }
 

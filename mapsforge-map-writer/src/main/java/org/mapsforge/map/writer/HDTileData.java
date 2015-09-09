@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.map.writer.dataProcessor;
+package org.mapsforge.map.writer;
 
 import gnu.trove.list.array.TLongArrayList;
 
@@ -21,8 +21,9 @@ import java.util.Map;
 
 import org.mapsforge.map.writer.model.TDNode;
 import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileData;
 
-class HDTileData extends TileData {
+public class HDTileData extends TileData {
 	private final TLongArrayList pois;
 	private final TLongArrayList ways;
 

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/OsmTools.iml" filepath="$PROJECT_DIR$/OsmTools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/locusApi/locusApi.iml" filepath="$PROJECT_DIR$/locusApi/locusApi.iml" />
       <module fileurl="file://$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" filepath="$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" filepath="$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" />
       <module fileurl="file://$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" filepath="$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" />
