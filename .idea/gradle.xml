@@ -8,6 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/locusApi" />
             <option value="$PROJECT_DIR$/mapsforge-core" />
             <option value="$PROJECT_DIR$/mapsforge-map-writer" />
             <option value="$PROJECT_DIR$/osmToolsBasic" />

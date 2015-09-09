@@ -2,7 +2,7 @@ package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.locus.features.dbPoi.DbPoiConst;
 import com.asamm.osmTools.Parameters;
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
+import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
@@ -39,7 +39,7 @@ public class CmdAddressPoiDb extends Cmd {
         return mFilePoiDb;
     }
 
-    public void addTaskSimplify(DataWriterDefinition definition) throws IOException {
+    public void addTaskSimplify(WriterPoiDefinition definition) throws IOException {
         FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadSource();
@@ -80,13 +80,35 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("-type=poi");
         addCommand("-fileDb=" + mFilePoiDb);
         addCommand("-fileConfig=" + Parameters.getConfigApDbPath());
+
     }
 
-    private void addListOfTags(DataWriterDefinition definition, DbPoiConst.EntityType type) {
+    /**
+     * Prepare cmd line to run osmosis for generation post address database
+     */
+    public void addGeneratorAddress () {
+
+        addReadPbf(getMap().getPathSource());
+        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
+        addCommand("-type=address");
+        addCommand("-fileDb=" + mFilePoiDb);
+
+        File file = new File(getMap().getPathSource());
+
+        int size = (int) (file.length() / 1024L / 1024L);
+        if (size <= 400) {
+            addCommand("-dataContainerType=ram");
+        }
+        else {
+            addCommand("-dataContainerType=hdd");
+        }
+    }
+
+    private void addListOfTags(WriterPoiDefinition definition, DbPoiConst.EntityType type) {
         // prepare list of tags
-        List<DataWriterDefinition.DbRootSubContainer> nodes = definition.getRootSubContainers();
+        List<WriterPoiDefinition.DbRootSubContainer> nodes = definition.getRootSubContainers();
         Hashtable<String, String> nodesPrep = new Hashtable<String, String>();
-        for (DataWriterDefinition.DbRootSubContainer dbDef : nodes) {
+        for (WriterPoiDefinition.DbRootSubContainer dbDef : nodes) {
             // check type
             if (!dbDef.isValidType(type)) {
                 continue;

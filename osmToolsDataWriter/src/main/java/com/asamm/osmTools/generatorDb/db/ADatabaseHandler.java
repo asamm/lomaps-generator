@@ -1,23 +1,28 @@
 package com.asamm.osmTools.generatorDb.db;
 
+import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
+import com.vividsolutions.jts.io.*;
 import org.sqlite.SQLiteConfig;
 
 import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.List;
 
 public abstract class ADatabaseHandler {
 
 	private static final String TAG = ADatabaseHandler.class.getSimpleName();
 
+    protected WKBWriter wkbWriter;
+    protected WKBReader wkbReader;
+    protected WKTWriter wktWriter;
+    protected WKTReader wktReader;
+
 	private boolean ready;
 	private File dbFile;
 
-	private Connection conn;
+	protected Connection conn;
 	private Statement stmt;
 	
 	public ADatabaseHandler(File file, boolean deleteExistingDb) {
@@ -33,6 +38,13 @@ public abstract class ADatabaseHandler {
 
 	protected void initialize() throws ClassNotFoundException, 
 		SQLException, InvalidAttributesException {
+
+        // init geometry writer
+        wkbWriter = new WKBWriter();
+        wktWriter = new WKTWriter(2);
+        wkbReader = new WKBReader();
+        wktReader = new WKTReader();
+
 		// load the SQLite-JDBC driver using the current class loader
 		Class.forName("org.sqlite.JDBC");
 
@@ -72,9 +84,13 @@ public abstract class ADatabaseHandler {
 		// set ready flag
 		ready = true;
 	}
-	
+
+    protected PreparedStatement createPreparedStatement (String sql) throws SQLException {
+        return conn.prepareStatement(sql);
+    }
+
 	protected void executeStatement(String sql) throws SQLException {
-		Logger.d(TAG, "executeStatement(" + sql + ")");
+		Logger.i(TAG, "executeStatement(" + sql + ")");
 		stmt.execute(sql);
 	}
 	
@@ -120,4 +136,6 @@ public abstract class ADatabaseHandler {
 		text = text.replace("'", "''");
 		return text;
 	}
+
+
 }

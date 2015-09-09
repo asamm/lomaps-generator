@@ -45,12 +45,12 @@ public final class Constants {
 	/**
 	 * Default simplification factor.
 	 */
-	public static final double DEFAULT_SIMPLIFICATION_FACTOR = 10.0;
+	public static final double DEFAULT_SIMPLIFICATION_FACTOR = 2.5;
 
 	/**
 	 * The default size of a tile in pixel.
 	 */
-	public static final int DEFAULT_TILE_SIZE = 512;
+	public static final int DEFAULT_TILE_SIZE = 256;
 	/**
 	 * The maximum base zoom level for which we apply a simplification algorithm to filter way points.
 	 */

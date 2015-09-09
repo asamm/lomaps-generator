@@ -54,8 +54,6 @@ public class MapWriterConfiguration {
 	private String writerVersion;
 	private ZoomIntervalConfiguration zoomIntervalConfiguration;
 
-    private boolean verbose;
-
 	/**
 	 * Convenience method.
 	 * 
@@ -502,12 +500,4 @@ public class MapWriterConfiguration {
 							+ this.mapStartPosition.toString());
 		}
 	}
-
-    public boolean isVerbose() {
-        return verbose;
-    }
-
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
-    }
 }

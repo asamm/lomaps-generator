@@ -1,7 +1,7 @@
 package com.asamm.osmTools.generatorDb.db;
 
+import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.utils.Logger;
 
@@ -24,7 +24,7 @@ public class DatabasePoi extends ADatabaseHandler {
 
 	private static final String TAG = DatabasePoi.class.getSimpleName();
 	
-	private DataWriterDefinition nodeHandler;
+	private WriterPoiDefinition writerPoiDefinition;
 	// statement for inserting values into TN_TAG_VALUES table
 	private PreparedStatement psInsertTV;
 	// statement for inserting points
@@ -39,9 +39,9 @@ public class DatabasePoi extends ADatabaseHandler {
 	private Hashtable<String, Long> tagKeys;
 	private Hashtable<String, Long> tagValues;
 	
-	public DatabasePoi(File file, DataWriterDefinition nodeHandler) throws Exception {
+	public DatabasePoi(File file, WriterPoiDefinition poiDefinition) throws Exception {
 		super(file, true);
-		this.nodeHandler = nodeHandler;
+		this.writerPoiDefinition = poiDefinition;
 		
 		// initialize database
 		initialize();
@@ -51,11 +51,11 @@ public class DatabasePoi extends ADatabaseHandler {
 	protected void setTables(Connection conn) throws SQLException, InvalidAttributesException {
 		// create table with types
 		foldersRoot = insertValueTable(
-				conn, TN_FOLDERS_ROOT, nodeHandler.foldersRoot);
+				conn, TN_FOLDERS_ROOT, writerPoiDefinition.foldersRoot);
 		foldersSub = insertValueTable(
-				conn, TN_FOLDERS_SUB, nodeHandler.foldersSub);
+				conn, TN_FOLDERS_SUB, writerPoiDefinition.foldersSub);
 		tagKeys = insertValueTable(
-				conn, TN_TAG_KEYS, nodeHandler.getSupportedKeysForDb());
+				conn, TN_TAG_KEYS, writerPoiDefinition.getSupportedKeysForDb());
 		tagValues = insertValueTable(
 				conn, TN_TAG_VALUES, new ArrayList<String>());
 		
@@ -244,9 +244,9 @@ public class DatabasePoi extends ADatabaseHandler {
 	        }
 	        
 	        // insert types (Root/Sub folders) into DB
-            List<DataWriterDefinition.DbRootSubContainer> containers = poi.getRootSubContainers();
+            List<WriterPoiDefinition.DbRootSubContainer> containers = poi.getRootSubContainers();
 	        for (int i = 0, m = containers.size(); i < m; i++) {
-                DataWriterDefinition.DbRootSubContainer nc = containers.get(i);
+                WriterPoiDefinition.DbRootSubContainer nc = containers.get(i);
 	        	psInsertPRS.setLong(1, poiRowId);
 	        	psInsertPRS.setLong(2, foldersRoot.get(nc.folRoot));
 	        	psInsertPRS.setLong(3, foldersSub.get(nc.folSub));

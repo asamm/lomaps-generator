@@ -12,31 +12,36 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.map.writer.dataProcessor;
+package org.mapsforge.map.writer.model;
+
+import java.util.List;
+import java.util.Set;
 
 import org.mapsforge.core.model.BoundingBox;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileGridLayout;
-import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-
-import java.util.List;
 
 /**
  * A TileBasedDataStore allows tile based access to OpenStreetMap geo data. POIs and ways are mapped to tiles on
  * configured base zoom levels.
  */
 public interface TileBasedDataProcessor {
-
-    /**
+	/**
 	 * Add a node to the data store. No association with a tile is performed.
 	 * 
 	 * @param node
 	 *            the node
 	 */
 	void addNode(Node node);
+
+	/**
+	 * Add a relation to the data store.
+	 * 
+	 * @param relation
+	 *            the relation
+	 */
+	void addRelation(Relation relation);
 
 	/**
 	 * Add a way to the data store.
@@ -46,18 +51,18 @@ public interface TileBasedDataProcessor {
 	 */
 	void addWay(Way way);
 
-    /**
-     * Add a relation to the data store.
-     *
-     * @param relation
-     *            the relation
-     */
-    void addRelation(Relation relation);
-
 	/**
 	 * Complete the data store, e.g. build indexes or similar.
 	 */
 	void complete();
+
+	/**
+	 * Retrieve the total amount of tiles cumulated over all base zoom levels that is needed to represent the underlying
+	 * bounding box of this tile data store.
+	 * 
+	 * @return total amount of tiles
+	 */
+	long cumulatedNumberOfTiles();
 
 	/**
 	 * Get the bounding box that describes this TileBasedDataStore.
@@ -65,6 +70,15 @@ public interface TileBasedDataProcessor {
 	 * @return The bounding box that defines the area that is covered by the data store.
 	 */
 	BoundingBox getBoundingBox();
+
+	/**
+	 * Retrieve all coastlines that cross the given tile.
+	 * 
+	 * @param tc
+	 *            the coordinate of the tile
+	 * @return all coastlines that cross the tile, an empty set if no coastlines cross
+	 */
+	Set<TDWay> getCoastLines(TileCoordinate tc);
 
 	/**
 	 * Retrieve the all the inner ways that are associated with an outer way that represents a multipolygon.

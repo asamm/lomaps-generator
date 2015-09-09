@@ -87,14 +87,16 @@ public class TDWay {
 				byte shape = LINE;
 				if (waynodes[0].getId() == waynodes[waynodes.length - 1].getId()) {
 					if (waynodes.length >= GeoUtils.MIN_NODES_POLYGON) {
-						shape = SIMPLE_POLYGON;
+						if (OSMUtils.isArea(way)) {
+							shape = SIMPLE_POLYGON;
+						}
 					} else {
 						LOGGER.finer("Found closed polygon with fewer than 4 way nodes. Way-id: " + way.getId());
 						return null;
 					}
 				}
 
-                return new TDWay(way.getId(), ster.getLayer(), ster.getName(), ster.getHousenumber(), ster.getRef(),
+				return new TDWay(way.getId(), ster.getLayer(), ster.getName(), ster.getHousenumber(), ster.getRef(),
 						knownWayTags, shape, waynodes);
 			}
 		}

@@ -13,7 +13,7 @@ public abstract class AGenerator {
 
     private static final String TAG = AGenerator.class.getSimpleName();
 
-	private ADatabaseHandler db;
+	protected ADatabaseHandler db;
 	
 	// prepare database
 	protected void initialize() throws Exception {
@@ -55,4 +55,6 @@ public abstract class AGenerator {
 	protected abstract AOsmObject addNodeImpl(Node node, ADatabaseHandler db);
 
 	protected abstract AOsmObject addWayImp(WayEx way, ADatabaseHandler db);
+
+
 }

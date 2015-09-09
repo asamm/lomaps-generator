@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DataWriterDefinition {
+public class WriterPoiDefinition extends  AWriterDefinition{
 
-    private static final String TAG = DataWriterDefinition.class.getSimpleName();
+    private static final String TAG = WriterPoiDefinition.class.getSimpleName();
 
 	private File file;
 	private List<DbRootSubContainer> nodes;
@@ -77,7 +77,7 @@ public class DataWriterDefinition {
 		}
 	}
 
-	public DataWriterDefinition(File file) throws Exception {
+	public WriterPoiDefinition(File file) throws Exception {
 		Logger.d(TAG, "NodeHandler(" + file.getAbsolutePath() + ")");
 		this.file = file;
 		this.nodes = new ArrayList<>();
@@ -95,7 +95,8 @@ public class DataWriterDefinition {
 		this.tagKeysUrl = new ArrayList<>();
 		parseData();
 	}
-	
+
+    @Override
 	public boolean isValidEntity(Entity entity) {
 		// quick check
 		if (entity == null || entity.getTags() == null) {
@@ -120,15 +121,6 @@ public class DataWriterDefinition {
 		return nodes;
 	}
 	
-	private DbPoiConst.EntityType getTypeFromEntity(Entity entity) {
-		if (entity instanceof Node) {
-			return DbPoiConst.EntityType.POIS;
-		} else if (entity instanceof Way) {
-			return DbPoiConst.EntityType.WAYS;
-		} else {
-			return DbPoiConst.EntityType.UNKNOWN;
-		}
-	}
 
     /**
      * Check if key is included in main keys or detail keys

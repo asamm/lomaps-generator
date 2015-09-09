@@ -76,41 +76,46 @@ public final class GeoUtils {
 	 *            the way
 	 * @param geometry
 	 *            the geometry
-	 * @param tileAsGeom
+	 * @param tileCoordinate
 	 *            the tile coordinate
+	 * @param enlargementInMeters
+	 *            the bounding box buffer
 	 * @return the clipped geometry
 	 */
-	public static Geometry clipToTile(TDWay way, Geometry geometry, Geometry tileAsGeom) {
-		Geometry ret;
+	public static Geometry clipToTile(TDWay way, Geometry geometry, TileCoordinate tileCoordinate,
+			int enlargementInMeters) {
+		Geometry tileBBJTS = null;
+		Geometry ret = null;
+
+		// create tile bounding box
+		tileBBJTS = tileToJTSGeometry(tileCoordinate.getX(), tileCoordinate.getY(), tileCoordinate.getZoomlevel(),
+				enlargementInMeters);
 
 		// clip the geometry by intersection with the bounding box of the tile
 		// may throw a TopologyException
 		try {
-            // perform quick check
-            Envelope envGeom = geometry.getEnvelopeInternal();
-            Envelope envTile = tileAsGeom.getEnvelopeInternal();
-            if (envGeom.getMinX() > envTile.getMaxX() ||
-                    envGeom.getMaxX() < envTile.getMinX() ||
-                    envGeom.getMinY() > envTile.getMaxY() ||
-                    envGeom.getMaxY() < envTile.getMinY()) {
-                return null;
-            }
-
-
-			ret = tileAsGeom.intersection(geometry);
-            // TODO really needed?
-//			// according to Ludwig (see issue332) valid polygons may become invalid by clipping (at least
-//			// in the Python shapely library
-//			// we need to investigate this more closely and write appropriate test cases
-//			// for now, I check whether the resulting polygon is valid and if not try to repair it
-//			if ((ret instanceof Polygon || ret instanceof MultiPolygon) && !ret.isValid()) {
-//				LOGGER.log(Level.WARNING, "clipped way is not valid, trying to repair it: " + way.getId());
-//				ret = JTSUtils.repairInvalidPolygon(ret);
-//				if (ret == null) {
-//					way.setInvalid(true);
-//					LOGGER.log(Level.WARNING, "could not repair invalid polygon: " + way.getId());
-//				}
-//			}
+			if (!geometry.isValid()) {
+				// this should stop the problem of non-noded intersections that trigger an error when
+				// clipping
+				LOGGER.log(Level.WARNING, "invalid geometry prior to tile clipping, trying to repair " + way.getId());
+				geometry = JTSUtils.repairInvalidPolygon(geometry);
+				if (!geometry.isValid()) {
+					LOGGER.log(Level.WARNING, "invalid geometry even after attempt to fix " + way.getId());
+				}
+			}
+			ret = tileBBJTS.intersection(geometry);
+			// according to Ludwig (see issue332) valid polygons may become invalid by clipping (at least
+			// in the Python shapely library
+			// we need to investigate this more closely and write approriate test cases
+			// for now, I check whether the resulting polygon is valid and if not try to repair it
+			if ((ret instanceof Polygon || ret instanceof MultiPolygon) && !ret.isValid()) {
+				LOGGER.log(Level.WARNING, "clipped way is not valid, trying to repair it: " + way.getId());
+				ret = JTSUtils.repairInvalidPolygon(ret);
+				if (ret == null) {
+					way.setInvalid(true);
+					LOGGER.log(Level.WARNING, "could not repair invalid polygon: " + way.getId());
+				}
+			}
 		} catch (TopologyException e) {
 			LOGGER.log(Level.WARNING, "JTS cannot clip way, not storing it in data file: " + way.getId(), e);
 			way.setInvalid(true);
@@ -159,7 +164,7 @@ public final class GeoUtils {
 	public static LatLong computeCentroid(Geometry geometry) {
 		Point centroid = geometry.getCentroid();
 		if (centroid != null) {
-			return new LatLong(centroid.getCoordinate().y, centroid.getCoordinate().x);
+			return new LatLong(centroid.getCoordinate().y, centroid.getCoordinate().x, true);
 		}
 
 		return null;
@@ -170,14 +175,18 @@ public final class GeoUtils {
 	/**
 	 * @param geometry
 	 *            a JTS {@link Geometry} object representing the OSM entity
-	 * @param tileAsGeom
+	 * @param tile
 	 *            the tile
+	 * @param enlargementInMeter
+	 *            the enlargement of the tile in meters
 	 * @return true, if the geometry is covered completely by this tile
 	 */
-	public static boolean coveredByTile(final Geometry geometry, Geometry tileAsGeom) {
-		if (tileAsGeom.covers(geometry)) {
+	public static boolean coveredByTile(final Geometry geometry, final TileCoordinate tile, final int enlargementInMeter) {
+		Geometry bbox = tileToJTSGeometry(tile.getX(), tile.getY(), tile.getZoomlevel(), enlargementInMeter);
+		if (bbox.covers(geometry)) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -209,13 +218,12 @@ public final class GeoUtils {
 			LOGGER.fine("unable to create geometry from way: " + way.getId());
 			return matchedTiles;
 		}
-        //System.out.println("--- process way : " + way.getId() + " ----" );
+
 		TileCoordinate[] bbox = getWayBoundingBox(way, baseZoomLevel, enlargementInMeter);
 		// calculate the tile coordinates and the corresponding bounding boxes
 		try {
 			for (int k = bbox[0].getX(); k <= bbox[1].getX(); k++) {
 				for (int l = bbox[0].getY(); l <= bbox[1].getY(); l++) {
-                    //System.out.println("Tile X: " + k + " Tile Y: " + l);
 					Geometry bboxGeometry = tileToJTSGeometry(k, l, baseZoomLevel, enlargementInMeter);
 					if (bboxGeometry.intersects(wayGeometry)) {
 						matchedTiles.add(new TileCoordinate(k, l, baseZoomLevel));
@@ -243,10 +251,10 @@ public final class GeoUtils {
 			return false;
 		}
 
-		double lon1 = MercatorProjection.tileXToLongitude(tile.getX(), tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
-		double lon2 = MercatorProjection.tileXToLongitude(tile.getX() + 1, tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
-		double lat1 = MercatorProjection.tileYToLatitude(tile.getY(), tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
-		double lat2 = MercatorProjection.tileYToLatitude(tile.getY() + 1, tile.getZoomlevel(), Constants.DEFAULT_TILE_SIZE);
+		double lon1 = MercatorProjection.tileXToLongitude(tile.getX(), tile.getZoomlevel());
+		double lon2 = MercatorProjection.tileXToLongitude(tile.getX() + 1, tile.getZoomlevel());
+		double lat1 = MercatorProjection.tileYToLatitude(tile.getY(), tile.getZoomlevel());
+		double lat2 = MercatorProjection.tileYToLatitude(tile.getY() + 1, tile.getZoomlevel());
 		return latLong.latitude <= lat1 && latLong.latitude >= lat2 && latLong.longitude >= lon1
 				&& latLong.longitude <= lon2;
 	}
@@ -273,6 +281,7 @@ public final class GeoUtils {
 		// are on northern or southern hemisphere)
 		double latMax = Math.max(Math.abs(bbox.getMaxY()), Math.abs(bbox.getMinY()));
 		double deltaLat = deltaLat(simplificationFactor, latMax, zoomlevel, tileSize);
+
 		try {
 			ret = TopologyPreservingSimplifier.simplify(geometry, deltaLat);
 		} catch (TopologyException e) {
@@ -281,6 +290,7 @@ public final class GeoUtils {
 			way.setInvalid(true);
 			return geometry;
 		}
+
 		return ret;
 	}
 
@@ -339,7 +349,7 @@ public final class GeoUtils {
 		}
 
 		double[] epsilons = new double[2];
-		double lat = MercatorProjection.tileYToLatitude(tileY, zoom, Constants.DEFAULT_TILE_SIZE);
+		double lat = MercatorProjection.tileYToLatitude(tileY, zoom);
 		epsilons[0] = LatLongUtils.latitudeDistance(enlargementInMeter);
 		epsilons[1] = LatLongUtils.longitudeDistance(enlargementInMeter, lat);
 
@@ -348,28 +358,29 @@ public final class GeoUtils {
 
 	// **************** JTS CONVERSIONS *********************
 
-	private static double[] computeTileEnlargement(double lat, int enlargementInPixel) {
-		if (enlargementInPixel == 0) {
+	private static double[] computeTileEnlargement(double lat, int enlargementInMeter) {
+		if (enlargementInMeter == 0) {
 			return EPSILON_ZERO;
 		}
 
 		double[] epsilons = new double[2];
 
-		epsilons[0] = LatLongUtils.latitudeDistance(enlargementInPixel);
-		epsilons[1] = LatLongUtils.longitudeDistance(enlargementInPixel, lat);
+		epsilons[0] = LatLongUtils.latitudeDistance(enlargementInMeter);
+		epsilons[1] = LatLongUtils.longitudeDistance(enlargementInMeter, lat);
 
 		return epsilons;
 	}
 
 	// Computes the amount of latitude degrees for a given distance in pixel at a given zoom level.
 	private static double deltaLat(double deltaPixel, double lat, byte zoom, int tileSize) {
-		double pixelY = MercatorProjection.latitudeToPixelY(lat, zoom, tileSize);
-		double lat2 = MercatorProjection.pixelYToLatitude(pixelY + deltaPixel, zoom, tileSize);
+		long mapSize = MercatorProjection.getMapSize(zoom, tileSize);
+		double pixelY = MercatorProjection.latitudeToPixelY(lat, mapSize);
+		double lat2 = MercatorProjection.pixelYToLatitude(pixelY + deltaPixel, mapSize);
 
 		return Math.abs(lat2 - lat);
 	}
 
-	private static TileCoordinate[] getWayBoundingBox(final TDWay way, byte zoomlevel, int enlargementInPixel) {
+	private static TileCoordinate[] getWayBoundingBox(final TDWay way, byte zoomlevel, int enlargementInMeter) {
 		double maxx = Double.NEGATIVE_INFINITY, maxy = Double.NEGATIVE_INFINITY, minx = Double.POSITIVE_INFINITY, miny = Double.POSITIVE_INFINITY;
 		for (TDNode coordinate : way.getWayNodes()) {
 			maxy = Math.max(maxy, LatLongUtils.microdegreesToDegrees(coordinate.getLatitude()));
@@ -378,27 +389,24 @@ public final class GeoUtils {
 			minx = Math.min(minx, LatLongUtils.microdegreesToDegrees(coordinate.getLongitude()));
 		}
 
-		double[] epsilonsTopLeft = computeTileEnlargement(maxy, enlargementInPixel);
-		double[] epsilonsBottomRight = computeTileEnlargement(miny, enlargementInPixel);
+		double[] epsilonsTopLeft = computeTileEnlargement(maxy, enlargementInMeter);
+		double[] epsilonsBottomRight = computeTileEnlargement(miny, enlargementInMeter);
 
 		TileCoordinate[] bbox = new TileCoordinate[2];
-		bbox[0] = new TileCoordinate((int) MercatorProjection.longitudeToTileX(minx - epsilonsTopLeft[1], zoomlevel, Constants.DEFAULT_TILE_SIZE),
-				(int) MercatorProjection.latitudeToTileY(maxy + epsilonsTopLeft[0], zoomlevel, Constants.DEFAULT_TILE_SIZE), zoomlevel);
+		bbox[0] = new TileCoordinate((int) MercatorProjection.longitudeToTileX(minx - epsilonsTopLeft[1], zoomlevel),
+				(int) MercatorProjection.latitudeToTileY(maxy + epsilonsTopLeft[0], zoomlevel), zoomlevel);
 		bbox[1] = new TileCoordinate(
-				(int) MercatorProjection.longitudeToTileX(maxx + epsilonsBottomRight[1], zoomlevel, Constants.DEFAULT_TILE_SIZE),
-				(int) MercatorProjection.latitudeToTileY(miny - epsilonsBottomRight[0], zoomlevel, Constants.DEFAULT_TILE_SIZE), zoomlevel);
+				(int) MercatorProjection.longitudeToTileX(maxx + epsilonsBottomRight[1], zoomlevel),
+				(int) MercatorProjection.latitudeToTileY(miny - epsilonsBottomRight[0], zoomlevel), zoomlevel);
 
 		return bbox;
 	}
 
-	public static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
-        //System.out.println("TileToJTSGeom: tileX: " + tileX);
-		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom, Constants.DEFAULT_TILE_SIZE);
-		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom, Constants.DEFAULT_TILE_SIZE);
-		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom, Constants.DEFAULT_TILE_SIZE);
-        //System.out.println("TileToJTSGeom: minLon: " + minLon);
-		double maxLon = MercatorProjection.tileXToLongitude(tileX + 1, zoom, Constants.DEFAULT_TILE_SIZE);
-        //System.out.println("TileToJTSGeom: maxLon: " + maxLon);
+	private static Geometry tileToJTSGeometry(long tileX, long tileY, byte zoom, int enlargementInMeter) {
+		double minLat = MercatorProjection.tileYToLatitude(tileY + 1, zoom);
+		double maxLat = MercatorProjection.tileYToLatitude(tileY, zoom);
+		double minLon = MercatorProjection.tileXToLongitude(tileX, zoom);
+		double maxLon = MercatorProjection.tileXToLongitude(tileX + 1, zoom);
 
 		double[] epsilons = bufferInDegrees(tileY, zoom, enlargementInMeter);
 
@@ -419,7 +427,7 @@ public final class GeoUtils {
 		ArrayList<Integer> result = new ArrayList<>();
 
 		for (int j = 0; j < jtsCoords.length; j++) {
-			LatLong geoCoord = new LatLong(jtsCoords[j].y, jtsCoords[j].x);
+			LatLong geoCoord = new LatLong(jtsCoords[j].y, jtsCoords[j].x, true);
 			result.add(Integer.valueOf(LatLongUtils.degreesToMicrodegrees(geoCoord.latitude)));
 			result.add(Integer.valueOf(LatLongUtils.degreesToMicrodegrees(geoCoord.longitude)));
 		}

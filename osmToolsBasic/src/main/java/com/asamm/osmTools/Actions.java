@@ -5,7 +5,6 @@
 package com.asamm.osmTools;
 
 import com.asamm.osmTools.cmdCommands.*;
-import com.asamm.osmTools.generatorDb.DataWriterDefinition;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
@@ -391,7 +390,10 @@ class Actions {
             return;
         }
 
+        // TODO uncomment commented only for development addressDB
+
         // load definitions
+/*
         File defFile = new File(Parameters.getConfigApDbPath());
         DataWriterDefinition definition = new DataWriterDefinition(defFile);
 
@@ -404,6 +406,13 @@ class Actions {
         CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
         cmdGen.addGeneratorDb();
         cmdGen.execute();
+
+*/
+
+        CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
+        cmd.addGeneratorAddress();
+        Logger.i(TAG, "Generate DB, command: " + cmd.getCmdLine() );
+        cmd.execute();
 
         // edit - do not pack database it'll be packed together with map file itself
         // after generating, pack file and delete original

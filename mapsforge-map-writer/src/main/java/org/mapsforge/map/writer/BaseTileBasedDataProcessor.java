@@ -12,53 +12,47 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.map.writer.dataProcessor;
+package org.mapsforge.map.writer;
 
-import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.TopologyException;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TShortIntHashMap;
 import gnu.trove.procedure.TObjectProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
+
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.core.util.LatLongUtils;
 import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.writer.model.*;
-import org.mapsforge.map.writer.util.Constants;
+import org.mapsforge.map.writer.model.MapWriterConfiguration;
+import org.mapsforge.map.writer.model.NodeResolver;
+import org.mapsforge.map.writer.model.TDNode;
+import org.mapsforge.map.writer.model.TDRelation;
+import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileBasedDataProcessor;
+import org.mapsforge.map.writer.model.TileCoordinate;
+import org.mapsforge.map.writer.model.TileData;
+import org.mapsforge.map.writer.model.TileGridLayout;
+import org.mapsforge.map.writer.model.WayResolver;
+import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
 import org.mapsforge.map.writer.util.GeoUtils;
 
-import java.util.*;
-import java.util.Map.Entry;
+import com.vividsolutions.jts.geom.TopologyException;
 
 abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, NodeResolver, WayResolver {
-
-    private static final String TAG = BaseTileBasedDataProcessor.class.getSimpleName();
-
-    protected class WayHandler implements TObjectProcedure<TDWay> {
-        @Override
-        public boolean execute(TDWay way) {
-            if (way == null) {
-                return true;
-            }
-
-            // we only consider ways that have tags and which have not already
-            // added as outer way of a relation
-            // inner ways without additional tags are also not considered as they are processed as part of a
-            // multi polygon
-            if (way.isRenderRelevant() && !BaseTileBasedDataProcessor.this.outerToInnerMapping.contains(way.getId())
-                    && !BaseTileBasedDataProcessor.this.innerWaysWithoutAdditionalTags.contains(way.getId())) {
-                addWayToTiles(way, BaseTileBasedDataProcessor.this.bboxEnlargement);
-            }
-
-            return true;
-        }
-    }
-
 	protected class RelationHandler implements TObjectProcedure<TDRelation> {
+		private List<Deque<TDWay>> extractedPolygons;
 
-        private List<Deque<TDWay>> extractedPolygons;
 		private List<Integer> inner;
 		private Map<Integer, List<Integer>> outerToInner;
 		private final WayPolygonizer polygonizer = new WayPolygonizer();
@@ -76,32 +70,33 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 			try {
 				this.polygonizer.polygonizeAndRelate(members);
 			} catch (TopologyException e) {
-                Logger.e(TAG, "cannot relate extracted polygons to each other for relation: " + relation.getId(), e);
+				LOGGER.log(Level.FINE,
+						"cannot relate extracted polygons to each other for relation: " + relation.getId(), e);
 			}
 
 			// skip invalid relations
 			if (!this.polygonizer.getDangling().isEmpty()) {
 				if (BaseTileBasedDataProcessor.this.skipInvalidRelations) {
-                    Logger.w(TAG, "skipping relation that contains dangling ways which could not be merged to polygons: "
+					LOGGER.fine("skipping relation that contains dangling ways which could not be merged to polygons: "
 							+ relation.getId());
 					return true;
 				}
-				Logger.d(TAG, "execute(), relation contains dangling ways, " +
-                        "which could not be merged to polygons: " + relation.getId());
+				LOGGER.fine("relation contains dangling ways which could not be merged to polygons: "
+						+ relation.getId());
 			} else if (!this.polygonizer.getIllegal().isEmpty()) {
 				if (BaseTileBasedDataProcessor.this.skipInvalidRelations) {
-					Logger.w(TAG, "skipping relation contains illegal closed ways with fewer than 4 nodes: "
+					LOGGER.fine("skipping relation contains illegal closed ways with fewer than 4 nodes: "
 							+ relation.getId());
 					return true;
 				}
-				Logger.w(TAG, "relation contains illegal closed ways with fewer than 4 nodes: " + relation.getId());
+				LOGGER.fine("relation contains illegal closed ways with fewer than 4 nodes: " + relation.getId());
 			}
 
 			this.extractedPolygons = this.polygonizer.getPolygons();
 			this.outerToInner = this.polygonizer.getOuterToInner();
 
 			for (Entry<Integer, List<Integer>> entry : this.outerToInner.entrySet()) {
-				Deque<TDWay> outerPolygon = this.extractedPolygons.get(entry.getKey());
+				Deque<TDWay> outerPolygon = this.extractedPolygons.get(entry.getKey().intValue());
 				this.inner = null;
 				this.inner = entry.getValue();
 				byte shape = TDWay.SIMPLE_POLYGON;
@@ -110,18 +105,16 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 					shape = TDWay.MULTI_POLYGON;
 				}
 
-				TDWay outerWay;
+				TDWay outerWay = null;
 				if (outerPolygon.size() > 1) {
 					// we need to create a new way from a set of ways
 					// collect the way nodes and use the tags of the relation
 					// if one of the ways has its own tags, we should ignore them,
 					// ways with relevant tags will be added separately later
 					if (!relation.isRenderRelevant()) {
-						Logger.d(TAG, "execute(), constructed outer polygon in relation " +
-                                "has no known tags: " + relation.getId());
+						LOGGER.fine("constructed outer polygon in relation has no known tags: " + relation.getId());
 						continue;
 					}
-
 					// merge way nodes from outer way segments
 					List<TDNode> waynodeList = new ArrayList<>();
 					for (TDWay outerSegment : outerPolygon) {
@@ -130,7 +123,9 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 								waynodeList.add(outerSegment.getWayNodes()[i]);
 							}
 						} else {
-                            Collections.addAll(waynodeList, outerSegment.getWayNodes());
+							for (TDNode tdNode : outerSegment.getWayNodes()) {
+								waynodeList.add(tdNode);
+							}
 						}
 					}
 					TDNode[] waynodes = waynodeList.toArray(new TDNode[waynodeList.size()]);
@@ -189,8 +184,8 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 				}
 
 				for (Integer innerIndex : this.inner) {
-					Deque<TDWay> innerSegments = this.extractedPolygons.get(innerIndex);
-					TDWay innerWay;
+					Deque<TDWay> innerSegments = this.extractedPolygons.get(innerIndex.intValue());
+					TDWay innerWay = null;
 
 					if (innerSegments.size() == 1) {
 						innerWay = innerSegments.getFirst();
@@ -217,7 +212,9 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 									waynodeList.add(innerSegment.getWayNodes()[i]);
 								}
 							} else {
-                                Collections.addAll(waynodeList, innerSegment.getWayNodes());
+								for (TDNode tdNode : innerSegment.getWayNodes()) {
+									waynodeList.add(tdNode);
+								}
 							}
 						}
 						TDNode[] waynodes = waynodeList.toArray(new TDNode[waynodeList.size()]);
@@ -234,6 +231,26 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 		}
 	}
 
+	protected class WayHandler implements TObjectProcedure<TDWay> {
+		@Override
+		public boolean execute(TDWay way) {
+			if (way == null) {
+				return true;
+			}
+			// we only consider ways that have tags and which have not already
+			// added as outer way of a relation
+			// inner ways without additional tags are also not considered as they are processed as part of a
+			// multi polygon
+			if (way.isRenderRelevant() && !BaseTileBasedDataProcessor.this.outerToInnerMapping.contains(way.getId())
+					&& !BaseTileBasedDataProcessor.this.innerWaysWithoutAdditionalTags.contains(way.getId())) {
+				addWayToTiles(way, BaseTileBasedDataProcessor.this.bboxEnlargement);
+			}
+
+			return true;
+		}
+	}
+
+	protected static final Logger LOGGER = Logger.getLogger(BaseTileBasedDataProcessor.class.getName());
 	protected final int bboxEnlargement;
 	protected final org.mapsforge.core.model.BoundingBox boundingbox;
 	// accounting
@@ -251,15 +268,19 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 	protected final boolean skipInvalidRelations;
 	protected TileGridLayout[] tileGridLayouts;
 
+	// public BaseTileBasedDataProcessor(double minLat, double maxLat, double minLon, double maxLon,
+	// ZoomIntervalConfiguration zoomIntervalConfiguration, int bboxEnlargement, String preferredLanguage) {
+	// this(new Rect(minLon, maxLon, minLat, maxLat), zoomIntervalConfiguration, bboxEnlargement,
+	// preferredLanguage);
+	//
+	// }
+
 	protected final Map<TileCoordinate, TLongHashSet> tilesToCoastlines;
 
 	protected final ZoomIntervalConfiguration zoomIntervalConfiguration;
 
-    protected boolean verboseLogging;
-
 	public BaseTileBasedDataProcessor(MapWriterConfiguration configuration) {
-
-        // prepare containers
+		super();
 		this.boundingbox = configuration.getBboxConfiguration();
 		this.zoomIntervalConfiguration = configuration.getZoomIntervalConfiguration();
 		this.tileGridLayouts = new TileGridLayout[this.zoomIntervalConfiguration.getNumberOfZoomIntervals()];
@@ -277,21 +298,27 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 		this.histogramPoiTags = new TShortIntHashMap();
 		this.histogramWayTags = new TShortIntHashMap();
 
-        this.verboseLogging = configuration.isVerbose();
-
 		// compute horizontal and vertical tile coordinate offsets for all
 		// base zoom levels
 		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
 			TileCoordinate upperLeft = new TileCoordinate((int) MercatorProjection.longitudeToTileX(
-					this.boundingbox.minLongitude, this.zoomIntervalConfiguration.getBaseZoom(i),
-                    Constants.DEFAULT_TILE_SIZE),
+					this.boundingbox.minLongitude, this.zoomIntervalConfiguration.getBaseZoom(i)),
 					(int) MercatorProjection.latitudeToTileY(this.boundingbox.maxLatitude,
-							this.zoomIntervalConfiguration.getBaseZoom(i), Constants.DEFAULT_TILE_SIZE),
+							this.zoomIntervalConfiguration.getBaseZoom(i)),
 					this.zoomIntervalConfiguration.getBaseZoom(i));
-			this.tileGridLayouts[i] = new TileGridLayout(upperLeft,
-                    computeNumberOfHorizontalTiles(i),
+			this.tileGridLayouts[i] = new TileGridLayout(upperLeft, computeNumberOfHorizontalTiles(i),
 					computeNumberOfVerticalTiles(i));
 		}
+	}
+
+	@Override
+	public long cumulatedNumberOfTiles() {
+		long cumulated = 0;
+		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
+			cumulated += this.tileGridLayouts[i].getAmountTilesHorizontal()
+					* this.tileGridLayouts[i].getAmountTilesVertical();
+		}
+		return cumulated;
 	}
 
 	@Override
@@ -310,22 +337,20 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 	}
 
 	protected void addPOI(TDNode poi) {
-        // check if node is really a poi
-		if (poi == null || !poi.isPOI()) {
+		if (!poi.isPOI()) {
 			return;
 		}
 
-        // add POI to specific zooms
 		byte minZoomLevel = poi.getZoomAppear();
 		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
 			// is POI seen in a zoom interval?
 			if (minZoomLevel <= this.zoomIntervalConfiguration.getMaxZoom(i)) {
 				long tileCoordinateX = MercatorProjection.longitudeToTileX(
 						LatLongUtils.microdegreesToDegrees(poi.getLongitude()),
-						this.zoomIntervalConfiguration.getBaseZoom(i), Constants.DEFAULT_TILE_SIZE);
+						this.zoomIntervalConfiguration.getBaseZoom(i));
 				long tileCoordinateY = MercatorProjection.latitudeToTileY(
 						LatLongUtils.microdegreesToDegrees(poi.getLatitude()),
-						this.zoomIntervalConfiguration.getBaseZoom(i), Constants.DEFAULT_TILE_SIZE);
+						this.zoomIntervalConfiguration.getBaseZoom(i));
 				TileData tileData = getTileImpl(i, (int) tileCoordinateX, (int) tileCoordinateY);
 				if (tileData != null) {
 					tileData.addPOI(poi);
@@ -336,12 +361,13 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 	}
 
 	protected void addWayToTiles(TDWay way, int enlargement) {
-        byte minZoomLevel = way.getMinimumZoomLevel();
+		int bboxEnlargementLocal = enlargement;
+		byte minZoomLevel = way.getMinimumZoomLevel();
 		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
 			// is way seen in a zoom interval?
 			if (minZoomLevel <= this.zoomIntervalConfiguration.getMaxZoom(i)) {
 				Set<TileCoordinate> matchedTiles = GeoUtils.mapWayToTiles(way,
-						this.zoomIntervalConfiguration.getBaseZoom(i), enlargement);
+						this.zoomIntervalConfiguration.getBaseZoom(i), bboxEnlargementLocal);
 				boolean added = false;
 				for (TileCoordinate matchedTile : matchedTiles) {
 					TileData td = getTileImpl(i, matchedTile.getX(), matchedTile.getY());
@@ -359,6 +385,29 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 		}
 	}
 
+	protected void countPoiTags(TDNode poi) {
+		if (poi == null || poi.getTags() == null) {
+			return;
+		}
+		for (short tag : poi.getTags()) {
+			this.histogramPoiTags.adjustOrPutValue(tag, 1, 1);
+		}
+	}
+
+	protected void countWayTags(short[] tags) {
+		if (tags != null) {
+			for (short tag : tags) {
+				this.histogramWayTags.adjustOrPutValue(tag, 1, 1);
+			}
+		}
+	}
+
+	protected void countWayTags(TDWay way) {
+		if (way != null) {
+			countWayTags(way.getTags());
+		}
+	}
+
 	protected abstract TileData getTileImpl(int zoom, int tileX, int tileY);
 
 	protected abstract void handleAdditionalRelationTags(TDWay virtualWay, TDRelation relation);
@@ -367,85 +416,36 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 
 	protected abstract void handleVirtualOuterWay(TDWay virtualWay);
 
-    // TOOLS
-
-    private void countPoiTags(TDNode poi) {
-        // check object
-        if (poi == null || poi.getTags() == null) {
-            return;
-        }
-
-        // iterate over all tags
-        short[] tags = poi.getTags();
-        for (int i = 0; i < tags.length; i++) {
-            this.histogramPoiTags.adjustOrPutValue(tags[i], 1, 1);
-        }
-    }
-
-    private void countWayTags(TDWay way) {
-        // check object
-        if (way != null) {
-            countWayTags(way.getTags());
-        }
-    }
-
-    protected void countWayTags(short[] tags) {
-        // check object
-        if (tags == null) {
-            return;
-        }
-
-        // iterate over tags
-        for (int i = 0; i < tags.length; i++) {
-            this.histogramWayTags.adjustOrPutValue(tags[i], 1, 1);
-        }
-    }
-
 	private int computeNumberOfHorizontalTiles(int zoomIntervalIndex) {
-        // compute coordinates
-		long tileCoordinateLeft = MercatorProjection.longitudeToTileX(
-                this.boundingbox.minLongitude,
-				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex),
-                Constants.DEFAULT_TILE_SIZE);
-		long tileCoordinateRight = MercatorProjection.longitudeToTileX(
-                this.boundingbox.maxLongitude,
-				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex),
-                Constants.DEFAULT_TILE_SIZE);
+		long tileCoordinateLeft = MercatorProjection.longitudeToTileX(this.boundingbox.minLongitude,
+				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex));
 
-        // check results
+		long tileCoordinateRight = MercatorProjection.longitudeToTileX(this.boundingbox.maxLongitude,
+				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex));
+
 		assert tileCoordinateLeft <= tileCoordinateRight;
 		assert tileCoordinateLeft - tileCoordinateRight + 1 < Integer.MAX_VALUE;
 
-        // return result
-//        Logger.i(TAG, "baseZoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) +
-//                ", tileSize:" + Constants.DEFAULT_TILE_SIZE +
-//                ", tileCoordinateLeft:" + tileCoordinateLeft +
-//                ", tileCoordinateRight:" + tileCoordinateRight +
-//                ", horizontal: " + (tileCoordinateRight - tileCoordinateLeft + 1));
+		LOGGER.finer("basezoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) + "\t+n_horizontal: "
+				+ (tileCoordinateRight - tileCoordinateLeft + 1));
+
 		return (int) (tileCoordinateRight - tileCoordinateLeft + 1);
 	}
 
 	private int computeNumberOfVerticalTiles(int zoomIntervalIndex) {
-        // compute coordinates
-		long tileCoordinateBottom = MercatorProjection.latitudeToTileY(
-                this.boundingbox.minLatitude,
-				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex),
-                Constants.DEFAULT_TILE_SIZE);
-		long tileCoordinateTop = MercatorProjection.latitudeToTileY(
-                this.boundingbox.maxLatitude,
-                this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex),
-                Constants.DEFAULT_TILE_SIZE);
+		long tileCoordinateBottom = MercatorProjection.latitudeToTileY(this.boundingbox.minLatitude,
+				this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex));
 
-        // check results
+		long tileCoordinateTop = MercatorProjection.latitudeToTileY(this.boundingbox.maxLatitude,
+
+		this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex));
+
 		assert tileCoordinateBottom >= tileCoordinateTop;
 		assert tileCoordinateBottom - tileCoordinateTop + 1 <= Integer.MAX_VALUE;
 
-        // return result
-//        Logger.i(TAG, "baseZoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) +
-//                ", tileSize:" + Constants.DEFAULT_TILE_SIZE +
-//                ", tileCoordinateBottom:" + tileCoordinateBottom +
-//                ", tileCoordinateTop:" + tileCoordinateTop +
-//                ", vertical: " + (tileCoordinateBottom - tileCoordinateTop + 1));
+		LOGGER.finer("basezoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) + "\t+n_vertical: "
+				+ (tileCoordinateBottom - tileCoordinateTop + 1));
+
 		return (int) (tileCoordinateBottom - tileCoordinateTop + 1);
 	}
 }

@@ -198,7 +198,7 @@ abstract class Cmd {
         return cmdArray;
     }
     
-    private String  getCmdLine() {
+    public String  getCmdLine() {
         String line = "";
         for (String param : mCmdList){
             line += param + " ";

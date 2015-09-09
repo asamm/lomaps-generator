@@ -112,7 +112,6 @@
 		<osm-tag key="natural" value="cave_entrance" zoom-appear="14" />
 		<osm-tag key="natural" value="peak" zoom-appear="12" />
 		<osm-tag key="natural" value="spring" zoom-appear="17" />
-		<osm-tag key="natural" value="tree" zoom-appear="16" />
 		<osm-tag key="natural" value="volcano" zoom-appear="12" />
 	</pois>
 
@@ -179,6 +178,10 @@
 	<!-- NATURAL / WATERWAY TAGS -->
 	<ways>
 		<osm-tag key="lock" value="yes" zoom-appear="14" />
+
+		<!-- mapsforge artificial tags for land/sea areas, do not remove -->
+		<osm-tag key="natural" value="sea" zoom-appear="0" />
+		<osm-tag key="natural" value="nosea" zoom-appear="0" />
 
 		<osm-tag key="natural" value="beach" zoom-appear="10" />
 		<osm-tag key="natural" value="coastline" zoom-appear="0" />
@@ -250,7 +253,6 @@
 		<osm-tag key="leisure" value="water_park" zoom-appear="12" />
 
 		<osm-tag key="sport" value="golf" zoom-appear="12" />
-		<osm-tag key="sport" value="shooting" zoom-appear="12" />
 		<osm-tag key="sport" value="soccer" zoom-appear="12" />
 		<osm-tag key="sport" value="swimming" zoom-appear="12" />
 		<osm-tag key="sport" value="tennis" zoom-appear="12" />

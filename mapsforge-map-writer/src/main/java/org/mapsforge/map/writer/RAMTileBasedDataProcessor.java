@@ -12,32 +12,37 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.map.writer.dataProcessor;
+package org.mapsforge.map.writer;
 
-import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.hash.TLongHashSet;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.mapsforge.core.model.BoundingBox;
-import org.mapsforge.map.writer.OSMTagMapping;
-import org.mapsforge.map.writer.model.*;
+import org.mapsforge.map.writer.model.MapWriterConfiguration;
+import org.mapsforge.map.writer.model.TDNode;
+import org.mapsforge.map.writer.model.TDRelation;
+import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileCoordinate;
+import org.mapsforge.map.writer.model.TileData;
+import org.mapsforge.map.writer.model.TileInfo;
+import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
 import org.mapsforge.map.writer.util.GeoUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 /**
  * A TileBasedDataStore that uses the RAM as storage device for temporary data structures.
  */
 public final class RAMTileBasedDataProcessor extends BaseTileBasedDataProcessor {
-
-    private static final String TAG = RAMTileBasedDataProcessor.class.getSimpleName();
-
 	/**
 	 * Creates a new instance of a {@link RAMTileBasedDataProcessor}.
 	 * 
@@ -49,55 +54,47 @@ public final class RAMTileBasedDataProcessor extends BaseTileBasedDataProcessor 
 		return new RAMTileBasedDataProcessor(configuration);
 	}
 
-    // container for nodes
-	private final TLongObjectHashMap<TDNode> nodes;
-    // container for ways
-    private final TLongObjectHashMap<TDWay> ways;
-    // container for polygons
-    private final TLongObjectHashMap<TDRelation> multipolygons;
+	final TLongObjectHashMap<TDWay> ways;
+	private final TLongObjectHashMap<TDRelation> multipolygons;
 
-    // container for separated tiles
+	private final TLongObjectHashMap<TDNode> nodes;
+
 	private final RAMTileData[][][] tileData;
 
 	private RAMTileBasedDataProcessor(MapWriterConfiguration configuration) {
 		super(configuration);
-
-        // prepare containers
 		this.nodes = new TLongObjectHashMap<>();
 		this.ways = new TLongObjectHashMap<>();
 		this.multipolygons = new TLongObjectHashMap<>();
-
+		this.tileData = new RAMTileData[this.zoomIntervalConfiguration.getNumberOfZoomIntervals()][][];
 		// compute number of tiles needed on each base zoom level
-        this.tileData = new RAMTileData[this.zoomIntervalConfiguration.getNumberOfZoomIntervals()][][];
 		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
-			this.tileData[i] = new RAMTileData
-                    [this.tileGridLayouts[i].getAmountTilesHorizontal()]
-                    [this.tileGridLayouts[i].getAmountTilesVertical()];
+			this.tileData[i] = new RAMTileData[this.tileGridLayouts[i].getAmountTilesHorizontal()][this.tileGridLayouts[i]
+					.getAmountTilesVertical()];
 		}
 	}
 
 	@Override
 	public void addNode(Node node) {
-        // create and check node
 		TDNode tdNode = TDNode.fromNode(node, this.preferredLanguage);
-        if (tdNode == null) {
-            return;
-        }
-
-        // add node to storage
-        this.nodes.put(tdNode.getId(), tdNode);
+		this.nodes.put(tdNode.getId(), tdNode);
 		addPOI(tdNode);
 	}
 
 	@Override
+	public void addRelation(Relation relation) {
+		TDRelation tdRelation = TDRelation.fromRelation(relation, this, this.preferredLanguage);
+		if (tdRelation != null) {
+			this.multipolygons.put(relation.getId(), tdRelation);
+		}
+	}
+
+	@Override
 	public void addWay(Way way) {
-        // create and check ways
 		TDWay tdWay = TDWay.fromWay(way, this, this.preferredLanguage);
 		if (tdWay == null) {
 			return;
 		}
-
-        // add ways to storage
 		this.ways.put(tdWay.getId(), tdWay);
 		this.maxWayID = Math.max(this.maxWayID, way.getId());
 
@@ -115,26 +112,48 @@ public final class RAMTileBasedDataProcessor extends BaseTileBasedDataProcessor 
 		}
 	}
 
-    @Override
-    public void addRelation(Relation relation) {
-        TDRelation tdRelation = TDRelation.fromRelation(relation, this, this.preferredLanguage);
-        if (tdRelation != null) {
-            this.multipolygons.put(relation.getId(), tdRelation);
-        }
-    }
-
 	@Override
 	public void complete() {
 		// Polygonize multipolygon
-        Logger.d(TAG, "complete(), handle relations...");
-		this.multipolygons.forEachValue(new RelationHandler());
+		RelationHandler relationHandler = new RelationHandler();
+		this.multipolygons.forEachValue(relationHandler);
 
-        Logger.d(TAG, "complete(), handle ways...");
-		this.ways.forEachValue(new WayHandler());
+		WayHandler wayHandler = new WayHandler();
+		this.ways.forEachValue(wayHandler);
 
-        Logger.d(TAG, "complete(), optimize poi and ways");
 		OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
 		OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
+	}
+
+	@Override
+	public BoundingBox getBoundingBox() {
+		return this.boundingbox;
+	}
+
+	@Override
+	public Set<TDWay> getCoastLines(TileCoordinate tc) {
+		if (tc.getZoomlevel() <= TileInfo.TILE_INFO_ZOOMLEVEL) {
+			return Collections.emptySet();
+		}
+		TileCoordinate correspondingOceanTile = tc.translateToZoomLevel(TileInfo.TILE_INFO_ZOOMLEVEL).get(0);
+		TLongHashSet coastlines = this.tilesToCoastlines.get(correspondingOceanTile);
+		if (coastlines == null) {
+			return Collections.emptySet();
+		}
+
+		final Set<TDWay> res = new HashSet<>();
+		coastlines.forEach(new TLongProcedure() {
+			@Override
+			public boolean execute(long id) {
+				TDWay way = RAMTileBasedDataProcessor.this.ways.get(id);
+				if (way != null) {
+					res.add(way);
+					return true;
+				}
+				return false;
+			}
+		});
+		return res;
 	}
 
 	@Override

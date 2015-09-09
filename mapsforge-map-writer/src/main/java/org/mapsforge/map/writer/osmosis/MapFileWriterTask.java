@@ -18,14 +18,15 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.asamm.osmTools.utils.Logger;
 import org.mapsforge.core.model.BoundingBox;
-import org.mapsforge.map.writer.dataProcessor.HDTileBasedDataProcessor;
+import org.mapsforge.map.writer.HDTileBasedDataProcessor;
 import org.mapsforge.map.writer.MapFileWriter;
-import org.mapsforge.map.writer.dataProcessor.RAMTileBasedDataProcessor;
+import org.mapsforge.map.writer.RAMTileBasedDataProcessor;
 import org.mapsforge.map.writer.model.MapWriterConfiguration;
-import org.mapsforge.map.writer.dataProcessor.TileBasedDataProcessor;
+import org.mapsforge.map.writer.model.TileBasedDataProcessor;
 import org.mapsforge.map.writer.util.Constants;
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.Bound;
@@ -39,21 +40,18 @@ import org.openstreetmap.osmosis.core.task.v0_6.Sink;
  * An Osmosis plugin that reads OpenStreetMap data and converts it to a mapsforge binary file.
  */
 public class MapFileWriterTask implements Sink {
+	private static final Logger LOGGER = Logger.getLogger(MapFileWriterTask.class.getName());
 
-    private static final String TAG = MapFileWriterTask.class.getSimpleName();
+	// Accounting
+	private int amountOfNodesProcessed = 0;
+	private int amountOfRelationsProcessed = 0;
+	private int amountOfWaysProcessed = 0;
 
-	// counting
-	private int mNodesProcessed = 0;
-    private int mWaysProcessed = 0;
-    private int mRelationsProcessed = 0;
-
-    // plugin configuration
-	private final MapWriterConfiguration mConfig;
-    // data processor
-	private TileBasedDataProcessor mDataProcessor;
+	private final MapWriterConfiguration configuration;
+	private TileBasedDataProcessor tileBasedGeoObjectStore;
 
 	MapFileWriterTask(MapWriterConfiguration configuration) {
-		this.mConfig = configuration;
+		this.configuration = configuration;
 
 		Properties properties = new Properties();
 		try {
@@ -63,65 +61,23 @@ public class MapFileWriterTask implements Sink {
 			configuration.setFileSpecificationVersion(Integer.parseInt(properties
 					.getProperty(Constants.PROPERTY_NAME_FILE_SPECIFICATION_VERSION)));
 
-			Logger.d(TAG, "mapfile-writer version: " + configuration.getWriterVersion());
-			Logger.d(TAG, "mapfile format specification version: " + configuration.getFileSpecificationVersion());
+			LOGGER.info("mapfile-writer version: " + configuration.getWriterVersion());
+			LOGGER.info("mapfile format specification version: " + configuration.getFileSpecificationVersion());
 		} catch (IOException e) {
 			throw new RuntimeException("could not find default properties", e);
 		} catch (NumberFormatException e) {
 			throw new RuntimeException("map file specification version is not an integer", e);
 		}
 
-		// create datastore if BBox is defined
-		if (this.mConfig.getBboxConfiguration() != null) {
-            createDataProcessor();
+		// CREATE DATASTORE IF BBOX IS DEFINED
+		if (this.configuration.getBboxConfiguration() != null) {
+			if ("ram".equalsIgnoreCase(configuration.getDataProcessorType())) {
+				this.tileBasedGeoObjectStore = RAMTileBasedDataProcessor.newInstance(configuration);
+			} else {
+				this.tileBasedGeoObjectStore = HDTileBasedDataProcessor.newInstance(configuration);
+			}
 		}
 	}
-
-    @Override
-    public void initialize(Map<String, Object> metadata) {
-        // nothing to do here
-    }
-
-    @Override
-    public final void process(EntityContainer entityContainer) {
-        Entity entity = entityContainer.getEntity();
-        switch (entity.getType()) {
-
-            // handle BOUND
-            case Bound:
-                Bound bound = (Bound) entity;
-                if (this.mConfig.getBboxConfiguration() == null) {
-                    BoundingBox bbox = new BoundingBox(bound.getBottom(), bound.getLeft(),
-                            bound.getTop(), bound.getRight());
-                    this.mConfig.setBboxConfiguration(bbox);
-                    this.mConfig.validate();
-                    createDataProcessor();
-                }
-                Logger.d(TAG, "start reading data...");
-                break;
-
-            // handle NODE
-            case Node:
-                checkState();
-                this.mDataProcessor.addNode((Node) entity);
-                this.mNodesProcessed++;
-                break;
-
-            // handle WAY
-            case Way:
-                checkState();
-                this.mDataProcessor.addWay((Way) entity);
-                this.mWaysProcessed++;
-                break;
-
-            // handle RELATION
-            case Relation:
-                checkState();
-                this.mDataProcessor.addRelation((Relation) entity);
-                this.mRelationsProcessed++;
-                break;
-        }
-    }
 
 	@Override
 	public final void complete() {
@@ -130,54 +86,105 @@ public class MapFileWriterTask implements Sink {
 		nfCounts.setGroupingUsed(true);
 		nfMegabyte.setMaximumFractionDigits(2);
 
-		Logger.i(TAG, "completing read...");
-		this.mDataProcessor.complete();
+		LOGGER.info("completing read...");
+		this.tileBasedGeoObjectStore.complete();
 
-		Logger.i(TAG, "start writing file...");
+		LOGGER.info("start writing file...");
+
 		try {
-			if (this.mConfig.getOutputFile().exists()) {
-				this.mConfig.getOutputFile().delete();
+			if (this.configuration.getOutputFile().exists()) {
+				LOGGER.info("overwriting file " + this.configuration.getOutputFile().getAbsolutePath());
+				this.configuration.getOutputFile().delete();
 			}
-			MapFileWriter.writeFile(this.mConfig, this.mDataProcessor);
+			MapFileWriter.writeFile(this.configuration, this.tileBasedGeoObjectStore);
 		} catch (IOException e) {
-			Logger.e(TAG, "error while writing file", e);
+			LOGGER.log(Level.SEVERE, "error while writing file", e);
 		}
 
-        // print results
-		Logger.i(TAG, "Finished, nodes:" + nfCounts.format(this.mNodesProcessed) +
-                ", ways:" + nfCounts.format(this.mWaysProcessed) +
-                ", relations: " + nfCounts.format(this.mRelationsProcessed));
-		Logger.i(TAG, "Estimated memory consumption: " +
-                nfMegabyte.format(+((Runtime.getRuntime().totalMemory() -
-                        Runtime.getRuntime().freeMemory()) / Math.pow(1024, 2))) + "MB");
+		LOGGER.info("finished...");
+		LOGGER.fine("total processed nodes: " + nfCounts.format(this.amountOfNodesProcessed));
+		LOGGER.fine("total processed ways: " + nfCounts.format(this.amountOfWaysProcessed));
+		LOGGER.fine("total processed relations: " + nfCounts.format(this.amountOfRelationsProcessed));
+
+		LOGGER.info("estimated memory consumption: "
+				+ nfMegabyte.format(+((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / Math
+						.pow(1024, 2))) + "MB");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.openstreetmap.osmosis.core.task.v0_6.Initializable#initialize(java.util.Map)
+	 */
+	@Override
+	public void initialize(Map<String, Object> metadata) {
+		// nothing to do here
+	}
+
+	@Override
+	public final void process(EntityContainer entityContainer) {
+		Entity entity = entityContainer.getEntity();
+
+		switch (entity.getType()) {
+			case Bound:
+				Bound bound = (Bound) entity;
+				if (this.configuration.getBboxConfiguration() == null) {
+					BoundingBox bbox = new BoundingBox(bound.getBottom(), bound.getLeft(), bound.getTop(),
+							bound.getRight());
+					this.configuration.setBboxConfiguration(bbox);
+					this.configuration.validate();
+					if ("ram".equals(this.configuration.getDataProcessorType())) {
+						this.tileBasedGeoObjectStore = RAMTileBasedDataProcessor.newInstance(this.configuration);
+					} else {
+						this.tileBasedGeoObjectStore = HDTileBasedDataProcessor.newInstance(this.configuration);
+					}
+				}
+				LOGGER.info("start reading data...");
+				break;
+
+			// *******************************************************
+			// ****************** NODE PROCESSING*********************
+			// *******************************************************
+			case Node:
+
+				if (this.tileBasedGeoObjectStore == null) {
+					LOGGER.severe("No valid bounding box found in input data.\n"
+							+ "Please provide valid bounding box via command "
+							+ "line parameter 'bbox=minLat,minLon,maxLat,maxLon'.\n"
+							+ "Tile based data store not initialized. Aborting...");
+					throw new IllegalStateException("tile based data store not initialized, missing bounding "
+							+ "box information in input data");
+				}
+				this.tileBasedGeoObjectStore.addNode((Node) entity);
+				// hint to GC
+				entity = null;
+				this.amountOfNodesProcessed++;
+				break;
+
+			// *******************************************************
+			// ******************* WAY PROCESSING*********************
+			// *******************************************************
+			case Way:
+				this.tileBasedGeoObjectStore.addWay((Way) entity);
+				entity = null;
+				this.amountOfWaysProcessed++;
+				break;
+
+			// *******************************************************
+			// ****************** RELATION PROCESSING*********************
+			// *******************************************************
+			case Relation:
+				Relation currentRelation = (Relation) entity;
+				this.tileBasedGeoObjectStore.addRelation(currentRelation);
+				this.amountOfRelationsProcessed++;
+				entity = null;
+				break;
+		}
 	}
 
 	@Override
 	public final void release() {
-		if (this.mDataProcessor != null) {
-			this.mDataProcessor.release();
-            this.mDataProcessor = null;
+		if (this.tileBasedGeoObjectStore != null) {
+			this.tileBasedGeoObjectStore.release();
 		}
 	}
-
-    // TOOLS
-
-    private void createDataProcessor() {
-        if ("ram".equalsIgnoreCase(mConfig.getDataProcessorType())) {
-            this.mDataProcessor = RAMTileBasedDataProcessor.newInstance(mConfig);
-        } else {
-            this.mDataProcessor = HDTileBasedDataProcessor.newInstance(mConfig);
-        }
-    }
-
-    private void checkState() {
-        if (this.mDataProcessor == null) {
-            Logger.e(TAG, "No valid bounding box found in input data.\n"
-                    + "Please provide valid bounding box via command "
-                    + "line parameter 'bbox=minLat,minLon,maxLat,maxLon'.\n"
-                    + "Tile based data store not initialized. Aborting...");
-            throw new IllegalStateException("tile based data store not initialized, missing bounding "
-                    + "box information in input data");
-        }
-    }
 }

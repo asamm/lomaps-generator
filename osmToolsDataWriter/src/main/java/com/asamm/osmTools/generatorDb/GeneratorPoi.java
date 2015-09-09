@@ -18,9 +18,9 @@ public class GeneratorPoi extends AGenerator {
 	private File outputDb;
 	
 	// handler for tags
-	private DataWriterDefinition nodeHandler;
+	private WriterPoiDefinition nodeHandler;
 	
-	public GeneratorPoi(File outputDbFile, DataWriterDefinition nodeHandler) throws Exception {
+	public GeneratorPoi(File outputDbFile, WriterPoiDefinition nodeHandler) throws Exception {
 		this.outputDb = outputDbFile;
 		this.nodeHandler = nodeHandler; 
 		
