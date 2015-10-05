@@ -18,12 +18,14 @@ public class DataContainerHdd extends ADataContainer {
 
 	private DatabaseDataTmp dbData;
 
+    private File tmpDbFile;
 
 
 	
-	public DataContainerHdd(AWriterDefinition writerDefinition, File tempFile) throws Exception {
+	public DataContainerHdd(AWriterDefinition writerDefinition, File tmpDbFile) throws Exception {
 		super(writerDefinition);
-        dbData = new DatabaseDataTmp(tempFile,true);
+        this.tmpDbFile = tmpDbFile;
+        dbData = new DatabaseDataTmp(tmpDbFile,true);
 
         Logger.i(TAG, "HDD container created");
     }
@@ -100,6 +102,10 @@ public class DataContainerHdd extends ADataContainer {
 
     @Override
 	public void destroy() {
+        if (tmpDbFile.exists()) {
+            tmpDbFile.delete();
+        }
+
 		super.destroy();
 		try {
             dbData.destroy();

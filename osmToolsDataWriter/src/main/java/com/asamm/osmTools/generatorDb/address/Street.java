@@ -25,11 +25,11 @@ public class Street  {
     /** Name of the street */
     private String name;
 
-    /** OSM id of place in which is street located */
+    /** OSM id of place in which is street located. basicaly is used only for wayStreet when crate hash */
     private long cityId;
 
-    /** OSM id of lower or smaller part of city*/
-    private long cityPartId;
+    /** IDs of cities in which can be this way*/
+    private List<Long> cityIds;
 
     /** Splitted is_in tag*/
     private List<String> isIn;
@@ -55,7 +55,7 @@ public class Street  {
         this.id = street.id;
         this.name = street.name;
         this.cityId = street.cityId;
-        this.cityPartId = street.cityPartId;
+        this.cityIds = street.cityIds;
         this.isIn = street.isIn;
         this.geometry = street.geometry;
     }
@@ -68,12 +68,12 @@ public class Street  {
         if (geometry == null){
             return false;
         }
-        if (cityId == 0) {
+        if (cityIds.size() <= 0){
             return false;
         }
-        if (cityPartId == 0){
-            return false;
-        }
+//        if (cityId == 0) {
+//            return false;
+//        }
         return true;
     }
 
@@ -83,7 +83,7 @@ public class Street  {
         this.id = -1;
         this.name = "";
         this.cityId = -1;
-        this.cityPartId = -1;
+        this.cityIds = new ArrayList<>();
         this.isIn = new ArrayList<>();
         this.geometry = new GeometryFactory().createMultiLineString(null);
 
@@ -110,12 +110,21 @@ public class Street  {
         this.cityId = cityId;
     }
 
-    public long getCityPartId() {
-        return cityPartId;
+    public List<Long> getCityIds() {
+        return cityIds;
     }
 
-    public void setCityPartId(long cityPartId) {
-        this.cityPartId = cityPartId;
+    public void setCityIds(List<Long> cityIds) {
+        if (cityIds != null){
+            this.cityIds = cityIds;
+        }
+    }
+
+    public void addCityId(long cityId) {
+        if (cityIds == null){
+            cityIds = new ArrayList<>();
+        }
+        cityIds.add(cityId);
     }
 
     public String getName() {
@@ -147,8 +156,6 @@ public class Street  {
         return "Street{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", cityId=" + cityId +
-                ", cityPartId=" + cityPartId +
                 ", isIn=" + isIn +
                 ", geometry=" + Utils.geomToGeoJson(geometry) +
                 '}';
@@ -163,4 +170,5 @@ public class Street  {
     }
 
 
+    
 }

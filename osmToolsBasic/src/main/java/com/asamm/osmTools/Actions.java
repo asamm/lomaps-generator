@@ -5,6 +5,7 @@
 package com.asamm.osmTools;
 
 import com.asamm.osmTools.cmdCommands.*;
+import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
@@ -390,29 +391,28 @@ class Actions {
             return;
         }
 
-        // TODO uncomment commented only for development addressDB
 
         // load definitions
-/*
+
         File defFile = new File(Parameters.getConfigApDbPath());
-        DataWriterDefinition definition = new DataWriterDefinition(defFile);
+        WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
         // firstly simplify source file
         CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
         cmd.addTaskSimplify(definition);
         cmd.execute();
 
-        // now execute map generating
+        // now execute db poi generating
         CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
         cmdGen.addGeneratorDb();
+        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
         cmdGen.execute();
 
-*/
-
-        CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
-        cmd.addGeneratorAddress();
-        Logger.i(TAG, "Generate DB, command: " + cmd.getCmdLine() );
-        cmd.execute();
+        // Address generation
+        CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
+        cmdAddres.addGeneratorAddress();
+        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
+        cmdAddres.execute();
 
         // edit - do not pack database it'll be packed together with map file itself
         // after generating, pack file and delete original
