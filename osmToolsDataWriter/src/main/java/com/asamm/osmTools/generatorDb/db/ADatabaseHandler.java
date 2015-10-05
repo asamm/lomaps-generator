@@ -9,6 +9,7 @@ import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
 import java.sql.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class ADatabaseHandler {
 
@@ -25,25 +26,29 @@ public abstract class ADatabaseHandler {
 	protected Connection conn;
 	private Statement stmt;
 	
-	public ADatabaseHandler(File file, boolean deleteExistingDb) {
+	public ADatabaseHandler(File file, boolean deleteExistingDb) throws Exception{
 		this.dbFile = file;
-		if (file.exists() && deleteExistingDb) {
-			file.delete();
-		}
-		if (file.getParentFile() != null) {
+
+        if (file.exists() && deleteExistingDb) {
+            file.delete();
+        }
+
+    	if (file.getParentFile() != null) {
 			file.getParentFile().mkdirs();
 		}
 		ready = false;
-	}
 
-	protected void initialize() throws ClassNotFoundException, 
-		SQLException, InvalidAttributesException {
-
-        // init geometry writer
+        // init geometry column writers / readers
         wkbWriter = new WKBWriter();
         wktWriter = new WKTWriter(2);
         wkbReader = new WKBReader();
         wktReader = new WKTReader();
+
+        initialize();
+	}
+
+	private void initialize() throws ClassNotFoundException,
+		SQLException, InvalidAttributesException {
 
 		// load the SQLite-JDBC driver using the current class loader
 		Class.forName("org.sqlite.JDBC");
@@ -51,7 +56,7 @@ public abstract class ADatabaseHandler {
 		// prepare configuration
 		SQLiteConfig config = new SQLiteConfig();
 		config.enableLoadExtension(true);
-		
+
 		// prepare connection to database
 		conn = DriverManager.getConnection(
 				"jdbc:sqlite:" + dbFile.getAbsolutePath(),
@@ -59,9 +64,9 @@ public abstract class ADatabaseHandler {
 
 		// connect
 		stmt = conn.createStatement();
-		
+
 		// set timeout to 30 sec.
-		stmt.setQueryTimeout(30); 
+		stmt.setQueryTimeout(30);
 
 		// loading SpatiaLite
 //        executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
@@ -75,15 +80,14 @@ public abstract class ADatabaseHandler {
 		// initializes SPATIAL_REF_SYS and GEOMETRY_COLUMNS
 		executeStatement("SELECT InitSpatialMetadata()");
 
-		// now set tables
-		setTables(conn);
-			
 		// be ready for transactions
 		conn.setAutoCommit(false);
-			
+
 		// set ready flag
 		ready = true;
 	}
+
+    protected abstract void cleanTables ();
 
     protected PreparedStatement createPreparedStatement (String sql) throws SQLException {
         return conn.prepareStatement(sql);
@@ -102,7 +106,7 @@ public abstract class ADatabaseHandler {
 		try {
 			if (conn != null) {
 				conn.commit();
-				if (closeConnection) {
+				if (closeConnection ) {
 					conn.close();
 				}
 			}
@@ -111,7 +115,7 @@ public abstract class ADatabaseHandler {
 		}
 	}
 	
-	protected abstract void setTables(Connection conn) 
+	protected abstract void setTables()
 			throws SQLException, InvalidAttributesException;
 
 	public boolean isReady() {
@@ -121,12 +125,13 @@ public abstract class ADatabaseHandler {
 	public void destroy() throws SQLException {
 		ready = false;
 		try {
-			if (stmt != null) {
-				stmt.close();
-			}
-
+            if (stmt != null) {
+                stmt.close();
+            }
 			// also commit
 			commit(true);
+
+            vacuum();
 		} catch (Exception e) {
             Logger.e(TAG, "destroy()", e);
 		}
@@ -136,6 +141,23 @@ public abstract class ADatabaseHandler {
 		text = text.replace("'", "''");
 		return text;
 	}
+
+    protected void vacuum () {
+
+        try {
+            Connection conn = DriverManager.getConnection(
+                    "jdbc:sqlite:" + dbFile.getAbsolutePath());
+
+            Statement statement = conn.createStatement();
+            statement.execute("VACUUM");
+            statement.close();
+
+            conn.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }

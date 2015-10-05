@@ -36,8 +36,11 @@ class DataGeneratorFactory extends TaskManagerFactory {
 		conf.reportCount = getIntegerArgument(
 				taskConfig, PARAM_TESTING_REPORT_COUNT, 0);
 
-        conf.setDataContainerType(getStringArgument(
-                taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
+
+        if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS ){
+            conf.setDataContainerType(getStringArgument(
+                    taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
+        }
 
 		// validate configuration
 		conf.validate();

@@ -12,6 +12,7 @@ public class DbPoiConst {
 	public static final String TN_POINTS_KEY_VALUE = "Points_Key_Value";
 
     public static final String TN_STREETS = "Streets";
+    public static final String TN_STREET_IN_CITIES = "Street_In_Cities";
     public static final String TN_CITIES = "Cities";
 
 	public static final String COL_ID = "id";
@@ -30,6 +31,7 @@ public class DbPoiConst {
 
     public static final String COL_CITY_ID = "cityid";
     public static final String COL_CITY_PART_ID = "citypartid";
+    public static final String COL_STREET_ID = "streetid";
 	
 	public static final String COL_EMAIL = "email";
 	public static final String COL_PHONE = "phone";

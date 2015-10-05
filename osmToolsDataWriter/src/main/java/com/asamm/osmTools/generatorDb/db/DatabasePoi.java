@@ -42,22 +42,60 @@ public class DatabasePoi extends ADatabaseHandler {
 	public DatabasePoi(File file, WriterPoiDefinition poiDefinition) throws Exception {
 		super(file, true);
 		this.writerPoiDefinition = poiDefinition;
-		
-		// initialize database
-		initialize();
+
+        setTables();
 	}
-	
-	@Override
-	protected void setTables(Connection conn) throws SQLException, InvalidAttributesException {
+
+    @Override
+    protected void cleanTables() {
+        String sql = "";
+        try {
+
+            sql = "SELECT DisableSpatialIndex('" + TN_POINTS + "', '"+COL_GEOM+"')";
+            executeStatement(sql);
+            sql = "DROP TABLE IF EXISTS  idx_"+ TN_POINTS +"_"+COL_GEOM;
+            executeStatement(sql);
+
+            sql = "DROP INDEX IF EXISTS idx_prs_points_id ";
+            executeStatement(sql);
+
+            sql = "DROP INDEX IF EXISTS idx_prs_root_sub";
+            executeStatement(sql);
+
+            sql = "DROP INDEX IF EXISTS idx_prs_root";
+            executeStatement(sql);
+
+            sql = "DROP INDEX IF EXISTS idx_pkv_points_id";
+            executeStatement(sql);
+
+
+            sql ="DROP TABLE IF EXISTS  "+TN_POINTS_ROOT_SUB ;
+            executeStatement(sql);
+
+            sql ="DROP TABLE IF EXISTS  "+TN_POINTS_KEY_VALUE ;
+            executeStatement(sql);
+
+            sql ="DROP TABLE IF EXISTS  "+TN_POINTS ;
+            executeStatement(sql);
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "cleanTables(), problem with query: " + sql, e);
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+	protected void setTables() throws SQLException, InvalidAttributesException {
 		// create table with types
 		foldersRoot = insertValueTable(
-				conn, TN_FOLDERS_ROOT, writerPoiDefinition.foldersRoot);
+				TN_FOLDERS_ROOT, writerPoiDefinition.foldersRoot);
 		foldersSub = insertValueTable(
-				conn, TN_FOLDERS_SUB, writerPoiDefinition.foldersSub);
+				TN_FOLDERS_SUB, writerPoiDefinition.foldersSub);
 		tagKeys = insertValueTable(
-				conn, TN_TAG_KEYS, writerPoiDefinition.getSupportedKeysForDb());
+				TN_TAG_KEYS, writerPoiDefinition.getSupportedKeysForDb());
 		tagValues = insertValueTable(
-				conn, TN_TAG_VALUES, new ArrayList<String>());
+				TN_TAG_VALUES, new ArrayList<String>());
 		
 		// prepare table for connection all together
 		String sql = "CREATE TABLE " + TN_POINTS_ROOT_SUB + " (";
@@ -144,9 +182,10 @@ public class DatabasePoi extends ADatabaseHandler {
         super.destroy();
     }
 	
-	private Hashtable<String, Long> insertValueTable(Connection conn, String tableName, 
+	private Hashtable<String, Long> insertValueTable( String tableName,
 			List<String> data) throws SQLException {
-		String sql = "CREATE TABLE " + tableName + " (";
+
+        String sql = "CREATE TABLE " + tableName + " (";
 		sql += COL_ID + " INTEGER NOT NULL PRIMARY KEY,";
 		sql += COL_NAME + " TEXT NOT NULL)";
 		executeStatement(sql);

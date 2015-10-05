@@ -37,7 +37,7 @@ public class GeneratorAddress extends AGenerator {
     private List<Boundary> boundaries;
 
     /** Center city and the best boundary for it*/
-    private Map<City, Boundary> centerCityBoundaryMap;
+    private Map<Long, Boundary> centerCityBoundaryMap;
 
     /** List of cities that are in the boundary*/
     private Map<Boundary, List<City>> citiesInBoundaryMap;
@@ -61,7 +61,6 @@ public class GeneratorAddress extends AGenerator {
         this.citiesInBoundaryMap = new HashMap<>();
 
         initialize();
-
 	}
 
 	@Override
@@ -73,13 +72,12 @@ public class GeneratorAddress extends AGenerator {
     public void proceedData(ADataContainer dc) {
 
 
-
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
         loadCityPlaces(dc);
 
         // ---- step 2 create boundaries -----
-        Logger.i(TAG, "=== Step 2 - crate boundaries ===");
+        Logger.i(TAG, "=== Step 2 - create boundaries ===");
         loadBoundaries(dc);
 
         // ---- step 3 find center city for boundary -----
@@ -92,21 +90,45 @@ public class GeneratorAddress extends AGenerator {
 
         // ---- step 5 write cities to DB ----
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
-        writeCitiesToDB();
+        insertCitiesToDB();
 
         // ---- step 6 and 7 process streets ----
 
         loadStreetRelations(dc);
+
+        Logger.i(TAG, "=== Step 8 - simplify street and city geoms ===");
+        simplifyGeoms ();
+
+
     }
 
-    
+    private void simplifyGeoms() {
+        DatabaseAddress databaseAddress = getDatabaseAddress();
+        long start = System.currentTimeMillis();
+
+        databaseAddress.simplifyStreetGeoms();
+
+        City city;
+        for (int i = 0, size = cities.size() ; i < size;  i++){
+            city = cities.get(i);
+            Boundary boundary = centerCityBoundaryMap.get(city.getId());
+            if (boundary != null){
+                databaseAddress.simplifyCityGeom(city, boundary);
+            }
+        }
+
+        ((DatabaseAddress) db).createCityBoundaryIndex();
+        long time = System.currentTimeMillis() - start;
+        Logger.i(TAG, "SimplifyGeoms takes: " + time/1000.0 + " sec" );
+    }
+
 
     private void loadStreetRelations(ADataContainer dc) {
         StreetCreator sc = new StreetCreator(dc, this);
 
         // ----- Step 6 create streets from relations streets -----
-       // Logger.i(TAG, "=== Step 6 - crate streets from relations ===");
-       // sc.createStreetFromRelations();
+        Logger.i(TAG, "=== Step 6 - crate streets from relations ===");
+        sc.createStreetFromRelations();
 
         // ----- step 7 create streets from ways ------
         Logger.i(TAG, "=== Step 7 - crate streets from ways ===");
@@ -119,19 +141,19 @@ public class GeneratorAddress extends AGenerator {
     }
 
 
-    private void writeCitiesToDB() {
+
+
+    private void insertCitiesToDB() {
 
         City city;
         for (int i = 0, size = cities.size() ; i < size;  i++){
             city = cities.get(i);
-            Boundary boundary = centerCityBoundaryMap.get(city);
+            Boundary boundary = centerCityBoundaryMap.get(city.getId());
 
             ((DatabaseAddress) db).insertCity(city, boundary);
-
         }
 
         ((DatabaseAddress) db).crateCityCenterIndex();
-        ((DatabaseAddress) db).createCityBoundaryIndex();
         ((DatabaseAddress) db).createCityTilesIndex();
     }
 
@@ -291,10 +313,10 @@ public class GeneratorAddress extends AGenerator {
     private void registerBoundaryForCity(Boundary boundary, City city) {
 
         // try to obtain previous registered boundary for city
-        Boundary oldBoundary = this.centerCityBoundaryMap.get(city);
+        Boundary oldBoundary = this.centerCityBoundaryMap.get(city.getId());
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
-            centerCityBoundaryMap.put(city, boundary);
+            centerCityBoundaryMap.put(city.getId(), boundary);
         }
         else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
                 && oldBoundary != boundary
@@ -315,7 +337,7 @@ public class GeneratorAddress extends AGenerator {
             if (newBoundaryPriority < oldBoundaryPriority){
 //                Logger.i(TAG, "Boundary: " + oldBoundary.toString()
 //                        + " \n were replaced with boundary: " + boundary.toString());
-                centerCityBoundaryMap.put(city, boundary);
+                centerCityBoundaryMap.put(city.getId(), boundary);
             }
         }
     }
@@ -492,7 +514,7 @@ public class GeneratorAddress extends AGenerator {
         return cities;
     }
 
-    public Map<City, Boundary> getCenterCityBoundaryMap() {
+    public Map<Long, Boundary> getCenterCityBoundaryMap() {
         return centerCityBoundaryMap;
     }
 

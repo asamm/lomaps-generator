@@ -14,7 +14,6 @@ import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,7 +35,6 @@ public class StreetCreator {
     public long timeFindStreetCities = 0;
     public long timeInsertStreetTmpTime = 0;
     public long timeLoadCities = 0;
-
 
     public StreetCreator (ADataContainer dc, GeneratorAddress ga){
 
@@ -103,10 +101,9 @@ public class StreetCreator {
             Street street = new Street (name, isInList, mls);
 
             // find all cities where street can be in it or is close to city
-            List<City> cities = findStreetCities(street);
-            // for every possible city create copy of street (street is duplicated for every city)
+            List<City> cities = findStreetCities(street, relationId);
 
-            List<Street> streets = createStreetsForCities(street, cities);
+            List<Street> streets = createWayStreetsForCities(street, cities);
 
             for (Street streetToInsert : streets){
                 long streetId = insertOrUpdateStreet(streetToInsert);
@@ -114,19 +111,6 @@ public class StreetCreator {
         }
     }
 
-    private boolean isStreetWay (Way way) {
-
-        String highwayVal = OsmUtils.getTagValue(way, OSMTagKey.HIGHWAY);
-        if (highwayVal == null){
-            return false;
-        }
-
-        if (highwayVal.equals("platform")){
-            return false;
-        }
-
-        return true;
-    }
 
 
 
@@ -157,16 +141,26 @@ public class StreetCreator {
 
             // find all cities where street can be in it or is close to city
             long start = System.currentTimeMillis();
-            List<City> cities = findStreetCities(street);
+            List<City> cities = findStreetCities(street, wayId);
             timeFindStreetCities += System.currentTimeMillis() - start;
 
+
+
             start = System.currentTimeMillis();
-            // for every possible city create copy of street (street is duplicated for every city)
-            List<Street> streets = createStreetsForCities(street, cities);
+            // for every possible city create copy of street
+            List<Street> streets = createWayStreetsForCities(street, cities);
             Street streetTmp;
             for (int i=0, size = streets.size(); i < size; i++) {
                 dc.addStreet(streets.get(i));
+
             }
+
+//            if (wayId == 7980116){
+//                for (City city : cities){
+//                    Logger.i(TAG, "Way id  7980116 is in cities: " + city.toString());
+//                }
+//            }
+
             timeInsertStreetTmpTime += System.currentTimeMillis() - start;
         }
 
@@ -187,18 +181,29 @@ public class StreetCreator {
 
         Iterator<Integer> iterator = dc.getStreetHashSet().iterator();
         List<MultiLineString> geoms = new ArrayList<>();
+
         int counter = 0;
         while (iterator.hasNext()){
             counter ++;
+            List<Long> cityIds = new ArrayList<>();
             int hash = iterator.next();
+            //load all ways with the same hash from cache
             List<Street> wayStreets = dc.getWayStreetsFromCache(hash);
             if (wayStreets.size() ==0){
                 continue;
             }
 
+            // join possible cityIds
             geoms = new ArrayList<>();
             for (int i=0, size = wayStreets.size(); i < size; i++){
-                geoms.add(wayStreets.get(i).getGeometry());
+                Street wayStreet = wayStreets.get(i);
+                geoms.add(wayStreet.getGeometry());
+                //combine cityIds from every streetWay into on list of cities
+                for (Long cityId : wayStreet.getCityIds()){
+                    if ( !cityIds.contains(cityId)){
+                        cityIds.add(cityId);
+                    }
+                }
             }
 
             // union all ways into one street
@@ -214,37 +219,36 @@ public class StreetCreator {
             // get first street and update the geom (all way streets should have save city and name
             Street street = wayStreets.get(0);
             street.setGeometry(mls);
+            street.setCityIds(cityIds);
 
-            databaseAddress.insertStreet(street);
+            insertOrUpdateStreet(street);
         }
     }
 
 
     /**
-     * Create list of street for every city that can contain this street. Also try to find
-     * any lower administration part of this city
-     * @param street streets to fill with city and subcity ids
+     * Create list of way street for every city that can contain this street.
+     * @param street streets to fill with city
      * @param streetCities list of cities in which can be street placed
      * @return
      */
-    private List<Street> createStreetsForCities (Street street, List<City> streetCities){
+    private List<Street> createWayStreetsForCities(Street street, List<City> streetCities){
 
+        List<Long> cityIds = new ArrayList<>();
         List<Street> streets = new ArrayList<>();
 
+        // create list of city ids in which is this way (street)
         for (City city : streetCities){
-            // find any smaller city part if exist
-            City subCity = city;
-//            City subCity = getSubCity(street, city);
-//            if (subCity == null) {
-//                //TODO IS THIS CORRECT? Use the city as the subcity?
-//                subCity = city;
-//            }
+            cityIds.add(city.getId());
+        }
 
+        // add cityIds into street so every copy know other streets
+        street.setCityIds(cityIds);
 
-            // create copy of street and city
+        for (City city : streetCities){
+            // create copy of street
             Street streetCreated = new Street(street);
             streetCreated.setCityId(city.getId());
-            streetCreated.setCityPartId(subCity.getId());
 
             streets.add(streetCreated);
         }
@@ -257,7 +261,7 @@ public class StreetCreator {
      * @param street
      * @return
      */
-    private List<City> findStreetCities (Street street) {
+    private List<City> findStreetCities (Street street, long wayId) {
 
 
         List<City> streetCities = new ArrayList<>(); // cities where street is in it
@@ -275,17 +279,29 @@ public class StreetCreator {
         for (int i=0, size = cities.size(); i < size; i++){
 
             city = cities.get(i);
-            //Logger.i(TAG, "test city:  " + city.getId() + ", name: " + city.getName() + "distance: " + Utils.getDistance(streetCentroid, city.getCenter()));
+//            if (wayId == 7980116){
+//                Logger.i(TAG, "test city:  " + city.getId() + ", name: " + city.getName()
+//                        + " distance: " + Utils.getDistance(streetCentroid, city.getCenter()));
+//            }
             // recognize city by the name and isIn tag
             if (street.getIsIn().contains(city.getName())){
+//                if (wayId == 7980116){
+//                    Logger.i(TAG, "Way id  7980116 has city ISIN, city: " + city.toString());
+//                }
                 streetCities.add(city);
                 continue;
             }
 
             // try check if is in boundary
-            Boundary boundary = ga.getCenterCityBoundaryMap().get(city);
+            Boundary boundary = ga.getCenterCityBoundaryMap().get(city.getId());
+
+
             if (boundary != null) {
-                if (boundary.getGeom().contains(street.getGeometry())) {
+                if (boundary.getGeom().contains(street.getGeometry()) || (street.getGeometry().crosses(boundary.getGeom()))) {
+//                    if (wayId == 7980116){
+//                        Logger.i(TAG, "Way id  7980116 is in boundary" + boundary.toString());
+//                    }
+
                     streetCities.add(city);
                     continue;
                 }
@@ -294,7 +310,9 @@ public class StreetCreator {
             // boundary is not defined > if relative distance is lower 0.2
             double distance = Utils.getDistance(streetCentroid, city.getCenter());
             if (distance / city.getType().getRadius() < 0.2){
-                //Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
+//                if (wayId == 7980116) {
+//                    Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
+//                }
                 streetCities.add(city);
             }
         }
@@ -359,41 +377,100 @@ public class StreetCreator {
         long id = 0;
 
         // try to load same street from database
-        List<Street> loadedStreets = databaseAddress.selectStreet(street);
-
-        if (loadedStreets.size() == 0) {
+        List<Street> loadedStreets = databaseAddress.selectStreetInCities(street);
+        int size = loadedStreets.size();
+        if (size == 0) {
             // database does not contain such street > simple insert new record
             id = databaseAddress.insertStreet(street);
         }
 
-        if (loadedStreets.size() == 1){
-            // it seems that already exist street with same name, same city and same subcity > join geometry together
-            Street srOld = loadedStreets.get(0);
-            //Logger.i(TAG, "Loaded street: ." + srOld.toString());
-            Geometry joinedGeom = srOld.getGeometry().union(street.getGeometry());
+        if (size == 1){
 
-            MultiLineString mlsJoined;
-            if (joinedGeom instanceof MultiLineString){
-                mlsJoined = (MultiLineString) joinedGeom;
-            }
-            else {
-                LineString ls = (LineString) joinedGeom;
-                mlsJoined = geometryFactory.createMultiLineString(new LineString[]{ls});
+            //join loaded street with new one and update the loaded street
+            // already exist street with this name for different with any same city
+            Street loadedStreet = loadedStreets.get(0);
+
+            List<Long> cityIdsNotSaved = new ArrayList<>();
+            for (Long cityId : street.getCityIds()){
+                if ( !loadedStreet.getCityIds().contains(cityId)){
+                    cityIdsNotSaved.add(cityId);
+                }
             }
 
-            srOld.setGeometry(mlsJoined);
-            //Logger.w(TAG, "Joined geom: ." + srOld.toString());
+            loadedStreet.setGeometry(unionStreetGeom(loadedStreet, street));
+            loadedStreet.setCityIds(cityIdsNotSaved);
+            //Logger.w(TAG, "Joined geom: ." + loadedStreet.toString());
             // update street geom
-            id = databaseAddress.updateStreet(srOld);
+            id = databaseAddress.updateStreet(loadedStreet);
         }
-        if (loadedStreets.size() > 1){
-            Logger.w(TAG, "There are more then one records for street");
-            for (Street s : loadedStreets){
-                Logger.w(TAG, "Existed street: " + s.toString());
+
+        if (size > 1){
+            // there more streets in the DB > join them into the new one and delete the previous records in db
+            List<Long> cityIds = new ArrayList<>();
+            for (int i=0; i < size; i++ ){
+                Street loadedStreet = loadedStreets.get(i);
+
+                for (Long cityId : street.getCityIds()){
+                    if ( !street.getCityIds().contains(cityId)){
+                        street.addCityId(cityId);
+                    }
+                }
+
+                street.setGeometry(unionStreetGeom(street, loadedStreet));
+                // delete old record
+                databaseAddress.deleteStreet(loadedStreet.getId());
             }
+
+            // insert new joined street into db
+            id = databaseAddress.insertStreet(street);
         }
+
         return id;
     }
+
+    private MultiLineString unionStreetGeom (Street s1, Street s2){
+        Geometry joinedGeom = s1.getGeometry().union(s2.getGeometry());
+
+        MultiLineString mlsJoined;
+        if (joinedGeom instanceof MultiLineString){
+            mlsJoined = (MultiLineString) joinedGeom;
+        }
+        else {
+            LineString ls = (LineString) joinedGeom;
+            mlsJoined = geometryFactory.createMultiLineString(new LineString[]{ls});
+        }
+
+        return mlsJoined;
+    }
+
+
+    /**************************************************/
+    /*                UTILS
+    /**************************************************/
+
+
+    private boolean isStreetWay (Way way) {
+
+        String highwayVal = OsmUtils.getTagValue(way, OSMTagKey.HIGHWAY);
+        if (highwayVal == null){
+            return false;
+        }
+
+        if (highwayVal.equals("track")){
+            return false;
+        }
+
+        if (highwayVal.equals("path")){
+            return false;
+        }
+
+        if (highwayVal.equals("platform")){
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Try to find smaller or lower city part (subburb etc) in city for street
      * @param street
@@ -403,7 +480,7 @@ public class StreetCreator {
     public City getSubCity (Street street, City topCity) {
 
         // try to get boundary for city
-        Boundary topBoundary = ga.getCenterCityBoundaryMap().get(topCity);
+        Boundary topBoundary = ga.getCenterCityBoundaryMap().get(topCity.getId());
         if (topBoundary == null){
             return null;
         }
@@ -418,7 +495,7 @@ public class StreetCreator {
                 continue;
             }
             // load boundary for sub city and find the lowest according to the admin level
-            Boundary subBoundary = ga.getCenterCityBoundaryMap().get(subCity);
+            Boundary subBoundary = ga.getCenterCityBoundaryMap().get(subCity.getId());
             if (subBoundary == null || !subBoundary.hasAdminLevel()){
                 continue;
             }

@@ -1,6 +1,5 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
 /**
@@ -10,17 +9,26 @@ public class City {
 
     public enum CityType {
         // types and radius
-        CITY(10000), TOWN(5000), VILLAGE(1300), HAMLET(1000), SUBURB(400), DISTRICT(400);
+        CITY(10000, 1), TOWN(5000, 2), VILLAGE(1300, 3), HAMLET(1000, 4), SUBURB(400, 5), DISTRICT(400, 6);
 
-        /** predefined redius in meters for city type*/
+        /** predefined radius in meters for city type*/
         private double radius;
 
-        private CityType(double radius) {
+        /** Num interpretation of type of a city. Lower type is bigger city */
+        private int typeCode;
+
+
+        private CityType(double radius, int typeCode) {
             this.radius = radius;
+            this.typeCode = typeCode;
         }
 
         public double getRadius() {
             return radius;
+        }
+
+        public int getTypeCode() {
+            return typeCode;
         }
 
         public static String valueToString(CityType cityType) {
@@ -40,10 +48,23 @@ public class City {
             }
             return null;
         }
+
+        public static CityType createFromTypeCodeValue(int typeCode) {
+            if (typeCode == 0) {
+                return null;
+            }
+
+            for (CityType cityType : CityType.values()) {
+                if (cityType.getTypeCode() == typeCode) {
+                    return cityType;
+                }
+            }
+            return null;
+        }
     }
     // -------- END OF CITY TYPE ENUM ----------
 
-    /** Same as OSM Node id but some City are not created from Node place and for this reason is id zero*/
+    /** Same as OSM Node or id of relation/way */
     private long id;
 
     /** Name of the city*/
@@ -54,9 +75,6 @@ public class City {
 
     /** Size of city*/
     private CityType type;
-
-    //TODO LIST OF STREETS
-    //private List<Street> listOfStreets = new ArrayList<Street>();
 
     private String isIn;
 

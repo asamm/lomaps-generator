@@ -1,9 +1,7 @@
 package com.asamm.osmTools.generatorDb.db;
 
-import com.asamm.osmTools.generatorDb.address.City;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.base64.Base64;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
@@ -58,8 +56,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             throws Exception {
         super(file, deleteExistingDb);
 
-        // initialize database
-        initialize();
+        setTables();
 
         // prepare statements
         psInsertNode = createPreparedStatement("INSERT INTO nodes (id, data) VALUES (?, ?)");
@@ -79,9 +76,15 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         dwbe = new DataWriterBigEndian();
     }
 
+    @Override
+    protected void cleanTables() {
+        // nothing to do this table is temporary and it's always create as new
+
+    }
+
 
     @Override
-    protected void setTables(Connection conn) throws SQLException, InvalidAttributesException {
+    protected void setTables() throws SQLException, InvalidAttributesException {
         String sql = "CREATE TABLE nodes (";
         sql += "id BIGINT NOT NULL PRIMARY KEY,";
         sql += "data BLOB NOT NULL)";
@@ -308,6 +311,13 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             dwbe.writeLong(street.getCityId());
             //dwbe.writeLong(street.getCityPartId());
             dwbe.writeString(street.getName());
+            // write list of city ids
+            List<Long> cityIds = street.getCityIds();
+            dwbe.writeInt(cityIds.size());
+            for (int i=0, size=cityIds.size(); i < size; i++){
+                dwbe.writeLong(cityIds.get(i));
+            }
+
             byte[] geomData = wkbWriter.write(street.getGeometry());
             dwbe.writeInt(geomData.length);
             dwbe.write(geomData);
@@ -326,6 +336,14 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             Street street = new Street();
             street.setCityId(drbe.readLong());
             street.setName(drbe.readString());
+            //read list of cityIds
+            int size = drbe.readInt();
+            List<Long> cityIds = new ArrayList<>();
+            for (int i=0; i < size; i++){
+                cityIds.add(drbe.readLong());
+            }
+            street.setCityIds(cityIds);
+
             int count = drbe.readInt();
             street.setGeometry((com.vividsolutions.jts.geom.MultiLineString) wkbReader.read(drbe.readBytes(count)));
 
