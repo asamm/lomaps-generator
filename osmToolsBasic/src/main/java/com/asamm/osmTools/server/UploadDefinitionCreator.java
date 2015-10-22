@@ -24,7 +24,7 @@ public class UploadDefinitionCreator {
 
     /***************** CONSTS *****************/
     //name of item is created from name of map + this postfix
-    private static final String ITEM_NAME_VECTOR_POSTFIX = " - offline vector map";
+    private static final String ITEM_NAME_VECTOR_POSTFIX = " - LoMaps";
     // define folder that contains vector maps in client
     private static final String CLIENT_VECTOR_MAP_DESTINATION = "mapsVector/";
     // define if created/updated version will be in the end set as active version

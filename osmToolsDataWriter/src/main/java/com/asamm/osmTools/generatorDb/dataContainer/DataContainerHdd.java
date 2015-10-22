@@ -10,6 +10,7 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.*;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class DataContainerHdd extends ADataContainer {
@@ -56,6 +57,12 @@ public class DataContainerHdd extends ADataContainer {
         dbData.insertRelation(relation.getId(), relation);
     }
 
+
+//    @Override
+//    public Iterator<Node> getNodes() {
+//        ri
+//    }
+
 	@Override
 	public Node getNodeFromCache(long id) {
 		return dbData.selectNode(id);
@@ -84,9 +91,9 @@ public class DataContainerHdd extends ADataContainer {
         dbData.finalizeBatchStatement();
     }
 
-    public void finalizeWayStreetCaching () {
-        dbData.createStreetIndex();
-    }
+//    public void finalizeWayStreetCaching () {
+//        dbData.createStreetIndex();
+//    }
 
 
     @Override
@@ -111,4 +118,5 @@ public class DataContainerHdd extends ADataContainer {
             dbData.destroy();
 		} catch (Exception e) {}
 	}
+
 }

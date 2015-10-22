@@ -34,7 +34,7 @@ public class LocusServerConst {
 
     public static final int VECTOR_ITEM_TYPE_UNIT = 1;  //define that it is item with file
 
-    public static final int VECTOR_VERSION_CODE = 123; //
+    public static final int VECTOR_VERSION_CODE = 125; //
     public static final boolean VECTOR_CAN_BE_WELCOME_PRESENT = true;
 
     public static final long[] VECTOR_IMAGE_IDS = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};

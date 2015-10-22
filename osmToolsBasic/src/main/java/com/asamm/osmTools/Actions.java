@@ -400,15 +400,21 @@ class Actions {
         // firstly simplify source file
         CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
         cmd.addTaskSimplify(definition);
+        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
         cmd.execute();
 
         // now execute db poi generating
         CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
         cmdGen.addGeneratorDb();
         Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-        cmdGen.execute();
+ //       cmdGen.execute();
 
         // Address generation
+        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
+        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
+        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
+        cmdAddressSimpl.execute();
+
         CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );

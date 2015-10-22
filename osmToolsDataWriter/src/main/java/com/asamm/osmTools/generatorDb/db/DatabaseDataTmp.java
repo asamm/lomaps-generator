@@ -102,7 +102,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         stmt.execute(sql);
 
         sql = "CREATE TABLE "+TN_STREETS+" (";
-        sql += COL_HASH+" INT NOT NULL ,";
+        sql += COL_HASH+" INT NOT NULL PRIMARY KEY ,";
         sql += COL_DATA + " BLOB";
         sql +=        " )";
         stmt.execute(sql);
@@ -110,18 +110,18 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         stmt.close();
     }
 
-    public void createStreetIndex () {
-        try {
-            psInsertStreet.executeBatch();
-            streetInsertBatchSize = 0;
-
-            String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
-            Statement stmt = conn.createStatement();
-            stmt.execute(sql);
-        } catch (SQLException e) {
-            Logger.e(TAG, "createStreetIndex(), problem with query", e);
-        }
-    }
+//    public void createStreetIndex () {
+//        try {
+//            // finalize inserts of streets
+//            psInsertStreet.executeBatch();
+//            streetInsertBatchSize = 0;
+//
+//            String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
+//            executeStatement(sql);
+//        } catch (SQLException e) {
+//            Logger.e(TAG, "createStreetIndex(), problem with query", e);
+//        }
+//    }
 
     public void insertNode(long id, Entity entity) {
 

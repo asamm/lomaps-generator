@@ -16,6 +16,7 @@ import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
+import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -33,6 +34,7 @@ public class GeneratorAddress extends AGenerator {
 
     /** All places created from node or from relations*/
     private List<City> cities;
+
 
     private List<Boundary> boundaries;
 
@@ -138,6 +140,13 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Inserts streets into tmp table takes: " + sc.timeInsertStreetTmpTime/1000.0 + " sec" );
         Logger.i(TAG, "Loading cities  takes: " + sc.timeLoadCities/1000.0 + " sec" );
 
+        Logger.i(TAG, "Joining ways and prepararion for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
+        Logger.i(TAG, "Insert or update streets: " + sc.timeInsertOrUpdateStreetsWhole /1000.0 + " sec" );
+
+        Logger.i(TAG, "Select previous strees: " + sc.timeSelectPreviousStreetFromDB /1000.0 + " sec" );
+        Logger.i(TAG, "Insert streets: " + sc.timeInsertStreetSql /1000.0 + " sec" );
+        Logger.i(TAG, "Update streets: " + sc.timeUpdateStreetSql /1000.0 + " sec" );
+
     }
 
 
@@ -159,10 +168,10 @@ public class GeneratorAddress extends AGenerator {
 
 
     void loadCityPlaces(ADataContainer dc) {
-        List<Long> nodeIds = dc.getNodeIds();
+        TLongList nodeIds = dc.getNodeIds();
 
-        for (long nodeId : nodeIds){
-            Node node = dc.getNodeFromCache(nodeId);
+        for (int i=0, size = nodeIds.size(); i < size; i++) {
+            Node node = dc.getNodeFromCache(nodeIds.get(i));
             if (node == null || !addressDefinition.isValidPlaceNode(node)) {
                 continue;
             }
@@ -196,8 +205,9 @@ public class GeneratorAddress extends AGenerator {
 
         BoundaryCreator boundaryFactory = new BoundaryCreator();
         // create boundaries from relation
-        for (long relationId : dc.getRelationIds()){
-            Relation relation = dc.getRelationFromCache(relationId);
+        TLongList relationIds = dc.getRelationIds();
+        for (int i=0, size = relationIds.size(); i < size; i++) {
+            Relation relation = dc.getRelationFromCache(relationIds.get(i));
             if (relation == null) {
                 continue;
             }
@@ -215,8 +225,9 @@ public class GeneratorAddress extends AGenerator {
             }
         }
 
-        for (long wayId : dc.getWayIds()) {
-            Way way = dc.getWayFromCache(wayId);
+        TLongList wayIds = dc.getWayIds();
+        for (int i=0, size = relationIds.size(); i < size; i++) {
+            Way way = dc.getWayFromCache(wayIds.get(i));
             Boundary boundary = boundaryFactory.create(dc, way);
 
             if (boundary == null){
@@ -469,6 +480,7 @@ public class GeneratorAddress extends AGenerator {
             List<City> citiesInBoundary = new ArrayList<>();
             for (int c=0, sizeC = cities.size();  c < sizeC; c++){
                 city = cities.get(c);
+
                 if (boundary.getGeom().contains(city.getCenter())){
                     citiesInBoundary.add(city);
                 }

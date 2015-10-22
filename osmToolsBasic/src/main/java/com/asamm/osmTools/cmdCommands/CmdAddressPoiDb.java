@@ -72,6 +72,65 @@ public class CmdAddressPoiDb extends Cmd {
         addWritePbf(mFileTempMap.getAbsolutePath(), true);
     }
 
+    public void addTaskSimplifyForAddress(WriterPoiDefinition definition) throws IOException {
+        FileUtils.deleteQuietly(mFilePoiDb);
+
+        addReadSource();
+        addCommand("--tf");
+        addCommand("reject-relations");
+        addCommand("--tf");
+        addCommand("accept-nodes");
+        addCommand("place=*");
+        addCommand("--tf");
+        addCommand("reject-ways");
+        addCommand("outPipe.0=Nodes");
+
+        // add second task
+        addReadSource();
+        addCommand("--tf");
+        addCommand("accept-relations");
+        addCommand("highway=*");
+        addCommand("boundary=*");
+        addCommand("place=*");
+        addCommand("*=street");
+        addCommand("*=associatedStreet");
+        addCommand("--tf");
+        addCommand("accept-ways");
+        addCommand("highway=*");
+        addCommand("boundary=*");
+        addCommand("place=*");
+        addCommand("*=street");
+        addCommand("*=associatedStreet");
+        addCommand("--used-node");
+//        addCommand("idTrackerType=Dynamic");
+        addCommand("outPipe.0=Ways");
+
+        // add third task
+//        addReadSource();
+//        addCommand("--tf");
+//        addCommand("accept-relations");
+//        addCommand("highway=*");
+//        addCommand("boundary=*");
+//        addCommand("place=*");
+//        addCommand("*=street");
+//        addCommand("*=associatedStreet");
+//        addCommand("--used-node");
+//        addCommand("--tf");
+//        addCommand("reject-ways");
+//        addCommand("--used-node");
+////        addCommand("idTrackerType=Dynamic");
+//        addCommand("outPipe.0=Relations");
+
+        // add merge task
+        addCommand("--merge");
+        addCommand("inPipe.0=Nodes");
+        addCommand("inPipe.1=Ways");
+//        addCommand("inPipe.2=Relations");
+
+        // add export path
+        addWritePbf(mFileTempMap.getAbsolutePath(), true);
+    }
+
     public void addGeneratorDb() {
         FileUtils.deleteQuietly(mFilePoiDb);
 
@@ -88,7 +147,8 @@ public class CmdAddressPoiDb extends Cmd {
      */
     public void addGeneratorAddress () {
 
-        addReadPbf(getMap().getPathSource());
+        //addReadPbf(getMap().getPathSource());
+        addReadPbf(mFileTempMap.getAbsolutePath());
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
         addCommand("-fileDb=" + mFilePoiDb);
