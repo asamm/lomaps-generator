@@ -6,6 +6,8 @@ import com.vividsolutions.jts.geom.Point;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
+import java.text.Normalizer;
+
 /**
  * Created by voldapet on 2015-08-14 .
  */
@@ -82,5 +84,20 @@ public class Utils {
     }
 
 
+
+    /**
+     * Function use java.text.Normalizer and replace all diacritics with their codes
+     * then are these codes using regular expresion replaced with empty string.
+     * @param text String for normalization
+     * @return Normalized string
+     */
+    public static String normalizeString(String text) {
+        if (text == null){
+            return null;
+        }
+
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+    }
 
 }

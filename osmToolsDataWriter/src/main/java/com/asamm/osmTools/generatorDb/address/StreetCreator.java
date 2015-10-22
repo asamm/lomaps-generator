@@ -4,13 +4,13 @@ import com.asamm.osmTools.generatorDb.GeneratorAddress;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
-import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.union.UnaryUnionOp;
+import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
@@ -36,6 +36,13 @@ public class StreetCreator {
     public long timeInsertStreetTmpTime = 0;
     public long timeLoadCities = 0;
 
+    public long timeJoinWaysToStreets = 0;
+    public long timeInsertOrUpdateStreetsWhole = 0;
+    public long timeSelectPreviousStreetFromDB = 0;
+    public long timeUpdateStreetSql = 0;
+    public long timeInsertStreetSql = 0;
+
+
     public StreetCreator (ADataContainer dc, GeneratorAddress ga){
 
         this.dc = dc;
@@ -51,10 +58,11 @@ public class StreetCreator {
      */
     public void createStreetFromRelations () {
 
-        for (long relationId : dc.getRelationIds()) {
+        TLongList relationIds = dc.getRelationIds();
+        for (int i=0, size = relationIds.size(); i < size; i++) {
 
             //Logger.i(TAG, "Create street for relation id: " + relationId);
-
+            long relationId = relationIds.get(i);
             Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
                 continue;
@@ -116,7 +124,10 @@ public class StreetCreator {
 
     public void createStreetFromWays() {
 
-        for (long wayId : dc.getWayIds()){
+        TLongList wayIds = dc.getWayIds();
+        for (int i=0, size = wayIds.size(); i < size; i++) {
+
+            long wayId = wayIds.get(i);
 
             Way way = dc.getWayFromCache(wayId);
             if (way == null){
@@ -150,8 +161,8 @@ public class StreetCreator {
             // for every possible city create copy of street
             List<Street> streets = createWayStreetsForCities(street, cities);
             Street streetTmp;
-            for (int i=0, size = streets.size(); i < size; i++) {
-                dc.addStreet(streets.get(i));
+            for (int j=0, sizeJ = streets.size(); j < sizeJ; j++) {
+                dc.addStreet(streets.get(j));
 
             }
 
@@ -175,15 +186,12 @@ public class StreetCreator {
 
         Logger.i(TAG, "Start to join ways into streets and insert them into DB");
 
-        if (dc instanceof DataContainerHdd){
-            ((DataContainerHdd) dc).finalizeWayStreetCaching();
-        }
-
         Iterator<Integer> iterator = dc.getStreetHashSet().iterator();
         List<MultiLineString> geoms = new ArrayList<>();
 
         int counter = 0;
         while (iterator.hasNext()){
+            long start = System.currentTimeMillis();
             counter ++;
             List<Long> cityIds = new ArrayList<>();
             int hash = iterator.next();
@@ -221,7 +229,11 @@ public class StreetCreator {
             street.setGeometry(mls);
             street.setCityIds(cityIds);
 
+            timeJoinWaysToStreets += System.currentTimeMillis() - start;
+
+            long start2 = System.currentTimeMillis();
             insertOrUpdateStreet(street);
+            timeInsertOrUpdateStreetsWhole += System.currentTimeMillis() - start2;
         }
     }
 
@@ -362,7 +374,7 @@ public class StreetCreator {
     }
 
     /**
-     * Insert street with name, city and subcity into database. If the same street alrady exist
+     * Insert street with name, city and subcity into database. If the same street already exist
      * then join old geometry with new one and update old record
      * @param street street to insert
      * @return id of inserted street
@@ -377,11 +389,18 @@ public class StreetCreator {
         long id = 0;
 
         // try to load same street from database
+
+        long start = System.currentTimeMillis();
         List<Street> loadedStreets = databaseAddress.selectStreetInCities(street);
+        timeSelectPreviousStreetFromDB += System.currentTimeMillis() - start;
+
         int size = loadedStreets.size();
         if (size == 0) {
             // database does not contain such street > simple insert new record
+            long start3 = System.currentTimeMillis();
             id = databaseAddress.insertStreet(street);
+            timeInsertStreetSql += System.currentTimeMillis() - start3;
+
         }
 
         if (size == 1){
@@ -401,7 +420,9 @@ public class StreetCreator {
             loadedStreet.setCityIds(cityIdsNotSaved);
             //Logger.w(TAG, "Joined geom: ." + loadedStreet.toString());
             // update street geom
+            long start2 = System.currentTimeMillis();
             id = databaseAddress.updateStreet(loadedStreet);
+            timeUpdateStreetSql += System.currentTimeMillis() - start2;
         }
 
         if (size > 1){
@@ -422,7 +443,9 @@ public class StreetCreator {
             }
 
             // insert new joined street into db
+            long start3 = System.currentTimeMillis();
             id = databaseAddress.insertStreet(street);
+            timeInsertStreetSql += System.currentTimeMillis() - start3;
         }
 
         return id;
@@ -585,12 +608,18 @@ public class StreetCreator {
                     mls = mlsNext;
                 }
                 else if (mlsNext != null){
-                     mls = (MultiLineString) mls.union(mlsNext);
-                }
+                     Geometry joinedGeom = mls.union(mlsNext);
 
+                    if (joinedGeom instanceof MultiLineString){
+                        mls = (MultiLineString) joinedGeom;
+                    }
+                    else {
+                        LineString ls = (LineString) joinedGeom;
+                        mls = geometryFactory.createMultiLineString(new LineString[]{ls});
+                    }
+                }
             }
             return mls;
-
         }
         return null;
     }

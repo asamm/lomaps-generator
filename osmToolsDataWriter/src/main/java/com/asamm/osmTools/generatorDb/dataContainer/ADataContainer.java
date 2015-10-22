@@ -5,14 +5,13 @@ import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.data.RelationEx;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.utils.Logger;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class ADataContainer {
 
@@ -23,9 +22,9 @@ public abstract class ADataContainer {
 
 
     // ids of elements stored in cache
-	private List<Long> nodeIds;
-	private List<Long> wayIds;
-    private List<Long> relationIds;
+	private TLongList nodeIds;
+	private TLongList wayIds;
+    private TLongList relationIds;
     private Set<Integer> streetHashSet;
 	
 	// counters
@@ -39,9 +38,9 @@ public abstract class ADataContainer {
 	
 	public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
 		this.writerDefinition = writerDefinition;
-		this.nodeIds = new ArrayList<Long>();
-		this.wayIds = new ArrayList<Long>();
-        this.relationIds = new ArrayList<>();
+		this.nodeIds = new TLongArrayList();
+		this.wayIds = new TLongArrayList();
+        this.relationIds = new TLongArrayList();
         this.streetHashSet = new HashSet<>();
 	}
 	
@@ -118,8 +117,8 @@ public abstract class ADataContainer {
 
 	public List<Node> getNodes() {
         List<Node> validNodes = new ArrayList<Node>();
-		for (long nodeId : nodeIds) {
-            Node node = getNode(nodeId);
+		for (int i=0, size = nodeIds.size(); i < size; i++) {
+            Node node = getNode(nodeIds.get(i));
             if (node != null && writerDefinition.isValidEntity(node)) {
                 amountOfNodesUsed++;
                 validNodes.add(node);
@@ -127,6 +126,8 @@ public abstract class ADataContainer {
 		}
 		return validNodes;
 	}
+
+ //   public abstract Iterator<Node> getNodes ();
 
     public WayEx getWay (long wayId){
 
@@ -151,8 +152,8 @@ public abstract class ADataContainer {
 
 	public List<WayEx> getWays() {
         List<WayEx> validWays = new ArrayList<WayEx>();
-		for (long wayId : wayIds) {
-			WayEx we = getWay(wayId);
+        for (int i=0, size = wayIds.size(); i < size; i++) {
+        	WayEx we = getWay(wayIds.get(i));
             if (we != null){
                 validWays.add(we);
             }
@@ -174,8 +175,8 @@ public abstract class ADataContainer {
 
     public List<RelationEx> getRelations (){
         List<RelationEx> relations = new ArrayList<>();
-        for (long relationId : relationIds){
-            RelationEx re = getRelation(relationId);
+        for (int i=0, size = relationIds.size(); i < size; i++) {
+            RelationEx re = getRelation(relationIds.get(i));
             if (re != null){
                 relations.add(re);
             }
@@ -185,27 +186,27 @@ public abstract class ADataContainer {
 
 
 
-    public List<Long> getNodeIds() {
+    public TLongList getNodeIds() {
         return nodeIds;
     }
 
-    public void setNodeIds(List<Long> nodeIds) {
+    public void setNodeIds(TLongList nodeIds) {
         this.nodeIds = nodeIds;
     }
 
-    public List<Long> getWayIds() {
+    public TLongList getWayIds() {
         return wayIds;
     }
 
-    public void setWayIds(List<Long> wayIds) {
+    public void setWayIds(TLongList wayIds) {
         this.wayIds = wayIds;
     }
 
-    public List<Long> getRelationIds() {
+    public TLongList getRelationIds() {
         return relationIds;
     }
 
-    public void setRelationIds(List<Long> relationIds) {
+    public void setRelationIds(TLongList relationIds) {
         this.relationIds = relationIds;
     }
 

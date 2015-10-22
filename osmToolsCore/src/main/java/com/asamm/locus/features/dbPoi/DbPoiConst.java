@@ -20,6 +20,7 @@ public class DbPoiConst {
     public static final String COL_DATA = "data";
     public static final String COL_TYPE = "type";
 	public static final String COL_NAME = "name";
+    public static final String COL_NAME_NORM = "namenorm";
     public static final String COL_GEOM = "geom";
     public static final String COL_CENTER_GEOM = "center";
 	
