@@ -10,18 +10,19 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKBWriter;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.sql.*;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.asamm.locus.features.dbPoi.DbPoiConst.*;
-import static com.asamm.locus.features.dbPoi.DbPoiConst.TN_STREET_IN_CITIES;
+import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
+import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.TN_STREET_IN_CITIES;
 
 public class DatabaseAddress extends ADatabaseHandler {
 
@@ -55,7 +56,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
     ByteArrayInputStream bais;
 
-    static boolean deleteOldDb = false;
+    private static boolean deleteOldDb = false;
     public DatabaseAddress(File file) throws Exception {
 
         super(file, deleteOldDb);
@@ -178,7 +179,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_NAME_NORM+" TEXT NOT NULL)";
 		executeStatement(sql);
 
-		// creating a POINT Geometry column
+		// creating a Center Geometry column fro Cities
 		sql = "SELECT AddGeometryColumn('"+TN_CITIES+"', ";
 		sql += "'"+COL_CENTER_GEOM+"', 4326, 'POINT', 'XY')";
 		executeStatement(sql);
@@ -404,10 +405,10 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             String name = street.getName();
             String nameNormalized = Utils.normalizeString(name);
-            //if ( !nameNormalized.equals(name)){
+            if ( !nameNormalized.equals(name)){
                 //store full name only if normalized name is different
                 psInsertStreet.setString(2, name);
-            //}
+            }
             psInsertStreet.setString(3, nameNormalized);
 
             MultiLineString mls = street.getGeometry();
@@ -423,11 +424,12 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             psInsertStreet.execute();
 
-            List<Long> cityIds = street.getCityIds();
-            for (Long cityId : cityIds) {
+            TLongHashSet cityIds = street.getCityIds();
+            TLongIterator iterator = cityIds.iterator();
+            while (iterator.hasNext()){
 
                 psInserStreetCities.setLong(1,id);
-                psInserStreetCities.setLong(2,cityId);
+                psInserStreetCities.setLong(2,iterator.next());
 
                 psInserStreetCities.addBatch();
             }
@@ -498,11 +500,12 @@ public class DatabaseAddress extends ADatabaseHandler {
             psUpdateStreet.execute();
 
             // insert only not existed cityIds for this street
-            List<Long> cityIds = street.getCityIds();
-            for (Long cityId : cityIds) {
+            TLongHashSet cityIds = street.getCityIds();
+            TLongIterator iterator = cityIds.iterator();
+            while (iterator.hasNext()){
 
                 psInserStreetCities.setLong(1,streetId);
-                psInserStreetCities.setLong(2,cityId);
+                psInserStreetCities.setLong(2,iterator.next());
 
                 psInserStreetCities.addBatch();
             }
@@ -527,23 +530,23 @@ public class DatabaseAddress extends ADatabaseHandler {
         Map<Long, Street> loadedStreetMap  = new HashMap<>();
         String sql = "";
         try {
-            List<Long> cityIds = street.getCityIds();
+            TLongHashSet cityIds = street.getCityIds();
 
             if (cityIds.size() == 0){
                 Logger.w(TAG, "selectStreetInCities:  street has no cityId, street " + street.toString() );
             }
 
             // prepare list of city ids
-            String isInIds = "";
-            for(int i=0, size = cityIds.size(); i < size; i++){
-                if (i == 0){
-                    isInIds += "(" + String.valueOf(cityIds.get(i)) ;
-                }
-                else{
-                    isInIds += ", " + String.valueOf(cityIds.get(i));
+            StringBuilder isInIds = new StringBuilder("(");
+            TLongIterator iterator = cityIds.iterator();
+            while (iterator.hasNext()){
+                isInIds.append(String.valueOf(iterator.next()));
+
+                if (iterator.hasNext()){
+                    isInIds.append(", ");
                 }
             }
-            isInIds += ")";
+            isInIds.append(")");
 
             String name = escapeSqlString (street.getName());
 
@@ -551,7 +554,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             sql += " FROM " + TN_STREETS + " JOIN " + TN_STREET_IN_CITIES;
             sql += " ON " + COL_ID + " = " + COL_STREET_ID;
             sql += " WHERE " + COL_NAME + " like '" + name +"'";
-            sql += " AND " + COL_CITY_ID + " IN " + isInIds;
+            sql += " AND " + COL_CITY_ID + " IN " + isInIds.toString();
 
             ResultSet rs = getStmt().executeQuery(sql);
 

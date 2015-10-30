@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.data;
 
-import com.asamm.locus.features.dbPoi.DbPoiConst;
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import com.asamm.osmTools.generatorDb.utils.OsmTagUsage;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -16,7 +16,7 @@ public abstract class AOsmObject {
 	// current node
     private Entity entity;
 	// type of entity
-    private DbPoiConst.EntityType mEntityType;
+    private DbAddressPoiConst.EntityType mEntityType;
 
     // object ID
     private long mId;
@@ -31,13 +31,13 @@ public abstract class AOsmObject {
 
 		// define entity type
 		if (entity instanceof Node) {
-			mEntityType = DbPoiConst.EntityType.POIS;
+			mEntityType = DbAddressPoiConst.EntityType.POIS;
 		} else if (entity instanceof Way) {
-			mEntityType = DbPoiConst.EntityType.WAYS;
+			mEntityType = DbAddressPoiConst.EntityType.WAYS;
 		}
 	}
 
-    public DbPoiConst.EntityType getEntityType() {
+    public DbAddressPoiConst.EntityType getEntityType() {
         return mEntityType;
     }
 

@@ -10,12 +10,18 @@ import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
 
+import org.apache.commons.io.FileUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
@@ -359,6 +365,38 @@ public class ItemMap extends AItemMap {
                 br.close();
             }
         }
+    }
+
+    /**
+     * Read definition of map polygon from GeoJson
+     * @param map
+     * @return
+     */
+    public JSONObject getItemAreaGeoJson() {
+
+        // read json file with area definition
+        File fileJsonPolyg = new File(getPathJsonPolygon());
+        if (!fileJsonPolyg.exists()){
+            throw new IllegalArgumentException("JSON polygon file doesn't exist "+fileJsonPolyg.getAbsolutePath());
+        }
+
+        String jsonPolygon = "";
+        try {
+            jsonPolygon =  FileUtils.readFileToString(fileJsonPolyg, UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Can not read JSON polygon file "+fileJsonPolyg.getAbsolutePath());
+        }
+        // replace line brakes
+        JSONParser parser=new JSONParser();
+        JSONObject obj= null;
+        try {
+            obj = (JSONObject) parser.parse(jsonPolygon);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 
 

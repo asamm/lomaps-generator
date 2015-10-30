@@ -13,7 +13,7 @@ import org.openstreetmap.osmosis.core.domain.v0_6.WayNode;
 
 public class WayEx extends Way {
 
-	private ArrayList<Node> nodes;
+	private List<Node> nodes;
 	
 	public WayEx(Way way) {
 		// create a copy of a way
@@ -31,17 +31,17 @@ public class WayEx extends Way {
 
 	public boolean fillNodes(ADataContainer dc) {
 		nodes.clear();
-		for (int i = 0, n = getWayNodes().size(); i < n; i++) {
+        int wayNodesSize = getWayNodes().size();
+        long[] ids = new long[wayNodesSize];
+		for (int i = 0; i < wayNodesSize; i++) {
 			WayNode wn = getWayNodes().get(i);
-			Node node = dc.getNodeFromCache(wn.getNodeId());
-            if (node != null) {
-				nodes.add(node);
-			} else {
-				return false;
-			}
+            ids[i] = wn.getNodeId();
 		}
-		return true;
-	}
+
+        nodes = dc.getNodesFromCache(ids);
+        return true;
+        //return (nodes.size() == wayNodesSize);
+    }
 	
 	public List<Node> getNodes() {
 		return nodes;

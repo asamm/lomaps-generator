@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.data;
 
-import com.asamm.locus.features.dbPoi.DbPoiConst;
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -57,9 +57,9 @@ public class OsmPoi extends AOsmObject {
 		handleTags();
 		
 		// handle entity itself
-		if (getEntityType() == DbPoiConst.EntityType.POIS) {
+		if (getEntityType() == DbAddressPoiConst.EntityType.POIS) {
 			handleNode((Node) entity);
-		} else if (getEntityType() == DbPoiConst.EntityType.WAYS) {
+		} else if (getEntityType() == DbAddressPoiConst.EntityType.WAYS) {
 			handleWay((WayEx) entity);
 		}
 	}
@@ -151,7 +151,7 @@ public class OsmPoi extends AOsmObject {
 			for (int i = 0, m = tags.size(); i < m; i++) {
                 Tag tag = tags.get(i);
 				if (tag.key.equals(newKey)) {
-					tag.value = tag.value + DbPoiConst.DATA_SEPARATOR + value;
+					tag.value = tag.value + DbAddressPoiConst.DATA_SEPARATOR + value;
 					return true;
 				}
 			}

@@ -2,6 +2,8 @@ package com.asamm.osmTools.generatorDb.db;
 
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.set.hash.TLongHashSet;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
@@ -16,9 +18,10 @@ import javax.naming.directory.InvalidAttributesException;
 import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
-import static com.asamm.locus.features.dbPoi.DbPoiConst.*;
+import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
 
 /**
  * Created by voldapet on 8/10/15.
@@ -102,7 +105,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         stmt.execute(sql);
 
         sql = "CREATE TABLE "+TN_STREETS+" (";
-        sql += COL_HASH+" INT NOT NULL PRIMARY KEY ,";
+        sql += COL_HASH+" INT NOT NULL ,";
         sql += COL_DATA + " BLOB";
         sql +=        " )";
         stmt.execute(sql);
@@ -110,18 +113,18 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         stmt.close();
     }
 
-//    public void createStreetIndex () {
-//        try {
-//            // finalize inserts of streets
-//            psInsertStreet.executeBatch();
-//            streetInsertBatchSize = 0;
-//
-//            String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
-//            executeStatement(sql);
-//        } catch (SQLException e) {
-//            Logger.e(TAG, "createStreetIndex(), problem with query", e);
-//        }
-//    }
+    public void createStreetIndex () {
+        try {
+            // finalize inserts of streets
+            psInsertStreet.executeBatch();
+            streetInsertBatchSize = 0;
+
+            String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
+            executeStatement(sql);
+        } catch (SQLException e) {
+            Logger.e(TAG, "createStreetIndex(), problem with query", e);
+        }
+    }
 
     public void insertNode(long id, Entity entity) {
 
@@ -163,6 +166,56 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public List<Node> selectNodes(long[] ids) {
+
+        List<Node> nodes = new ArrayList<>();
+        LinkedHashMap<Long, Node> resultMap = new LinkedHashMap<>();
+
+        String sql = "SELECT data FROM nodes WHERE id IN ";
+        StringBuilder isInIds = new StringBuilder("(");
+        for (int i=0; i < ids.length; i++){
+            if (i==0){
+                isInIds.append(ids[i]);
+            }
+            else {
+                isInIds.append(",").append(ids[i]);
+            }
+        }
+        isInIds.append(")");
+
+        sql += isInIds.toString();
+
+        ResultSet rs = null;
+        try {
+            rs = getStmt().executeQuery(sql);
+            for (int i=0; rs.next(); i++) {
+                byte[] nodeData = rs.getBytes(1);
+                ByteArrayInputStream bais = new ByteArrayInputStream(nodeData);
+                DataInputStream dis = new DataInputStream(bais);
+                DataInputStoreReader disr = new DataInputStoreReader(dis);
+                Node node = new Node(disr, dynamicRegister);
+                dis.close();
+
+                if (node == null){
+                    Logger.i(TAG, "Can not create node with id; SQL: " + sql);
+                    continue;
+                }
+                resultMap.put(node.getId(), node);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // return the nodes in correct order
+        for (int i=0; i < ids.length; i++){
+            Node node = resultMap.get(ids[i]);
+            if (node != null){
+                nodes.add(node);
+            }
+        }
+        return nodes;
     }
 
     public void insertWay(long id, Entity entity) {
@@ -312,10 +365,11 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             //dwbe.writeLong(street.getCityPartId());
             dwbe.writeString(street.getName());
             // write list of city ids
-            List<Long> cityIds = street.getCityIds();
+            TLongHashSet cityIds = street.getCityIds();
             dwbe.writeInt(cityIds.size());
-            for (int i=0, size=cityIds.size(); i < size; i++){
-                dwbe.writeLong(cityIds.get(i));
+            TLongIterator iterator = cityIds.iterator();
+            while (iterator.hasNext()){
+                dwbe.writeLong(iterator.next());
             }
 
             byte[] geomData = wkbWriter.write(street.getGeometry());
@@ -338,7 +392,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             street.setName(drbe.readString());
             //read list of cityIds
             int size = drbe.readInt();
-            List<Long> cityIds = new ArrayList<>();
+            TLongHashSet cityIds = new TLongHashSet();
             for (int i=0; i < size; i++){
                 cityIds.add(drbe.readLong());
             }
@@ -374,4 +428,6 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             Logger.e(TAG, "finalizeBatchStatement(), problem with query", e);
         }
     }
+
+
 }

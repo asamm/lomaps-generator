@@ -58,15 +58,15 @@ public class DataContainerHdd extends ADataContainer {
     }
 
 
-//    @Override
-//    public Iterator<Node> getNodes() {
-//        ri
-//    }
-
 	@Override
 	public Node getNodeFromCache(long id) {
 		return dbData.selectNode(id);
 	}
+
+    @Override
+    public List<Node> getNodesFromCache(long[] ids) {
+        return dbData.selectNodes(ids);
+    }
 
     /**
      * Get osm way from cache
@@ -91,9 +91,9 @@ public class DataContainerHdd extends ADataContainer {
         dbData.finalizeBatchStatement();
     }
 
-//    public void finalizeWayStreetCaching () {
-//        dbData.createStreetIndex();
-//    }
+    public void finalizeWayStreetCaching () {
+        dbData.createStreetIndex();
+    }
 
 
     @Override

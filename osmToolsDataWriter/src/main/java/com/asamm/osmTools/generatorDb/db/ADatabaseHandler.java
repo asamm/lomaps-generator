@@ -3,7 +3,9 @@ package com.asamm.osmTools.generatorDb.db;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.io.*;
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
 
 import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
@@ -22,14 +24,17 @@ public abstract class ADatabaseHandler {
 
 	private boolean ready;
 	private File dbFile;
+    boolean deleteExistingDb;
 
 	protected Connection conn;
 	private Statement stmt;
 	
 	public ADatabaseHandler(File file, boolean deleteExistingDb) throws Exception{
 		this.dbFile = file;
+        this.deleteExistingDb = deleteExistingDb;
 
         if (file.exists() && deleteExistingDb) {
+            Logger.i(TAG, "Delete DB file: " + file.getAbsolutePath());
             file.delete();
         }
 
@@ -136,7 +141,7 @@ public abstract class ADatabaseHandler {
             Logger.e(TAG, "destroy()", e);
 		}
 	}
-	
+
 	protected String getEscapedText(String text) {
 		text = text.replace("'", "''");
 		return text;
@@ -160,4 +165,5 @@ public abstract class ADatabaseHandler {
     }
 
 
+    
 }

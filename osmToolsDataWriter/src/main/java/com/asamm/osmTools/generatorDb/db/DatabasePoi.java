@@ -5,10 +5,9 @@ import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.utils.Logger;
 
-import static com.asamm.locus.features.dbPoi.DbPoiConst.*;
+import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,7 +40,8 @@ public class DatabasePoi extends ADatabaseHandler {
 	
 	public DatabasePoi(File file, WriterPoiDefinition poiDefinition) throws Exception {
 		super(file, true);
-		this.writerPoiDefinition = poiDefinition;
+
+        this.writerPoiDefinition = poiDefinition;
 
         setTables();
 	}

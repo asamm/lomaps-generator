@@ -1,12 +1,10 @@
 package com.asamm.osmTools.generatorDb;
 
-import com.asamm.locus.features.dbPoi.DbPoiConst;
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.File;
@@ -43,23 +41,23 @@ public class WriterPoiDefinition extends  AWriterDefinition{
 		boolean entityPoi;
 		boolean entityWay;
 		
-		private boolean isValidEntity(DbPoiConst.EntityType type, Collection<Tag> tags) {
-			if (entityPoi && type == DbPoiConst.EntityType.POIS ||
-					entityWay && type == DbPoiConst.EntityType.WAYS) {
+		private boolean isValidEntity(DbAddressPoiConst.EntityType type, Collection<Tag> tags) {
+			if (entityPoi && type == DbAddressPoiConst.EntityType.POIS ||
+					entityWay && type == DbAddressPoiConst.EntityType.WAYS) {
 				return checkTags(tags);
 			}
 			return false;
 		}
 		
-		public boolean isValidType(DbPoiConst.EntityType type) {
-			if (entityPoi && type == DbPoiConst.EntityType.POIS ||
-					entityWay && type == DbPoiConst.EntityType.WAYS) {
+		public boolean isValidType(DbAddressPoiConst.EntityType type) {
+			if (entityPoi && type == DbAddressPoiConst.EntityType.POIS ||
+					entityWay && type == DbAddressPoiConst.EntityType.WAYS) {
 				return true;
 			}
 			return false;
 		}
 		
-		private boolean isValidEntity(DbPoiConst.EntityType type, String key, String value) {
+		private boolean isValidEntity(DbAddressPoiConst.EntityType type, String key, String value) {
 			if (!isValidType(type)) {
 				return false;
 			}
@@ -103,8 +101,8 @@ public class WriterPoiDefinition extends  AWriterDefinition{
 			return false;
 		}
 
-		DbPoiConst.EntityType type = getTypeFromEntity(entity);
-		if (type == DbPoiConst.EntityType.UNKNOWN) {
+		DbAddressPoiConst.EntityType type = getTypeFromEntity(entity);
+		if (type == DbAddressPoiConst.EntityType.UNKNOWN) {
 			return false;
 		}
 		
@@ -150,17 +148,17 @@ public class WriterPoiDefinition extends  AWriterDefinition{
     public String isKeySupportedMulti(String key) {
         // test emails
 		if (tagKeysEmail.contains(key)) {
-			return DbPoiConst.COL_EMAIL;
+			return DbAddressPoiConst.COL_EMAIL;
 		}
 
         // test phones
 		if (tagKeysPhone.contains(key)) {
-			return DbPoiConst.COL_PHONE;
+			return DbAddressPoiConst.COL_PHONE;
 		}
 
         // test urls
 		if (tagKeysUrl.contains(key)) {
-			return DbPoiConst.COL_URL;
+			return DbAddressPoiConst.COL_URL;
 		}
 
         // return "null"
@@ -181,16 +179,16 @@ public class WriterPoiDefinition extends  AWriterDefinition{
 		}
 		
 		// add extra columns
-		extra.add(DbPoiConst.COL_EMAIL);
-		extra.add(DbPoiConst.COL_PHONE);
-		extra.add(DbPoiConst.COL_URL);
+		extra.add(DbAddressPoiConst.COL_EMAIL);
+		extra.add(DbAddressPoiConst.COL_PHONE);
+		extra.add(DbAddressPoiConst.COL_URL);
 		return extra;
 	}
 
-	public DbRootSubContainer getNodeContainer(DbPoiConst.EntityType type,
+	public DbRootSubContainer getNodeContainer(DbAddressPoiConst.EntityType type,
 			String key, String value) {
 		// check source params
-		if (type == DbPoiConst.EntityType.UNKNOWN || key == null || value == null) {
+		if (type == DbAddressPoiConst.EntityType.UNKNOWN || key == null || value == null) {
 			return null;
 		}
 		

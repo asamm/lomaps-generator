@@ -16,6 +16,7 @@ import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.index.strtree.STRtree;
 import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
@@ -100,8 +101,6 @@ public class GeneratorAddress extends AGenerator {
 
         Logger.i(TAG, "=== Step 8 - simplify street and city geoms ===");
         simplifyGeoms ();
-
-
     }
 
     private void simplifyGeoms() {
@@ -137,8 +136,9 @@ public class GeneratorAddress extends AGenerator {
         sc.createStreetFromWays();
 
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
+        Logger.i(TAG, "Finding cities only loading cities fromk DB takes: " + sc.timeLoadNereastCities /1000.0 + " sec" );
         Logger.i(TAG, "Inserts streets into tmp table takes: " + sc.timeInsertStreetTmpTime/1000.0 + " sec" );
-        Logger.i(TAG, "Loading cities  takes: " + sc.timeLoadCities/1000.0 + " sec" );
+
 
         Logger.i(TAG, "Joining ways and prepararion for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
         Logger.i(TAG, "Insert or update streets: " + sc.timeInsertOrUpdateStreetsWhole /1000.0 + " sec" );
@@ -146,7 +146,6 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Select previous strees: " + sc.timeSelectPreviousStreetFromDB /1000.0 + " sec" );
         Logger.i(TAG, "Insert streets: " + sc.timeInsertStreetSql /1000.0 + " sec" );
         Logger.i(TAG, "Update streets: " + sc.timeUpdateStreetSql /1000.0 + " sec" );
-
     }
 
 
@@ -203,9 +202,10 @@ public class GeneratorAddress extends AGenerator {
 
     void loadBoundaries(ADataContainer dc) {
 
-        BoundaryCreator boundaryFactory = new BoundaryCreator();
         // create boundaries from relation
         TLongList relationIds = dc.getRelationIds();
+        BoundaryCreator boundaryFactory = new BoundaryCreator(relationIds.size());
+
         for (int i=0, size = relationIds.size(); i < size; i++) {
             Relation relation = dc.getRelationFromCache(relationIds.get(i));
             if (relation == null) {
@@ -220,7 +220,7 @@ public class GeneratorAddress extends AGenerator {
             }
 
             if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundaries: Add boundary to cache: " + boundary.getName());
+                //Logger.i(TAG, "loadBoundaries: Add boundary from relation to cache: " + boundary.getName());
                 boundaries.add(boundary);
             }
         }
@@ -236,7 +236,7 @@ public class GeneratorAddress extends AGenerator {
             }
 
             if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundaries: Add boundary to cache: " + boundary.getName());
+                //Logger.i(TAG, "loadBoundaries: Add boundary from way to cache: " + boundary.getName());
                 boundaries.add(boundary);
             }
         }
@@ -472,23 +472,29 @@ public class GeneratorAddress extends AGenerator {
      */
     private void findAllCitiesForBoundary() {
 
+        STRtree index = new STRtree();
+        for (int c=0, sizeC = cities.size();  c < sizeC; c++){
+            City city = cities.get(c);
+            index.insert(city.getCenter().getEnvelopeInternal(), city);
+        }
+
         Boundary boundary = null;
         City city = null;
         for (int i=0, size = boundaries.size(); i < size; i++){
 
             boundary = boundaries.get(i);
             List<City> citiesInBoundary = new ArrayList<>();
-            for (int c=0, sizeC = cities.size();  c < sizeC; c++){
+            List cityFromIndex = index.query(boundary.getGeom().getEnvelopeInternal());
+
+            for (int c=0, sizeC = cityFromIndex.size();  c < sizeC; c++){
                 city = cities.get(c);
 
                 if (boundary.getGeom().contains(city.getCenter())){
                     citiesInBoundary.add(city);
                 }
             }
-
             citiesInBoundaryMap.put(boundary, citiesInBoundary);
         }
-
     }
 
 
@@ -506,7 +512,6 @@ public class GeneratorAddress extends AGenerator {
 		// add to database
 		if (db != null) {
 //			db.insertObject(addr);
-
 		} 
 		return addr;
 	}

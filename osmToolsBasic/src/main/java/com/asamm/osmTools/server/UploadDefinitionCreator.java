@@ -11,7 +11,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Iterator;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -27,21 +29,45 @@ public class UploadDefinitionCreator {
     private static final String ITEM_NAME_VECTOR_POSTFIX = " - LoMaps";
     // define folder that contains vector maps in client
     private static final String CLIENT_VECTOR_MAP_DESTINATION = "mapsVector/";
-    // define if created/updated version will be in the end set as active version
-    private static final boolean SET_NEW_VERSION_AS_ACTIVE = false;
 
 
     private static UploadDefinitionCreator instance = null;
+
+    // JSON file with general settings for upload
+    private static final String STORE_ITEM_DEFINITION_PATH = "storeUpload/store_item_definition.json";
 
     /**
      * JSON object that hold whole definition of files / store item for uploading
      */
     private JSONArray jsonItems;
 
+    /**
+     * Contains definition for upload that are common for all maps
+     */
+    private JSONObject defJson;
+
+
+
     private UploadDefinitionCreator() {
 
         jsonItems = new JSONArray();
 
+
+        JSONParser parser = new JSONParser();
+
+        Object obj = null;
+        try {
+            // load general definition that is common for all uploaded LoMaps
+            obj = parser.parse(new FileReader(STORE_ITEM_DEFINITION_PATH));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        defJson = (JSONObject) obj;
+
+        Logger.i(TAG, defJson.toJSONString());
     }
 
 
@@ -78,6 +104,10 @@ public class UploadDefinitionCreator {
         }
     }
 
+    /**
+     * Prepare JSON string from whole definition
+     * @return
+     */
     public String getDefinitionJsonString (){
 
         if (jsonItems.size() == 0){
@@ -92,9 +122,15 @@ public class UploadDefinitionCreator {
         return jsonDef.toJSONString();
     }
 
+    /**
+     * Create JSON that contains needed definition for upload one map
+     * @param map map to create upload JSON
+     * @return
+     */
     private JSONObject createJsonItem (ItemMap map){
 
-        JSONObject jsonItem = new JSONObject();
+        // create copy from common definition json
+        JSONObject jsonItem = new JSONObject(defJson);
 
         File resultFile = new File(map.getPathResult());
 
@@ -102,54 +138,50 @@ public class UploadDefinitionCreator {
             throw new IllegalArgumentException("Create definition upload JSON failed: File for uploading does not exist:  "+map.getPathResult());
         }
 
-        jsonItem.put(LocusServerConst.ACTION_DATA_NAME, map.getNameReadable() + ITEM_NAME_VECTOR_POSTFIX );
-        jsonItem.put(LocusServerConst.ACTION_DATA_ICON, LocusServerConst.VECTOR_IC0N_ID);
+        JSONArray listing = new JSONArray();
+        JSONArray listingDef = (JSONArray) jsonItem.get(LocusServerConst.LISTING);
+        String name = map.getNameReadable() + ITEM_NAME_VECTOR_POSTFIX;
 
-        jsonItem.put(LocusServerConst.ACTION_DATA_IMAGE_IDS, getItemImages());
-        jsonItem.put(LocusServerConst.ACTION_DATA_DESCRIPTION, LocusServerConst.VECTOR_DESCRIPTION);
-
-        jsonItem.put(LocusServerConst.ACTION_DATA_ITEM_TYPE, LocusServerConst.VECTOR_ITEM_TYPE_UNIT);
-        jsonItem.put(LocusServerConst.ACTION_DATA_ENABLED, true);
-        jsonItem.put(LocusServerConst.ACTION_DATA_AVAILABLE_FOR, LocusServerConst.VECTOR_AVAILABLE_FOR);
-        jsonItem.put(LocusServerConst.ACTION_DATA_CAN_BE_WELCOME_PRESENT, canBeWelcomePresent(resultFile));
+        Iterator<JSONObject> iterator = listingDef.iterator();
+        while (iterator.hasNext()){
+            // create copy for language of listing
+            JSONObject langJson = new JSONObject(iterator.next());
+            langJson.put(LocusServerConst.NAME,name);
+            listing.add(langJson);
+        }
+        // assing new listing to the item json
+        jsonItem.put(LocusServerConst.LISTING, listing);
 
         // compute loCoins
-        jsonItem.put(LocusServerConst.ACTION_DATA_LOCOINS, computeLocoins(resultFile) );
+        jsonItem.put(LocusServerConst.LOCOINS, computeLocoins(resultFile) );
 
-        jsonItem.put(LocusServerConst.ACTION_DATA_USAGE_IDS, getItemUsages());
-        jsonItem.put(LocusServerConst.ACTION_DATA_PROVIDER_ID, LocusServerConst.VECTOR_PROVIDER_ID);
-        jsonItem.put(LocusServerConst.ACTION_DATA_REGION_IDS, getItemRegion(map.getRegionId()));
+        jsonItem.put(LocusServerConst.REGION_IDS, getItemRegion(map.getRegionId()));
 
-        jsonItem.put(LocusServerConst.ACTION_DATA_PREFERED_LANG, map.getPrefLang());
+        jsonItem.put(LocusServerConst.PREFERED_LANG, map.getPrefLang());
 
-        // add JSON object of version
-        jsonItem.put(LocusServerConst.ACTION_DATA_VERSION, createJsonVersion(map));
+        // ------- VERSION --- add JSON object of version
+        JSONObject jsonVersionDef = (JSONObject) jsonItem.get(LocusServerConst.VERSION);
+        jsonItem.put(LocusServerConst.VERSION, createJsonVersion(jsonVersionDef, map));
 
         // put polygon definition into item obj.
-        jsonItem.put(LocusServerConst.ACTION_DATA_ITEM_AREA, getItemPolygonJson(map));
+        jsonItem.put(LocusServerConst.ITEM_AREA, map.getItemAreaGeoJson());
 
         return jsonItem;
     }
 
 
 
+    private JSONObject createJsonVersion(JSONObject jsonVersion, ItemMap map){
 
-    private JSONObject createJsonVersion (ItemMap map){
-        JSONObject jsonVersion = new JSONObject();
-        jsonVersion.put(LocusServerConst.ACTION_DATA_SUPPORTED_APK, createJsonSupportedApk());
-        jsonVersion.put(LocusServerConst.ACTION_DATA_CODE, LocusServerConst.VECTOR_VERSION_CODE);
-        jsonVersion.put(LocusServerConst.ACTION_DATA_NAME, Parameters.getVersionName());
-        jsonVersion.put(LocusServerConst.ACTION_DATA_FILE, createJsonFile(map));
+        jsonVersion = new JSONObject(jsonVersion);
 
-        jsonVersion.put(LocusServerConst.ACTION_DATA_SET_ACTIVE, SET_NEW_VERSION_AS_ACTIVE);
+        jsonVersion.put(LocusServerConst.NAME, Parameters.getVersionName());
+        jsonVersion.put(LocusServerConst.FILE, createJsonFile(map));
 
+        //Logger.i (TAG, createJsonFile(map).toJSONString());
         return jsonVersion;
     }
 
-    private JSONObject createJsonSupportedApk (){
-        JSONObject  jsonApks =  new JSONObject(LocusServerConst.supportedVersions);
-        return jsonApks;
-    }
 
     /**
      * Prepare JSON object where are defined important information for ItemVersionFile
@@ -159,11 +191,11 @@ public class UploadDefinitionCreator {
     private JSONObject createJsonFile (ItemMap map){
 
         JSONObject jsonFile =  new JSONObject();
-        jsonFile.put(LocusServerConst.ACTION_DATA_FILE_DELETE_SOURCE, true);
-        jsonFile.put(LocusServerConst.ACTION_DATA_FILE_UNPACK, true);
-        jsonFile.put(LocusServerConst.ACTION_DATA_FILE_REFRESH_MAPS, true);
+        jsonFile.put(LocusServerConst.FILE_DELETE_SOURCE, true);
+        jsonFile.put(LocusServerConst.FILE_UNPACK, true);
+        jsonFile.put(LocusServerConst.FILE_REFRESH_MAPS, true);
         jsonFile.put(LocusServerConst.LOCATIONS, map.getPathResult());
-        jsonFile.put(LocusServerConst.ACTION_DATA_DESTINATION_PATH, getClientDestinationPath(map));
+        jsonFile.put(LocusServerConst.DESTINATION_PATH, getClientDestinationPath(map));
 
         return jsonFile;
     }
@@ -212,18 +244,6 @@ public class UploadDefinitionCreator {
     }
 
     /**
-     * Prepare JSONarray from simple array of imageIds
-     * @return
-     */
-    private JSONArray getItemImages (){
-        JSONArray jsonImages = new JSONArray();
-        for (int i=0; i < LocusServerConst.VECTOR_IMAGE_IDS.length; i++){
-            jsonImages.add(LocusServerConst.VECTOR_IMAGE_IDS[i]);
-        }
-        return  jsonImages;
-    }
-
-    /**
      * Prepare JSONarray from simple array of regionIds
      * @return
      */
@@ -232,51 +252,4 @@ public class UploadDefinitionCreator {
         jsonRegions.add(regionId);
         return  jsonRegions;
     }
-
-
-    /**
-     * Prepare JSONarray from simple array of imageIds
-     * @return
-     */
-    private JSONArray getItemUsages (){
-        JSONArray jsonUsages = new JSONArray();
-        for (int i=0; i < LocusServerConst.VECTOR_USAGE_IDS.length; i++){
-            jsonUsages.add(LocusServerConst.VECTOR_USAGE_IDS[i]);
-        }
-        return  jsonUsages;
-    }
-
-    /**
-     * Read definition of map polygon from GeoJson
-     * @param map
-     * @return
-     */
-    private JSONObject getItemPolygonJson (ItemMap map) {
-
-        // read json file with area definition
-        File fileJsonPolyg = new File(map.getPathJsonPolygon());
-        if (!fileJsonPolyg.exists()){
-            throw new IllegalArgumentException("JSON polygon file doesn't exist "+fileJsonPolyg.getAbsolutePath());
-        }
-
-        String jsonPolygon = "";
-        try {
-            jsonPolygon =  FileUtils.readFileToString(fileJsonPolyg,UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException("Can not read JSON polygon file "+fileJsonPolyg.getAbsolutePath());
-        }
-        // replace line brakes
-        JSONParser parser=new JSONParser();
-        JSONObject obj= null;
-        try {
-            obj = (JSONObject) parser.parse(jsonPolygon);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        return obj;
-    }
-
-
 }
