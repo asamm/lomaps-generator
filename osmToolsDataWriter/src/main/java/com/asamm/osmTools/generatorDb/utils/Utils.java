@@ -85,6 +85,24 @@ public class Utils {
 
 
 
+    public static Coordinate offset (Coordinate coordinate, double offsetY, double offsetX ) {
+
+        //Earth’s radius, sphere
+        float R=6372800;
+
+
+        //Coordinate offsets in radians
+        double dLat = offsetY / R;
+        double dLon = offsetX / (R*Math.cos(Math.PI*coordinate.y/180));
+
+        //OffsetPosition, decimal degrees
+        double latO = coordinate.y + dLat * 180/Math.PI;
+        double lonO = coordinate.x + dLon * 180/Math.PI;
+
+        return new Coordinate(lonO, latO);
+    }
+
+
     /**
      * Function use java.text.Normalizer and replace all diacritics with their codes
      * then are these codes using regular expresion replaced with empty string.

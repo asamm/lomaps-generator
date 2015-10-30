@@ -1,6 +1,6 @@
 package com.asamm.osmTools.cmdCommands;
 
-import com.asamm.locus.features.dbPoi.DbPoiConst;
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
@@ -40,14 +40,14 @@ public class CmdAddressPoiDb extends Cmd {
     }
 
     public void addTaskSimplify(WriterPoiDefinition definition) throws IOException {
-        FileUtils.deleteQuietly(mFilePoiDb);
+        //FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadSource();
         addCommand("--tf");
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-nodes");
-        addListOfTags(definition, DbPoiConst.EntityType.POIS);
+        addListOfTags(definition, DbAddressPoiConst.EntityType.POIS);
         addCommand("--tf");
         addCommand("reject-ways");
         addCommand("outPipe.0=Nodes");
@@ -58,7 +58,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-ways");
-        addListOfTags(definition, DbPoiConst.EntityType.WAYS);
+        addListOfTags(definition, DbAddressPoiConst.EntityType.WAYS);
         addCommand("--used-node");
 //        addCommand("idTrackerType=Dynamic");
         addCommand("outPipe.0=Ways");
@@ -73,7 +73,6 @@ public class CmdAddressPoiDb extends Cmd {
     }
 
     public void addTaskSimplifyForAddress(WriterPoiDefinition definition) throws IOException {
-        FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadSource();
         addCommand("--tf");
@@ -87,13 +86,6 @@ public class CmdAddressPoiDb extends Cmd {
 
         // add second task
         addReadSource();
-        addCommand("--tf");
-        addCommand("accept-relations");
-        addCommand("highway=*");
-        addCommand("boundary=*");
-        addCommand("place=*");
-        addCommand("*=street");
-        addCommand("*=associatedStreet");
         addCommand("--tf");
         addCommand("accept-ways");
         addCommand("highway=*");
@@ -164,7 +156,7 @@ public class CmdAddressPoiDb extends Cmd {
         }
     }
 
-    private void addListOfTags(WriterPoiDefinition definition, DbPoiConst.EntityType type) {
+    private void addListOfTags(WriterPoiDefinition definition, DbAddressPoiConst.EntityType type) {
         // prepare list of tags
         List<WriterPoiDefinition.DbRootSubContainer> nodes = definition.getRootSubContainers();
         Hashtable<String, String> nodesPrep = new Hashtable<String, String>();

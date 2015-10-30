@@ -4,6 +4,7 @@
  */
 package com.asamm.osmTools;
 
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.mapConfig.ItemMap;
@@ -13,17 +14,20 @@ import com.asamm.osmTools.sea.Sea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.tourist.Tourist;
 import com.asamm.osmTools.utils.*;
+import com.asamm.osmTools.utils.db.DatabaseData;
 import com.asamm.osmTools.utils.io.ZipUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -194,6 +198,7 @@ class Actions {
                     break;
                 case GENERATE:
                     actionGenerate(map);
+                    actionInsertMetaData(map);
                     break;
                 case COMPRESS:
                     actionCompress(map);
@@ -407,7 +412,7 @@ class Actions {
         CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
         cmdGen.addGeneratorDb();
         Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
- //       cmdGen.execute();
+        cmdGen.execute();
 
         // Address generation
         CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
@@ -679,6 +684,40 @@ class Actions {
                 Logger.i(TAG, "Generated map "+map.getPathGenerate()+ " already exists. Nothing to do.");
             }
         }
+    }
+
+    // ACTION META TABLE
+
+    private void actionInsertMetaData (ItemMap itemMap) throws Exception {
+
+        if (!itemMap.hasAction(Parameters.Action.GENERATE) && !itemMap.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+            // map hasn't any result file for compress
+            return;
+        }
+
+        File dbAddressPoi = new File(itemMap.getPathAddressPoiDb());
+        DatabaseData dbData = new DatabaseData(dbAddressPoi);
+
+        // read description from definition json
+        JSONParser parser = new JSONParser();
+        JSONArray descriptionJson = (JSONArray) parser.parse(
+                new FileReader(Parameters.getMapDescriptionDefinitionJsonPath()));
+
+        // parse version into java date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
+        Date dateVersion = sdf.parse(Parameters.getVersionName());
+
+        // insert version of map
+        dbData.insertData(DbAddressPoiConst.VAL_AREA, itemMap.getItemAreaGeoJson().toJSONString());
+        dbData.insertData(DbAddressPoiConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
+        dbData.insertData(DbAddressPoiConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
+        dbData.insertData(DbAddressPoiConst.VAL_REGION_ID, itemMap.getRegionId());
+        dbData.insertData(DbAddressPoiConst.VAL_VERSION, Parameters.getVersionName());
+        dbData.insertData(DbAddressPoiConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
+        dbData.insertData(DbAddressPoiConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
+
+
+        dbData.commit(true);
     }
 
     // ACTION COMPRESS

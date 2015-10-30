@@ -50,7 +50,11 @@ public abstract class ADataContainer {
 
     public abstract void insertRelationToCache (Relation relation);
 
+    public abstract void finalizeWayStreetCaching();
+
     public abstract Node getNodeFromCache(long id);
+
+    public abstract List<Node> getNodesFromCache(long[] ids);
 	
 	public abstract Way getWayFromCache(long id);
 
@@ -213,5 +217,6 @@ public abstract class ADataContainer {
     public Set<Integer> getStreetHashSet() {
         return streetHashSet;
     }
+
 
 }

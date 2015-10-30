@@ -8,6 +8,8 @@ import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
@@ -21,13 +23,13 @@ public class BoundaryCreator {
 
     private static final String TAG = BoundaryCreator.class.getSimpleName();
 
-    private  List<Long> processedWays;
+    private TLongList processedWays;
 
     private GeometryFactory geometryFactory;
 
-    public BoundaryCreator() {
+    public BoundaryCreator(int relationSize) {
 
-        processedWays = new ArrayList<>();
+        processedWays = new TLongArrayList();
         geometryFactory = new GeometryFactory();
 
     }
@@ -204,7 +206,7 @@ public class BoundaryCreator {
                 if ( !CoordinateArrays.isRing(innerCoord)){
                     innerCoord = closeLine(innerCoord);
                 }
-
+                //Logger.i(TAG, "Relation id: " +relId + "; geometry: " + Utils.geomToGeoJson(geometryFactory.createLineString(innerCoord)));
                 LinearRing innerRing = geometryFactory.createLinearRing(innerCoord);
                 poly = geometryFactory.createPolygon(outerRing, new LinearRing[] {innerRing});
             }
@@ -218,11 +220,6 @@ public class BoundaryCreator {
         }
 
         MultiPolygon multiPolygon = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
-
-//        if (relId == 62718){
-//            Logger.i(TAG, "MultiPoly: " + Utils.geomToGeoJson(multiPolygon));
-//        }
-
         if (!multiPolygon.isValid()) {
             multiPolygon = fixInvalidGeom(multiPolygon);
         }
@@ -283,7 +280,4 @@ public class BoundaryCreator {
             ct = City.CityType.createFromPlaceValue(place);
         }
     }
-
-
-
 }

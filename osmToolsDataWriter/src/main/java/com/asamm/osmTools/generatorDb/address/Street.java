@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
+import gnu.trove.set.hash.TLongHashSet;
 import locus.api.objects.Storable;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
@@ -29,7 +30,7 @@ public class Street  {
     private long cityId;
 
     /** IDs of cities in which can be this way*/
-    private List<Long> cityIds;
+    private TLongHashSet cityIds;
 
     /** Splitted is_in tag*/
     private List<String> isIn;
@@ -83,7 +84,7 @@ public class Street  {
         this.id = -1;
         this.name = "";
         this.cityId = -1;
-        this.cityIds = new ArrayList<>();
+        this.cityIds = new TLongHashSet();
         this.isIn = new ArrayList<>();
         this.geometry = new GeometryFactory().createMultiLineString(null);
 
@@ -110,11 +111,11 @@ public class Street  {
         this.cityId = cityId;
     }
 
-    public List<Long> getCityIds() {
+    public TLongHashSet getCityIds() {
         return cityIds;
     }
 
-    public void setCityIds(List<Long> cityIds) {
+    public void setCityIds(TLongHashSet cityIds) {
         if (cityIds != null){
             this.cityIds = cityIds;
         }
@@ -122,7 +123,7 @@ public class Street  {
 
     public void addCityId(long cityId) {
         if (cityIds == null){
-            cityIds = new ArrayList<>();
+            cityIds = new TLongHashSet();
         }
         cityIds.add(cityId);
     }
@@ -164,7 +165,7 @@ public class Street  {
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
-                .append(this.cityId)
+                //.append(this.cityId)
                 .append(this.name)
                 .toHashCode();
     }

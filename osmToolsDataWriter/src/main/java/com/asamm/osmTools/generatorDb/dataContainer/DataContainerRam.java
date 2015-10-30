@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.asamm.osmTools.generatorDb.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
+import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -39,11 +40,29 @@ public class DataContainerRam extends ADataContainer {
     }
 
     @Override
+    public void finalizeWayStreetCaching() {
+        // nothing to do
+    }
+
+    @Override
 	public Node getNodeFromCache(long id) {
 		return nodes.get(id);
 	}
 
-	@Override
+    @Override
+    public List<Node> getNodesFromCache(long[] ids) {
+        List<Node> nodes = new ArrayList<>(ids.length);
+        for (int i=0; i < ids.length; i++){
+            Node node = getNodeFromCache(ids[i]);
+            if (node != null){
+                //Logger.i("DataContainerRam", "Can not load node with id from cache, id: " + ids[i]);
+                nodes.add(node);
+            }
+        }
+        return nodes;
+    }
+
+    @Override
 	public Way getWayFromCache(long id) {
 		return ways.get(id);
 	}

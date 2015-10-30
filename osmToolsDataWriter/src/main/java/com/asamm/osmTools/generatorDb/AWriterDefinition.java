@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb;
 
-import com.asamm.locus.features.dbPoi.DbPoiConst;
+import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
@@ -12,18 +12,18 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 public abstract class AWriterDefinition {
 
 
-    protected DbPoiConst.EntityType getTypeFromEntity(Entity entity) {
+    protected DbAddressPoiConst.EntityType getTypeFromEntity(Entity entity) {
         if (entity instanceof Node) {
-            return DbPoiConst.EntityType.POIS;
+            return DbAddressPoiConst.EntityType.POIS;
         }
         else if (entity instanceof Way) {
-            return DbPoiConst.EntityType.WAYS;
+            return DbAddressPoiConst.EntityType.WAYS;
         }
         else if (entity instanceof Relation){
-            return DbPoiConst.EntityType.RELATION;
+            return DbAddressPoiConst.EntityType.RELATION;
         }
         else {
-            return DbPoiConst.EntityType.UNKNOWN;
+            return DbAddressPoiConst.EntityType.UNKNOWN;
         }
     }
 

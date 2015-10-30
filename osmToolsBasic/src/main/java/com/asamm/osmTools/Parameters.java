@@ -84,6 +84,8 @@ public class Parameters {
 
     private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUpload" + Consts.FILE_SEP + "upload_definition.json";
 
+    private static final String mMapDescriptionDefinition = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "map_description_definition.json";
+
     // name of version itself (like "2014.06.10") it also set the date to the file
     private static String mVersionName;
     // list of defined actions
@@ -131,19 +133,13 @@ public class Parameters {
     public static String mTouristTagMapping;
     private static String mContourTagMapping;
     
-    
-
     public static String htmlMapHeaderFile = Consts.DIR_BASE + "config" +
             Consts.FILE_SEP + "maps_header.html";
     public static String htmlMapPath; 
     
+    // TOURIST
 
-    
-
-    // ============= TOURIST =================
     public static String tagMappingFile;
-
-    
     public static long touristNodeId    = 15000000000L;
     public static long touristWayId     = 16000000000L;
     public static long contourNodeId    = 18000000000L;
@@ -159,10 +155,9 @@ public class Parameters {
     // the list of bycicle network type
     public static  Hashtable<String,Integer> bycicleNetworkType = new Hashtable<String, Integer>();
     public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<String, Integer>();
-    public static  ArrayList<String> hikingColourType; 
-    
-    
-    // popis map
+    public static  ArrayList<String> hikingColourType;
+
+    // description in headero of map file
     public static String MAP_COMMENT =
             "<div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
             + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
@@ -170,6 +165,13 @@ public class Parameters {
             + " Data source OpenStreetMap community"
             + "<br /><br/>"
             + "</div>";
+
+
+    // META DATA TABLE
+
+    private static final int mDbDataPoiVersion = 1;
+    private static final int mDbDataAddressVersion = 1;
+
 
     /***************************************************/
     /*                     GETTERS                     */
@@ -204,6 +206,11 @@ public class Parameters {
     public static String getUploadDefinitionJsonPath() {
         return mUploadDefinitionJsonPath;
     }
+
+    public static String getMapDescriptionDefinitionJsonPath (){
+        return mMapDescriptionDefinition;
+    }
+
 
     public static String getContourTagMapping() {
         return mContourTagMapping;
@@ -280,6 +287,16 @@ public class Parameters {
 
     public static String getGraphHopperExe() {
         return mGraphHopperExe;
+    }
+
+    // DB META DATA PARAMS
+
+    public static int getDbDataPoiVersion() {
+        return mDbDataPoiVersion;
+    }
+
+    public static int getDbDataAddressVersion() {
+        return mDbDataAddressVersion;
     }
 
     /***************************************************/
@@ -505,7 +522,7 @@ public class Parameters {
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/bin/phyghtmap";
             mOgr2ogr = "/usr/bin/ogr2ogr";
-            mPythonDir = "/usr/bin/python";
+            mPythonDir = "/opt/python3.3/bin/python3";
             mPreShellCommand = "";
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
