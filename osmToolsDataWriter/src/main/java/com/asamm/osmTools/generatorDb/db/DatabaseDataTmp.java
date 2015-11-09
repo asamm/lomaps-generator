@@ -302,11 +302,11 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     }
 
 
-    public void insertStreet(int hash, Street street) {
+    public void insertWayStreet(int hash, Street street) {
 
         try {
             psInsertStreet.setInt(1, hash);
-            psInsertStreet.setBytes(2, serializeStreet(street));
+            psInsertStreet.setBytes(2, street.getAsBytes());
             psInsertStreet.addBatch();
 
             streetInsertBatchSize++;
@@ -321,7 +321,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     }
 
 
-    public List<Street> selectStreets(int hash){
+    public List<Street> selectWayStreets(int hash){
 
         List<Street> loadedStreets = new ArrayList<>();
         try {
@@ -333,7 +333,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
             while (rs.next()) {
                 byte[] data = rs.getBytes(1);
-                Street street = readStreet(data);
+                Street street = new Street(data);
                 loadedStreets.add(street);
             }
         } catch (Exception e) {
@@ -356,6 +356,30 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
         return baos.toByteArray();
     }
+
+
+    /**
+     * Execute not finished batch statemen
+     */
+    public void finalizeBatchStatement() {
+
+        try {
+            psInsertNode.executeBatch();
+            nodeInsertBatchSize = 0;
+
+            psInsertWay.executeBatch();
+            wayInsertBatchSize = 0;
+
+            psInsertRelation.executeBatch();
+            relationInsertBatchSize = 0;
+        } catch (SQLException e) {
+            Logger.e(TAG, "finalizeBatchStatement(), problem with query", e);
+        }
+    }
+
+
+    // SERIALIZATION PART
+
 
     private byte[] serializeStreet(Street street){
         try {
@@ -384,6 +408,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         }
     }
 
+
     private Street readStreet (byte[] data){
         try {
             drbe = new DataReaderBigEndian(data);
@@ -409,25 +434,5 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             return new Street();
         }
     }
-
-    /**
-     * Execute not finished batch statemen
-     */
-    public void finalizeBatchStatement() {
-
-        try {
-            psInsertNode.executeBatch();
-            nodeInsertBatchSize = 0;
-
-            psInsertWay.executeBatch();
-            wayInsertBatchSize = 0;
-
-            psInsertRelation.executeBatch();
-            relationInsertBatchSize = 0;
-        } catch (SQLException e) {
-            Logger.e(TAG, "finalizeBatchStatement(), problem with query", e);
-        }
-    }
-
 
 }

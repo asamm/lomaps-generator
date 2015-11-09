@@ -34,24 +34,8 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         // save all ways because the streets
         else if (entity.getType() == EntityType.Way){
-
-            Collection<Tag> tags = entity.getTags();
-            for (Tag tag : tags) {
-
-                if (tag.getKey().equals(OSMTagKey.HIGHWAY.getValue())) {
-                    return true;
-                }
-
-                if (tag.getKey().equals(OSMTagKey.BOUNDARY.getValue()) || tag.getKey().equals(OSMTagKey.PLACE.getValue())) {
-                    return true;
-                }
-
-                if (tag.getValue().equals(OSMTagKey.STREET.getValue()) || tag.getValue().equals(OSMTagKey.ASSOCIATED_STREET.getValue())) {
-                    return true;
-                }
-            }
-
-            return false;
+            //unused ways are limited by osmosis simplification
+            return true;
         }
 
         // save only boundaries ways and region into cache

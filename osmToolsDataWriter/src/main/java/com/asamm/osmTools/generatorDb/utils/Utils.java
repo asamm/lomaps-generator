@@ -1,8 +1,8 @@
 package com.asamm.osmTools.generatorDb.utils;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.awt.PointShapeFactory;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.util.GeometricShapeFactory;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
@@ -41,6 +41,21 @@ public class Utils {
         GeoJSONWriter writer = new GeoJSONWriter();
         GeoJSON json = writer.write(geometry);
         return json.toString();
+    }
+
+    /**
+     * Function use java.text.Normalizer and replace all diacritics with their codes
+     * then are these codes using regular expresion replaced with empty string.
+     * @param text String for normalization
+     * @return Normalized string
+     */
+    public static String normalizeString(String text) {
+        if (text == null){
+            return null;
+        }
+
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
 
 
@@ -83,6 +98,14 @@ public class Utils {
         return deg / 180.0 * Math.PI;
     }
 
+    /**
+     * Convert distance in radians to degrees
+     * @param rad value in radians
+     * @return values in degrees
+     */
+    private static double toDeg (double rad){
+        return rad * 180 / Math.PI;
+    }
 
 
     public static Coordinate offset (Coordinate coordinate, double offsetY, double offsetX ) {
@@ -103,19 +126,28 @@ public class Utils {
     }
 
 
-    /**
-     * Function use java.text.Normalizer and replace all diacritics with their codes
-     * then are these codes using regular expresion replaced with empty string.
-     * @param text String for normalization
-     * @return Normalized string
-     */
-    public static String normalizeString(String text) {
-        if (text == null){
-            return null;
-        }
+    public static Polygon createRectangle (Coordinate center, double distance){
 
-        return Normalizer.normalize(text, Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        //Earth’s radius, sphere
+        float R=6372800;
+
+        //Coordinate offsets (from center) in radians
+        double dLat = distance / R;
+        double dLon = distance / (R*Math.cos(Math.PI * center.y / 180));
+
+        dLat = toDeg(dLat);
+        dLon = toDeg(dLon);
+
+        GeometricShapeFactory gsf = new GeometricShapeFactory();
+
+        gsf.setCentre(center);
+        gsf.setWidth(dLon * 2);
+        gsf.setHeight(dLat * 2 );
+        gsf.setNumPoints(4);
+
+        return gsf.createRectangle();
     }
+
+
 
 }

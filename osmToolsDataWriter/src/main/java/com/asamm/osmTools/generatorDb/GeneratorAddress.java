@@ -12,10 +12,9 @@ import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
+import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -33,9 +32,12 @@ public class GeneratorAddress extends AGenerator {
 	private static final String TAG = GeneratorAddress.class.getSimpleName();
 
 
+
     /** All places created from node or from relations*/
     private List<City> cities;
 
+    /** JTS in memory index of center geometries for cities*/
+    private STRtree cityCenterIndex;
 
     private List<Boundary> boundaries;
 
@@ -97,7 +99,7 @@ public class GeneratorAddress extends AGenerator {
 
         // ---- step 6 and 7 process streets ----
 
-        loadStreetRelations(dc);
+        loadStreets(dc);
 
         Logger.i(TAG, "=== Step 8 - simplify street and city geoms ===");
         simplifyGeoms ();
@@ -124,7 +126,7 @@ public class GeneratorAddress extends AGenerator {
     }
 
 
-    private void loadStreetRelations(ADataContainer dc) {
+    private void loadStreets(ADataContainer dc) {
         StreetCreator sc = new StreetCreator(dc, this);
 
         // ----- Step 6 create streets from relations streets -----
@@ -137,6 +139,8 @@ public class GeneratorAddress extends AGenerator {
 
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
         Logger.i(TAG, "Finding cities only loading cities fromk DB takes: " + sc.timeLoadNereastCities /1000.0 + " sec" );
+        Logger.i(TAG, "Finding cities only compare the boundaries takes: " + sc.timeFindCityTestBoundaries /1000.0 + " sec" );
+        Logger.i(TAG, "Finding cities only compare the is in takes: " + sc.timeFindCityTestIsIn /1000.0 + " sec" );
         Logger.i(TAG, "Inserts streets into tmp table takes: " + sc.timeInsertStreetTmpTime/1000.0 + " sec" );
 
 
@@ -167,6 +171,7 @@ public class GeneratorAddress extends AGenerator {
 
 
     void loadCityPlaces(ADataContainer dc) {
+        cityCenterIndex = new STRtree();
         TLongList nodeIds = dc.getNodeIds();
 
         for (int i=0, size = nodeIds.size(); i < size; i++) {
@@ -193,8 +198,9 @@ public class GeneratorAddress extends AGenerator {
                 Logger.d(TAG, "City is not valid. Do not add into city cache. City: " + city.toString());
                 continue;
             }
-
+            // add crated city into list and also into index
             cities.add(city);
+            cityCenterIndex.insert(city.getCenter().getEnvelopeInternal(), city);
         }
 
         Logger.i(TAG, "loadCityPlaces: " + cities.size() + " cities were created and loaded into cache");
@@ -220,7 +226,7 @@ public class GeneratorAddress extends AGenerator {
             }
 
             if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundaries: Add boundary from relation to cache: " + boundary.getName());
+                //Logger.i(TAG, "loadBoundaries: Add boundary from relation to cache: " + boundary.toString());
                 boundaries.add(boundary);
             }
         }
@@ -236,7 +242,7 @@ public class GeneratorAddress extends AGenerator {
             }
 
             if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundaries: Add boundary from way to cache: " + boundary.getName());
+                //Logger.i(TAG, "loadBoundaries: Add boundary from way to cache: " + boundary.toString());
                 boundaries.add(boundary);
             }
         }
@@ -472,19 +478,13 @@ public class GeneratorAddress extends AGenerator {
      */
     private void findAllCitiesForBoundary() {
 
-        STRtree index = new STRtree();
-        for (int c=0, sizeC = cities.size();  c < sizeC; c++){
-            City city = cities.get(c);
-            index.insert(city.getCenter().getEnvelopeInternal(), city);
-        }
-
         Boundary boundary = null;
         City city = null;
         for (int i=0, size = boundaries.size(); i < size; i++){
 
             boundary = boundaries.get(i);
             List<City> citiesInBoundary = new ArrayList<>();
-            List cityFromIndex = index.query(boundary.getGeom().getEnvelopeInternal());
+            List cityFromIndex = cityCenterIndex.query(boundary.getGeom().getEnvelopeInternal());
 
             for (int c=0, sizeC = cityFromIndex.size();  c < sizeC; c++){
                 city = cities.get(c);
@@ -496,6 +496,33 @@ public class GeneratorAddress extends AGenerator {
             citiesInBoundaryMap.put(boundary, citiesInBoundary);
         }
     }
+
+    /**************************************************/
+    /*             Other tools
+    /**************************************************/
+
+    public List<City> getClosestCities (Point centerPoint, int minNumber){
+
+        double distance = 5000;
+
+        List cityFromIndex = new ArrayList();
+
+        int numOfResize = 0;
+        while (cityFromIndex.size() < minNumber) {
+            //Logger.i(TAG,"Extends bounding box");
+            Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
+            cityFromIndex = cityCenterIndex.query(searchBound.getEnvelopeInternal());
+            distance = distance * 2;
+            numOfResize++;
+            if (numOfResize == 4){
+                Logger.i(TAG, "MAx num of resize reached");
+                break;
+            }
+        }
+
+        return cityFromIndex;
+    }
+
 
 
     /**************************************************/

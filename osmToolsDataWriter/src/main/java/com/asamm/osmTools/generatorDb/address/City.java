@@ -2,6 +2,8 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.vividsolutions.jts.geom.Point;
 
+import java.util.Map;
+
 /**
  * Created by voldapet on 2015-08-14 .
  */
@@ -69,6 +71,9 @@ public class City {
 
     /** Name of the city*/
     private String name;
+
+    /** Multilang codes*/
+    protected Map<String, String> names;
 
     /** Center of the city*/
     private Point center;

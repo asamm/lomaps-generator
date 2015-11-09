@@ -9,8 +9,6 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class DataContainerHdd extends ADataContainer {
@@ -98,12 +96,12 @@ public class DataContainerHdd extends ADataContainer {
 
     @Override
     public void insertWayStreetToCache(int hash, Street street) {
-        dbData.insertStreet(hash, street);
+        dbData.insertWayStreet(hash, street);
     }
 
     @Override
     public List<Street> getWayStreetsFromCache(int hash) {
-        return dbData.selectStreets (hash);
+        return dbData.selectWayStreets(hash);
     }
 
 

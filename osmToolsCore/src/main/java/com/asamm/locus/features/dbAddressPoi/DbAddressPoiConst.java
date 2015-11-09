@@ -14,6 +14,8 @@ public class DbAddressPoiConst {
     public static final String TN_STREETS = "Streets";
     public static final String TN_STREET_IN_CITIES = "Street_In_Cities";
     public static final String TN_CITIES = "Cities";
+    public static final String TN_HOUSES = "Houses";
+
 
     public static final String TN_META_DATA = "MetaData";
 
@@ -23,6 +25,8 @@ public class DbAddressPoiConst {
     public static final String COL_TYPE = "type";
 	public static final String COL_NAME = "name";
     public static final String COL_NAME_NORM = "namenorm";
+    public static final String COL_NUMBER = "number";
+    public static final String COL_POST_CODE = "postcode";
     public static final String COL_GEOM = "geom";
     public static final String COL_CENTER_GEOM = "center";
     public static final String COL_VALUE = "value";
