@@ -1,5 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
+import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import org.wololo.geojson.GeoJSON;

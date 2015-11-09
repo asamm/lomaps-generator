@@ -12,6 +12,7 @@ public class OsmConst {
 
         ADMIN_LEVEL("admin_level"),
         BOUNDARY("boundary"),
+        POSTAL_CODE("postal_code"),
 
         //relation types
         STREET("street"),

@@ -97,7 +97,7 @@ public abstract class ADataContainer {
         }
     }
 
-    public void addStreet (Street street){
+    public void addWayStreet(Street street){
         amountOfWayStreetUsed++;
 
         int hash = street.hashCode();

@@ -139,8 +139,8 @@ public class CmdAddressPoiDb extends Cmd {
      */
     public void addGeneratorAddress () {
 
-        //addReadPbf(getMap().getPathSource());
-        addReadPbf(mFileTempMap.getAbsolutePath());
+        addReadPbf(getMap().getPathSource());
+        //addReadPbf(mFileTempMap.getAbsolutePath());
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
         addCommand("-fileDb=" + mFilePoiDb);

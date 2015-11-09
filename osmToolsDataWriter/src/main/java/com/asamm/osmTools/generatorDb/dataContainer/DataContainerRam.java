@@ -77,7 +77,7 @@ public class DataContainerRam extends ADataContainer {
         // nothing to do > index is created only in hdd cache implementation
     }
 
-    public void addStreet (Street street){
+    public void addWayStreet(Street street){
         super.amountOfWayStreetUsed++;
 
         int hash = street.hashCode();
