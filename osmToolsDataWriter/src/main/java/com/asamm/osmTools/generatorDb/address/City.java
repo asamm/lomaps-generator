@@ -1,5 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
+import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 
 import java.util.Map;
@@ -83,6 +85,9 @@ public class City {
 
     private String isIn;
 
+    /** Boundary of city - can be null*/
+    private MultiPolygon geom;
+
     public City () {
 
     }
@@ -164,6 +169,14 @@ public class City {
         }
     }
 
+    public MultiPolygon getGeom() {
+        return geom;
+    }
+
+    public void setGeom(MultiPolygon geom) {
+        this.geom = geom;
+    }
+
     @Override
     public int hashCode() {
         int hash = 1;
@@ -179,6 +192,7 @@ public class City {
                 ", coordinate=" + center +
                 ", type=" + type +
                 ", isIn='" + isIn + '\'' +
+                ", geom=" + Utils.geomToGeoJson(geom) +
                 '}';
     }
 }

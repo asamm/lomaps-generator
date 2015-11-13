@@ -256,15 +256,4 @@ public class Street extends Storable {
                 ", geometry=" + Utils.geomToGeoJson(geometry) +
                 '}';
     }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder()
-                //.append(this.cityId)
-                .append(this.name)
-                .toHashCode();
-    }
-
-
-
 }
