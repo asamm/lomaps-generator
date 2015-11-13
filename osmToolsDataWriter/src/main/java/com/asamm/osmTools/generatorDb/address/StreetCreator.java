@@ -9,11 +9,13 @@ import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
+import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
@@ -33,7 +35,15 @@ public class StreetCreator {
 
     DatabaseAddress databaseAddress;
 
+    HouseFactory houseFactory;
+
     GeometryFactory geometryFactory;
+
+    // number of houses where we was not able to find proper street
+    int removedHousesWithoutStreet = 0;
+
+    /** Cached last street becase often goes houses from the same street*/
+    Street lastHouseStreet = null;
 
     public long timeFindStreetCities = 0;
     public long timeInsertStreetTmpTime = 0;
@@ -55,6 +65,8 @@ public class StreetCreator {
         this.databaseAddress = ga.getDatabaseAddress();
 
         this.geometryFactory = new GeometryFactory();
+
+        this.houseFactory = new HouseFactory(dc, ga);
     }
 
     /**
@@ -66,8 +78,9 @@ public class StreetCreator {
         TLongList relationIds = dc.getRelationIds();
         for (int i=0, size = relationIds.size(); i < size; i++) {
 
-            //Logger.i(TAG, "Create street for relation id: " + relationId);
             long relationId = relationIds.get(i);
+            //Logger.i(TAG, "Create street for relation id: " + relationId);
+
             Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
                 continue;
@@ -79,7 +92,9 @@ public class StreetCreator {
                 continue;
             }
 
-            if ( !(type.equals(OSMTagKey.STREET.getValue()) || type.equals(OSMTagKey.ASSOCIATED_STREET.getValue()))){
+            if ( !(type.equals(OSMTagKey.STREET.getValue())
+                    || type.equals(OSMTagKey.ASSOCIATED_STREET.getValue())
+                    || type.equals((OSMTagKey.MULTIPOLYGON.getValue())))){
                 continue;
             }
 
@@ -112,7 +127,7 @@ public class StreetCreator {
 
             if (mls == null) {
                 // probably associtate Address relation that does not contain any street member > skip it
-                Logger.i(TAG, "can not create street geom from relation id: " + relationId);
+                //Logger.i(TAG, "can not create street geom from relation id: " + relationId);
                 continue;
             }
 
@@ -201,6 +216,37 @@ public class StreetCreator {
         joinWayStreets();
     }
 
+    public void createHousesFromWays () {
+        TLongList wayIds = dc.getWayIds();
+        for (int i=0, size = wayIds.size(); i < size; i++) {
+            long wayId = wayIds.get(i);
+            WayEx way = dc.getWay(wayId);
+            List<House> houses = houseFactory.createHouse(way);
+
+            for(House house : houses) {
+
+                if (house.getCenter() == null){
+
+                    Logger.w(TAG, "House does not have defined the center: " + house.toString());
+
+
+                }
+
+
+
+                Street street = findStreetForHouse(house);
+                if (street == null){
+                    Logger.w(TAG, "Can not find street for house: " + house.toString());
+                    continue;
+                }
+
+                // insert house into db
+                databaseAddress.insertHouse(street, house);
+            }
+
+        }
+    }
+
     /**
      * iterate through hashes of created streets from osm ways and join ways into one Street
      */
@@ -220,7 +266,7 @@ public class StreetCreator {
             long start = System.currentTimeMillis();
              cityIds = new TLongHashSet();
             int hash = iterator.next();
-            //load all ways with the same hash from cache these all ways has the same name but different city
+            //load all ways with the same hash from cache. These all ways has the same name but different city
             List<Street> wayStreets = dc.getWayStreetsFromCache(hash);
             if (wayStreets.size() ==0){
                 continue;
@@ -230,6 +276,7 @@ public class StreetCreator {
             // to find other wayStreet from that share at least on cityId. If found it join it with the waystreet from
             // parent loop. then delete it.
             // Becease different wayStreet can have different cityIds it's needed to iterate several times.
+
             for (int i = wayStreets.size() -1; i >=0; i--){
 
                 geoms = new ArrayList<>(); // geometries for created street;
@@ -244,15 +291,18 @@ public class StreetCreator {
                     sameStreetFounded = false;
                     for (int j = i-1; j >= 0; j--){
                         Street wayStreetToJoin = wayStreets.get(j);
+//                        if (wayStreet.getName().equals("Friedhofstraße")) {
+//                            Logger.i(TAG, "test streeet: " + wayStreetToJoin.toString());
+//                        }
+
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
-//                            if (wayStreet.getName().equals("Sternschanze")) {
+//                            if (wayStreet.getName().equals("Friedhofstraße")) {
 //                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
 //                            }
                             geoms.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
                             houses.addAll(wayStreetToJoin.getHouses());
-
 
                             // remove this street way
                             wayStreets.remove(j);
@@ -289,7 +339,9 @@ public class StreetCreator {
 
                 // insert new joined street into db
                 long start3 = System.currentTimeMillis();
+
                 long id = databaseAddress.insertStreet(street);
+
                 timeInsertStreetSql += System.currentTimeMillis() - start3;
 
             }
@@ -355,44 +407,43 @@ public class StreetCreator {
 //            cities = databaseAddress.loadNearestCities(streetCentroid, 30);
 //        }
 
-
         List<City> cities = ga.getClosestCities(streetCentroid, 30);
-
         timeLoadNereastCities += System.currentTimeMillis() - start;
 
-        City city;
-        for (int i=0, size = cities.size(); i < size; i++){
+        List<City> citiesWithoutBound = new ArrayList<>();
 
-            city = cities.get(i);
-//            if (wayId == 7980116){
-//                Logger.i(TAG, "test city:  " + city.getId() + ", name: " + city.getName()
-//                        + " distance: " + Utils.getDistance(streetCentroid, city.getCenter()));
-//            }
-            // recognize city by the name and isIn tag
+
+        // recognize city by the name and isIn tag
+        for (int i = cities.size() - 1; i >= 0; i--){
+            City city = cities.get(i);
             start = System.currentTimeMillis();
             if (street.getIsIn().contains(city.getName())){
-//                if (wayId == 7980116){
-//                    Logger.i(TAG, "Way id  7980116 has city ISIN, city: " + city.toString());
-//                }
                 streetCities.add(city);
+                cities.remove(i);
                 timeFindCityTestIsIn += System.currentTimeMillis() - start;
+            }
+        }
+
+        // create index from rest of cities if boundary exist
+        start = System.currentTimeMillis();
+        STRtree cityBoundsIndex = new STRtree();
+        for (City city : cities){
+            MultiPolygon mp = city.getGeom();
+            if (mp == null){
+                // this city does not have defined the bound geometry
+                citiesWithoutBound.add(city);
                 continue;
             }
+            cityBoundsIndex.insert(city.getGeom().getEnvelopeInternal(), city);
+        }
+        timeFindCityTestBoundaries += System.currentTimeMillis() - start;
 
-            // try check if is in boundary
-            start = System.currentTimeMillis();
-            Boundary boundary = ga.getCenterCityBoundaryMap().get(city.getId());
-            if (boundary != null) {
+        // search all cities that intersect or contain street
+        streetCities.addAll(cityBoundsIndex.query(street.getGeometry().getEnvelopeInternal()));
 
-                if (boundary.getGeom().contains(street.getGeometry()) || (street.getGeometry().crosses(boundary.getGeom()))) {
-//                    if (wayId == 7980116){
-//                        Logger.i(TAG, "Way id  7980116 is in boundary" + boundary.toString());
-//                    }
-                    streetCities.add(city);
-                }
-                timeFindCityTestBoundaries += System.currentTimeMillis() - start;
-                continue;
-            }
+        // for rest of cities that does not have defined the bounds check distance etc
+
+        for (City city : citiesWithoutBound){
 
             // boundary is not defined > if relative distance is lower 0.2
             double distance = Utils.getDistance(streetCentroid, city.getCenter());
@@ -406,7 +457,7 @@ public class StreetCreator {
 
         if (streetCities.isEmpty()) {
             // iterate again the cities and try to find the closest
-            city = getClosestCity(street.getGeometry().getCentroid());
+            City city = getClosestCity(street.getGeometry().getCentroid());
 
             if (city != null){
                 streetCities.add(city);
@@ -550,25 +601,111 @@ public class StreetCreator {
 
         for (Entity entityH : entities){
 
-            House house = HouseFactory.createHouse(entityH, dc);
-
-            if (house == null){
-                //probably not valid house skip it
-                continue;
-
-            }
+            List<House> houses = houseFactory.createHouse(entityH);
             //Logger.i(TAG, "Created house: " + house.toString());
-            street.addHouse(house);
+
+            for (House house: houses){
+                street.addHouse(house);
+                databaseAddress.insertHouse(street, house);
+            }
         }
 
         return street;
     }
 
+    /**
+     * Try to find appropriate street for House
+     * @param house for that we want to find street
+     * @return the best way for house or null if no street was found
+     */
+    private Street findStreetForHouse (House house){
+
+        //Logger.i(TAG, "Look for street: House: "  + house.toString());
+
+        List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 10);
+        String addrStreetName = house.getStreetName();
 
 
+        if (addrStreetName.length() > 0){
+            for (Street street : streetsAround) {
+
+                //Logger.i(TAG, "Street to check" + street.toString());
+                if (street.getName().equals(addrStreetName)){
+                    return street;
+                }
+            }
+            // was not able to find the nereast street with the same name > try to select by name from addressdb
+            if (house.getCityName().length() > 0 ){
+
+                Street street = databaseAddress.selectStreetByNames(house.getCityName(), addrStreetName);
+                if (street != null){
+                    return street;
+                }
+            }
+
+            // house has defined the name but can not find the street with the same name > check the similar name
+            Street maxSimilarStreet = null;
+            double maxSimilarityScore = 0;
+            for (Street street : streetsAround) {
+                if (maxSimilarStreet == null){
+                    maxSimilarStreet =  street;
+                }
+
+                double similarity = StringUtils.getJaroWinklerDistance(addrStreetName, street.getName());
+                if (similarity > maxSimilarityScore){
+                    maxSimilarityScore = similarity;
+                    maxSimilarStreet = street;
+                }
+            }
+
+            if (maxSimilarityScore > 0.9){
+//                Logger.i(TAG, "Sim: "+maxSimilarityScore+" For house "+house.getOsmId() +" with streetname: " + addrStreetName +
+//                " was, found street:  " + maxSimilarStreet.toString());
+                return maxSimilarStreet;
+            }
+        }
+
+        // was not able to find street based on name > try the nereast one
+        //Logger.i(TAG, "House does not have defined the addr:street, find the nearest: " + house.toString());
+        Street nearestStreet = null;
+        double minDistance = Float.MAX_VALUE;
+        Point houseCenter = house.getCenter();
+        for (Street street : streetsAround) {
+            if (nearestStreet == null){
+                nearestStreet =  street;
+            }
+
+            double distance = houseCenter.distance(street.getGeometry());
+            if (distance < minDistance){
+                minDistance = distance;
+                nearestStreet = street;
+            }
+        }
+
+        if (addrStreetName.length() > 0 && Utils.toMeters(minDistance) > 100){
+            Logger.i(TAG, "HOuse has name street but the nereast street is far away. Distance: " + Utils.toMeters(minDistance) +
+                    "\n House: " + house.toString() + " \n Nereast street: " + nearestStreet.toString());
+            removedHousesWithoutStreet++;
+            return null;
+        }
+
+//        Logger.i(TAG, "### Nearest street: " +
+//                "\n House: " + house.toString() + " \n Street: " + nearestStreet.toString());
+        return nearestStreet;
+    }
 
 
+    /**************************************************/
+    /*                  OTHER UTILS
+    /**************************************************/
 
+
+    /**
+     * Test if way is type Highway and of proper type. For example track or platform are not
+     * valid ways for creation street
+     * @param way way to test
+     * @return true if it is way that is suiteble for creation street
+     */
     private boolean isStreetWay (Way way) {
 
         String highwayVal = OsmUtils.getTagValue(way, OSMTagKey.HIGHWAY);
@@ -576,13 +713,13 @@ public class StreetCreator {
             return false;
         }
 
-        if (highwayVal.equals("track")){
-            return false;
-        }
-
-        if (highwayVal.equals("path")){
-            return false;
-        }
+//        if (highwayVal.equals("track")){
+//            return false;
+//        }
+//
+//        if (highwayVal.equals("path")){
+//            return false;
+//        }
 
         if (highwayVal.equals("platform")){
             return false;
@@ -656,7 +793,11 @@ public class StreetCreator {
     }
 
 
-
+    /**
+     * Parse entity tags and find value of name tag
+     * @param entity entity to obtain name
+     * @return street name or null if tag name is not defined
+     */
     private String getStreetName (Entity entity){
         String name = null;
         if (entity != null){
@@ -665,6 +806,12 @@ public class StreetCreator {
         return name;
     }
 
+    /**
+     * Create Multiline string that represent geometry of street
+     * @param entity relation or way of the street
+     * @return street geometry or null if entity does not contain street data (for example associatedStreet relations
+     * can contain only building but not street geometry)
+     */
     private MultiLineString createStreetGeom (Entity entity){
 
         if (entity == null){
@@ -687,12 +834,17 @@ public class StreetCreator {
             for (RelationMember rm : relation.getMembers()){
                 MultiLineString mlsNext = null;
 
-                if (rm.getMemberRole() == null || !rm.getMemberRole().equals("street")) {
-                    //create geometry only from members that has role street
-                    continue;
-                }
-                else if (rm.getMemberType() == EntityType.Way){
+                if (rm.getMemberType() == EntityType.Way){
+
                     Way way = dc.getWayFromCache(rm.getMemberId());
+
+                    if (rm.getMemberRole() == null || !rm.getMemberRole().equals("street")) {
+                        //some relation does not have defined the member > try to guess if it is street
+                        if ( !isStreetWay(way)){
+                            continue;
+                        }
+                    }
+
                     mlsNext = createStreetGeom(way);
                 }
                 else if (rm.getMemberType() == EntityType.Relation){
@@ -736,9 +888,6 @@ public class StreetCreator {
         LineString ls = geometryFactory.createLineString(wayEx.getCoordinates());
         return geometryFactory.createMultiLineString(new LineString[]{ls});
     }
-
-
-
 
 }
 

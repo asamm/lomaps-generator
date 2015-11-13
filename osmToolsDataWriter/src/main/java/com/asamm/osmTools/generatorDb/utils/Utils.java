@@ -89,6 +89,11 @@ public class Utils {
         return (2 * R * 1000 * Math.asin(Math.sqrt(a)));
     }
 
+    public static double toMeters (double distWgs){
+        float R=6372800;
+        return (2 * R * Math.asin(Math.sqrt(distWgs)));
+    }
+
     /**
      * Convert deg angle to radians
      * @param deg angle in degrees

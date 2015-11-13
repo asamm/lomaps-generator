@@ -66,6 +66,8 @@ public class GeneratorAddress extends AGenerator {
         this.citiesInBoundaryMap = new HashMap<>();
 
         initialize();
+
+
 	}
 
 	@Override
@@ -97,45 +99,29 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
         insertCitiesToDB();
 
-        // ---- step 6 and 7 process streets ----
 
-        loadStreets(dc);
-
-        Logger.i(TAG, "=== Step 8 - simplify street and city geoms ===");
-        simplifyGeoms ();
-    }
-
-    private void simplifyGeoms() {
-        DatabaseAddress databaseAddress = getDatabaseAddress();
-        long start = System.currentTimeMillis();
-
-        databaseAddress.simplifyStreetGeoms();
-
-        City city;
-        for (int i = 0, size = cities.size() ; i < size;  i++){
-            city = cities.get(i);
-            Boundary boundary = centerCityBoundaryMap.get(city.getId());
-            if (boundary != null){
-                databaseAddress.simplifyCityGeom(city, boundary);
-            }
-        }
-
-        ((DatabaseAddress) db).createCityBoundaryIndex();
-        long time = System.currentTimeMillis() - start;
-        Logger.i(TAG, "SimplifyGeoms takes: " + time/1000.0 + " sec" );
-    }
-
-
-    private void loadStreets(ADataContainer dc) {
         StreetCreator sc = new StreetCreator(dc, this);
-
         // ----- Step 6 create streets from relations streets -----
-        Logger.i(TAG, "=== Step 6 - crate streets from relations ===");
+        Logger.i(TAG, "=== Step 6 - create streets from relations ===");
         sc.createStreetFromRelations();
 
         // ----- step 7 create streets from ways ------
-        Logger.i(TAG, "=== Step 7 - crate streets from ways ===");
+        Logger.i(TAG, "=== Step 7 - create streets from ways ===");
         sc.createStreetFromWays();
+        Logger.i(TAG, "Create dummy streets for cities without street ===");
+        ((DatabaseAddress) db).createDummyStreets();
+
+        Logger.i(TAG, "=== Step 8 - create houses from ways ===");
+        sc.createHousesFromWays();
+
+        Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
+        simplifyGeoms ();
+
+
+
+
+
+
 
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
         Logger.i(TAG, "Finding cities only loading cities fromk DB takes: " + sc.timeLoadNereastCities /1000.0 + " sec" );
@@ -153,22 +139,9 @@ public class GeneratorAddress extends AGenerator {
     }
 
 
-
-
-    private void insertCitiesToDB() {
-
-        City city;
-        for (int i = 0, size = cities.size() ; i < size;  i++){
-            city = cities.get(i);
-            Boundary boundary = centerCityBoundaryMap.get(city.getId());
-
-            ((DatabaseAddress) db).insertCity(city, boundary);
-        }
-
-        ((DatabaseAddress) db).crateCityCenterIndex();
-        ((DatabaseAddress) db).createCityTilesIndex();
-    }
-
+    /**************************************************/
+    /*  STEP 1 - Create cities
+    /**************************************************/
 
     void loadCityPlaces(ADataContainer dc) {
         cityCenterIndex = new STRtree();
@@ -205,6 +178,10 @@ public class GeneratorAddress extends AGenerator {
 
         Logger.i(TAG, "loadCityPlaces: " + cities.size() + " cities were created and loaded into cache");
     }
+
+    /**************************************************/
+    /*  STEP 2 - Create boundaries
+    /**************************************************/
 
     void loadBoundaries(ADataContainer dc) {
 
@@ -496,6 +473,52 @@ public class GeneratorAddress extends AGenerator {
             citiesInBoundaryMap.put(boundary, citiesInBoundary);
         }
     }
+
+    /**************************************************/
+    /*  STEP 5 - write cities into DB
+    /**************************************************/
+
+    private void insertCitiesToDB() {
+
+        City city;
+        for (int i = 0, size = cities.size() ; i < size;  i++){
+            city = cities.get(i);
+            Boundary boundary = centerCityBoundaryMap.get(city.getId());
+            if (boundary != null){
+                city.setGeom(boundary.getGeom());
+            }
+
+            ((DatabaseAddress) db).insertCity(city, boundary);
+        }
+
+        ((DatabaseAddress) db).crateCityCenterIndex();
+        ((DatabaseAddress) db).createCityTilesIndex();
+    }
+
+    /**************************************************/
+    /*  STEP 9 - simplify geoms
+    /**************************************************/
+
+    private void simplifyGeoms() {
+        DatabaseAddress databaseAddress = getDatabaseAddress();
+        long start = System.currentTimeMillis();
+
+        databaseAddress.simplifyStreetGeoms();
+
+        City city;
+        for (int i = 0, size = cities.size() ; i < size;  i++){
+            city = cities.get(i);
+            Boundary boundary = centerCityBoundaryMap.get(city.getId());
+            if (boundary != null){
+                databaseAddress.simplifyCityGeom(city, boundary);
+            }
+        }
+
+        ((DatabaseAddress) db).createCityBoundaryIndex();
+        long time = System.currentTimeMillis() - start;
+        Logger.i(TAG, "SimplifyGeoms takes: " + time/1000.0 + " sec" );
+    }
+
 
     /**************************************************/
     /*             Other tools

@@ -17,6 +17,7 @@ public class OsmConst {
         //relation types
         STREET("street"),
         ASSOCIATED_STREET("associatedStreet"),
+        MULTIPOLYGON("multipolygon"),
 
         // address
         PLACE("place"),
@@ -43,7 +44,7 @@ public class OsmConst {
         WEBSITE("website"),
         URL("url"),
 
-        HIGHWAY("highway");
+        HIGHWAY("highway"),;
 
 
         private final String value;
@@ -54,7 +55,7 @@ public class OsmConst {
 
         public String getValue() {
             return value;
+
         }
     }
-
 }

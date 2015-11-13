@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
+import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -34,7 +35,15 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         // save all ways because the streets
         else if (entity.getType() == EntityType.Way){
-            //unused ways are limited by osmosis simplification
+            //almost unused ways are limited by osmosis simplification
+            Collection<Tag> tags = entity.getTags();
+            for (Tag tag : tags) {
+                if (tag.getKey().equals(OSMTagKey.HIGHWAY.getValue())) {
+                    if (tag.getValue().equals("proposed")){
+                        return false;
+                    }
+                }
+            }
             return true;
         }
 
@@ -82,6 +91,12 @@ public class WriterAddressDefinition extends AWriterDefinition{
             }
 
             if (tag.getValue().equals(OSMTagKey.STREET.getValue()) || tag.getValue().equals(OSMTagKey.ASSOCIATED_STREET.getValue())) {
+                return true;
+            }
+
+            if (tag.getKey().equals(OSMTagKey.HIGHWAY.getValue()) && tag.getValue().equals("pedestrian")) {
+                // because the squares
+                //Logger.i(TAG, "Pedestrian relation id: " + entity.getId());
                 return true;
             }
         }

@@ -7,6 +7,7 @@ import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -100,7 +101,7 @@ public abstract class ADataContainer {
     public void addWayStreet(Street street){
         amountOfWayStreetUsed++;
 
-        int hash = street.hashCode();
+        int hash = new HashCodeBuilder().append(street.getName()).toHashCode();
         // put street into tmp cache
         insertWayStreetToCache(hash, street);
         streetHashSet.add(hash);
