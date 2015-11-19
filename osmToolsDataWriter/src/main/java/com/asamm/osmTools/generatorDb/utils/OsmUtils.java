@@ -29,4 +29,27 @@ public class OsmUtils {
         }
         return null;
     }
+
+
+    /**
+     * Parse entity tags and find value possible street name
+     * The priority of tags is: 1. Name, 2. Street, 3. Addr:street
+     * Important! don't use it for getting street name when parse houses
+     * For houses has higher priority the addr:street
+     * @param entity entity to obtain name
+     * @return street name or null if is not possible to parse street name
+     */
+    public static String getStreetName (Entity entity){
+        String name = null;
+        if (entity != null){
+            name = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.NAME);
+        }
+        if (name == null || name.length() == 0){
+            name = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.STREET);
+        }
+        if (name == null || name.length() == 0){
+            name = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.ADDR_STREET);
+        }
+        return name;
+    }
 }
