@@ -106,8 +106,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                 + COL_CITY_ID + " ) VALUES (?, ?)");
 
         psInsertHouse = createPreparedStatement(
-                "INSERT INTO "+ TN_HOUSES +" ("+COL_ID+", "+COL_NUMBER+", "+COL_POST_CODE+", "+COL_NAME+", "+COL_CENTER_GEOM+
-                        ") VALUES (?, ?, ?, ?,  GeomFromWKB(?, 4326))");
+                "INSERT INTO "+ TN_HOUSES +" ("+COL_ID+", "+COL_STREET_ID+", "+COL_DATA+",  "+COL_NUMBER+", " +COL_NAME+", "+COL_POST_CODE+", "+COL_CENTER_GEOM+
+                        ") VALUES (?, ?, ?, ?, ?, ?,  GeomFromWKB(?, 4326))");
 
         psSelectStreet = createPreparedStatement(
                 "SELECT " + COL_ID + ", "  + COL_NAME + ", "+ COL_NAME_NORM + ", AsBinary(" + COL_GEOM + ")" +
@@ -261,9 +261,14 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         sql = "CREATE TABLE "+TN_HOUSES+" (";
         sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
+        sql += COL_STREET_ID + " BIGINT NOT NULL, ";
+
+        sql += COL_DATA + " TEXT, "; // TODO REMOVE
+
         sql += COL_NUMBER+" TEXT NOT NULL, ";
-        sql += COL_POST_CODE+", ";
-        sql += COL_NAME+" )";
+        sql += COL_NAME+ " TEXT,  ";
+        sql += COL_POST_CODE+" TEXT ) ";
+
         executeStatement(sql);
 
         // creating a Center Geometry column fro Cities
@@ -440,7 +445,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertStreet.clearParameters();
 
             street.setId(id);
-            psInsertStreet.setLong(1, id);
+            psInsertStreet.setLong(1, street.getId());
 
             String name = street.getName();
             String nameNormalized = Utils.normalizeString(name);
@@ -450,13 +455,13 @@ public class DatabaseAddress extends ADatabaseHandler {
             }
             psInsertStreet.setString(3, nameNormalized);
 
-            MultiLineString mls = street.getGeometry();
-            if (!mls.isValid()){
-                Logger.w(TAG, "insertWayStreet: not valid geom " + street.toString() );
-            }
-            if (mls.isEmpty()){
-                Logger.w(TAG, "insertWayStreet: empty geom " + street.toString() );
-            }
+//            MultiLineString mls = street.getGeometry();
+//            if (!mls.isValid()){
+//                Logger.w(TAG, "insertWayStreet: not valid geom " + street.toString() );
+//            }
+//            if (mls.isEmpty()){
+//                Logger.w(TAG, "insertWayStreet: empty geom " + street.toString() );
+//            }
 
             psInsertStreet.setBytes(4, wkbWriter.write(street.getGeometry()));
             psInsertStreet.execute();
@@ -486,6 +491,12 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
     }
 
+    /**
+     * Insert house into address database
+     * @param street Street to which it belongs the inserted house
+     * @param house
+     * @return id of inserted house
+     */
     public long insertHouse (Street street, House house){
 
 //        Logger.i(TAG, "Insert house into db: " +
@@ -495,10 +506,12 @@ public class DatabaseAddress extends ADatabaseHandler {
         long houseId = housesIdSequence++;
         try {
             psInsertHouse.setLong(1, houseId);
-            psInsertHouse.setString(2, house.getNumber());
-            psInsertHouse.setString(3, house.getPostCode());
-            psInsertHouse.setString(4, street.getName());
-            psInsertHouse.setBytes(5, wkbWriter.write(house.getCenter()));
+            psInsertHouse.setLong(2, street.getId());
+            psInsertHouse.setString(3, street.getName()); //TODO remove
+            psInsertHouse.setString(4, house.getNumber());
+            psInsertHouse.setString(5, house.getName());
+            psInsertHouse.setString(6, house.getPostCode());
+            psInsertHouse.setBytes(7, wkbWriter.write(house.getCenter()));
 
             psInsertHouse.execute();
             return houseId;
@@ -512,7 +525,9 @@ public class DatabaseAddress extends ADatabaseHandler {
 
     }
 
-    /** Find cities without streets and then create dummy street with the same name and same location*/
+    /**
+     * Find cities without streets and then create dummy street with the same name and same location     *
+     */
     public void createDummyStreets() {
         String sql = "SELECT " + COL_ID + ", " + COL_NAME + ", " + COL_NAME_NORM + ", AsBinary (" + COL_CENTER_GEOM + ")" +
         " FROM " + TN_CITIES + " LEFT JOIN (SELECT DISTINCT " + COL_CITY_ID +" FROM " + TN_STREET_IN_CITIES +

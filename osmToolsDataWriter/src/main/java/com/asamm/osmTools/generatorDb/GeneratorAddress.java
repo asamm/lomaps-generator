@@ -112,7 +112,9 @@ public class GeneratorAddress extends AGenerator {
         ((DatabaseAddress) db).createDummyStreets();
 
         Logger.i(TAG, "=== Step 8 - create houses from ways ===");
+        //sc.createHousesFromRelations();
         sc.createHousesFromWays();
+        //sc.createHousesFromNodes();
 
         Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
         simplifyGeoms ();

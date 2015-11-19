@@ -23,8 +23,14 @@ public class House extends Storable{
 
 
     public enum AddrInterpolationType {
-        ALL, EVEN, ODD, ALPHABETIC, NONE;
+        ALL(1), EVEN(2), ODD(2), ALPHABETIC(1), INTEGER(1), NONE(1);
 
+        /** Step in interpolation */
+        private int step;
+
+        private AddrInterpolationType (int step){
+            this.step = step;
+        }
 
         /**
          * Find proper enum based on value of tag addr:interpolation
@@ -37,12 +43,19 @@ public class House extends Storable{
                 return NONE;
             }
 
+            if (Utils.isInteger(value)){
+                return INTEGER;
+            }
             for(AddrInterpolationType ait : values()) {
                 if (ait.name().equalsIgnoreCase(value)) {
                     return ait;
                 }
             }
             return NONE;
+        }
+
+        public int getStep (){
+            return step;
         }
     }
 
@@ -76,16 +89,13 @@ public class House extends Storable{
         super(dr);
     }
 
-    public House(long osmId, String number, String name, String postCode, Point center,
-                 AddrInterpolationType addrInterpolationType ) {
+    public House(long osmId, String number, String name, String postCode, Point center) {
 
         this.osmId = osmId;
         setNumber(number);
         setName(name);
         setPostCode(postCode);
         this.center = center;
-        this.addrInterpolationType = addrInterpolationType;
-
     }
 
 
@@ -237,11 +247,11 @@ public class House extends Storable{
                 '}';
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 1;
-        hash = hash * 17 + Long.valueOf(osmId).hashCode();
-        hash = hash * 31 + number.hashCode();
-        return hash;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 1;
+//        hash = hash * 17 + Long.valueOf(osmId).hashCode();
+//        hash = hash * 31 + number.hashCode();
+//        return hash;
+//    }
 }

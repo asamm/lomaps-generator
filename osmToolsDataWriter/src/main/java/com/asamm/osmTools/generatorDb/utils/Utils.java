@@ -154,5 +154,50 @@ public class Utils {
     }
 
 
+    /**
+     * Convert distance in meters to degres in specific point on sphere
+     * It's not accurate
+     * @param center aproximate place on the sphere where want to convert the distance
+     * @param distance distance in meters to convert
+     * @return distance in degrees in  dX and dY (dLon, dLat)
+     */
+    public static double[] metersToDlatDlong (Coordinate center, double distance){
+        //Earth’s radius, sphere
+        float R=6372800;
 
+        //Coordinate offsets (from center) in radians
+        double dLat = distance / R;
+        double dLon = distance / (R*Math.cos(Math.PI * center.y / 180));
+
+        dLat = toDeg(dLat);
+        dLon = toDeg(dLon);
+
+        return new double[]{dLon,dLat};
+    }
+
+
+    public static boolean isNumeric(String str)
+    {
+        try
+        {
+            double d = Double.parseDouble(str);
+        }
+        catch(NumberFormatException nfe)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean isInteger(String str)  {
+
+        try  {
+            int i = Integer.parseInt(str);
+        }
+        catch(NumberFormatException nfe)
+        {
+            return false;
+        }
+        return true;
+    }
 }

@@ -44,7 +44,7 @@ public class Street extends Storable {
     /** Splitted is_in tag*/
     private List<String> isIn;
 
-    private THashSet<House> houses;
+    private List<House> houses;
 
     /** JTS multiline geometry of the street*/
     private MultiLineString geometry;
@@ -101,7 +101,7 @@ public class Street extends Storable {
         this.cityId = -1;
         this.cityIds = new TLongHashSet();
         this.isIn = new ArrayList<>();
-        this.houses = new THashSet<>();
+        this.houses = new ArrayList<>();
         this.geometry = new GeometryFactory().createMultiLineString(null);
 
     }
@@ -130,7 +130,7 @@ public class Street extends Storable {
         }
 
         size = dr.readInt();
-        houses = new THashSet<>();
+        houses = new ArrayList<>();
         for (int i=0; i < size; i++){
             houses.add(new House(dr));
         }
@@ -230,11 +230,11 @@ public class Street extends Storable {
         houses.add(house);
     }
 
-    public THashSet<House> getHouses() {
+    public List<House> getHouses() {
         return houses;
     }
 
-    public void setHouses(THashSet<House> houses) {
+    public void setHouses(List<House> houses) {
         this.houses = houses;
     }
 
