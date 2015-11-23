@@ -3,6 +3,7 @@ package com.asamm.osmTools.generatorDb.address;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
+import gnu.trove.map.hash.THashMap;
 
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import java.util.Map;
  * Created by voldapet on 2015-08-14 .
  */
 public class City {
+
 
     public enum CityType {
         // types and radius
@@ -71,7 +73,7 @@ public class City {
     /** Same as OSM Node or id of relation/way */
     private long id;
 
-    /** Name of the city*/
+    /** Name of the city in local lang*/
     private String name;
 
     /** Multilang codes*/
@@ -84,6 +86,9 @@ public class City {
     private CityType type;
 
     private String isIn;
+
+    /** All possible international languages of cities, <langCode|name> */
+    private THashMap<String, String> namesInternational;
 
     /** Boundary of city - can be null*/
     private MultiPolygon geom;
@@ -101,6 +106,7 @@ public class City {
     private void reset () {
         name = "";
         isIn = "";
+        this.namesInternational = new THashMap<>();
     }
 
     public boolean isValid () {
@@ -168,6 +174,25 @@ public class City {
             this.isIn = isIn;
         }
     }
+
+    /**
+     * Add city name in lang mutation
+     * @param langCode code of language
+     * @param name name of the city in specified language
+     */
+    public void addNameInternational (String langCode, String name){
+        this.namesInternational.put(langCode, name);
+
+    }
+
+    public THashMap<String, String> getNamesInternational() {
+        return namesInternational;
+    }
+
+    public void setNamesInternational(THashMap<String, String> namesInternational) {
+        this.namesInternational = namesInternational;
+    }
+
 
     public MultiPolygon getGeom() {
         return geom;

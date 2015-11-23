@@ -44,7 +44,11 @@ public class OsmConst {
         WEBSITE("website"),
         URL("url"),
 
-        HIGHWAY("highway"),;
+
+        HIGHWAY("highway"),
+        BUILDING("building")
+
+        ;
 
 
         private final String value;

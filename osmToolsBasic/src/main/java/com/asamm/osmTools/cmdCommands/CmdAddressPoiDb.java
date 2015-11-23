@@ -78,14 +78,22 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("--tf");
         addCommand("reject-relations");
         addCommand("--tf");
+        addCommand("reject-ways");
+        addCommand("--tf");
         addCommand("accept-nodes");
         addCommand("place=*");
-        addCommand("--tf");
-        addCommand("reject-ways");
+        addCommand("addr:housenumber=*");
+        addCommand("addr:housename=*");
+        addCommand("addr:street=*");
+        addCommand("addr:street2=*");
+        addCommand("address:house=*");
+
         addCommand("outPipe.0=Nodes");
 
         // add second task
         addReadSource();
+        addCommand("--tf");
+        addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-ways");
         addCommand("highway=*");
@@ -93,31 +101,49 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("place=*");
         addCommand("*=street");
         addCommand("*=associatedStreet");
+        addCommand("addr:housenumber=*");
+        addCommand("addr:housename=*");
+        addCommand("addr:street=*");
+        addCommand("addr:street2=*");
+        addCommand("address:house=*");
+        addCommand("addr:interpolation=*");
+        addCommand("address:type=*");
+
         addCommand("--used-node");
-//        addCommand("idTrackerType=Dynamic");
+        addCommand("idTrackerType=Dynamic");
+
         addCommand("outPipe.0=Ways");
 
         // add third task
-//        addReadSource();
-//        addCommand("--tf");
-//        addCommand("accept-relations");
-//        addCommand("highway=*");
-//        addCommand("boundary=*");
-//        addCommand("place=*");
-//        addCommand("*=street");
-//        addCommand("*=associatedStreet");
-//        addCommand("--used-node");
-//        addCommand("--tf");
-//        addCommand("reject-ways");
-//        addCommand("--used-node");
-////        addCommand("idTrackerType=Dynamic");
-//        addCommand("outPipe.0=Relations");
+        addReadSource();
+        addCommand("--tf");
+        addCommand("accept-relations");
+        addCommand("highway=*");
+        addCommand("boundary=*");
+        addCommand("place=*");
+        addCommand("*=street");
+        addCommand("*=associatedStreet");
+        addCommand("addr:housenumber=*");
+        addCommand("addr:housename=*");
+        addCommand("addr:street=*");
+        addCommand("addr:street2=*");
+        addCommand("address:house=*");
+        addCommand("addr:interpolation=*");
+        addCommand("address:type=*");
+
+        addCommand("--used-way");
+        addCommand("--used-node");
+//        addCommand("idTrackerType=Dynamic");
+        addCommand("outPipe.0=Relations");
 
         // add merge task
         addCommand("--merge");
         addCommand("inPipe.0=Nodes");
         addCommand("inPipe.1=Ways");
-//        addCommand("inPipe.2=Relations");
+        addCommand("outPipe.0=NodesWays");
+        addCommand("--merge");
+        addCommand("inPipe.0=Relations");
+        addCommand("inPipe.1=NodesWays");
 
         // add export path
         addWritePbf(mFileTempMap.getAbsolutePath(), true);

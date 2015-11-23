@@ -4,6 +4,7 @@ import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
+import gnu.trove.map.hash.THashMap;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
@@ -28,8 +29,15 @@ public class Boundary {
     /** Id of entity that is set as center of boundary (should be a place)*/
     private long adminCenterId;
 
+    /** All possible international languages of cities, <langCode|name> */
+    private THashMap<String, String> namesInternational;
+
     private MultiPolygon geom;
 
+    /**
+     *
+     * @param id entity id
+     */
     public Boundary (long id){
         reset();
 
@@ -142,6 +150,15 @@ public class Boundary {
 
     public void setAdminCenterId(long adminCenterId) {
         this.adminCenterId = adminCenterId;
+    }
+
+
+    public THashMap<String, String> getNamesInternational() {
+        return namesInternational;
+    }
+
+    public void setNamesInternational(THashMap<String, String> namesInternational) {
+        this.namesInternational = namesInternational;
     }
 
     public MultiPolygon getGeom() {

@@ -13,51 +13,12 @@ import locus.api.utils.DataWriterBigEndian;
 import java.io.IOException;
 
 /**
+ * Address Place named as house
  * Created by voldapet on 2015-11-04 .
  */
 public class House extends Storable{
 
     private static final String TAG = House.class.getSimpleName();
-
-
-
-
-    public enum AddrInterpolationType {
-        ALL(1), EVEN(2), ODD(2), ALPHABETIC(1), INTEGER(1), NONE(1);
-
-        /** Step in interpolation */
-        private int step;
-
-        private AddrInterpolationType (int step){
-            this.step = step;
-        }
-
-        /**
-         * Find proper enum based on value of tag addr:interpolation
-         * @param value content of tag addr:interpolation
-         * @return type of interpolation or None if interpolation value is unknown or not defined
-         */
-        public static AddrInterpolationType fromValue(String value){
-
-            if (value == null){
-                return NONE;
-            }
-
-            if (Utils.isInteger(value)){
-                return INTEGER;
-            }
-            for(AddrInterpolationType ait : values()) {
-                if (ait.name().equalsIgnoreCase(value)) {
-                    return ait;
-                }
-            }
-            return NONE;
-        }
-
-        public int getStep (){
-            return step;
-        }
-    }
 
 
     /** OSM id of entity from which was house created. It's not unique */
@@ -81,9 +42,6 @@ public class House extends Storable{
 
     /** Position of house */
     Point center;
-
-    /** The type of interpolation*/
-    AddrInterpolationType addrInterpolationType;
 
     public House(DataReaderBigEndian dr) throws IOException {
         super(dr);
@@ -114,7 +72,6 @@ public class House extends Storable{
         this.osmId = 0;
         this.number = "";
         this.name = "";
-        this.addrInterpolationType = AddrInterpolationType.NONE;
         this.postCode = "";
         this.streetName = "";
         this.cityName = "";
@@ -129,7 +86,6 @@ public class House extends Storable{
         this.number = dr.readString();
         this.name = dr.readString();
         this.postCode = dr.readString();
-        this.addrInterpolationType = AddrInterpolationType.fromValue(dr.readString());
 
         WKBReader wkbReader = new WKBReader();
         int count = dr.readInt();
@@ -146,7 +102,6 @@ public class House extends Storable{
         dw.writeString(number);
         dw.writeString(name);
         dw.writeString(postCode);
-        dw.writeString(addrInterpolationType.name());
 
         WKBWriter wkbWriter = new WKBWriter();
         byte[] geomData = wkbWriter.write(center);
@@ -195,14 +150,6 @@ public class House extends Storable{
         this.center = center;
     }
 
-    public AddrInterpolationType getHouseInterpolation() {
-        return addrInterpolationType;
-    }
-
-    public void setHouseInterpolation(AddrInterpolationType addrInterpolationType) {
-        this.addrInterpolationType = addrInterpolationType;
-    }
-
     public String getStreetName() {
         return streetName;
     }
@@ -242,7 +189,6 @@ public class House extends Storable{
                 ", streetName='" + streetName + '\'' +
                 ", cityName='" + cityName + '\'' +
                 ", postCode='" + postCode + '\'' +
-                ", addrInterpolationType=" + addrInterpolationType +
                 ", center=" + Utils.geomToGeoJson(center) +
                 '}';
     }

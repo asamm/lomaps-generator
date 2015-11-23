@@ -112,9 +112,12 @@ public class GeneratorAddress extends AGenerator {
         ((DatabaseAddress) db).createDummyStreets();
 
         Logger.i(TAG, "=== Step 8 - create houses from ways ===");
-        //sc.createHousesFromRelations();
+        sc.createHousesFromRelations();
         sc.createHousesFromWays();
-        //sc.createHousesFromNodes();
+        sc.createHousesFromNodes();
+        Logger.i(TAG, "Clear duplicated houses ");
+        ((DatabaseAddress) db).deleteDuplicatedHouses();
+
 
         Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
         simplifyGeoms ();
@@ -166,6 +169,7 @@ public class GeneratorAddress extends AGenerator {
             City city = new City(cityType);
             city.setId(node.getId());
             city.setName(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.NAME));
+            city.setNamesInternational(OsmUtils.getNamesInternational(node));
             city.setCenter(new GeometryFactory().createPoint(new Coordinate(node.getLongitude(), node.getLatitude())));
             city.setIsIn(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.IS_IN));
 
@@ -443,6 +447,7 @@ public class GeneratorAddress extends AGenerator {
         City city = new City(boundary.getCityType());
         city.setId(boundary.getId());
         city.setName(boundary.getName());
+        city.setNamesInternational(boundary.getNamesInternational());
         city.setCenter(boundary.getCenterPoint());
 
         return city;
