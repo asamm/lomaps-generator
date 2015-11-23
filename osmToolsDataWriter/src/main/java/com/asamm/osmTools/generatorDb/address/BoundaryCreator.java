@@ -70,6 +70,7 @@ public class BoundaryCreator {
         Boundary boundary = new Boundary(entity.getId());
         boundary.setName(bName);
 
+
         //Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
 
         if (entity.getType() == EntityType.Way){
@@ -150,6 +151,7 @@ public class BoundaryCreator {
         boundary.setAdminLevel(extractBoundaryAdminLevel(entity));
         boundary.setShortName(OsmUtils.getTagValue(entity, OSMTagKey.SHORT_NAME));
         boundary.setCityType(cityType);
+        boundary.setNamesInternational(OsmUtils.getNamesInternational(entity));
 
 //        if (hasChildRelation){
 //            Logger.i(TAG, "Administrative/place entity id: " + entity.getId() +" has other relation as member. " +

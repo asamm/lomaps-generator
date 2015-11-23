@@ -10,14 +10,9 @@ import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.linearref.LengthIndexedLine;
-import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
-import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-import sun.security.util.Length;
+import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,8 +136,6 @@ public class HouseFactory {
      */
     private List<House> parseInterpolation(Entity entity, String addrInterpolationValue) {
 
-        Logger.i(TAG, "parseInterpolation(): ----- Parse entity: " + entity.getId());
-
         List<House> houses = new ArrayList<>();
         EntityType entityType = entity.getType();
 
@@ -150,14 +143,14 @@ public class HouseFactory {
             return houses;
         }
 
-        House.AddrInterpolationType ait = House.AddrInterpolationType.fromValue(addrInterpolationValue);
+        AddrInterpolationType ait = AddrInterpolationType.fromValue(addrInterpolationValue);
         if (entityType == EntityType.Way){
             Way way = (Way) entity;
 
             if (way.isClosed()){
                 // probably building don't interpolate
                 House house = parseHouseData(way);
-                Logger.i(TAG, "parseInterpolation(): way is closed, building? wayId: " + way.getId());
+                //Logger.i(TAG, "parseInterpolation(): way is closed, building? wayId: " + way.getId());
                 if (house !=  null){
                     houses.add(house);
                 }
@@ -184,9 +177,7 @@ public class HouseFactory {
                 Node node = nodes.get(i);
                 boolean isLastNode = (i == nodesSize - 1);
                 segmentCoordinates.add(new Coordinate(node.getLongitude(), node.getLatitude()));
-                if (way.getId() == 217905604){
-                    Logger.i(TAG, "Interpolate points: " + node.toString());
-                }
+
                 //Logger.i(TAG, "parseInterpolation(): Parse nodes for : " + way.getId() + ", node: " + node.getId());
                 House house = parseHouseData(node);
                 if (house == null){
@@ -206,7 +197,7 @@ public class HouseFactory {
                     else if (endHouse == null) {
                         endHouse = house;
                         List<House> housesInterpolated =
-                                interpolateHouses(startHouse, endHouse, segmentCoordinates, ait, addrInterpolationValue, isLastNode);
+                                interpolateHousesOnLineSegment(startHouse, endHouse, segmentCoordinates, ait, addrInterpolationValue, isLastNode);
 
                         houses.addAll(housesInterpolated);
 
@@ -230,15 +221,14 @@ public class HouseFactory {
                 houses.add(startHouse);
             }
         }
-
         return houses;
     }
 
-    private List<House> interpolateHouses(
+    private List<House> interpolateHousesOnLineSegment(
             House startHouse,
             House endHouse,
             List<Coordinate> segmentCoordinates,
-            House.AddrInterpolationType ait,
+            AddrInterpolationType ait,
             String interpolationValue,
             boolean isLastNode) {
 
@@ -246,63 +236,72 @@ public class HouseFactory {
         houses.add(startHouse);
 
         String startHouseNum = startHouse.getNumber();
-        String endHouseNum = endHouse.getNumber();
 
         int startValue = 0;
         int endValue = 0;
         int step = ait.getStep();
 
-        if ( ait == House.AddrInterpolationType.ALPHABETIC){
-            startValue = getLastChar(startHouse.getNumber());
+        if ( ait == AddrInterpolationType.ALPHABETIC){
+            startValue = getLastChar(startHouseNum);
             endValue = getLastChar(endHouse.getNumber());
         }
         else {
             startValue = Integer.parseInt(startHouseNum);
-            endValue = Integer.parseInt(endHouseNum);
+            endValue = Integer.parseInt(endHouse.getNumber());
         }
 
-        if (ait == House.AddrInterpolationType.INTEGER){
-            // obtain step for this specific interpolation
+        if (ait == AddrInterpolationType.INTEGER){
+            // obtain step for this specific type interpolation
             step = Integer.valueOf(interpolationValue);
         }
 
-        Logger.w(TAG,
-                "\n Start house: " + startHouse.toString() +
-                "\n End house: " + endHouse.toString());
-
         int diff = endValue - startValue;
+
+        if (diff == 0){
+            // there is no difference between house number > nothing to do
+            if (isLastNode){
+                houses.add(endHouse);
+            }
+            return houses;
+        }
+
         if (diff < 0){
-            Logger.w(TAG, "Negative interpolation, change steps " +
-                    "\n Start house: " + startHouse.toString() +
-                            "\n End house: " + endHouse.toString());
+            // negative interpolation > reverse step to be negative
             step = step * (-1);
         }
 
-        Coordinate[] coordinates =segmentCoordinates.toArray(new Coordinate[0]);
-        LineString ls = geometryFactory.createLineString(coordinates);
+        // PREPARE INDEXED LINE FOR INTERPOLATION ALONG THE LINE
+
+        Coordinate[] lineCoords = segmentCoordinates.toArray(new Coordinate[0]);
+        LineString ls = geometryFactory.createLineString(lineCoords);
         LengthIndexedLine indexedLine = new LengthIndexedLine(ls);
-
-        Logger.i(TAG, "LineString for inter: " + Utils.geomToGeoJson(ls));
-
         double endIndex = indexedLine.getEndIndex();
         double startIndex = indexedLine.getStartIndex();
         double stepIndex = ((endIndex - startIndex) / diff) * step;
 
-        Coordinate[] points = new Coordinate[diff/step -1];
-        int counter = 0;
         for (int i=1; i < diff/step; i++) {
 
-            Coordinate coordinate = indexedLine.extractPoint(startIndex + i * stepIndex);
-            points[i-1] = coordinate;
+            // interpolate the coordinates of new house
+            Coordinate centerCoord = indexedLine.extractPoint(startIndex + i * stepIndex);
+            Point centerPoint = geometryFactory.createPoint(centerCoord);
 
+            // create new house number based on type of interpolation
             int houseNum = startValue + i * step;
+            String houseNumStr = "";
+            if ( ait == AddrInterpolationType.ALPHABETIC){
+                // convert integer to ascii char and replace the last char in start house number
+                houseNumStr = startHouseNum.substring(0, startHouseNum.length()-1) + (char)houseNum;
+            }
+            else {
+                houseNumStr = String.valueOf(houseNum);
+            }
 
             House house = new House(
                     0,
-                    String.valueOf(houseNum),
+                    houseNumStr,
                     "",
                     startHouse.getPostCode(),
-                    geometryFactory.createPoint(coordinate) );
+                    centerPoint);
             house.setStreetName(startHouse.getStreetName());
             house.setCityName(startHouse.getCityName());
 
@@ -322,11 +321,11 @@ public class HouseFactory {
      * @param ait
      * @return true house number can be interpolated
      */
-    public boolean canBeUsedForInterpolation (String houseNumber, House.AddrInterpolationType ait){
-        if (ait == House.AddrInterpolationType.NONE){
+    public boolean canBeUsedForInterpolation (String houseNumber, AddrInterpolationType ait){
+        if (ait == AddrInterpolationType.NONE){
             return false;
         }
-        else if ( ait == House.AddrInterpolationType.ALPHABETIC){
+        else if ( ait == AddrInterpolationType.ALPHABETIC){
             Pattern pAlphabet = Pattern.compile("[a-zA-Z]$");
             Matcher matcher = pAlphabet.matcher(houseNumber);
             if ( houseNumber.length() == 1 && matcher.find() ){
@@ -354,6 +353,8 @@ public class HouseFactory {
         return false;
     }
 
+
+
     /**************************************************/
     /*                  RUSSIAN STANDARD
     /**************************************************/
@@ -380,7 +381,7 @@ public class HouseFactory {
                         houseNum2,house1.getName(),
                         house1.getPostCode(),
                         house1.getCenter());
-                house2.setStreetName(house1.getStreetName());
+                house2.setStreetName(streetName2);
 
                 houses.add(house1);
                 houses.add(house2);
@@ -443,6 +444,32 @@ public class HouseFactory {
                 center = geometryFactory.createPoint(ls.getEnvelopeInternal().centre());
             }
             return center;
+        }
+        else if (entity.getType() == EntityType.Relation){
+            Relation relation = (Relation) entity;
+            List<RelationMember> members = relation.getMembers();
+            for (RelationMember rm : members){
+
+                Entity entityMember = null;
+                if (rm.getMemberType() == EntityType.Way) {
+                    entityMember = dc.getWayFromCache(rm.getMemberId());
+                    if (entityMember == null){
+                        Logger.w(TAG, "getCenter() Can not load relation member from cache, WAY id: " + rm.getMemberId());
+                    }
+
+                }
+                else if (rm.getMemberType() == EntityType.Node){
+                    entityMember = dc.getNodeFromCache(rm.getMemberId());
+                    if (entityMember == null){
+                        Logger.w(TAG, "getCenter() Can not load relation member from cache, NODE id: " + rm.getMemberId());
+                    }
+                }
+
+                if (entityMember == null){
+                    continue;
+                }
+                return getCenter(entityMember, dc);
+            }
         }
 
         Logger.w(TAG, "getCenter() Can not create center point for house, OSM id: " + entity.getId());

@@ -1,6 +1,9 @@
 package com.asamm.osmTools.generatorDb.utils;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst;
+import com.asamm.osmTools.utils.Logger;
+import gnu.trove.impl.hash.THash;
+import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
 
@@ -51,5 +54,30 @@ public class OsmUtils {
             name = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.ADDR_STREET);
         }
         return name;
+    }
+
+    public static THashMap<String, String> getNamesInternational (Entity entity){
+        THashMap<String, String> names = new THashMap<>();
+
+        if (entity == null){
+            return names;
+        }
+        Collection<Tag> tags =  entity.getTags();
+        if(tags == null){
+            return names;
+        }
+        for (Tag tag : tags){
+            String key = tag.getKey();
+            if (key.startsWith("name:")) {
+                String name = tag.getValue();
+                String langCode = key.split(":")[1];
+                if (langCode.length() == 2 && name != null && name.length() > 0){
+
+                    names.put(langCode, name);
+                    //Logger.i("OSm UTILS"," lang Code: " + langCode + " name: " + name );
+                }
+            }
+        }
+        return names;
     }
 }

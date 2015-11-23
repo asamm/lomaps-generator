@@ -12,7 +12,6 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
@@ -143,33 +142,6 @@ public class StreetCreator {
 
             Street street = new Street (name, isInList, mls);
 
-            // HOUSE PART
-
-            List<House> houses = new ArrayList<>();
-            for (RelationMember rm : relation.getMembers()){
-
-                String role = rm.getMemberRole();
-                if (role.equals("house") || role.equals("address")){
-                    Entity entityH = null;
-                    if (rm.getMemberType() == EntityType.Way) {
-                        entityH = dc.getWayFromCache(rm.getMemberId());
-                    }
-                    else if (rm.getMemberType() == EntityType.Node){
-                        entityH = dc.getNodeFromCache(rm.getMemberId());
-                    }
-
-                    if (entityH == null){
-                        Logger.i(TAG, "Can not get address relation member from cache. Relation" + relationId +
-                                " Relation member: " + rm.getMemberId());
-                        continue;
-                    }
-
-                    houses.addAll(houseFactory.createHouse(entityH));
-                }
-            }
-
-            street.setHouses(houses);
-
             // find all cities where street can be in it or is close to city
             List<City> cities = findCitiesForStreet(street);
             street.addCityIds(cities);
@@ -234,6 +206,7 @@ public class StreetCreator {
         for (int i=0, size = streetRelations.size(); i < size; i++) {
 
             long relationId = streetRelations.get(i);
+
             Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
                 continue;
@@ -267,20 +240,27 @@ public class StreetCreator {
                 }
             }
 
+            // try to create house from relation itself, eq: https://www.openstreetmap.org/relation/1857530
+            houses.addAll(houseFactory.createHouse(relation));
+
+
             // test if new houses has defined the street name
             for (House house : houses) {
-                if (name != null && name.length() > 0) {
-                    if ( ! Utils.objectEquals(name, house.getStreetName())) {
-                        // name of street has higher priority then addr:streetname obtained from parding houses
-                        house.setStreetName(name);
-                    }
-                }
 
                 Street street = findStreetForHouse(house);
                 if (street == null){
-                    Logger.i(TAG, "Can not find street for house: " + house.toString());
-                }
 
+                    // try to search street again but set the name parse from relation
+                    if (name != null && name.length() > 0) {
+                        house.setStreetName(name);
+                        street = findStreetForHouse(house);
+                        if (street == null){
+                            Logger.i(TAG, "Can not find street for house: " + house.toString());
+                            removedHousesWithoutStreet++;
+                            continue;
+                        }
+                    }
+                }
                 databaseAddress.insertHouse(street, house);
             }
         }
@@ -288,12 +268,12 @@ public class StreetCreator {
 
     public void createHousesFromWays () {
 
-        houseFactory.canBeUsedForInterpolation("A", House.AddrInterpolationType.ALPHABETIC);
-        houseFactory.canBeUsedForInterpolation("12", House.AddrInterpolationType.ALPHABETIC);
-        houseFactory.canBeUsedForInterpolation("12d", House.AddrInterpolationType.ALPHABETIC);
-        houseFactory.canBeUsedForInterpolation("ddd", House.AddrInterpolationType.ALPHABETIC);
+        houseFactory.canBeUsedForInterpolation("A", AddrInterpolationType.ALPHABETIC);
+        houseFactory.canBeUsedForInterpolation("12", AddrInterpolationType.ALPHABETIC);
+        houseFactory.canBeUsedForInterpolation("12d", AddrInterpolationType.ALPHABETIC);
+        houseFactory.canBeUsedForInterpolation("ddd", AddrInterpolationType.ALPHABETIC);
 
-        houseFactory.canBeUsedForInterpolation("12", House.AddrInterpolationType.EVEN);
+        houseFactory.canBeUsedForInterpolation("12", AddrInterpolationType.EVEN);
 
 
         TLongList wayIds = dc.getWayIds();
@@ -307,6 +287,7 @@ public class StreetCreator {
                 Street street = findStreetForHouse(house);
                 if (street == null){
                     //Logger.w(TAG, "createHousesFromWays(): Can not find street for house: " + house.toString());
+                    removedHousesWithoutStreet++;
                     continue;
                 }
 
@@ -327,7 +308,8 @@ public class StreetCreator {
 
                 Street street = findStreetForHouse(house);
                 if (street == null){
-                    Logger.w(TAG, "Can not find street for house: " + house.toString());
+                    //Logger.w(TAG, "createHousesFromNodes(): Can not find street for house: " + house.toString());
+                    removedHousesWithoutStreet++;
                     continue;
                 }
 
@@ -582,43 +564,22 @@ public class StreetCreator {
 
 
     /**
-     * Create list of way street for every city that can contain this street.
-     * @param street streets to fill with city
-     * @param streetCities list of cities in which can be street placed
-     * @return
-     */
-//    private List<Street> createWayStreetsForCities(Street street, List<City> streetCities){
-//
-//        List<Long> cityIds = new ArrayList<>();
-//        List<Street> streets = new ArrayList<>();
-//
-//        // create list of city ids in which is this way (street)
-//        for (City city : streetCities){
-//            cityIds.add(city.getId());
-//        }
-//
-//        // add cityIds into street so every copy know other streets
-//        street.setCityIds(cityIds);
-//
-//        for (City city : streetCities){
-//            // create copy of street
-//            Street streetCreated = new Street(street);
-//            streetCreated.setCityId(city.getId());
-//
-//            streets.add(streetCreated);
-//        }
-//        return streets;
-//    }
-
-    /**
      * Find cities where street is in it.
      * @param street street to find in which cities is
      * @return cities that contain tested street
      */
     private List<City> findCitiesForStreet(Street street) {
 
+        //Logger.i(TAG, " findCitiesForStreet() - lookig for cities for street: " + street.toString() );
+
         List<City> streetCities = new ArrayList<>(); // cities where street is in it
         Point streetCentroid = street.getGeometry().getCentroid();
+
+        if ( !streetCentroid.isValid()){
+            Logger.i(TAG, "Center point for street is empty, Street: " + street.toString());
+            streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
+            Logger.i(TAG, "Create centroid from first node : " + Utils.geomToGeoJson(streetCentroid));
+        }
 
         // decide if cities are iterate from memory or based on DB results
         long start = System.currentTimeMillis();

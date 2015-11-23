@@ -99,6 +99,10 @@ public class WriterAddressDefinition extends AWriterDefinition{
                 //Logger.i(TAG, "Pedestrian relation id: " + entity.getId());
                 return true;
             }
+
+            if (tag.getKey().equals(OSMTagKey.BUILDING.getValue())) {
+                return true;
+            }
         }
         return false;
     }
