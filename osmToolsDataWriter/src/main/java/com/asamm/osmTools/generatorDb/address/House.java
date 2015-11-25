@@ -37,6 +37,8 @@ public class House extends Storable{
     /** For value addr:city*/
     private String cityName;
 
+    private String place;
+
      /** Postal code */
     String postCode;
 
@@ -75,6 +77,7 @@ public class House extends Storable{
         this.postCode = "";
         this.streetName = "";
         this.cityName = "";
+        this.place = "";
 
 
     }
@@ -170,6 +173,16 @@ public class House extends Storable{
         }
     }
 
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        if (place != null){
+            this.place = place;
+        }
+    }
+
     public String getPostCode() {
         return postCode;
     }
@@ -188,10 +201,13 @@ public class House extends Storable{
                 ", name='" + name + '\'' +
                 ", streetName='" + streetName + '\'' +
                 ", cityName='" + cityName + '\'' +
+                ", place='" + place + '\'' +
                 ", postCode='" + postCode + '\'' +
                 ", center=" + Utils.geomToGeoJson(center) +
                 '}';
     }
+
+
 
 //    @Override
 //    public int hashCode() {

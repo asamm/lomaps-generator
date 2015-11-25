@@ -56,7 +56,7 @@ public class Street extends Storable {
 
     public Street(String name, List<String> isInList, MultiLineString mls) {
 
-        this.name = name;
+        setName(name);
         this.isIn = isInList;
         this.geometry = mls;
 

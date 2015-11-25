@@ -110,10 +110,14 @@ public class GeneratorAddress extends AGenerator {
         sc.createStreetFromWays();
         Logger.i(TAG, "Create dummy streets for cities without street ===");
         ((DatabaseAddress) db).createDummyStreets();
+        ((DatabaseAddress) db).buildStreetNameIndex();
 
-        Logger.i(TAG, "=== Step 8 - create houses from ways ===");
+        Logger.i(TAG, "=== Step 8 - create houses ===");
+        Logger.i(TAG, "Create houses from relations");
         sc.createHousesFromRelations();
+        Logger.i(TAG, "Create houses from ways");
         sc.createHousesFromWays();
+        Logger.i(TAG, "Create houses from nodes");
         sc.createHousesFromNodes();
         Logger.i(TAG, "Clear duplicated houses ");
         ((DatabaseAddress) db).deleteDuplicatedHouses();
@@ -122,25 +126,26 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
         simplifyGeoms ();
 
-
-
-
-
-
-
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
         Logger.i(TAG, "Finding cities only loading cities fromk DB takes: " + sc.timeLoadNereastCities /1000.0 + " sec" );
-        Logger.i(TAG, "Finding cities only compare the boundaries takes: " + sc.timeFindCityTestBoundaries /1000.0 + " sec" );
-        Logger.i(TAG, "Finding cities only compare the is in takes: " + sc.timeFindCityTestIsIn /1000.0 + " sec" );
-        Logger.i(TAG, "Inserts streets into tmp table takes: " + sc.timeInsertStreetTmpTime/1000.0 + " sec" );
+        Logger.i(TAG, "Finding cities only compare the boundaries takes: " + sc.timeFindCityTestByGeom /1000.0 + " sec" );
 
-
-        Logger.i(TAG, "Joining ways and prepararion for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
-        Logger.i(TAG, "Insert or update streets: " + sc.timeInsertOrUpdateStreetsWhole /1000.0 + " sec" );
-
-        Logger.i(TAG, "Select previous strees: " + sc.timeSelectPreviousStreetFromDB /1000.0 + " sec" );
+        Logger.i(TAG, "Joining ways and preparation for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
         Logger.i(TAG, "Insert streets: " + sc.timeInsertStreetSql /1000.0 + " sec" );
-        Logger.i(TAG, "Update streets: " + sc.timeUpdateStreetSql /1000.0 + " sec" );
+
+        Logger.i(TAG, "Houses" );
+        Logger.i(TAG, "Create parse houses: " + sc.timeCreateParseHouses /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house: " + sc.timeFindStreetForHouse /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using name from DB: " + sc.timeFindStreetSelectFromDB /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using similar name: " + sc.timeFindStreetSimilarName /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using the nearest: " + sc.timeFindStreetNearest /1000.0 + " sec" );
+
+        Logger.i(TAG, "Number of found streets for houses using sql select, : " + sc.numOfStreetForHousesUsingSqlSelect);
+
+        Logger.i(TAG, "Number of removed houses - not able to find street, : " + sc.removedHousesWithDefinedPlace);
+        Logger.i(TAG, "Number of removed houses with defined addr:street name, : " + sc.removedHousesWithDefinedStreetName);
+
+
     }
 
 
@@ -498,8 +503,7 @@ public class GeneratorAddress extends AGenerator {
             ((DatabaseAddress) db).insertCity(city, boundary);
         }
 
-        ((DatabaseAddress) db).crateCityCenterIndex();
-        ((DatabaseAddress) db).createCityTilesIndex();
+        ((DatabaseAddress) db).buildCityIndexes();
     }
 
     /**************************************************/
@@ -521,7 +525,7 @@ public class GeneratorAddress extends AGenerator {
             }
         }
 
-        ((DatabaseAddress) db).createCityBoundaryIndex();
+        ((DatabaseAddress) db).buildCityBoundaryIndex();
         long time = System.currentTimeMillis() - start;
         Logger.i(TAG, "SimplifyGeoms takes: " + time/1000.0 + " sec" );
     }

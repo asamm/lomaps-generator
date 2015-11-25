@@ -43,6 +43,11 @@ public class OsmUtils {
      * @return street name or null if is not possible to parse street name
      */
     public static String getStreetName (Entity entity){
+
+        if (entity == null){
+            return null;
+        }
+
         String name = null;
         if (entity != null){
             name = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.NAME);

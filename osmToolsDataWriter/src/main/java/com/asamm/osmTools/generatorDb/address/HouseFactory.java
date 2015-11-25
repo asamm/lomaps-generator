@@ -101,11 +101,6 @@ public class HouseFactory {
             return null;
         }
 
-        //sometime is used addr:place but not the addr:city
-        if (cityName == null && placeName != null){
-            cityName = placeName;
-        }
-
         String postCode = parsePostCode(entity);
         Point center = getCenter(entity, dc);
 
@@ -119,6 +114,7 @@ public class HouseFactory {
         House house = new House(entity.getId(), houseNum, houseName, postCode, center);
         house.setStreetName(streetName);
         house.setCityName(cityName);
+        house.setPlace(placeName);
 
         return house;
     }
