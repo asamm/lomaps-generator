@@ -90,7 +90,7 @@ public class DataContainerHdd extends ADataContainer {
     }
 
     public void finalizeWayStreetCaching () {
-        dbData.createStreetIndex();
+        dbData.createWayStreetIndex();
     }
 
 

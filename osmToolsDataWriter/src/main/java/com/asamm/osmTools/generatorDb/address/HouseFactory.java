@@ -102,6 +102,7 @@ public class HouseFactory {
         }
 
         String postCode = parsePostCode(entity);
+        int postCodeId = databaseAddress.getPostCodeId(postCode);
         Point center = getCenter(entity, dc);
 
         if (center == null){
@@ -115,6 +116,7 @@ public class HouseFactory {
         house.setStreetName(streetName);
         house.setCityName(cityName);
         house.setPlace(placeName);
+        house.setPostCodeId(postCodeId);
 
         return house;
     }
@@ -242,8 +244,17 @@ public class HouseFactory {
             endValue = getLastChar(endHouse.getNumber());
         }
         else {
-            startValue = Integer.parseInt(startHouseNum);
-            endValue = Integer.parseInt(endHouse.getNumber());
+
+            try {
+                startValue = Integer.parseInt(startHouseNum);
+                endValue = Integer.parseInt(endHouse.getNumber());
+            }
+            catch (NumberFormatException e) {
+                Logger.w(TAG, "interpolateHousesOnLineSegment() - Can not parse start or end value for houses " +
+                        "\n start house: " + startHouse.toString() +
+                        "\n end house: " + endHouse.toString());
+                return houses;
+            }
         }
 
         if (ait == AddrInterpolationType.INTEGER){

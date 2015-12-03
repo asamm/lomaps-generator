@@ -2,21 +2,16 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKBWriter;
 import gnu.trove.iterator.TLongIterator;
-import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import locus.api.objects.Storable;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +27,10 @@ public class Street extends Storable {
     /** It's not OSM entity id > id for database */
     private long id;
 
+    /** This value is set only for custom wayStreet before joined street is created
+     * CAn be id of OSM way or OSM relation*/
+    private long osmId;
+
     /** Name of the street */
     private String name;
 
@@ -41,7 +40,7 @@ public class Street extends Storable {
     /** IDs of cities in which can be this way*/
     private TLongHashSet cityIds;
 
-    /** Splitted is_in tag*/
+    /** Value of is_in tag */
     private List<String> isIn;
 
     private List<House> houses;
@@ -59,7 +58,6 @@ public class Street extends Storable {
         setName(name);
         this.isIn = isInList;
         this.geometry = mls;
-
     }
 
     public Street (byte[] data) throws IOException {
@@ -97,6 +95,7 @@ public class Street extends Storable {
 
     public void reset() {
         this.id = -1;
+        this.osmId = -1;
         this.name = "";
         this.cityId = -1;
         this.cityIds = new TLongHashSet();
@@ -178,6 +177,14 @@ public class Street extends Storable {
         this.id = id;
     }
 
+    public long getOsmId() {
+        return osmId;
+    }
+
+    public void setOsmId(long osmId) {
+        this.osmId = osmId;
+    }
+
     public long getCityId() {
         return cityId;
     }
@@ -199,7 +206,7 @@ public class Street extends Storable {
     public void addCityIds (List<City> cities) {
 
         for (City city : cities) {
-            cityIds.add(city.getId());
+            cityIds.add(city.getOsmId());
         }
     }
 
@@ -250,10 +257,13 @@ public class Street extends Storable {
     public String toString() {
         return "Street{" +
                 "id=" + id +
+                "osmId=" + osmId +
                 ", name='" + name + '\'' +
                 ", isIn=" + isIn +
                 ", houses size=" + houses.size() +
                 ", geometry=" + Utils.geomToGeoJson(geometry) +
                 '}';
     }
+
+
 }

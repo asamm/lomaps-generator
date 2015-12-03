@@ -6,7 +6,9 @@ import com.vividsolutions.jts.util.GeometricShapeFactory;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.text.Normalizer;
+import java.util.zip.Deflater;
 
 /**
  * Created by voldapet on 2015-08-14 .
@@ -58,6 +60,35 @@ public class Utils {
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
 
+    /**************************************************/
+    /*            COMPRESS UTILS
+    /**************************************************/
+
+    /**
+     * Compress simple byte array
+     *
+     * @param input byte array to compress
+     * @return compressed byte array
+     */
+    public static byte[] compressByteArray (byte[] input){
+
+        Deflater compressor = new Deflater();
+        compressor.setLevel(Deflater.BEST_COMPRESSION);
+
+        compressor.setInput(input);
+        compressor.finish();
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(input.length);
+
+        byte[] buf = new byte[256];
+        while (!compressor.finished()) {
+            int count = compressor.deflate(buf);
+            bos.write(buf, 0, count);
+        }
+        locus.api.utils.Utils.closeStream(bos);
+        byte[] compressedData = bos.toByteArray();
+        return compressedData;
+    }
 
     /**************************************************/
     /*            MAP UTILS
@@ -87,11 +118,6 @@ public class Utils {
         //return R * c * 1000;
         // simplyfy haversine:
         return (2 * R * 1000 * Math.asin(Math.sqrt(a)));
-    }
-
-    public static double toMeters (double distWgs){
-        float R=6372800;
-        return (2 * R * Math.asin(Math.sqrt(distWgs)));
     }
 
     /**
@@ -130,8 +156,11 @@ public class Utils {
         return new Coordinate(lonO, latO);
     }
 
-
     public static Polygon createRectangle (Coordinate center, double distance){
+        return createCircle(center, distance, 4);
+    }
+
+    public static Polygon createCircle (Coordinate center, double distance, int numPoints){
 
         //Earth’s radius, sphere
         float R=6372800;
@@ -148,7 +177,7 @@ public class Utils {
         gsf.setCentre(center);
         gsf.setWidth(dLon * 2);
         gsf.setHeight(dLat * 2 );
-        gsf.setNumPoints(4);
+        gsf.setNumPoints(numPoints);
 
         return gsf.createRectangle();
     }

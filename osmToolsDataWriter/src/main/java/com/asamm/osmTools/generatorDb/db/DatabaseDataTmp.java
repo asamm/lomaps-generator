@@ -76,6 +76,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         dosw = new DataOutputStoreWriter(new DataOutputStream(baos));
         dynamicRegister = new DynamicStoreClassRegister();
 
+
         dwbe = new DataWriterBigEndian();
     }
 
@@ -113,7 +114,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         stmt.close();
     }
 
-    public void createStreetIndex () {
+    public void createWayStreetIndex() {
         try {
             // finalize inserts of streets
             psInsertStreet.executeBatch();
@@ -122,8 +123,16 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
             executeStatement(sql);
         } catch (SQLException e) {
-            Logger.e(TAG, "createStreetIndex(), problem with query", e);
+            Logger.e(TAG, "createWayStreetIndex(), problem with query", e);
         }
+    }
+
+    public void destroy() throws SQLException {
+
+        super.destroy();
+
+        // delete the tmp database file itself
+        dbFile.delete();
     }
 
     public void insertNode(long id, Entity entity) {

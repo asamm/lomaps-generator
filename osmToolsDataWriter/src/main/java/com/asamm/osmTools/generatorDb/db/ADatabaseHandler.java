@@ -23,7 +23,7 @@ public abstract class ADatabaseHandler {
     protected WKTReader wktReader;
 
 	private boolean ready;
-	private File dbFile;
+	protected File dbFile;
     boolean deleteExistingDb;
 
 	protected Connection conn;
