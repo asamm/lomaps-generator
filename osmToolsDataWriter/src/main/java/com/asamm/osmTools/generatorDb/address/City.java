@@ -70,8 +70,9 @@ public class City {
     }
     // -------- END OF CITY TYPE ENUM ----------
 
+
     /** Same as OSM Node or id of relation/way */
-    private long id;
+    private long osmId;
 
     /** Name of the city in local lang*/
     private String name;
@@ -89,6 +90,9 @@ public class City {
 
     /** All possible international languages of cities, <langCode|name> */
     private THashMap<String, String> namesInternational;
+
+    /** Administrative place for villages */
+    private City parentCity;
 
     /** Boundary of city - can be null*/
     private MultiPolygon geom;
@@ -127,12 +131,12 @@ public class City {
     /*             GETTERS & SETTERS
     /**************************************************/
 
-    public long getId() {
-        return id;
+    public long getOsmId() {
+        return osmId;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setOsmId(long osmId) {
+        this.osmId = osmId;
     }
 
     public String getName() {
@@ -193,6 +197,13 @@ public class City {
         this.namesInternational = namesInternational;
     }
 
+    public City getParentCity() {
+        return parentCity;
+    }
+
+    public void setParentCity(City parentCity) {
+        this.parentCity = parentCity;
+    }
 
     public MultiPolygon getGeom() {
         return geom;
@@ -202,17 +213,17 @@ public class City {
         this.geom = geom;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 1;
-        hash = hash * 31 + Long.valueOf(id).hashCode();
-        return hash;
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 1;
+//        hash = hash * 31 + Long.valueOf(id).hashCode();
+//        return hash;
+//    }
 
     @Override
     public String toString() {
         return "City{" +
-                "id=" + id +
+                "id=" + osmId +
                 ", name='" + name + '\'' +
                 ", coordinate=" + center +
                 ", type=" + type +

@@ -1,9 +1,6 @@
 package com.asamm.osmTools.generatorDb.db;
 
-import com.asamm.osmTools.generatorDb.address.Boundary;
-import com.asamm.osmTools.generatorDb.address.City;
-import com.asamm.osmTools.generatorDb.address.House;
-import com.asamm.osmTools.generatorDb.address.Street;
+import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
@@ -13,13 +10,16 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.iterator.TLongIterator;
+import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.TLongHashSet;
-import org.sqlite.SQLiteConnection;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+import java.util.zip.ZipOutputStream;
 
 import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
 import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.COL_ID;
@@ -32,8 +32,19 @@ public class DatabaseAddress extends ADatabaseHandler {
     public static final String DEFAULT_LANG_CODE = "def";
 
     /** increment for street. Streets have own ids there is NO relation with OSM id*/
-    private long streetIdSequence = 1;
-    private long housesIdSequence = 1;
+    private long streetIdSequence = 0;
+
+    private long housesIdSequence = 0;
+
+    public long housesPreparedAsBlobForStreets = 0;
+
+    /** Counter for used postCodes */
+    private int postCodesIdSequence = 0;
+
+    /** Map store the reference between postCode and num of row in table of postCodes */
+    private THashMap<String, Integer> postCodesMap;
+
+    private THashMap<String, Integer> houseNumMap;
 
     /** Precompiled statement for inserting cities into db*/
     private PreparedStatement psInsertCity;
@@ -45,18 +56,23 @@ public class DatabaseAddress extends ADatabaseHandler {
     /** statement for insert new street into database */
     private PreparedStatement psInsertStreet;
     /** For insert possible cities where is street in*/
-    private PreparedStatement psInserStreetCities;
+    private PreparedStatement psInsertStreetCities;
+
+    /** Insert house object into houses table*/
+    private PreparedStatement psInsertHouse;
+    /** Insert house that is not used in db into table that collect all removed houses*/
+    private PreparedStatement psInsertRemovedHouse;
+    /** Insert new postCode into table of postCodes*/
+    private PreparedStatement psInsertPostCode;
+
     /** Statement select street from database */
     private PreparedStatement psSelectStreet;
     /** When looking for street specific name in city with name*/
     private PreparedStatement psSelectStreetByNames;
+
+    private PreparedStatement psSelectHousesInStreet;
     /** Statement to update street geometry */
     private PreparedStatement psUpdateStreet;
-
-    private PreparedStatement psInsertHouse;
-    private PreparedStatement psInsertRemovedHouse;
-
-//    private PreparedStatement psSelectNereastCities;
 
     private PreparedStatement psSimplifyStretGeom;
 
@@ -68,8 +84,11 @@ public class DatabaseAddress extends ADatabaseHandler {
 
     ByteArrayInputStream bais;
 
+
     private static boolean deleteOldDb = false;
 
+    /** Only for testing when table houses contains all house values and table is not deleted*/
+    private static boolean hasHousesTableWithGeom = true;
 
     /** JTS in memory index of geometries of joined streets*/
     private STRtree streetGeomIndex;
@@ -92,13 +111,16 @@ public class DatabaseAddress extends ADatabaseHandler {
         streetGeomIndex = new STRtree();
         dummyStreetGeomIndex = new Quadtree();
 
+        postCodesMap = new THashMap<>();
+
+
 	}
 
     private void initPreparedStatements() throws SQLException {
         // create prepared statemennts
         psInsertCity = createPreparedStatement(
-                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+COL_CENTER_GEOM+", "+COL_GEOM+
-                        ") VALUES (?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
+                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+COL_PLACE_NAME+", "+COL_CENTER_GEOM+", "+COL_GEOM+
+                        ") VALUES (?, ?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
 
         psInsertCityNames = createPreparedStatement( "INSERT INTO "+ TN_CITIES_NAMES +
                 " ("+COL_CITY_ID+", "+COL_LANG_CODE+", "+COL_NAME+", "+COL_NAME_NORM+
@@ -108,16 +130,20 @@ public class DatabaseAddress extends ADatabaseHandler {
                 "INSERT INTO "+TN_STREETS+" ("+COL_ID+", "+COL_NAME+", " + COL_NAME_NORM + ", " +COL_GEOM+
                         ") VALUES (?, ?, ?, GeomFromWKB(?, 4326))");
 
-        psInserStreetCities = createPreparedStatement("INSERT INTO " + TN_STREET_IN_CITIES + " ( " + COL_STREET_ID + ", "
+        psInsertStreetCities = createPreparedStatement("INSERT INTO " + TN_STREET_IN_CITIES + " ( " + COL_STREET_ID + ", "
                 + COL_CITY_ID + " ) VALUES (?, ?)");
 
         psInsertHouse = createPreparedStatement(
-                "INSERT INTO "+ TN_HOUSES +" ("+COL_ID+", "+COL_STREET_ID+", "+COL_DATA+",  "+COL_NUMBER+", " +COL_NAME+", "+COL_POST_CODE+", "+COL_CENTER_GEOM+
-                        ") VALUES (?, ?, ?, ?, ?, ?,  GeomFromWKB(?, 4326))");
+                "INSERT INTO "+ TN_HOUSES +" ("+COL_ID+", "+COL_STREET_ID+", " + COL_STREET_NAME + ", "  +COL_NUMBER+", " +
+                        COL_NAME+", "+  COL_POST_CODE+", "+COL_DATA + ", " + COL_CENTER_GEOM +
+                        ") VALUES (?, ?, ?, ?, ?, ?,  ?, GeomFromWKB(?, 4326))");
 
         psInsertRemovedHouse =  createPreparedStatement(
                 "INSERT INTO "+ TN_HOUSES_REMOVED +" ("+COL_STREET_NAME+", "+COL_PLACE_NAME+",  "+COL_NUMBER+", " +COL_NAME+", "+COL_POST_CODE+", "+COL_CENTER_GEOM+
                         ") VALUES (?, ?, ?, ?, ?,  GeomFromWKB(?, 4326))");
+
+        psInsertPostCode = createPreparedStatement(
+                "INSERT INTO "+ TN_POSTCODES +" ("+COL_ID+", "+COL_POST_CODE+") VALUES (?, ?)");
 
         psSelectStreet = createPreparedStatement(
                 "SELECT " + COL_ID + ", "  + COL_NAME + ", "+ COL_NAME_NORM + ", AsBinary(" + COL_GEOM + ")" +
@@ -134,17 +160,11 @@ public class DatabaseAddress extends ADatabaseHandler {
                         " WHERE (" + TN_CITIES_NAMES+ "." + COL_NAME_NORM + " = ?) "
                         + " AND  (" +TN_STREETS+ "." + COL_NAME_NORM + " = ?) ");
 
-        psUpdateStreet = createPreparedStatement("UPDATE "+TN_STREETS +
-                " SET "+COL_GEOM+" = GeomFromWKB(?, 4326) WHERE "+COL_ID+" = ?");
+        psSelectHousesInStreet = createPreparedStatement(
+                "SELECT " + COL_DATA + " FROM " + TN_HOUSES + " WHERE " + COL_STREET_ID + "=? ");
 
-//        psSelectNereastCities = createPreparedStatement(
-//                "SELECT "+COL_TYPE+", Cities."+COL_ID+", "+COL_NAME+",  AsBinary("+COL_CENTER_GEOM+"), "+
-//                        " ((X(center)-?)*(X(center)-?)) + ((Y(center)-?)*(Y(center)-?)) as distance" +
-//                        " FROM " + TN_CITIES +
-//                        " JOIN cityTiles ON Cities.id = cityTiles.id" +
-//                        " WHERE xtile = ? AND ytile = ?" +
-//                        " ORDER By distance" +
-//                        " LIMIT ?");
+        psUpdateStreet = createPreparedStatement("UPDATE "+TN_STREETS +
+                " SET "+COL_DATA+" = ? WHERE "+COL_ID+" = ?");
 
         psSimplifyStretGeom = createPreparedStatement(
                 "UPDATE "+ TN_STREETS + " Set "+COL_GEOM+" = " +
@@ -212,9 +232,14 @@ public class DatabaseAddress extends ADatabaseHandler {
             sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES;
             executeStatement(sql);
 
-            sql = "DROP TABLE IF EXISTS  cityTiles";
+            sql = "DROP VIEW IF EXISTS  "+ VIEW_HOUSES;
             executeStatement(sql);
 
+            sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES_REMOVED;
+            executeStatement(sql);
+
+            sql = "DROP TABLE IF EXISTS  "+ TN_POSTCODES;
+            executeStatement(sql);
         } catch (SQLException e) {
             Logger.e(TAG, "cleanTables(), problem with query: " + sql, e);
             e.printStackTrace();
@@ -228,7 +253,8 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         String sql = "CREATE TABLE "+TN_CITIES+" (";
 		sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
-		sql += COL_TYPE+" INT NOT NULL) ";
+		sql += COL_TYPE+" INT NOT NULL, ";
+        sql += COL_PLACE_NAME+" TEXT ) ";
 		executeStatement(sql);
 
 		// creating a Center Geometry column fro Cities
@@ -254,7 +280,8 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql = "CREATE TABLE "+TN_STREETS+" (";
         sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
         sql += COL_NAME+" ,";
-        sql += COL_NAME_NORM+" TEXT NOT NULL";
+        sql += COL_NAME_NORM+" TEXT NOT NULL, ";
+        sql += COL_DATA+" BLOB";
         sql +=        ")";
         executeStatement(sql);
 
@@ -273,20 +300,19 @@ public class DatabaseAddress extends ADatabaseHandler {
         // TABLE OF HOUSES
 
         sql = "CREATE TABLE "+TN_HOUSES+" (";
-        sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
+        sql += COL_ID+" BIGINT NOT NULL, ";
         sql += COL_STREET_ID + " BIGINT NOT NULL, ";
-
-        sql += COL_DATA + " TEXT, "; // TODO REMOVE
-
+        sql += COL_STREET_NAME + " TEXT, ";
         sql += COL_NUMBER+" TEXT NOT NULL, ";
         sql += COL_NAME+ " TEXT,  ";
-        sql += COL_POST_CODE+" TEXT ) ";
-
+        sql += COL_POST_CODE+" TEXT, "  ;
+        sql += COL_DATA+" BLOB )" ;
         executeStatement(sql);
-        // creating a Center Geometry column fro Cities
+
         sql = "SELECT AddGeometryColumn('"+TN_HOUSES+"', ";
         sql += "'"+COL_CENTER_GEOM+"', 4326, 'POINT', 'XY')";
         executeStatement(sql);
+
 
         sql = "CREATE TABLE "+TN_HOUSES_REMOVED+" (";
         sql += COL_STREET_NAME + " TEXT, ";
@@ -296,9 +322,15 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_POST_CODE+" TEXT ) ";
         executeStatement(sql);
 
-        // creating a Center Geometry column fro Cities
+        // creating a Center Geometry column of centers of removed houses
         sql = "SELECT AddGeometryColumn('"+TN_HOUSES_REMOVED+"', ";
         sql += "'"+COL_CENTER_GEOM+"', 4326, 'POINT', 'XY')";
+        executeStatement(sql);
+
+        // TABLE OF POST CODES
+        sql = "CREATE TABLE "+TN_POSTCODES+" (";
+        sql += COL_ID + " INTEGER PRIMARY KEY, ";
+        sql += COL_POST_CODE + " TEXT) ";
         executeStatement(sql);
 	}
 
@@ -311,6 +343,14 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql = "SELECT CreateSpatialIndex('" + TN_STREETS + "', '"+COL_GEOM+"')";
         executeStatement(sql);
 
+        // compress street geom
+        sql = "UPDATE " + TN_STREETS +" SET "+ COL_GEOM+ " = CompressGeometry("+COL_GEOM+")";
+        executeStatement(sql);
+
+        if ( !hasHousesTableWithGeom){
+            sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES;
+            executeStatement(sql);
+        }
 
         super.destroy();
     }
@@ -354,6 +394,52 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
     }
 
+    public void buildHouseIndexes () {
+        try {
+            commit(false);
+            if (hasHousesTableWithGeom){
+                String sql = "SELECT CreateSpatialIndex('" + TN_HOUSES + "', '"+COL_CENTER_GEOM+"')";
+                executeStatement(sql);
+            }
+
+            // index for street id
+            String sql = "CREATE INDEX " + IDX_HOUSES_STREETID + " ON " + TN_HOUSES +
+                    " (" + COL_STREET_ID+ ")";
+            executeStatement(sql);
+
+//            else {
+//                // Workaround how to access integer lat lon
+//                String sql = "CREATE VIEW '" + VIEW_HOUSES + "' AS ";
+//                sql += "SELECT ROWID AS ROWID, " + COL_ID + " AS " + COL_ID + " , " + COL_STREET_ID + " AS " + COL_STREET_ID + " , ";
+//                sql += COL_NUMBER + " AS " + COL_NUMBER + " , " + COL_NAME + " AS " + COL_NAME + " , ";
+//                sql += COL_POST_CODE + " AS " + COL_POST_CODE + " , ";
+//                sql += COL_LON + " AS " + COL_LON + " , " + COL_LAT + " AS " + COL_LAT + " , ";
+//                sql += " MakePoint ("+ COL_LON + " / 1.0e6,  " + COL_LAT + "/ 1.0e6, 4326) AS " + COL_CENTER_GEOM;
+//                sql += " FROM " + TN_HOUSES;
+//
+//                executeStatement(sql);
+//
+
+//                // CREATE PSEUDO SPATIAL INDEX - see https://www.sqlite.org/rtree.html
+//                sql = "CREATE VIRTUAL TABLE " + IDX_HOUSES_LAT_LON + " USING Rtree (";
+//                sql += COL_ID + ", lonmin, lonmax, latmin, latmax)";
+//                executeStatement(sql);
+//
+//                // FILL THE INDEX
+//
+//                sql = "INSERT INTO " + IDX_HOUSES_LAT_LON + " (";
+//                sql += COL_ID + ", lonmin, lonmax, latmin, latmax)";
+//                sql += " SELECT " + COL_ID + ", " + COL_LON + "/1.0e6, " + COL_LON + " / 1.0e6, ";
+//                sql += COL_LAT + "/1.0e6, " + COL_LAT + " / 1.0e6 FROM " + TN_HOUSES;
+//                executeStatement(sql);
+//            }
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "buildHouseIndexes(), problem with query", e);
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Build index for normalized street name and for Street_in_cities table
      */
@@ -388,11 +474,17 @@ public class DatabaseAddress extends ADatabaseHandler {
             //Logger.i(TAG, "Insert city:  " + city.toString());
             psInsertCity.clearParameters();
 
-            psInsertCity.setLong(1, city.getId());
+            psInsertCity.setLong(1, city.getOsmId());
             psInsertCity.setInt(2, city.getType().getTypeCode());
-            psInsertCity.setBytes(3, wkbWriter.write(city.getCenter()));
+
+            City parentCity = city.getParentCity();
+            if (parentCity != null){
+                psInsertCity.setString(3, parentCity.getName());
+            }
+
+            psInsertCity.setBytes(4, wkbWriter.write(city.getCenter()));
             if (boundary != null){
-                psInsertCity.setBytes(4, wkbWriter.write(boundary.getGeom()));
+                psInsertCity.setBytes(5, wkbWriter.write(boundary.getGeom()));
             }
             psInsertCity.execute();
 
@@ -404,7 +496,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             for (Map.Entry<String, String> entry : entrySet){
                 //Logger.i("TAG", " insertCity: lang Code= " + entry.getKey() + " name= " + entry.getValue() );
                 psInsertCityNames.clearParameters();
-                psInsertCityNames.setLong(1, city.getId());
+                psInsertCityNames.setLong(1, city.getOsmId());
                 psInsertCityNames.setString(2, entry.getKey());
                 String name = entry.getValue();
                 String nameNormalized = Utils.normalizeString(name);
@@ -495,12 +587,12 @@ public class DatabaseAddress extends ADatabaseHandler {
             TLongIterator iterator = cityIds.iterator();
             while (iterator.hasNext()){
 
-                psInserStreetCities.setLong(1,id);
-                psInserStreetCities.setLong(2,iterator.next());
+                psInsertStreetCities.setLong(1, id);
+                psInsertStreetCities.setLong(2, iterator.next());
 
-                psInserStreetCities.addBatch();
+                psInsertStreetCities.addBatch();
             }
-            psInserStreetCities.executeBatch();
+            psInsertStreetCities.executeBatch();
 
             return id;
 
@@ -522,16 +614,19 @@ public class DatabaseAddress extends ADatabaseHandler {
 //        Logger.i(TAG, "Insert house into db: " +
 //                "\n Street: " + street.toString() +
 //                "\n House: " + house.toString());
+        HouseSer hs = new HouseSer(house.getNumber(),house.getName(), house.getPostCodeId(), house.getCenter());
+        byte[] bytes = hs.getAsBytes();
 
         long houseId = housesIdSequence++;
         try {
-            psInsertHouse.setLong(1, houseId);
+            psInsertHouse.setLong(1, house.getOsmId());
             psInsertHouse.setLong(2, street.getId());
-            psInsertHouse.setString(3, street.getName()); //TODO remove
+            psInsertHouse.setString(3, street.getName());
             psInsertHouse.setString(4, house.getNumber());
             psInsertHouse.setString(5, house.getName());
             psInsertHouse.setString(6, house.getPostCode());
-            psInsertHouse.setBytes(7, wkbWriter.write(house.getCenter()));
+            psInsertHouse.setBytes(7, bytes);
+            psInsertHouse.setBytes(8, wkbWriter.write(house.getCenter()));
 
             psInsertHouse.execute();
 
@@ -551,6 +646,33 @@ public class DatabaseAddress extends ADatabaseHandler {
             return 0;
         }
     }
+
+    /**
+     * Insert new (still not used) postcodes into database
+     * @param postCode postcode to insert
+     * @return code of inserted postCode or -1 in case of any exception
+     */
+    private int insertPostCode(String postCode) {
+
+        postCodesIdSequence++;
+
+        try {
+            //Logger.i(TAG,"Insert postCode into Database, postCode: " + postCode);
+            psInsertPostCode.setInt(1, postCodesIdSequence);
+            psInsertPostCode.setString(2, postCode);
+            psInsertPostCode.execute();
+
+            postCodesMap.put(postCode, postCodesIdSequence);
+
+            return postCodesIdSequence;
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "insertPostCode(), problem with query", e);
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
 
     /**
      * Temporary method that create table with houses for which was not able to find proper street
@@ -682,7 +804,6 @@ public class DatabaseAddress extends ADatabaseHandler {
             }
 
             return streetLoaded;
-
         } catch (SQLException e) {
             Logger.e(TAG, "selectStreet(), problem with query", e);
             e.printStackTrace();
@@ -692,6 +813,47 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
 
         return streetLoaded;
+    }
+
+    /**
+     * Select houses that are assigned to street. It return them as blob not as object
+     * @param streetId
+     * @return
+     */
+    public byte[] selectHousesInStreet (long streetId){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream out = new ZipOutputStream(baos);
+
+        int count = 0;
+        try {
+            psSelectHousesInStreet.setLong(1, streetId);
+            ResultSet rs = psSelectHousesInStreet.executeQuery();
+
+            while (rs.next()){
+
+                byte[] data = rs.getBytes(1);
+                if (data != null) {
+                    housesPreparedAsBlobForStreets++;
+                    count++;
+                    baos.write(data);
+                }
+            }
+        }
+        catch (SQLException e) {
+            Logger.e(TAG, "selectHousesInStreet(), problem with query", e);
+            e.printStackTrace();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            Logger.e(TAG, "selectHousesInStreet(), problem loading data", e);
+            e.printStackTrace();
+            baos.toByteArray();
+        } finally {
+            locus.api.utils.Utils.closeStream(baos);
+            locus.api.utils.Utils.closeStream(out);
+        }
+
+        byte[] data = baos.toByteArray();
+        return Utils.compressByteArray(data);
     }
 
 
@@ -747,32 +909,24 @@ public class DatabaseAddress extends ADatabaseHandler {
         return streetLoaded;
     }
 
-    public long updateStreet(Street street) {
-
-        long streetId = street.getId();
+    /**
+     * Set houses in street. Houses are serialized into byte[]
+     * @param streetId
+     * @param houseData
+     * @return id of updated street
+     */
+    public long updateStreetSetHouseBlob(long streetId, byte[] houseData) {
         try{
-            psUpdateStreet.setBytes(1, wkbWriter.write(street.getGeometry()));
-            psUpdateStreet.setLong(2, street.getId());
+            psUpdateStreet.setBytes(1,houseData);
+            psUpdateStreet.setLong(2, streetId);
             psUpdateStreet.execute();
-
-            // insert only not existed cityIds for this street
-            TLongHashSet cityIds = street.getCityIds();
-            TLongIterator iterator = cityIds.iterator();
-            while (iterator.hasNext()){
-
-                psInserStreetCities.setLong(1,streetId);
-                psInserStreetCities.setLong(2,iterator.next());
-
-                psInserStreetCities.addBatch();
-            }
-            psInserStreetCities.executeBatch();
 
             return streetId;
         } catch (SQLException e) {
-            Logger.e(TAG, "updateStreet(), problem with query", e);
+            Logger.e(TAG, "updateStreetSetHouseBlob(), problem with query", e);
             e.printStackTrace();
         }
-        return 0;
+        return -1;
     }
 
     /**
@@ -929,13 +1083,13 @@ public class DatabaseAddress extends ADatabaseHandler {
                 mp = (MultiPolygon) geometry;
             }
             psSimplifyCityGeom.clearParameters();
-            psSimplifyCityGeom.setLong(2, city.getId());
+            psSimplifyCityGeom.setLong(2, city.getOsmId());
             psSimplifyCityGeom.setBytes(1, wkbWriter.write(mp));
             psSimplifyCityGeom.execute();
 
 
         } catch (SQLException e) {
-            Logger.i(TAG, "Exception when simplify city: " + city.getId());
+            Logger.i(TAG, "Exception when simplify city: " + city.getOsmId());
         }
     }
 
@@ -986,6 +1140,24 @@ public class DatabaseAddress extends ADatabaseHandler {
         return streetsFromIndex;
     }
 
+    /**
+     * Get reference id for specified post code. If post code is not defined
+     * then add into table of post codes
+     * @param postCode code for which want to get reference
+     * @return reference to postcode or -1 if not possible to obtaion or create postcode id
+     */
+    public int getPostCodeId (String postCode) {
+        if (postCode == null || postCode.length() == 0){
+            return -1;
+        }
+        Integer postCodeId = postCodesMap.get(postCode);
+        if (postCodeId == null){
+            postCodeId = insertPostCode (postCode);
+        }
+        return postCodeId;
+    }
+
+
     public List<Street> getDummyStreetsAround(Point centerPoint, int minNumber) {
 
         double distance = 300;
@@ -1011,6 +1183,14 @@ public class DatabaseAddress extends ADatabaseHandler {
     }
 
     /**
+     * Get current value of id of last inserted street
+     * @return
+     */
+    public long getStreetIdSequence (){
+        return  streetIdSequence;
+    }
+
+    /**
      * Escape special characters for SQL query
      * @param name String to escape
      * @return escaped string
@@ -1026,14 +1206,14 @@ public class DatabaseAddress extends ADatabaseHandler {
      * and delete duplicated record
      * */
     public void deleteDuplicatedHouses() {
-        String sql = "DELETE FROM " + TN_HOUSES + " WHERE " + COL_ID + " IN (";
-        sql += " SELECT " + COL_ID + " FROM " + TN_HOUSES;
+        String sql = "DELETE FROM " + TN_HOUSES + " WHERE rowid IN (";
+        sql += " SELECT rowid FROM " + TN_HOUSES;
         sql += " GROUP BY " +  COL_CENTER_GEOM + ", " + COL_NUMBER ;
         sql += " HAVING count(*) > 1)" ;
 
         try {
             for (int i = 0; i < 3; i++) {
-                // Honestly do not why but it's needed to run it several times
+                // Honestly do not why but it's needed to run it several times, but it help to clean all duplicates
                 executeStatement(sql);
             }
 
@@ -1041,6 +1221,4 @@ public class DatabaseAddress extends ADatabaseHandler {
             Logger.e(TAG, "deleteDuplicatedHouses(): problem with query: " + sql, e);
         }
     }
-
-
 }

@@ -17,7 +17,9 @@ public class DbAddressPoiConst {
     public static final String TN_CITIES_NAMES = "Cities_Names";
     public static final String TN_HOUSES = "Houses";
     public static final String TN_HOUSES_REMOVED = "Houses_Removed";
+    public static final String TN_POSTCODES = "postcodes";
     public static final String TN_META_DATA = "MetaData";
+
 
 	public static final String COL_ID = "id";
     public static final String COL_HASH = "hash";
@@ -33,6 +35,10 @@ public class DbAddressPoiConst {
     public static final String COL_LANG_CODE = "langcode";
     public static final String COL_STREET_NAME = "streetname";
     public static final String COL_PLACE_NAME = "placename";
+    public static final String COL_LON = "lon";
+    public static final String COL_LAT = "lat";
+
+
 	
 	public static final String COL_POINTS_ID = TN_POINTS + "_" + COL_ID;
 	public static final String COL_FOL_ROOT_ID = TN_FOLDERS_ROOT + "_" + COL_ID;
@@ -52,6 +58,9 @@ public class DbAddressPoiConst {
     public static final String IDX_STREETS_NAMENORM = "idx_streets_namenorm";
     public static final String IDX_CITIES_NAMES_CITYID = "idx_cities_names_cityid";
     public static final String IDX_STREETS_IN_CITIES_CITYID = "idx_strees_in_cities_cityid";
+    public static final String IDX_HOUSES_STREETID = "idx_houses_streetid";
+
+    public static final String VIEW_HOUSES = "view_houses";
 
     public static final String VAL_AREA = "area";
     public static final String VAL_DESCRIPTION = "description";

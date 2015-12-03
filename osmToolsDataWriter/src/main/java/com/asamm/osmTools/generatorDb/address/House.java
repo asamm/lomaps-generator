@@ -40,10 +40,13 @@ public class House extends Storable{
     private String place;
 
      /** Postal code */
-    String postCode;
+    private String postCode;
+
+    /**  Serialized house does not contain whole postCode but only reference to table of postcodes*/
+    private int postCodeId;
 
     /** Position of house */
-    Point center;
+    private Point center;
 
     public House(DataReaderBigEndian dr) throws IOException {
         super(dr);
@@ -78,8 +81,6 @@ public class House extends Storable{
         this.streetName = "";
         this.cityName = "";
         this.place = "";
-
-
     }
 
     @Override
@@ -193,6 +194,15 @@ public class House extends Storable{
         }
     }
 
+
+    public int getPostCodeId() {
+        return postCodeId;
+    }
+
+    public void setPostCodeId(int postCodeId) {
+        this.postCodeId = postCodeId;
+    }
+
     @Override
     public String toString() {
         return "House{" +
@@ -203,6 +213,7 @@ public class House extends Storable{
                 ", cityName='" + cityName + '\'' +
                 ", place='" + place + '\'' +
                 ", postCode='" + postCode + '\'' +
+                ", postCodeId='" + postCodeId + '\'' +
                 ", center=" + Utils.geomToGeoJson(center) +
                 '}';
     }

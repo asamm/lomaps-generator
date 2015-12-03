@@ -12,6 +12,7 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
@@ -27,9 +28,9 @@ import java.util.List;
 /**
  * Created by voldapet on 2015-08-21 .
  */
-public class StreetCreator {
+public class StreetFactory {
 
-    private static final String TAG = StreetCreator.class.getSimpleName();
+    private static final String TAG = StreetFactory.class.getSimpleName();
 
     ADataContainer dc;
 
@@ -71,7 +72,7 @@ public class StreetCreator {
     public int removedHousesWithDefinedStreetName = 0;
     public int numOfStreetForHousesUsingSqlSelect = 0;
 
-    public StreetCreator (ADataContainer dc, GeneratorAddress ga){
+    public StreetFactory(ADataContainer dc, GeneratorAddress ga){
 
         this.dc = dc;
         this.ga = ga;
@@ -88,7 +89,7 @@ public class StreetCreator {
      * Iterate relations > find that are street or associated street and create streets from members
      * Create streets are saved into database
      */
-    public void createStreetFromRelations () {
+    public void createWayStreetFromRelations() {
 
         TLongList relationIds = dc.getRelationIds();
         for (int i=0, size = relationIds.size(); i < size; i++) {
@@ -148,19 +149,20 @@ public class StreetCreator {
                 continue;
             }
 
-            Street street = new Street (name, isInList, mls);
+            Street wayStreet = new Street (name, isInList, mls);
+            wayStreet.setOsmId(relationId);
 
             // find all cities where street can be in it or is close to city
-            List<City> cities = findCitiesForStreet(street);
-            street.addCityIds(cities);
+            List<City> cities = findCitiesForStreet(wayStreet);
+            wayStreet.addCityIds(cities);
 
-            dc.addWayStreet(street);
+            dc.addWayStreet(wayStreet);
         }
     }
 
 
 
-    public void createStreetFromWays() {
+    public void createWayStreetFromWays() {
 
         TLongList wayIds = dc.getWayIds();
         for (int i=0, size = wayIds.size(); i < size; i++) {
@@ -186,15 +188,16 @@ public class StreetCreator {
                 continue;
             }
 
-            Street street = new Street (name, isInList, mls);
+            Street wayStreet = new Street (name, isInList, mls);
+            wayStreet.setOsmId(wayId);
 
             // find all cities where street can be in it or is close to city
             long start = System.currentTimeMillis();
-            List<City> cities = findCitiesForStreet(street);
+            List<City> cities = findCitiesForStreet(wayStreet);
             timeFindStreetCities += System.currentTimeMillis() - start;
 
-            street.addCityIds(cities);
-            dc.addWayStreet(street);
+            wayStreet.addCityIds(cities);
+            dc.addWayStreet(wayStreet);
         }
 
         // combine all tmp street ways into streets
@@ -239,8 +242,8 @@ public class StreetCreator {
                     }
 
                     if (entityH == null){
-                        Logger.i(TAG, "Can not get address relation member from cache. Relation" + relationId +
-                                " Relation member: " + rm.getMemberId());
+                        Logger.i(TAG, "createHousesFromRelations() - Can not get address relation member from cache. " +
+                                "Relation: " + relationId + ", relation member: " + rm.getMemberId());
                         continue;
                     }
 
@@ -255,8 +258,6 @@ public class StreetCreator {
             long start = System.currentTimeMillis();
             houses.addAll(houseFactory.createHouse(relation));
             timeCreateParseHouses += System.currentTimeMillis() - start;
-
-
 
             // test if new houses has defined the street name
             for (House house : houses) {
@@ -358,7 +359,7 @@ public class StreetCreator {
             int hash = iterator.next();
             //load all ways with the same hash from cache. These all ways has the same name but different city
             List<Street> wayStreets = dc.getWayStreetsFromCache(hash);
-            if (wayStreets.size() ==0){
+            if (wayStreets.size() == 0){
                 continue;
             }
 
@@ -369,7 +370,7 @@ public class StreetCreator {
             // parent loop. then delete it.
             // Becease different wayStreet can have different cityIds it's needed to iterate several times.
 
-            for (int i = wayStreets.size() -1; i >=0; i--){
+            for (int i = wayStreets.size() -1; i >= 0; i--){
                 lineMerger = new LineMerger();
                 Street wayStreet = wayStreets.get(i);
                 wayStreets.remove(i);
@@ -418,7 +419,7 @@ public class StreetCreator {
                     mls = (MultiLineString)  geometryFactory.buildGeometry(lineStrings);
                 }
                 else {
-                    Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getId());
+                    Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
                     continue;
                 }
 
@@ -449,10 +450,17 @@ public class StreetCreator {
                     }
                 }
             }
-            timeJoinWaysToStreets += System.currentTimeMillis() - start;
         }
+        timeJoinWaysToStreets += System.currentTimeMillis() - start;
     }
 
+    /**
+     * Joined street can lay in more then one city. But some times it's not one street but
+     * two different street with the same name. This method identify if geometry of street
+     * is only one street or if it is two or more different citiyes
+     * @param street street to test if it is one or more different streets
+     * @return list of separated street
+     */
     private List<Street> splitToCityParts(Street street) {
 
         List<Street> separatedStreets = new ArrayList<>();
@@ -569,6 +577,12 @@ public class StreetCreator {
         return splittedMls;
     }
 
+    /**
+     * Compare two list of city ids.
+     * @param c1 List of city ids for the first wayStreet
+     * @param c2 List of city ids for the second wayStreet (wayStreet for join with the first one)
+     * @return true of both list (streets) are in one city
+     */
     private boolean isFromTheSameCities (TLongHashSet c1, TLongHashSet c2){
         TLongIterator iterator = c1.iterator();
         while (iterator.hasNext()){
@@ -578,7 +592,6 @@ public class StreetCreator {
         }
         return false;
     }
-
 
     /**
      * Find cities where street is in it.
@@ -823,7 +836,7 @@ public class StreetCreator {
             for (City city :  closestCities) {
                 if (city.getName().equalsIgnoreCase(addrPlace)){
 
-                    Street streetToInsert = databaseAddress.createDummyStreet(city.getName(), city.getId(), city.getCenter());
+                    Street streetToInsert = databaseAddress.createDummyStreet(city.getName(), city.getOsmId(), city.getCenter());
                     long start3 = System.currentTimeMillis();
                     long id = databaseAddress.insertStreet(streetToInsert, true);
                     timeInsertStreetSql += System.currentTimeMillis() - start3;
@@ -850,7 +863,7 @@ public class StreetCreator {
                 nearestStreet =  street;
             }
 
-            double distance = houseCenter.distance(street.getGeometry());
+            double distance = DistanceOp.distance(houseCenter, street.getGeometry());
             if (distance < minDistance){
                 minDistance = distance;
                 nearestStreet = street;
@@ -859,17 +872,21 @@ public class StreetCreator {
 
         timeFindStreetNearest += System.currentTimeMillis() - start;
 
+        if (addrStreetName.length() > 0 ){
 
-        if (addrStreetName.length() > 0 && Utils.toMeters(minDistance) > 150){
-//            Logger.i(TAG, "findStreetForHouse(): HOuse has name street but the nereast street is far away. Distance: " + Utils.toMeters(minDistance) +
-//                    "\n House: " + house.toString() + " \n Nereast street: " + nearestStreet.toString());
-            databaseAddress.insertRemovedHouse(house);
-            removedHousesWithDefinedStreetName++;
-            return null;
+            Polygon circle = Utils.createCircle(houseCenter.getCoordinate(), 100, 10);
+            if ( !circle.intersects(nearestStreet.getGeometry())) {
+//                Logger.i(TAG, "findStreetForHouse(): House has name street but the nereast street is far away. Distance: " +
+//                        "\n House: " + house.toString() + " \n Nereast street: " + nearestStreet.toString());
+                databaseAddress.insertRemovedHouse(house);
+                removedHousesWithDefinedStreetName++;
+                return null;
+            }
         }
 
 //        Logger.i(TAG, "### Nearest street: " +
 //                "\n House: " + house.toString() + " \n Street: " + nearestStreet.toString());
+        // this street has not defined the
         lastHouseStreet = nearestStreet;
         return nearestStreet;
     }
@@ -917,7 +934,7 @@ public class StreetCreator {
     public City getSubCity (Street street, City topCity) {
 
         // try to get boundary for city
-        Boundary topBoundary = ga.getCenterCityBoundaryMap().get(topCity.getId());
+        Boundary topBoundary = ga.getCenterCityBoundaryMap().getValue(topCity);
         if (topBoundary == null){
             return null;
         }
@@ -932,7 +949,7 @@ public class StreetCreator {
                 continue;
             }
             // load boundary for sub city and find the lowest according to the admin level
-            Boundary subBoundary = ga.getCenterCityBoundaryMap().get(subCity.getId());
+            Boundary subBoundary = ga.getCenterCityBoundaryMap().getValue(subCity);
             if (subBoundary == null || !subBoundary.hasAdminLevel()){
                 continue;
             }

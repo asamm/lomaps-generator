@@ -1,9 +1,9 @@
 package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.address.Boundary;
-import com.asamm.osmTools.generatorDb.address.BoundaryCreator;
+import com.asamm.osmTools.generatorDb.address.BoundaryFactory;
 import com.asamm.osmTools.generatorDb.address.City;
-import com.asamm.osmTools.generatorDb.address.StreetCreator;
+import com.asamm.osmTools.generatorDb.address.StreetFactory;
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmAddress;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
@@ -11,21 +11,22 @@ import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
+import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import gnu.trove.list.TLongList;
+import gnu.trove.map.hash.THashMap;
+import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class GeneratorAddress extends AGenerator {
 	
@@ -42,10 +43,13 @@ public class GeneratorAddress extends AGenerator {
     private List<Boundary> boundaries;
 
     /** Center city and the best boundary for it*/
-    private Map<Long, Boundary> centerCityBoundaryMap;
+    private BiDiHashMap<City, Boundary> centerCityBoundaryMap;
 
     /** List of cities that are in the boundary*/
-    private Map<Boundary, List<City>> citiesInBoundaryMap;
+    private THashMap<Boundary, List<City>> citiesInBoundaryMap;
+
+    /** Set of method that help to create boundary objects */
+    BoundaryFactory boundaryFactory;
 
     // output DB file
     private File outputDb;
@@ -60,15 +64,15 @@ public class GeneratorAddress extends AGenerator {
         this.outputDb = outputDb;
         this.addressDefinition = addressDefinition;
 
+        this.boundaryFactory = new BoundaryFactory(this);
+
         this.cities = new ArrayList<>();
         this.boundaries = new ArrayList<>();
-        this.centerCityBoundaryMap = new HashMap<>();
-        this.citiesInBoundaryMap = new HashMap<>();
+        this.centerCityBoundaryMap = new BiDiHashMap<>();
+        this.citiesInBoundaryMap = new THashMap<>();
 
         initialize();
-
-
-	}
+    }
 
 	@Override
 	protected ADatabaseHandler prepareDatabase()   throws Exception{
@@ -95,23 +99,27 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 4 - find all cities inside boundaries ===");
         findAllCitiesForBoundary();
 
+        Logger.i(TAG, "=== Step 4B - find parent cities ===");
+        findParentCitiesForVillages();
+
         // ---- step 5 write cities to DB ----
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
         insertCitiesToDB();
 
 
-        StreetCreator sc = new StreetCreator(dc, this);
+        StreetFactory sc = new StreetFactory(dc, this);
         // ----- Step 6 create streets from relations streets -----
         Logger.i(TAG, "=== Step 6 - create streets from relations ===");
-        sc.createStreetFromRelations();
+        sc.createWayStreetFromRelations();
 
         // ----- step 7 create streets from ways ------
         Logger.i(TAG, "=== Step 7 - create streets from ways ===");
-        sc.createStreetFromWays();
+        sc.createWayStreetFromWays();
         Logger.i(TAG, "Create dummy streets for cities without street ===");
         ((DatabaseAddress) db).createDummyStreets();
         ((DatabaseAddress) db).buildStreetNameIndex();
 
+        // ----- step 8 create hauses ------
         Logger.i(TAG, "=== Step 8 - create houses ===");
         Logger.i(TAG, "Create houses from relations");
         sc.createHousesFromRelations();
@@ -121,10 +129,15 @@ public class GeneratorAddress extends AGenerator {
         sc.createHousesFromNodes();
         Logger.i(TAG, "Clear duplicated houses ");
         ((DatabaseAddress) db).deleteDuplicatedHouses();
+        ((DatabaseAddress) db).buildHouseIndexes();
 
-
+        // ----- step 9 simplify geoms ------
         Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
         simplifyGeoms ();
+
+        // ----- step 10 set houses as blob to streets ------
+        Logger.i(TAG, "=== Step 10 - update streets, write houses data ===");
+        updateStreetsWriteHouses();
 
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
         Logger.i(TAG, "Finding cities only loading cities fromk DB takes: " + sc.timeLoadNereastCities /1000.0 + " sec" );
@@ -140,13 +153,14 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Find street for house using similar name: " + sc.timeFindStreetSimilarName /1000.0 + " sec" );
         Logger.i(TAG, "Find street for house using the nearest: " + sc.timeFindStreetNearest /1000.0 + " sec" );
 
+        Logger.i(TAG, "NUm of loaded houses as byte[] to update streets: " + ((DatabaseAddress) db).housesPreparedAsBlobForStreets );
+
         Logger.i(TAG, "Number of found streets for houses using sql select, : " + sc.numOfStreetForHousesUsingSqlSelect);
 
         Logger.i(TAG, "Number of removed houses - not able to find street, : " + sc.removedHousesWithDefinedPlace);
         Logger.i(TAG, "Number of removed houses with defined addr:street name, : " + sc.removedHousesWithDefinedStreetName);
-
-
     }
+
 
 
     /**************************************************/
@@ -172,7 +186,7 @@ public class GeneratorAddress extends AGenerator {
             }
 
             City city = new City(cityType);
-            city.setId(node.getId());
+            city.setOsmId(node.getId());
             city.setName(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.NAME));
             city.setNamesInternational(OsmUtils.getNamesInternational(node));
             city.setCenter(new GeometryFactory().createPoint(new Coordinate(node.getLongitude(), node.getLatitude())));
@@ -198,7 +212,6 @@ public class GeneratorAddress extends AGenerator {
 
         // create boundaries from relation
         TLongList relationIds = dc.getRelationIds();
-        BoundaryCreator boundaryFactory = new BoundaryCreator(relationIds.size());
 
         for (int i=0, size = relationIds.size(); i < size; i++) {
             Relation relation = dc.getRelationFromCache(relationIds.get(i));
@@ -220,7 +233,7 @@ public class GeneratorAddress extends AGenerator {
         }
 
         TLongList wayIds = dc.getWayIds();
-        for (int i=0, size = relationIds.size(); i < size; i++) {
+        for (int i=0, size = wayIds.size(); i < size; i++) {
             Way way = dc.getWayFromCache(wayIds.get(i));
             Boundary boundary = boundaryFactory.create(dc, way);
 
@@ -243,7 +256,7 @@ public class GeneratorAddress extends AGenerator {
     /**************************************************/
 
     /**
-     * Try to find center city for every boundary
+     * Try to find center city for every boundary. It also create the region places from boundaries of higher levels
      * @param dc base osm data container
      */
     private void findCenterCityForBoundary(ADataContainer dc) {
@@ -256,7 +269,7 @@ public class GeneratorAddress extends AGenerator {
             City cityFound = null;
             if(boundary.hasAdminCenterId()) {
                 for (City city : cities) {
-                    if (city.getId() == boundary.getAdminCenterId()) {
+                    if (city.getOsmId() == boundary.getAdminCenterId()) {
                         cityFound = city;
                         //Logger.i(TAG, "City were founded by admin center for boundary: "+boundary.getId()+ " city: " + city.toString());
                         break;
@@ -279,7 +292,7 @@ public class GeneratorAddress extends AGenerator {
             // Try to find city that has similar name as boundary
             if (cityFound == null) {
                 for (City city : cities) {
-                    if (hasSimilarName(boundary, city)) {
+                    if (boundaryFactory.hasSimilarName(boundary, city)) {
                         if (boundary.getGeom().contains(city.getCenter())) {
                             // city has similar name boundary and is in bounds > use it as center
                             cityFound = city;
@@ -294,8 +307,9 @@ public class GeneratorAddress extends AGenerator {
 
                 cityFound = createMissingCity(boundary);
                 if (cityFound.isValid()){
-                    boundary.setAdminCenterId(cityFound.getId());
+                    boundary.setAdminCenterId(cityFound.getOsmId());
                     cities.add(cityFound);
+                    cityCenterIndex.insert(cityFound.getCenter().getEnvelopeInternal(), cityFound);
                 }
             }
 
@@ -304,24 +318,24 @@ public class GeneratorAddress extends AGenerator {
                 registerBoundaryForCity (boundary, cityFound);
             }
             else {
-                //Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
+               // Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
             }
         }
     }
 
     /**
      * City can be center for more boundaries. Register the best boundary for city
-     * Mothod compare priority of previous boundary (if exist).
+     * Method compare priority of previous boundary (if exist).
      * @param boundary new boundary that should registered for center city
      * @param city center city
      */
     private void registerBoundaryForCity(Boundary boundary, City city) {
 
         // try to obtain previous registered boundary for city
-        Boundary oldBoundary = this.centerCityBoundaryMap.get(city.getId());
+        Boundary oldBoundary = this.centerCityBoundaryMap.getValue(city);
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
-            centerCityBoundaryMap.put(city.getId(), boundary);
+            centerCityBoundaryMap.put(city, boundary);
         }
         else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
                 && oldBoundary != boundary
@@ -336,121 +350,19 @@ public class GeneratorAddress extends AGenerator {
         }
 
         else {
-            int oldBoundaryPriority = getCityBoundaryPriority (oldBoundary, city);
-            int newBoundaryPriority = getCityBoundaryPriority(boundary, city);
+            int oldBoundaryPriority = boundaryFactory.getCityBoundaryPriority(oldBoundary, city);
+            int newBoundaryPriority = boundaryFactory.getCityBoundaryPriority(boundary, city);
 
             if (newBoundaryPriority < oldBoundaryPriority){
-//                Logger.i(TAG, "Boundary: " + oldBoundary.toString()
-//                        + " \n were replaced with boundary: " + boundary.toString());
-                centerCityBoundaryMap.put(city.getId(), boundary);
+                centerCityBoundaryMap.put(city, boundary);
             }
         }
-    }
-
-    /**
-     * Compare how ideal is boundary for city. The priority is evaluated as integer value from 0 - 36
-     * @param boundary boundary to compare
-     * @param city city to compare with boundary
-     * @return priority the lower is better
-     */
-    private int getCityBoundaryPriority(Boundary boundary, City city) {
-
-        boolean hasSameName = boundary.getName().equalsIgnoreCase(city.getName());
-
-        if (!hasSameName && boundary.getShortName().length() > 0){
-            // try to compare short name with city name
-            hasSameName = boundary.getShortName().equalsIgnoreCase(city.getName());
-        }
-
-        int adminLevelPriority = getAdminLevelPriority(boundary); // can be maximal 6
-        if(hasSameName) {
-            if(boundary.getCityType() != null) {
-                //boundary was created from relation that has tag place. So it's the best boundary for city
-                return 0;
-            }
-            else if(city.getId() == boundary.getAdminCenterId()){
-                return adminLevelPriority;  // return 1 - 6
-            }
-            return 10 + adminLevelPriority; // return 11 - 16, priority was made based on name
-        }
-        else {
-            // boundary and city has different name
-            if(city.getId() == boundary.getAdminCenterId()) {
-                return 20 + adminLevelPriority;
-            }
-            else {
-                return 30  + adminLevelPriority;
-            }
-        }
-    }
-
-    /**
-     * Says how priority agains other admin_level has boundary. The lower priority is better. OsmAnd ispiration
-     * @param boundary boundary to check
-     * @return return number from 1 - 6 as mark that says how "good" is admin level for boundary.
-     * The lower value has better priority
-     */
-    private int getAdminLevelPriority(Boundary boundary) {
-
-        int adminLevelPriority = 5;
-
-        if(boundary.getAdminLevel() > 0) {
-
-            int adminLevel = boundary.getAdminLevel();
-
-            if(adminLevel == 8) { //the best level city boundary
-                adminLevelPriority = 1;
-            }
-            else if(adminLevel == 7) {
-                adminLevelPriority = 2;
-            }
-            else if(adminLevel == 6) {
-                adminLevelPriority = 3;
-            }
-            else if(adminLevel == 9) {
-                adminLevelPriority = 4;
-            }
-            else if(adminLevel == 10) {
-                adminLevelPriority = 5;
-            }
-            else {
-                adminLevelPriority = 6;
-            }
-        }
-        return adminLevelPriority;
-    }
-
-
-    /**
-     * Compare name of boundary with name of city and try find city with similar name as boundary
-     * @param boundary
-     * @param city
-     * @return true if city has similar name as boundary
-     */
-    private boolean hasSimilarName (Boundary boundary, City city){
-
-        String bName = boundary.getName().toLowerCase();
-        String bShortName = boundary.getShortName().toLowerCase();
-        String cName = city.getName().toLowerCase();
-
-        if (bName.length() == 0 || cName.length() == 0){
-            return false;
-        }
-
-        if (bName.startsWith(cName+" ") || bName.endsWith(" "+ cName) || bName.contains( " " + cName + " ")){
-            return true;
-        }
-
-        if (bShortName.startsWith(cName+" ") || bShortName.endsWith(" "+ cName) || bShortName.contains( " " + cName + " ")){
-            return true;
-        }
-        return false;
     }
 
     private City createMissingCity (Boundary boundary){
 
         City city = new City(boundary.getCityType());
-        city.setId(boundary.getId());
+        city.setOsmId(boundary.getId());
         city.setName(boundary.getName());
         city.setNamesInternational(boundary.getNamesInternational());
         city.setCenter(boundary.getCenterPoint());
@@ -468,21 +380,33 @@ public class GeneratorAddress extends AGenerator {
     private void findAllCitiesForBoundary() {
 
         Boundary boundary = null;
-        City city = null;
         for (int i=0, size = boundaries.size(); i < size; i++){
 
             boundary = boundaries.get(i);
             List<City> citiesInBoundary = new ArrayList<>();
-            List cityFromIndex = cityCenterIndex.query(boundary.getGeom().getEnvelopeInternal());
+            List<City> cityFromIndex = cityCenterIndex.query(boundary.getGeom().getEnvelopeInternal());
 
-            for (int c=0, sizeC = cityFromIndex.size();  c < sizeC; c++){
-                city = cities.get(c);
-
+            for (City city : cityFromIndex){
                 if (boundary.getGeom().contains(city.getCenter())){
                     citiesInBoundary.add(city);
                 }
             }
             citiesInBoundaryMap.put(boundary, citiesInBoundary);
+        }
+    }
+
+    /**
+     * For villages neighbour or
+     */
+    private void findParentCitiesForVillages() {
+
+        for (City city : cities){
+            City parentCity = boundaryFactory.findParentCityForVillages(city);
+            // avoid the parent that are the same as city itself
+
+            if (parentCity != null && parentCity.getOsmId() != city.getOsmId()){
+                city.setParentCity(parentCity);
+            }
         }
     }
 
@@ -495,7 +419,7 @@ public class GeneratorAddress extends AGenerator {
         City city;
         for (int i = 0, size = cities.size() ; i < size;  i++){
             city = cities.get(i);
-            Boundary boundary = centerCityBoundaryMap.get(city.getId());
+            Boundary boundary = centerCityBoundaryMap.getValue(city);
             if (boundary != null){
                 city.setGeom(boundary.getGeom());
             }
@@ -519,7 +443,7 @@ public class GeneratorAddress extends AGenerator {
         City city;
         for (int i = 0, size = cities.size() ; i < size;  i++){
             city = cities.get(i);
-            Boundary boundary = centerCityBoundaryMap.get(city.getId());
+            Boundary boundary = centerCityBoundaryMap.getValue(city);
             if (boundary != null){
                 databaseAddress.simplifyCityGeom(city, boundary);
             }
@@ -529,6 +453,23 @@ public class GeneratorAddress extends AGenerator {
         long time = System.currentTimeMillis() - start;
         Logger.i(TAG, "SimplifyGeoms takes: " + time/1000.0 + " sec" );
     }
+
+    /**************************************************/
+    /*  STEP 10 - Set house blob data into streets
+    /**************************************************/
+
+    private void updateStreetsWriteHouses() {
+        DatabaseAddress databaseAddress = getDatabaseAddress();
+        long lastStreetId = databaseAddress.getStreetIdSequence();
+
+        for (long i = 0; i <= lastStreetId; i++ ){
+
+            byte[] data = databaseAddress.selectHousesInStreet(i);
+            databaseAddress.updateStreetSetHouseBlob(i, data);
+        }
+    }
+
+
 
 
     /**************************************************/
@@ -549,7 +490,7 @@ public class GeneratorAddress extends AGenerator {
             distance = distance * 2;
             numOfResize++;
             if (numOfResize == 4){
-                Logger.i(TAG, "MAx num of resize reached");
+                //Logger.i(TAG, "MAx num of resize reached");
                 break;
             }
         }
@@ -592,11 +533,11 @@ public class GeneratorAddress extends AGenerator {
         return cities;
     }
 
-    public Map<Long, Boundary> getCenterCityBoundaryMap() {
+    public BiDiHashMap<City, Boundary> getCenterCityBoundaryMap() {
         return centerCityBoundaryMap;
     }
 
-    public Map<Boundary, List<City>> getCitiesInBoundaryMap() {
+    public THashMap<Boundary, List<City>> getCitiesInBoundaryMap() {
         return citiesInBoundaryMap;
     }
 

@@ -132,5 +132,6 @@ public class DataGeneratorTask implements Sink {
 
 	public final void release() {
 		// nothing to do
+
 	}
 }

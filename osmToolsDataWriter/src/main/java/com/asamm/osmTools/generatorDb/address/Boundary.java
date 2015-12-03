@@ -26,7 +26,7 @@ public class Boundary {
     /** It's not null if relation/ways has tag place. So boundary is exactly the city*/
     private City.CityType cityType;
 
-    /** Id of entity that is set as center of boundary (should be a place)*/
+    /** OSM Id of entity that is set as center of boundary (should be a place)*/
     private long adminCenterId;
 
     /** All possible international languages of cities, <langCode|name> */
