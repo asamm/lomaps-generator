@@ -1,6 +1,10 @@
 package com.asamm.osmTools.generatorDb.address;
 
+import com.asamm.osmTools.generatorDb.utils.OsmUtils;
+import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
 import locus.api.utils.DataWriterBigEndian;
 
@@ -11,9 +15,9 @@ import java.io.IOException;
  * Custom object used for serialization of {@link com.asamm.osmTools.generatorDb.address.House} object
  *
  */
-public class HouseSer {
+public class HouseDTO {
 
-    private static final String TAG = HouseSer.class.getSimpleName();
+    private static final String TAG = HouseDTO.class.getSimpleName();
 
     private static final int COORDINATE_POW = 100000;
 
@@ -26,12 +30,12 @@ public class HouseSer {
     /** Reference to table of postcodes*/
     private int postCodeId;
 
-    /** Position of house */
-    private int lon;
+    /** Position of house. it's difference from the first note of parent street*/
+    private short lon;
 
-    private int lat;
+    private short lat;
 
-    public HouseSer(String number, String name, int postCodeId, Point center) {
+    public HouseDTO(String number, String name, int postCodeId, Point center, Street street) {
 
         reset();
 
@@ -39,9 +43,26 @@ public class HouseSer {
         setName(name);
         this.postCodeId = postCodeId;
 
-        this.lon = (int) Math.round(center.getX() * COORDINATE_POW);
-        this.lat = (int) Math.round(center.getY() * COORDINATE_POW);
+        Logger.i(TAG, "Convert house to DTO : " +
+                "\n HouseCenter: " + Utils.geomToGeoJson(center) +
+                "\n Street:  " + street.toString());
+
+            MultiLineString mls = street.getGeometry();
+            Coordinate[] coordinates = mls.getCoordinates();
+
+            //Coordinate streetFirstNode = street.getGeometry().getCoordinates()[0];
+            Coordinate streetFirstNode = coordinates[0];
+
+            int dLon = (int) Math.round((streetFirstNode.x - center.getX()) * COORDINATE_POW);
+            int dLat = (int) Math.round((streetFirstNode.y - center.getY()) * COORDINATE_POW);
+
+
+            this.lon = Utils.intToShort(dLon);
+            this.lat = Utils.intToShort(dLat);
+
+
     }
+
 
     /**************************************************/
     /*             SERIALIZATION PART
@@ -90,8 +111,8 @@ public class HouseSer {
             if (isPostcodeIdDefined(header)){
                 dr.writeInt(postCodeId);
             }
-            dr.writeInt(lon);
-            dr.writeInt(lat);
+            dr.writeShort(lon);
+            dr.writeShort(lat);
 
         } catch (IOException e) {
             Logger.e(TAG, "getAsBytes() - Can not serialize house: " + this.toString(), e );
@@ -155,7 +176,7 @@ public class HouseSer {
         return lon;
     }
 
-    public void setLon(int lon) {
+    public void setLon(short lon) {
         this.lon = lon;
     }
 
@@ -163,7 +184,7 @@ public class HouseSer {
         return lat;
     }
 
-    public void setLat(int lat) {
+    public void setLat(short lat) {
         this.lat = lat;
     }
 

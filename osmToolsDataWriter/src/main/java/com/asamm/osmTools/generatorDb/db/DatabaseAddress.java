@@ -4,12 +4,15 @@ import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.prep.PreparedGeometry;
+import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.iterator.TLongIterator;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.TLongHashSet;
 
@@ -19,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
-import java.util.zip.ZipOutputStream;
 
 import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
 import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.COL_ID;
@@ -32,7 +34,7 @@ public class DatabaseAddress extends ADatabaseHandler {
     public static final String DEFAULT_LANG_CODE = "def";
 
     /** increment for street. Streets have own ids there is NO relation with OSM id*/
-    private long streetIdSequence = 0;
+    private int streetIdSequence = 0;
 
     private long housesIdSequence = 0;
 
@@ -44,7 +46,8 @@ public class DatabaseAddress extends ADatabaseHandler {
     /** Map store the reference between postCode and num of row in table of postCodes */
     private THashMap<String, Integer> postCodesMap;
 
-    private THashMap<String, Integer> houseNumMap;
+    /** Id of streets which geometry is from path or tracks */
+    private TIntArrayList pathStreetIds;
 
     /** Precompiled statement for inserting cities into db*/
     private PreparedStatement psInsertCity;
@@ -88,13 +91,14 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = true;
+    private static boolean hasHousesTableWithGeom = false;
 
     /** JTS in memory index of geometries of joined streets*/
     private STRtree streetGeomIndex;
 
     /** Custom geom index only for dummy streets created from cities or places*/
     private Quadtree dummyStreetGeomIndex;
+
 
     public DatabaseAddress(File file) throws Exception {
 
@@ -112,8 +116,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         dummyStreetGeomIndex = new Quadtree();
 
         postCodesMap = new THashMap<>();
-
-
+        pathStreetIds = new TIntArrayList();
 	}
 
     private void initPreparedStatements() throws SQLException {
@@ -278,7 +281,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         // TABLE FOR STREETS
 
         sql = "CREATE TABLE "+TN_STREETS+" (";
-        sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
+        sql += COL_ID+" INT NOT NULL PRIMARY KEY,";
         sql += COL_NAME+" ,";
         sql += COL_NAME_NORM+" TEXT NOT NULL, ";
         sql += COL_DATA+" BLOB";
@@ -292,7 +295,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         //
         sql = "CREATE TABLE "+ TN_STREET_IN_CITIES +" (";
-        sql += COL_STREET_ID+" BIGINT NOT NULL,";
+        sql += COL_STREET_ID+" INT NOT NULL,";
         sql += COL_CITY_ID+" BIGINT NOT NULL";
         sql +=        ")";
         executeStatement(sql);
@@ -301,7 +304,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         sql = "CREATE TABLE "+TN_HOUSES+" (";
         sql += COL_ID+" BIGINT NOT NULL, ";
-        sql += COL_STREET_ID + " BIGINT NOT NULL, ";
+        sql += COL_STREET_ID + " INT NOT NULL, ";
         sql += COL_STREET_NAME + " TEXT, ";
         sql += COL_NUMBER+" TEXT NOT NULL, ";
         sql += COL_NAME+ " TEXT,  ";
@@ -548,7 +551,7 @@ public class DatabaseAddress extends ADatabaseHandler {
      */
     public long insertStreet(Street street, boolean isDummy){
         try {
-            long id = streetIdSequence++;
+            int id = streetIdSequence++;
             psInsertStreet.clearParameters();
 
             street.setId(id);
@@ -561,24 +564,24 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertStreet.setString(2, name);
             }
             psInsertStreet.setString(3, nameNormalized);
-
-//            MultiLineString mls = street.getGeometry();
-//            if (!mls.isValid()){
-//                Logger.w(TAG, "insertWayStreet: not valid geom " + street.toString() );
-//            }
-//            if (mls.isEmpty()){
-//                Logger.w(TAG, "insertWayStreet: empty geom " + street.toString() );
-//            }
-
             psInsertStreet.setBytes(4, wkbWriter.write(street.getGeometry()));
             psInsertStreet.execute();
 
             //register street in JTS memory index - use it later for houses
             if (isDummy){
-                dummyStreetGeomIndex.insert(street.getGeometry().getEnvelopeInternal(), street);
+                // It's seem that QuadTree index has some issue with points. If I use centroid as
+                // geom to index then query return all streets around
+                Geometry geomFake = Utils.createRectangle(street.getGeometry().getCoordinate(), 50);
+                dummyStreetGeomIndex.insert(geomFake.getEnvelopeInternal(), street);
+
             }
             else {
                 streetGeomIndex.insert(street.getGeometry().getEnvelopeInternal(), street);
+            }
+
+            // register id of path or track street > to remove such street later if they are without houses
+            if (street.isPath()){
+                pathStreetIds.add(id);
             }
 
             // INSERT CONNECTION  TO CITIES
@@ -614,13 +617,18 @@ public class DatabaseAddress extends ADatabaseHandler {
 //        Logger.i(TAG, "Insert house into db: " +
 //                "\n Street: " + street.toString() +
 //                "\n House: " + house.toString());
-        HouseSer hs = new HouseSer(house.getNumber(),house.getName(), house.getPostCodeId(), house.getCenter());
-        byte[] bytes = hs.getAsBytes();
+        HouseDTO houseDTO = new HouseDTO(
+                house.getNumber(),
+                house.getName(),
+                house.getPostCodeId(),
+                house.getCenter(),
+                street);
+        byte[] bytes = houseDTO.getAsBytes();
 
         long houseId = housesIdSequence++;
         try {
             psInsertHouse.setLong(1, house.getOsmId());
-            psInsertHouse.setLong(2, street.getId());
+            psInsertHouse.setInt(2, street.getId());
             psInsertHouse.setString(3, street.getName());
             psInsertHouse.setString(4, house.getNumber());
             psInsertHouse.setString(5, house.getName());
@@ -775,17 +783,17 @@ public class DatabaseAddress extends ADatabaseHandler {
      * @param streetId id of street
      * @return street or null if street with such id is not in DB
      */
-    public Street selectStreet(long streetId) {
+    public Street selectStreet(int streetId) {
 
         Street streetLoaded = null;
         try{
-            psSelectStreet.setLong(1, streetId);
+            psSelectStreet.setInt(1, streetId);
             ResultSet rs = psSelectStreet.executeQuery();
 
             while (rs.next()){
 
                 streetLoaded = new Street();
-                streetLoaded.setId(rs.getLong(1));
+                streetLoaded.setId(rs.getInt(1));
                 String name = rs.getString(2);
                 String nameNorm = rs.getString(3);
                 if (name == null){
@@ -818,15 +826,15 @@ public class DatabaseAddress extends ADatabaseHandler {
     /**
      * Select houses that are assigned to street. It return them as blob not as object
      * @param streetId
-     * @return
+     * @return compressed byte  array that contains serialized houses for street
      */
-    public byte[] selectHousesInStreet (long streetId){
+    public byte[] selectHousesInStreet (int streetId){
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ZipOutputStream out = new ZipOutputStream(baos);
 
         int count = 0;
         try {
-            psSelectHousesInStreet.setLong(1, streetId);
+            psSelectHousesInStreet.clearParameters();
+            psSelectHousesInStreet.setInt(1, streetId);
             ResultSet rs = psSelectHousesInStreet.executeQuery();
 
             while (rs.next()){
@@ -849,7 +857,6 @@ public class DatabaseAddress extends ADatabaseHandler {
             baos.toByteArray();
         } finally {
             locus.api.utils.Utils.closeStream(baos);
-            locus.api.utils.Utils.closeStream(out);
         }
 
         byte[] data = baos.toByteArray();
@@ -881,7 +888,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             while (rs.next()){
 
                 streetLoaded = new Street();
-                streetLoaded.setId(rs.getLong(1));
+                streetLoaded.setId(rs.getInt(1));
                 String name = rs.getString(2);
                 String nameNorm = rs.getString(3);
                 if (name == null){
@@ -937,7 +944,7 @@ public class DatabaseAddress extends ADatabaseHandler {
     public List<Street> selectStreetInCities(Street street) {
 
         // more then one street can be loaded
-        Map<Long, Street> loadedStreetMap  = new HashMap<>();
+        Map<Integer, Street> loadedStreetMap  = new HashMap<>();
         String sql = "";
         try {
             TLongHashSet cityIds = street.getCityIds();
@@ -970,7 +977,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             while (rs.next()){
 
-                long streetId = rs.getLong(1);
+                int streetId = rs.getInt(1);
 
                 // check if exist street in map from previous result
                 Street streetLoaded = loadedStreetMap.get(streetId);
@@ -980,7 +987,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                     // load completly whole street
                     streetLoaded = new Street();
 
-                    streetLoaded.setId(rs.getLong(1));
+                    streetLoaded.setId(rs.getInt(1));
                     streetLoaded.addCityId (rs.getLong(2));
                     streetLoaded.setName(rs.getString(3));
 
@@ -1093,15 +1100,15 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
     }
 
-    public void deleteStreet (long streetId){
+    public void deleteStreet (int streetId){
         try {
 
             psDeleteStreet.clearParameters();
-            psDeleteStreet.setLong(1, streetId);
+            psDeleteStreet.setInt(1, streetId);
             psDeleteStreet.execute();
 
             psDeleteStreetCities.clearParameters();
-            psDeleteStreetCities.setLong(1, streetId);
+            psDeleteStreetCities.setInt(1, streetId);
             psDeleteStreetCities.execute();
 
         } catch (SQLException e) {
@@ -1114,92 +1121,78 @@ public class DatabaseAddress extends ADatabaseHandler {
     /*                OTHER TOOLS
     /**************************************************/
 
+
+
     public List<Street> getStreetsAround(Point centerPoint, int minNumber) {
 
-        double distance = 300;
+        double distance = 200;
 
-        List streetsFromIndex = new ArrayList();
+        List<Street> streetsFromIndex = new ArrayList();
 
         int numOfResize = 0;
+        Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
         while (streetsFromIndex.size() < minNumber) {
-            //Logger.i(TAG,"Extends bounding box");
-            //Logger.i(TAG,"getStreetsAround(): center point: " +Utils.geomToGeoJson(centerPoint));
-            Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-
-
             //Logger.i(TAG,"getStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
             streetsFromIndex = streetGeomIndex.query(searchBound.getEnvelopeInternal());
-            distance = distance * 2;
             if (numOfResize == 4) {
                 //Logger.i(TAG, "getStreetsAround(): Max num of resize reached for center point: " + Utils.geomToGeoJson(centerPoint));
                 break;
             }
             numOfResize++;
+            distance = distance * 2;
+            searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
         }
 
+        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
+        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
+            Street street = streetsFromIndex.get(i);
+            if ( !pg.intersects(street.getGeometry().getEnvelope())){
+                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
+                streetsFromIndex.remove(i);
+            }
+        }
         return streetsFromIndex;
     }
 
     /**
-     * Get reference id for specified post code. If post code is not defined
-     * then add into table of post codes
-     * @param postCode code for which want to get reference
-     * @return reference to postcode or -1 if not possible to obtaion or create postcode id
+     * Select nearest streets
+     * @param centerPoint
+     * @param minNumber
+     * @return
      */
-    public int getPostCodeId (String postCode) {
-        if (postCode == null || postCode.length() == 0){
-            return -1;
-        }
-        Integer postCodeId = postCodesMap.get(postCode);
-        if (postCodeId == null){
-            postCodeId = insertPostCode (postCode);
-        }
-        return postCodeId;
-    }
-
-
     public List<Street> getDummyStreetsAround(Point centerPoint, int minNumber) {
 
-        double distance = 300;
+        double distance = 200;
 
-        List streetsFromIndex = new ArrayList();
-
+        List<Street> streetsFromIndex = new ArrayList();
+        Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
         int numOfResize = 0;
         while (streetsFromIndex.size() < minNumber) {
 
-            Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-
             //Logger.i(TAG,"getDummyStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
             streetsFromIndex = dummyStreetGeomIndex.query(searchBound.getEnvelopeInternal());
-            distance = distance * 2;
             if (numOfResize == 4) {
                 //Logger.i(TAG, "getDummyStreetsAround(): Max num of resize reached for center point: " + Utils.geomToGeoJson(centerPoint));
                 break;
             }
             numOfResize++;
+            distance = distance * 2;
+            searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
+        }
+
+        // FILTER - Quadtree return only items that MAY intersect > it's needed to check it
+
+        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
+        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
+            Street street = streetsFromIndex.get(i);
+            if ( !pg.intersects(street.getGeometry().getEnvelope())){
+                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
+                streetsFromIndex.remove(i);
+            }
         }
 
         return streetsFromIndex;
     }
-
-    /**
-     * Get current value of id of last inserted street
-     * @return
-     */
-    public long getStreetIdSequence (){
-        return  streetIdSequence;
-    }
-
-    /**
-     * Escape special characters for SQL query
-     * @param name String to escape
-     * @return escaped string
-     */
-    private String escapeSqlString(String name) {
-        name = name.replace("'", "''");
-        return name;
-    }
-
 
     /**
      * Search for houses that have the same center geom and the same housenumber
@@ -1221,4 +1214,48 @@ public class DatabaseAddress extends ADatabaseHandler {
             Logger.e(TAG, "deleteDuplicatedHouses(): problem with query: " + sql, e);
         }
     }
+
+    /**
+     * Get reference id for specified post code. If post code is not defined
+     * then add into table of post codes
+     * @param postCode code for which want to get reference
+     * @return reference to postcode or -1 if not possible to obtaion or create postcode id
+     */
+    public int getPostCodeId (String postCode) {
+        if (postCode == null || postCode.length() == 0){
+            return -1;
+        }
+        Integer postCodeId = postCodesMap.get(postCode);
+        if (postCodeId == null){
+            postCodeId = insertPostCode (postCode);
+        }
+        return postCodeId;
+    }
+
+
+
+    /**
+     * Get current value of id of last inserted street
+     * @return
+     */
+    public int getStreetIdSequence (){
+        return  streetIdSequence;
+    }
+
+    /**
+     * Escape special characters for SQL query
+     * @param name String to escape
+     * @return escaped string
+     */
+    private String escapeSqlString(String name) {
+        name = name.replace("'", "''");
+        return name;
+    }
+
+
+    public TIntArrayList getPathStreetIds() {
+        return pathStreetIds;
+    }
+
+
 }

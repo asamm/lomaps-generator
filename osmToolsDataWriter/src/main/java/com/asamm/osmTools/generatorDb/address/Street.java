@@ -25,7 +25,7 @@ public class Street extends Storable {
     private static final String TAG = Street.class.getSimpleName();
 
     /** It's not OSM entity id > id for database */
-    private long id;
+    private int id;
 
     /** This value is set only for custom wayStreet before joined street is created
      * CAn be id of OSM way or OSM relation*/
@@ -42,6 +42,9 @@ public class Street extends Storable {
 
     /** Value of is_in tag */
     private List<String> isIn;
+
+    /** keep information if street were created from track or path */
+    private boolean isPath;
 
     private List<House> houses;
 
@@ -100,6 +103,7 @@ public class Street extends Storable {
         this.cityId = -1;
         this.cityIds = new TLongHashSet();
         this.isIn = new ArrayList<>();
+        this.isPath = false;
         this.houses = new ArrayList<>();
         this.geometry = new GeometryFactory().createMultiLineString(null);
 
@@ -127,6 +131,7 @@ public class Street extends Storable {
         for (int i=0; i < size; i++){
             cityIds.add(dr.readLong());
         }
+        isPath = dr.readBoolean();
 
         size = dr.readInt();
         houses = new ArrayList<>();
@@ -154,6 +159,8 @@ public class Street extends Storable {
         while (iterator.hasNext()){
             dw.writeLong(iterator.next());
         }
+        dw.writeBoolean(isPath);
+
         dw.writeInt(houses.size());
         for (House house : houses){
             dw.write(house.getAsBytes());
@@ -169,11 +176,11 @@ public class Street extends Storable {
     /**************************************************/
 
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -237,6 +244,14 @@ public class Street extends Storable {
         houses.add(house);
     }
 
+    public boolean isPath() {
+        return isPath;
+    }
+
+    public void setPath(boolean isPath) {
+        this.isPath = isPath;
+    }
+
     public List<House> getHouses() {
         return houses;
     }
@@ -257,9 +272,10 @@ public class Street extends Storable {
     public String toString() {
         return "Street{" +
                 "id=" + id +
-                "osmId=" + osmId +
+                ", osmId=" + osmId +
                 ", name='" + name + '\'' +
                 ", isIn=" + isIn +
+                ", isPath=" + isPath +
                 ", houses size=" + houses.size() +
                 ", geometry=" + Utils.geomToGeoJson(geometry) +
                 '}';

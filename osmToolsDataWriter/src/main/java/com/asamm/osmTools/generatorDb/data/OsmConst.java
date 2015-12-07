@@ -44,9 +44,11 @@ public class OsmConst {
         WEBSITE("website"),
         URL("url"),
 
-
         HIGHWAY("highway"),
-        BUILDING("building")
+        BUILDING("building"),
+
+        // residetials
+        LANDUSE("landuse")
 
         ;
 

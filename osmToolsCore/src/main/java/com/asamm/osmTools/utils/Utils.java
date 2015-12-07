@@ -241,4 +241,32 @@ public class Utils {
             return "UTF-8";
         }
     }
+
+    /**
+     * Write string into file
+     * @param file file to write text into
+     * @param text text to write
+     * @param append true if append text in the end
+     */
+    public static void writeStringToFile(File file, String text, boolean append) {
+
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new FileWriter(file, append));
+            writer.write(text);
+        }
+        catch (IOException e) {
+            System.err.println("writeStringToFile(), e:" + e);
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                if (writer != null)
+                    writer.close();
+            } catch (IOException e) {
+                System.err.println("writeStringToFile(), e:" + e);
+                e.printStackTrace();
+            }
+        }
+    }
 }

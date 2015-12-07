@@ -1,9 +1,6 @@
 package com.asamm.osmTools.generatorDb;
 
-import com.asamm.osmTools.generatorDb.address.Boundary;
-import com.asamm.osmTools.generatorDb.address.BoundaryFactory;
-import com.asamm.osmTools.generatorDb.address.City;
-import com.asamm.osmTools.generatorDb.address.StreetFactory;
+import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmAddress;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
@@ -12,14 +9,18 @@ import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.index.strtree.STRtree;
+import com.vividsolutions.jts.operation.union.UnaryUnionOp;
+import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.THashMap;
-import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -34,11 +35,10 @@ public class GeneratorAddress extends AGenerator {
 
 
 
-    /** All places created from node or from relations*/
+    /**
+     * All places created from nodes or from relations
+     * */
     private List<City> cities;
-
-    /** JTS in memory index of center geometries for cities*/
-    private STRtree cityCenterIndex;
 
     private List<Boundary> boundaries;
 
@@ -48,8 +48,16 @@ public class GeneratorAddress extends AGenerator {
     /** List of cities that are in the boundary*/
     private THashMap<Boundary, List<City>> citiesInBoundaryMap;
 
+    /** Ids of relation that contains information about street and houses*/
+    private TLongList streetRelations;
+
+    /** JTS in memory index of center geometries for cities*/
+    private STRtree cityCenterIndex;
+
     /** Set of method that help to create boundary objects */
-    BoundaryFactory boundaryFactory;
+    BoundaryController boundaryFactory;
+    StreetController sc;
+    HouseController hc;
 
     // output DB file
     private File outputDb;
@@ -64,12 +72,14 @@ public class GeneratorAddress extends AGenerator {
         this.outputDb = outputDb;
         this.addressDefinition = addressDefinition;
 
-        this.boundaryFactory = new BoundaryFactory(this);
-
+        this.boundaryFactory = new BoundaryController(this);
         this.cities = new ArrayList<>();
         this.boundaries = new ArrayList<>();
         this.centerCityBoundaryMap = new BiDiHashMap<>();
         this.citiesInBoundaryMap = new THashMap<>();
+        this.streetRelations = new TLongArrayList();
+
+        cityCenterIndex = new STRtree();
 
         initialize();
     }
@@ -82,6 +92,11 @@ public class GeneratorAddress extends AGenerator {
     @Override
     public void proceedData(ADataContainer dc) {
 
+        this.sc = new StreetController(dc, this);
+        this.hc = new HouseController(dc, this);
+
+        Logger.i(TAG, "=== Step 0 - testinf residential ===");
+        //createResidentialAreas(dc);
 
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
@@ -107,7 +122,7 @@ public class GeneratorAddress extends AGenerator {
         insertCitiesToDB();
 
 
-        StreetFactory sc = new StreetFactory(dc, this);
+
         // ----- Step 6 create streets from relations streets -----
         Logger.i(TAG, "=== Step 6 - create streets from relations ===");
         sc.createWayStreetFromRelations();
@@ -116,17 +131,18 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 7 - create streets from ways ===");
         sc.createWayStreetFromWays();
         Logger.i(TAG, "Create dummy streets for cities without street ===");
+        //TODO create dummy street from place=locality
         ((DatabaseAddress) db).createDummyStreets();
         ((DatabaseAddress) db).buildStreetNameIndex();
 
         // ----- step 8 create hauses ------
         Logger.i(TAG, "=== Step 8 - create houses ===");
         Logger.i(TAG, "Create houses from relations");
-        sc.createHousesFromRelations();
+        hc.createHousesFromRelations(streetRelations);
         Logger.i(TAG, "Create houses from ways");
-        sc.createHousesFromWays();
+        hc.createHousesFromWays();
         Logger.i(TAG, "Create houses from nodes");
-        sc.createHousesFromNodes();
+        hc.createHousesFromNodes();
         Logger.i(TAG, "Clear duplicated houses ");
         ((DatabaseAddress) db).deleteDuplicatedHouses();
         ((DatabaseAddress) db).buildHouseIndexes();
@@ -147,18 +163,18 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Insert streets: " + sc.timeInsertStreetSql /1000.0 + " sec" );
 
         Logger.i(TAG, "Houses" );
-        Logger.i(TAG, "Create parse houses: " + sc.timeCreateParseHouses /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house: " + sc.timeFindStreetForHouse /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using name from DB: " + sc.timeFindStreetSelectFromDB /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using similar name: " + sc.timeFindStreetSimilarName /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using the nearest: " + sc.timeFindStreetNearest /1000.0 + " sec" );
+        Logger.i(TAG, "Create parse houses: " + hc.timeCreateParseHouses /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house: " + hc.timeFindStreetForHouse /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using name from DB: " + hc.timeFindStreetSelectFromDB /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using similar name: " + hc.timeFindStreetSimilarName /1000.0 + " sec" );
+        Logger.i(TAG, "Find street for house using the nearest: " + hc.timeFindStreetNearest /1000.0 + " sec" );
 
         Logger.i(TAG, "NUm of loaded houses as byte[] to update streets: " + ((DatabaseAddress) db).housesPreparedAsBlobForStreets );
 
-        Logger.i(TAG, "Number of found streets for houses using sql select, : " + sc.numOfStreetForHousesUsingSqlSelect);
+        Logger.i(TAG, "Number of found streets for houses using sql select, : " + hc.numOfStreetForHousesUsingSqlSelect);
 
-        Logger.i(TAG, "Number of removed houses - not able to find street, : " + sc.removedHousesWithDefinedPlace);
-        Logger.i(TAG, "Number of removed houses with defined addr:street name, : " + sc.removedHousesWithDefinedStreetName);
+        Logger.i(TAG, "Number of removed houses - not able to find street, : " + hc.removedHousesWithDefinedPlace);
+        Logger.i(TAG, "Number of removed houses with defined addr:street name, : " + hc.removedHousesWithDefinedStreetName);
     }
 
 
@@ -460,21 +476,126 @@ public class GeneratorAddress extends AGenerator {
 
     private void updateStreetsWriteHouses() {
         DatabaseAddress databaseAddress = getDatabaseAddress();
-        long lastStreetId = databaseAddress.getStreetIdSequence();
+        TIntArrayList pathStreetIds = databaseAddress.getPathStreetIds();
+        int lastStreetId = databaseAddress.getStreetIdSequence();
 
-        for (long i = 0; i <= lastStreetId; i++ ){
+        for (int id = 0; id <= lastStreetId; id++ ){
 
-            byte[] data = databaseAddress.selectHousesInStreet(i);
-            databaseAddress.updateStreetSetHouseBlob(i, data);
+            byte[] data = databaseAddress.selectHousesInStreet(id);
+
+            if (data == null || data.length == 0){
+                if (pathStreetIds.contains(id)){
+                    // it path or track without any house > remove this street
+                    // TODO improve compare distance form the city
+
+                    databaseAddress.deleteStreet(id);
+                }
+                continue;
+            }
+
+            databaseAddress.updateStreetSetHouseBlob(id, data);
         }
     }
 
 
+    /**************************************************/
+    /*  TEMPORARY
+    /**************************************************/
 
 
-    /**************************************************/
-    /*             Other tools
-    /**************************************************/
+    private void createResidentialAreas(ADataContainer dc) {
+
+        List<Geometry> polygons = new ArrayList<>();
+
+        List<Geometry> polytmp = new ArrayList<>();
+
+        TLongList wayIds = dc.getWayIds();
+        for (int i=0, size = wayIds.size(); i < size; i++) {
+            Way way = dc.getWayFromCache(wayIds.get(i));
+            Polygon poly = parseForResidential(dc, way);
+            if (poly == null || !poly.isValid()){
+                continue;
+            }
+
+            polytmp.add(poly);
+
+            if (polytmp.size() > 10000){
+                //UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polytmp);
+                //Geometry geomUnion = unaryUnionOp.union();
+                //polygons.add(DouglasPeuckerSimplifier.simplify(geomUnion, 0.0001));
+                //polytmp.clear();
+            }
+        }
+
+        // add rest of building into joined polygons
+        polygons.addAll(polytmp);
+        long start = System.currentTimeMillis();
+        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polygons);
+        Geometry finalGeom = unaryUnionOp.union();
+        Logger.i(TAG, "Union takes: " + (System.currentTimeMillis() - start) / 1000.0);
+
+        int size = finalGeom.getNumGeometries();
+
+
+
+        double minArea =  Utils.metersToDeg(300) *  Utils.metersToDeg(300);
+        List<Polygon> residentialPolygons = new ArrayList<>();
+
+        for (int i=0; i < size; i++){
+            Polygon polygon = (Polygon) finalGeom.getGeometryN(i);
+
+            if (polygon.getArea() > minArea ){
+                residentialPolygons.add(polygon);
+            }
+        }
+
+        GeometryFactory geometryFactory = new GeometryFactory();
+        MultiPolygon multiPoly = geometryFactory.createMultiPolygon(residentialPolygons.toArray(new Polygon[0]));
+
+        Geometry geom = DouglasPeuckerSimplifier.simplify(multiPoly, 0.0001);
+
+        com.asamm.osmTools.utils.Utils.writeStringToFile(new File("residential.geojson"),Utils.geomToGeoJson(geom) ,false);
+
+    }
+
+
+    private Polygon parseForResidential (ADataContainer dc, Way way){
+
+        float bufferM = 100;
+        Polygon polygon = null;
+
+        String landuse = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.LANDUSE);
+        String building = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.BUILDING);
+        if (Utils.objectEquals(landuse, "residential")){
+            WayEx wayEx = dc.getWay(way.getId());
+            if (wayEx == null || !wayEx.isValid()){
+                return null;
+            }
+            if (wayEx.isClosed()){
+                polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+            }
+        }
+
+        if (building != null) {
+            WayEx wayEx = dc.getWay(way.getId());
+            if (wayEx == null || !wayEx.isValid()) {
+                return null;
+            }
+            if (wayEx.isClosed()){
+                polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+            }
+            double bufferD = Utils.metersToDeg(bufferM);
+
+            polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+            if (polygon != null){
+                polygon = (Polygon) polygon.buffer(bufferD);
+            }
+        }
+        return polygon;
+    }
+
+
+
 
     public List<City> getClosestCities (Point centerPoint, int minNumber){
 
@@ -497,7 +618,6 @@ public class GeneratorAddress extends AGenerator {
 
         return cityFromIndex;
     }
-
 
 
     /**************************************************/
@@ -543,5 +663,9 @@ public class GeneratorAddress extends AGenerator {
 
     public DatabaseAddress getDatabaseAddress (){
         return (DatabaseAddress) db;
+    }
+
+    public TLongList getStreetRelations() {
+        return streetRelations;
     }
 }
