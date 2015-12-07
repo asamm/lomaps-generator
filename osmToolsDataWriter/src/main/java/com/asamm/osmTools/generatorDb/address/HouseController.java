@@ -10,8 +10,12 @@ import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.linearref.LengthIndexedLine;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
+import gnu.trove.list.TLongList;
+import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
+import javax.rmi.CORBA.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -19,12 +23,28 @@ import java.util.regex.Pattern;
 
 /**
  * Created by voldapet on 2015-11-05 .
- * Set of features that
+ *
+ * Set of methods that create house object. It consist in parsing raw OSM data, finding proper street for house
+ *
  */
-public class HouseFactory {
+public class HouseController {
 
 
-    private static final String TAG = HouseFactory.class.getSimpleName();
+    private static final String TAG = HouseController.class.getSimpleName();
+
+    public long timeFindStreetForHouse = 0;
+    public long timeFindStreetAroundByName = 0;
+    public long timeFindStreetSelectFromDB = 0;
+    public long timeFindStreetSimilarName = 0;
+    public long timeFindStreetAroundDummy = 0;
+    public long timeFindStreetNearest = 0;
+    public long timeCreateParseHouses = 0;
+
+    // number of houses where we was not able to find proper street
+    public int removedHousesWithDefinedPlace = 0;
+    public int removedHousesWithDefinedStreetName = 0;
+    public int numOfStreetForHousesUsingSqlSelect = 0;
+
 
 
     ADataContainer dc;
@@ -36,7 +56,12 @@ public class HouseFactory {
     GeometryFactory geometryFactory;
 
 
-    public  HouseFactory (ADataContainer dc, GeneratorAddress ga) {
+    /**
+     * Cached last street because often goes houses from the same street in sequence
+     * */
+    Street lastHouseStreet = new Street();
+
+    public HouseController(ADataContainer dc, GeneratorAddress ga) {
         this.dc = dc;
         this.ga = ga;
         this.databaseAddress = ga.getDatabaseAddress();
@@ -45,11 +70,148 @@ public class HouseFactory {
     }
 
     /**
+     * Iterate thourh @link{#streetRelations} and create houses from members
+     * @param streetRelations
+     */
+    public void createHousesFromRelations (TLongList streetRelations){
+
+        for (int i=0, size = streetRelations.size(); i < size; i++) {
+
+            long relationId = streetRelations.get(i);
+
+            Relation relation = dc.getRelationFromCache(relationId);
+            if (relation == null) {
+                continue;
+            }
+            // name from relation tags if not success than try to obtain it from way members or from houses
+            String name = OsmUtils.getStreetName(relation);
+
+            List<House> houses = new ArrayList<>();
+            for (RelationMember rm : relation.getMembers()){
+
+                if (name == null && rm.getMemberType() == EntityType.Way ) {
+                    Way way = dc.getWayFromCache(rm.getMemberId());
+                    if (name != null) {
+                        // if name was not obtained from relation try it from the realtion member ways
+                        name = OsmUtils.getStreetName(way);
+                    }
+                }
+
+                String role = rm.getMemberRole();
+                if (role.equals("house") || role.equals("address")){
+                    Entity entityH = null;
+                    if (rm.getMemberType() == EntityType.Way) {
+                        entityH = dc.getWayFromCache(rm.getMemberId());
+                    }
+                    else if (rm.getMemberType() == EntityType.Node){
+                        entityH = dc.getNodeFromCache(rm.getMemberId());
+                    }
+
+                    if (entityH == null){
+                        Logger.i(TAG, "createHousesFromRelations() - Can not get address relation member from cache. " +
+                                "Relation: " + relationId + ", relation member: " + rm.getMemberId());
+                        continue;
+                    }
+
+                    long start = System.currentTimeMillis();
+                    houses.addAll(createHouse(entityH));
+                    timeCreateParseHouses += System.currentTimeMillis() - start;
+                }
+            }
+
+            // try to create house from relation itself, eq: https://www.openstreetmap.org/relation/1857530
+
+            long start = System.currentTimeMillis();
+            houses.addAll(createHouse(relation));
+            timeCreateParseHouses += System.currentTimeMillis() - start;
+
+            // test if new houses has defined the street name
+            for (House house : houses) {
+
+                start = System.currentTimeMillis();
+                Street street = findStreetForHouse(house);
+                timeFindStreetForHouse += System.currentTimeMillis() - start;
+                if (street == null){
+
+                    // try to search street again but set the name parse from relation
+                    if (name != null && name.length() > 0) {
+                        house.setStreetName(name);
+                        start = System.currentTimeMillis();
+                        street = findStreetForHouse(house);
+                        timeFindStreetForHouse += System.currentTimeMillis() - start;
+                        if (street == null){
+                            //Logger.i(TAG, "Can not find street for house: " + house.toString());
+                            continue;
+                        }
+                    }
+                }
+                if (street != null){
+                    databaseAddress.insertHouse(street, house);
+                }
+            }
+        }
+    }
+
+    public void createHousesFromWays () {
+
+        TLongList wayIds = dc.getWayIds();
+        for (int i=0, size = wayIds.size(); i < size; i++) {
+            long wayId = wayIds.get(i);
+            WayEx way = dc.getWay(wayId);
+            long start = System.currentTimeMillis();
+            List<House> houses = createHouse(way);
+            timeCreateParseHouses += System.currentTimeMillis() - start;;
+
+            for(House house : houses) {
+
+                start = System.currentTimeMillis();
+                Street street = findStreetForHouse(house);
+                timeFindStreetForHouse += System.currentTimeMillis() - start;
+                if (street == null){
+                    //Logger.w(TAG, "createHousesFromWays(): Can not find street for house: " + house.toString());
+                    continue;
+                }
+
+                // insert house into db
+                databaseAddress.insertHouse(street, house);
+            }
+        }
+    }
+
+    public void createHousesFromNodes () {
+        TLongList nodeIds = dc.getNodeIds();
+        for (int i=0, size = nodeIds.size(); i < size; i++) {
+            long nodeId = nodeIds.get(i);
+            Node node = dc.getNode(nodeId);
+
+            long start = System.currentTimeMillis();
+            List<House> houses = createHouse(node);
+            timeCreateParseHouses += System.currentTimeMillis() - start;
+
+            for(House house : houses) {
+
+                start = System.currentTimeMillis();
+                Street street = findStreetForHouse(house);
+                timeFindStreetForHouse += System.currentTimeMillis() - start;
+                if (street == null){
+                    //Logger.w(TAG, "createHousesFromNodes(): Can not find street for house: " + house.toString());
+                    continue;
+                }
+
+                // insert house into db
+                databaseAddress.insertHouse(street, house);
+            }
+        }
+    }
+
+
+
+    /**
      * Crate house object from entity
      * @param entity way, node or relation that contain information about address
      * @return house or null if some tag is not valid or is not possible to obtain center point
      */
-    public List<House> createHouse (Entity entity) {
+    private List<House> createHouse (Entity entity) {
 
         List<House> houses = new ArrayList<>();
 
@@ -66,7 +228,6 @@ public class HouseFactory {
             // for some reason is not able to parse entity and create house obj > return empty array
             return houses;
         }
-
 
         // SOME RUSSIAN ADR HAS TWO STREETS IN ONE BUILDING CREATE TWO HOUSES
         // http://wiki.openstreetmap.org/wiki/Proposed_features/AddrN
@@ -101,6 +262,11 @@ public class HouseFactory {
             return null;
         }
 
+        if (houseName == null || houseName.length() == 0){
+            // for house where is not defined the addr:housename try to get simple name. Useful for public buildings
+            houseName = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.NAME);
+        }
+
         String postCode = parsePostCode(entity);
         int postCodeId = databaseAddress.getPostCodeId(postCode);
         Point center = getCenter(entity, dc);
@@ -119,6 +285,193 @@ public class HouseFactory {
         house.setPostCodeId(postCodeId);
 
         return house;
+    }
+
+    /**************************************************/
+    /*                  HOUSE UTILS
+    /**************************************************/
+
+    /**
+     * Try to find appropriate street for House
+     * @param house for that we want to find street
+     * @return the best way for house or null if no street was found
+     */
+    private Street findStreetForHouse (House house){
+
+        Logger.i(TAG, "*Looking for best street for house: " + house.toString());
+
+        String addrStreetName = house.getStreetName();
+        String addrPlace = house.getPlace();
+        String addrCity = house.getCityName();
+
+        Street nearestStreet = null;
+
+        if (addrStreetName.length() > 0){
+
+            nearestStreet = findStreetByAddrStreetName(house);
+        }
+        else  if ( addrPlace.length() > 0 ){
+            // street name is not defined but we have place name. This is common for villages
+            nearestStreet = findStreetByAddrPlaceName (house);
+        }
+        else {
+            // House have not defined the streetName nor the place name > find the closest street
+            Logger.i(TAG, "Looking for nearest street for house: ");
+            long start = System.currentTimeMillis();
+            List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 7);
+            streetsAround.addAll(databaseAddress.getDummyStreetsAround(house.getCenter(), 7));
+
+            double minDistance = Float.MAX_VALUE;
+            Point houseCenter = house.getCenter();
+            for (Street street : streetsAround) {
+                if (nearestStreet == null){
+                    nearestStreet =  street;
+                }
+
+                double distance = DistanceOp.distance(houseCenter, street.getGeometry());
+                if (distance < minDistance){
+                    minDistance = distance;
+                    nearestStreet = street;
+                }
+            }
+            timeFindStreetNearest += System.currentTimeMillis() - start;
+        }
+
+        if (nearestStreet == null && addrStreetName.length() > 0 ){
+
+//            Polygon circle = Utils.createCircle(house.getCenter().getCoordinate(), 100, 10);
+//            if ( !circle.intersects(nearestStreet.getGeometry())) {
+//                databaseAddress.insertRemovedHouse(house);
+//                removedHousesWithDefinedStreetName++;
+//                return null;
+//            }
+
+            databaseAddress.insertRemovedHouse(house);
+            removedHousesWithDefinedStreetName++;
+
+            // house has defined the street name but can not FIND such street
+
+        }
+
+//        Logger.i(TAG, "### Nearest street: " +
+//                "\n House: " + house.toString() + " \n Street: " + nearestStreet.toString());
+        // this street has not defined the
+        if (nearestStreet != null) {
+            lastHouseStreet = nearestStreet;
+        }
+        return nearestStreet;
+    }
+
+    private Street findStreetByAddrPlaceName(House house) {
+
+        String addrPlaceName = house.getPlace();
+        Logger.i(TAG, "Looking for best street for house by addrPlaceName: " + addrPlaceName);
+
+//        // test the last founded street as first
+//        if (lastHouseStreet != null && lastHouseStreet.getName().equalsIgnoreCase(addrPlaceName)){
+//           return lastHouseStreet;
+//        }
+
+        // select streets around and compare their name with house placeName
+        List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 20);
+        for (Street street : streetsAround) {
+            //Logger.i(TAG, "Street to check" + street.toString());
+            if (street.getName().equalsIgnoreCase(addrPlaceName)){
+                return street;
+            }
+        }
+
+        List<Street> dummyStreetsAround = databaseAddress.getDummyStreetsAround(house.getCenter(), 20);
+        for (Street street : dummyStreetsAround) {
+            //Logger.i(TAG, "Street to check" + street.toString());
+            if (street.getName().equalsIgnoreCase(addrPlaceName)){
+//                    Logger.i(TAG, "findStreetForHouse() - Use the dummy street with the same name as place" +
+//                            "\n place: " + addrPlace + " , city: " + addrCity + ", street: " + street.toString());
+                return street;
+            }
+        }
+
+        //no dummy streets fits our needs try to find the city with same name as house placename
+        List<City> closestCities = ga.getClosestCities(house.getCenter(), 30);
+        for (City city :  closestCities) {
+            if (city.getName().equalsIgnoreCase(addrPlaceName)){
+                // TODO test if any dummy street with name exist but it should be ensured using previous dummy streets around
+                Street streetToInsert = databaseAddress.createDummyStreet(city.getName(), city.getOsmId(), city.getCenter());
+                long id = databaseAddress.insertStreet(streetToInsert, true);
+
+//                Logger.i(TAG, "findStreetForHouse(): Create new dummy street for found city: " + city.getName() +
+//                        "\n new street: " + streetToInsert.toString() +
+//                        "\n house: " + house.toString());
+                return streetToInsert;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find the corresponding street for house based on place name
+     * @param house
+     * @return
+     */
+    private Street findStreetByAddrStreetName(House house) {
+
+        String addrStreetName = house.getStreetName();
+        Logger.i(TAG, "Looking for best street for house by addrStreetName: " + addrStreetName);
+
+//        // test the last founded street as first
+//        if (lastHouseStreet != null && lastHouseStreet.getName().equalsIgnoreCase(addrStreetName)){
+//            if
+//            return lastHouseStreet;
+//        }
+
+        List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 15);
+
+        for (Street street : streetsAround) {
+            Logger.i(TAG, "Street to check" + street.toString());
+            if (street.getName().equalsIgnoreCase(addrStreetName)){
+                return street;
+            }
+        }
+        // was not able to find the nereast street with the same name > try to select by name from addressdb
+        if (house.getCityName().length() > 0 ){
+
+            long start = System.currentTimeMillis();
+            Street street = databaseAddress.selectStreetByNames(house.getCityName(), addrStreetName);
+            timeFindStreetSelectFromDB += System.currentTimeMillis() - start;
+            if (street != null){
+                double distance = Utils.getDistance(house.getCenter(), street.getGeometry().getCentroid());
+                if (distance < 2500){
+                    numOfStreetForHousesUsingSqlSelect++;
+                    return street;
+                }
+            }
+        }
+
+        // house has defined the name but can not find the street with the same name > check the similar name
+        long startSim = System.currentTimeMillis();
+        Street maxSimilarStreet = null;
+        double maxSimilarityScore = 0;
+        for (Street street : streetsAround) {
+            if (maxSimilarStreet == null){
+                maxSimilarStreet =  street;
+            }
+
+            double similarity = StringUtils.getJaroWinklerDistance(addrStreetName, street.getName());
+            if (similarity > maxSimilarityScore){
+                maxSimilarityScore = similarity;
+                maxSimilarStreet = street;
+            }
+        }
+
+        if (maxSimilarityScore > 0.9){
+//                Logger.i(TAG, "Sim: "+maxSimilarityScore+" For house "+house.getOsmId() +" with streetname: " + addrStreetName +
+//                " was, found street:  " + maxSimilarStreet.toString());
+            timeFindStreetSimilarName += System.currentTimeMillis() - startSim;
+            return maxSimilarStreet;
+        }
+
+        return null;
     }
 
     /**************************************************/

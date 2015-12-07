@@ -15,6 +15,8 @@ import java.util.zip.Deflater;
  */
 public class Utils {
 
+    private static final float SPHERE_RADIUS =  6372800;
+
     /**
      * Compare object using equals.
      * @param a
@@ -72,6 +74,10 @@ public class Utils {
      */
     public static byte[] compressByteArray (byte[] input){
 
+        if (input == null || input.length == 0){
+            return null;
+        }
+
         Deflater compressor = new Deflater();
         compressor.setLevel(Deflater.BEST_COMPRESSION);
 
@@ -108,7 +114,7 @@ public class Utils {
         //  for how to see: http://www.movable-type.co.uk/scripts/latlong.html
         // use simplified version that use OsmAnd
 
-        double R = 6372.8; // for haversine use R = 6372.8 km instead of 6371 km
+        // for haversine use R = 6372.8 km instead of 6371 km
         double dLat = toRadians(lat2-lat1);
         double dLon = toRadians(lon2-lon1);
         double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -117,7 +123,7 @@ public class Utils {
         //double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         //return R * c * 1000;
         // simplyfy haversine:
-        return (2 * R * 1000 * Math.asin(Math.sqrt(a)));
+        return (2 * SPHERE_RADIUS* Math.asin(Math.sqrt(a)));
     }
 
     /**
@@ -141,13 +147,9 @@ public class Utils {
 
     public static Coordinate offset (Coordinate coordinate, double offsetY, double offsetX ) {
 
-        //Earth’s radius, sphere
-        float R=6372800;
-
-
         //Coordinate offsets in radians
-        double dLat = offsetY / R;
-        double dLon = offsetX / (R*Math.cos(Math.PI*coordinate.y/180));
+        double dLat = offsetY / SPHERE_RADIUS;
+        double dLon = offsetX / (SPHERE_RADIUS*Math.cos(Math.PI*coordinate.y/180));
 
         //OffsetPosition, decimal degrees
         double latO = coordinate.y + dLat * 180/Math.PI;
@@ -162,12 +164,9 @@ public class Utils {
 
     public static Polygon createCircle (Coordinate center, double distance, int numPoints){
 
-        //Earth’s radius, sphere
-        float R=6372800;
-
         //Coordinate offsets (from center) in radians
-        double dLat = distance / R;
-        double dLon = distance / (R*Math.cos(Math.PI * center.y / 180));
+        double dLat = distance / SPHERE_RADIUS;
+        double dLon = distance / (SPHERE_RADIUS*Math.cos(Math.PI * center.y / 180));
 
         dLat = toDeg(dLat);
         dLon = toDeg(dLon);
@@ -191,17 +190,25 @@ public class Utils {
      * @return distance in degrees in  dX and dY (dLon, dLat)
      */
     public static double[] metersToDlatDlong (Coordinate center, double distance){
-        //Earth’s radius, sphere
-        float R=6372800;
 
         //Coordinate offsets (from center) in radians
-        double dLat = distance / R;
-        double dLon = distance / (R*Math.cos(Math.PI * center.y / 180));
+        double dLat = distance / SPHERE_RADIUS;
+        double dLon = distance / (SPHERE_RADIUS*Math.cos(Math.PI * center.y / 180));
 
         dLat = toDeg(dLat);
         dLon = toDeg(dLon);
 
         return new double[]{dLon,dLat};
+    }
+
+    /**
+     * Don't use it for some precise conversion. It's very  very inacurate it does not respect the
+     * azimut of "line"
+     * @param meters distance in meters
+     * @return distance in degrees
+     */
+    public static double metersToDeg (double meters){
+        return meters * 180 / (6378000 * Math.PI);
     }
 
 
@@ -228,5 +235,13 @@ public class Utils {
             return false;
         }
         return true;
+    }
+
+    public static short intToShort (int number){
+
+        if (number > Short.MAX_VALUE || number < Short.MIN_VALUE) {
+            throw new IllegalArgumentException("Can not cast value to short, value: " + number);
+        }
+        return (short) number;
     }
 }

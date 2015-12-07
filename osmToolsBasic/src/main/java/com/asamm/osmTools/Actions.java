@@ -415,10 +415,10 @@ class Actions {
 //        cmdGen.execute();
 
         // Address generation
-        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
-        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
-        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
-        cmdAddressSimpl.execute();
+//        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
+//        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
+//        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
+//        cmdAddressSimpl.execute();
 
         CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
         cmdAddres.addGeneratorAddress();
