@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
@@ -60,6 +61,19 @@ public class House extends Storable{
         setPostCode(postCode);
         this.center = center;
     }
+
+//    public House (HouseDTO houseDTO, Coordinate streetFirstNode){
+//
+//        double lon = (streetFirstNode.x + houseDTO.getLon() * HouseDTO.COORDINATE_POW);
+//        double lat = (streetFirstNode.y + houseDTO.getLat() * HouseDTO.COORDINATE_POW);
+//
+//        setNumber(houseDTO.getNumber());
+//        setName(houseDTO.getName());
+//        setPostCode(houseDTO.getPostCodeId());
+//
+//
+//
+//    }
 
 
     /**************************************************/

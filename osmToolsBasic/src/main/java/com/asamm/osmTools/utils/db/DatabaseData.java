@@ -1,6 +1,6 @@
 package com.asamm.osmTools.utils.db;
 
-import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
+import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.utils.Logger;
 import org.sqlite.SQLiteConfig;
 
@@ -8,8 +8,8 @@ import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
 import java.sql.*;
 
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.COL_ID;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.COL_ID;
 
 /**
  * Created by voldapet on 2015-10-27 .
@@ -69,10 +69,10 @@ public class DatabaseData {
     public void createTables () {
 
         try {
-            String sql = "DROP TABLE IF EXISTS " + DbAddressPoiConst.TN_META_DATA;
+            String sql = "DROP TABLE IF EXISTS " + LoMapsDbConst.TN_META_DATA;
             executeStatement(sql);
 
-            sql = "CREATE TABLE IF NOT EXISTS " + DbAddressPoiConst.TN_META_DATA + " ( ";
+            sql = "CREATE TABLE IF NOT EXISTS " + LoMapsDbConst.TN_META_DATA + " ( ";
             sql += COL_ID + " TEXT PRIMARY KEY,";
             sql += COL_VALUE + " TEXT)";
             executeStatement(sql);

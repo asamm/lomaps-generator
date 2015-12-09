@@ -156,10 +156,10 @@ public class BoundaryController {
         // try to recognize type of place (its only for place relation/ways
         City.CityType cityType = City.CityType.createFromPlaceValue(place);
 
-        boundary.setAdminLevel(extractBoundaryAdminLevel(entity));
+        boundary.setAdminLevel(parseBoundaryAdminLevel(entity));
         boundary.setShortName(OsmUtils.getTagValue(entity, OSMTagKey.SHORT_NAME));
         boundary.setCityType(cityType);
-        boundary.setNamesInternational(OsmUtils.getNamesInternational(entity));
+        boundary.setNamesInternational(OsmUtils.getNamesLangMutation(entity, bName));
 
 //        if (hasChildRelation){
 //            Logger.i(TAG, "Administrative/place entity id: " + entity.getId() +" has other relation as member. " +
@@ -171,13 +171,17 @@ public class BoundaryController {
 
         //Logger.i(TAG, "Administrative/place entity: " + boundary.toString());
 
-
         boundaryGeomIndex.insert(boundary.getGeom().getEnvelopeInternal(), boundary);
         return boundary;
     }
 
-
-    private int extractBoundaryAdminLevel(Entity entity) {
+    /**
+     * Parse the tag that contains information about admin level
+     *
+     * @param entity entity to get admin level tag value
+     * @return admin level value or -1 if admin level is not defined or value is not integer
+     */
+    private int parseBoundaryAdminLevel(Entity entity) {
 
         int adminLevel = -1;
         try {

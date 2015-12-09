@@ -298,7 +298,7 @@ public class HouseController {
      */
     private Street findStreetForHouse (House house){
 
-        Logger.i(TAG, "*Looking for best street for house: " + house.toString());
+        //Logger.i(TAG, "*Looking for best street for house: " + house.toString());
 
         String addrStreetName = house.getStreetName();
         String addrPlace = house.getPlace();
@@ -316,7 +316,7 @@ public class HouseController {
         }
         else {
             // House have not defined the streetName nor the place name > find the closest street
-            Logger.i(TAG, "Looking for nearest street for house: ");
+            //Logger.i(TAG, "Looking for nearest street for house: ");
             long start = System.currentTimeMillis();
             List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 7);
             streetsAround.addAll(databaseAddress.getDummyStreetsAround(house.getCenter(), 7));
@@ -362,52 +362,6 @@ public class HouseController {
         return nearestStreet;
     }
 
-    private Street findStreetByAddrPlaceName(House house) {
-
-        String addrPlaceName = house.getPlace();
-        Logger.i(TAG, "Looking for best street for house by addrPlaceName: " + addrPlaceName);
-
-//        // test the last founded street as first
-//        if (lastHouseStreet != null && lastHouseStreet.getName().equalsIgnoreCase(addrPlaceName)){
-//           return lastHouseStreet;
-//        }
-
-        // select streets around and compare their name with house placeName
-        List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 20);
-        for (Street street : streetsAround) {
-            //Logger.i(TAG, "Street to check" + street.toString());
-            if (street.getName().equalsIgnoreCase(addrPlaceName)){
-                return street;
-            }
-        }
-
-        List<Street> dummyStreetsAround = databaseAddress.getDummyStreetsAround(house.getCenter(), 20);
-        for (Street street : dummyStreetsAround) {
-            //Logger.i(TAG, "Street to check" + street.toString());
-            if (street.getName().equalsIgnoreCase(addrPlaceName)){
-//                    Logger.i(TAG, "findStreetForHouse() - Use the dummy street with the same name as place" +
-//                            "\n place: " + addrPlace + " , city: " + addrCity + ", street: " + street.toString());
-                return street;
-            }
-        }
-
-        //no dummy streets fits our needs try to find the city with same name as house placename
-        List<City> closestCities = ga.getClosestCities(house.getCenter(), 30);
-        for (City city :  closestCities) {
-            if (city.getName().equalsIgnoreCase(addrPlaceName)){
-                // TODO test if any dummy street with name exist but it should be ensured using previous dummy streets around
-                Street streetToInsert = databaseAddress.createDummyStreet(city.getName(), city.getOsmId(), city.getCenter());
-                long id = databaseAddress.insertStreet(streetToInsert, true);
-
-//                Logger.i(TAG, "findStreetForHouse(): Create new dummy street for found city: " + city.getName() +
-//                        "\n new street: " + streetToInsert.toString() +
-//                        "\n house: " + house.toString());
-                return streetToInsert;
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Find the corresponding street for house based on place name
@@ -417,18 +371,13 @@ public class HouseController {
     private Street findStreetByAddrStreetName(House house) {
 
         String addrStreetName = house.getStreetName();
-        Logger.i(TAG, "Looking for best street for house by addrStreetName: " + addrStreetName);
 
-//        // test the last founded street as first
-//        if (lastHouseStreet != null && lastHouseStreet.getName().equalsIgnoreCase(addrStreetName)){
-//            if
-//            return lastHouseStreet;
-//        }
+        if (addrStreetName.equals("Kunčí")){
+            Logger.i(TAG, "Looking for best street for house by addrStreetName: " + addrStreetName);
+        }
 
         List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 15);
-
         for (Street street : streetsAround) {
-            Logger.i(TAG, "Street to check" + street.toString());
             if (street.getName().equalsIgnoreCase(addrStreetName)){
                 return street;
             }
@@ -440,7 +389,11 @@ public class HouseController {
             Street street = databaseAddress.selectStreetByNames(house.getCityName(), addrStreetName);
             timeFindStreetSelectFromDB += System.currentTimeMillis() - start;
             if (street != null){
-                double distance = Utils.getDistance(house.getCenter(), street.getGeometry().getCentroid());
+                Point streetCentroid = street.getGeometry().getCentroid();
+                if ( !streetCentroid.isValid()){
+                    streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
+                }
+                double distance = Utils.getDistance(house.getCenter(), streetCentroid);
                 if (distance < 2500){
                     numOfStreetForHousesUsingSqlSelect++;
                     return street;
@@ -473,6 +426,76 @@ public class HouseController {
 
         return null;
     }
+
+    private Street findStreetByAddrPlaceName(House house) {
+
+        String addrPlaceName = house.getPlace();
+
+        // select streets around and compare their name with house placeName
+        List<Street> streetsAround = databaseAddress.getStreetsAround(house.getCenter(), 20);
+        for (Street street : streetsAround) {
+            //Logger.i(TAG, "Street to check" + street.toString());
+            if (street.getName().equalsIgnoreCase(addrPlaceName)){
+                return street;
+            }
+        }
+
+        List<Street> dummyStreetsAround = databaseAddress.getDummyStreetsAround(house.getCenter(), 20);
+        for (Street street : dummyStreetsAround) {
+
+            //Logger.i(TAG, "Street to check" + street.toString());
+            if (addrPlaceName.equals("Kunčí")){
+                Logger.i(TAG, "Dummy Street to check" + street.toString());
+            }
+            if (street.getName().equalsIgnoreCase(addrPlaceName)){
+//                    Logger.i(TAG, "findStreetForHouse() - Use the dummy street with the same name as place" +
+//                            "\n place: " + addrPlace + " , city: " + addrCity + ", street: " + street.toString());
+                return street;
+            }
+        }
+
+        // TRY TO SELECT DUMMY BY NAME
+
+        long start = System.currentTimeMillis();
+        Street street = databaseAddress.selectStreetByNames(addrPlaceName, addrPlaceName);
+        timeFindStreetSelectFromDB += System.currentTimeMillis() - start;
+        if (street != null){
+            Point streetCentroid = street.getGeometry().getCentroid();
+            if ( !streetCentroid.isValid()){
+                streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
+            }
+            double distance = Utils.getDistance(house.getCenter(), streetCentroid);
+                Logger.i(TAG, "Select street by name from DB: " + street.toString());
+                Logger.i(TAG, "Distance: " + distance);
+
+            if (distance < 4500){
+                numOfStreetForHousesUsingSqlSelect++;
+                return street;
+            }
+
+        }
+
+        //no dummy streets fits our needs try to find the city with same name as house placename
+        List<City> closestCities = ga.getClosestCities(house.getCenter(), 30);
+        for (City city :  closestCities) {
+            if (city.getName().equalsIgnoreCase(addrPlaceName)){
+                // TODO test if any dummy street with name exist but it should be ensured using previous dummy streets around
+                Street streetToInsert = databaseAddress.createDummyStreet(city.getName(), city.getOsmId(), city.getCenter());
+                long id = databaseAddress.insertStreet(streetToInsert, true);
+
+                if (addrPlaceName.equals("Kunčí")){
+                         Logger.i(TAG, "findStreetForHouse(): Create new dummy street for found city: " + city.getName() +
+                        "\n new street: " + streetToInsert.toString() +
+                        "\n house: " + house.toString());
+                }
+
+                return streetToInsert;
+            }
+        }
+
+        return null;
+    }
+
 
     /**************************************************/
     /*                  INTERPOLATION UTILS

@@ -116,9 +116,6 @@ public class StreetController {
                 isInList = getIsInList(relation);
             }
 
-            if (name == null) {
-                continue;
-            }
             // create street geom
             MultiLineString mls = createStreetGeom(relation);
 
@@ -136,7 +133,13 @@ public class StreetController {
             List<City> cities = findCitiesForStreet(wayStreet);
             wayStreet.addCityIds(cities);
 
-            dc.addWayStreet(wayStreet);
+
+            if (name == null || name.length() == 0) {
+                dc.addWayStreetUnnamed(wayStreet);
+            }
+            else {
+                dc.addWayStreet(wayStreet);
+            }
         }
     }
 

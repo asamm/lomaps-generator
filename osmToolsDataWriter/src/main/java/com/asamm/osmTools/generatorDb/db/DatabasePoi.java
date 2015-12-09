@@ -5,7 +5,7 @@ import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.utils.Logger;
 
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 
 import java.io.File;
 import java.sql.PreparedStatement;

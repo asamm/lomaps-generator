@@ -23,9 +23,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.COL_ID;
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.TN_STREET_IN_CITIES;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 
 public class DatabaseAddress extends ADatabaseHandler {
 
@@ -233,9 +231,6 @@ public class DatabaseAddress extends ADatabaseHandler {
             executeStatement(sql);
 
             sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES;
-            executeStatement(sql);
-
-            sql = "DROP VIEW IF EXISTS  "+ VIEW_HOUSES;
             executeStatement(sql);
 
             sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES_REMOVED;
@@ -1142,15 +1137,15 @@ public class DatabaseAddress extends ADatabaseHandler {
             distance = distance * 2;
             searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
         }
-
-        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
-        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
-            Street street = streetsFromIndex.get(i);
-            if ( !pg.intersects(street.getGeometry().getEnvelope())){
-                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
-                streetsFromIndex.remove(i);
-            }
-        }
+//
+//        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
+//        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
+//            Street street = streetsFromIndex.get(i);
+//            if ( !pg.intersects(street.getGeometry().getEnvelope())){
+//                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
+//                streetsFromIndex.remove(i);
+//            }
+//        }
         return streetsFromIndex;
     }
 

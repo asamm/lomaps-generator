@@ -104,6 +104,16 @@ public class DataContainerHdd extends ADataContainer {
         return dbData.selectWayStreets(hash);
     }
 
+    @Override
+    protected void insertWayStreetUnnamedToCache(Street street) {
+        dbData.insertWayStreetUnnamed (street);
+    }
+
+    @Override
+    public Street getWayStreetsUnnamedFromCache(long osmId) {
+        return dbData.selectWayStreetUnnamed (osmId);
+    }
+
 
     @Override
 	public void destroy() {
