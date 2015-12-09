@@ -1,6 +1,6 @@
 package com.asamm.osmTools.cmdCommands;
 
-import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
+import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
@@ -47,7 +47,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-nodes");
-        addListOfTags(definition, DbAddressPoiConst.EntityType.POIS);
+        addListOfTags(definition, LoMapsDbConst.EntityType.POIS);
         addCommand("--tf");
         addCommand("reject-ways");
         addCommand("outPipe.0=Nodes");
@@ -58,7 +58,7 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-ways");
-        addListOfTags(definition, DbAddressPoiConst.EntityType.WAYS);
+        addListOfTags(definition, LoMapsDbConst.EntityType.WAYS);
         addCommand("--used-node");
 //        addCommand("idTrackerType=Dynamic");
         addCommand("outPipe.0=Ways");
@@ -188,7 +188,7 @@ public class CmdAddressPoiDb extends Cmd {
         }
     }
 
-    private void addListOfTags(WriterPoiDefinition definition, DbAddressPoiConst.EntityType type) {
+    private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {
         // prepare list of tags
         List<WriterPoiDefinition.DbRootSubContainer> nodes = definition.getRootSubContainers();
         Hashtable<String, String> nodesPrep = new Hashtable<String, String>();

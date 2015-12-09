@@ -5,23 +5,26 @@ import java.util.*;
 import com.asamm.osmTools.generatorDb.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
+import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 public class DataContainerRam extends ADataContainer {
 
-	private Hashtable<Long, Node> nodes;
-	private Hashtable<Long, Way> ways;
-    private Hashtable<Long, Relation> relations;
-    private Hashtable<Integer, List<Street>> wayStreets;
+	private THashMap<Long, Node> nodes;
+	private THashMap<Long, Way> ways;
+    private THashMap<Long, Relation> relations;
+    private THashMap<Integer, List<Street>> wayStreets;
+    private THashMap<Long, Street> wayStreetsUnnamed;
 
 	public DataContainerRam(AWriterDefinition writerDefinition) throws Exception {
 		super(writerDefinition);
-		nodes = new Hashtable<Long, Node>();
-		ways = new Hashtable<Long, Way>();
-        relations = new Hashtable<Long, Relation>();
-        wayStreets = new Hashtable<>();
+		nodes = new THashMap<Long, Node>();
+		ways = new THashMap<Long, Way>();
+        relations = new THashMap<Long, Relation>();
+        wayStreets = new THashMap<>();
+        wayStreetsUnnamed = new THashMap<>();
 	}
 
 	@Override
@@ -95,6 +98,17 @@ public class DataContainerRam extends ADataContainer {
     @Override
     public Set<Integer> getStreetHashSet() {
         return wayStreets.keySet();
+    }
+
+
+    @Override
+    protected void insertWayStreetUnnamedToCache(Street street) {
+        wayStreetsUnnamed.put(street.getOsmId(), street);
+    }
+
+    @Override
+    public Street getWayStreetsUnnamedFromCache(long osmId) {
+        return wayStreetsUnnamed.get(osmId);
     }
 
 

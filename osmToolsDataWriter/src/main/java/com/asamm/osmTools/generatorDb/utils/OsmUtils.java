@@ -61,7 +61,14 @@ public class OsmUtils {
         return name;
     }
 
-    public static THashMap<String, String> getNamesInternational (Entity entity){
+    /**
+     * Prepare map of lang mutation of city name. Lang mutation is not in map if this lang mutation
+     * is the same as local default name
+     * @param entity entity to get names
+     * @param nameDef default local name
+     * @return
+     */
+    public static THashMap<String, String> getNamesLangMutation(Entity entity, String nameDef){
         THashMap<String, String> names = new THashMap<>();
 
         if (entity == null){
@@ -74,12 +81,13 @@ public class OsmUtils {
         for (Tag tag : tags){
             String key = tag.getKey();
             if (key.startsWith("name:")) {
-                String name = tag.getValue();
+                String nameInt = tag.getValue();
                 String langCode = key.split(":")[1];
-                if (langCode.length() == 2 && name != null && name.length() > 0){
-
-                    names.put(langCode, name);
-                    //Logger.i("OSm UTILS"," lang Code: " + langCode + " name: " + name );
+                if (langCode.length() == 2 && nameInt != null && nameInt.length() > 0){
+                    if ( !Utils.objectEquals(nameInt, nameDef)){
+                        // only languages that does not have same name as default name are added into map
+                        names.put(langCode, nameInt);
+                    }
                 }
             }
         }

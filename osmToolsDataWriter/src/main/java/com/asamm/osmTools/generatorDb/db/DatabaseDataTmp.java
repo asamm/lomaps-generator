@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst.*;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 
 /**
  * Created by voldapet on 8/10/15.
@@ -34,12 +34,14 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     private PreparedStatement psInsertNode;
     private PreparedStatement psInsertWay;
     private PreparedStatement psInsertRelation;
-    private PreparedStatement psInsertStreet;
+    private PreparedStatement psInsertWayStreet;
+    private PreparedStatement psInsertWayStreetUnnamed;
 
     private PreparedStatement psSelectNode;
     private PreparedStatement psSelectWay;
     private PreparedStatement psSelectRelation;
-    private PreparedStatement psSelectStreets;
+    private PreparedStatement psSelectWayStreets;
+    private PreparedStatement psSelectWayStreetsUnnamed;
 
      // dynamic register for database
     private ByteArrayOutputStream baos;
@@ -54,6 +56,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     int wayInsertBatchSize = 0;
     int relationInsertBatchSize = 0;
     int streetInsertBatchSize = 0;
+    int waystreetUnnamedInsertBatchSize = 0;
 
     public DatabaseDataTmp(File file, boolean deleteExistingDb)
             throws Exception {
@@ -65,12 +68,14 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         psInsertNode = createPreparedStatement("INSERT INTO nodes (id, data) VALUES (?, ?)");
         psInsertWay = createPreparedStatement("INSERT INTO ways (id, data) VALUES (?, ?)");
         psInsertRelation = createPreparedStatement("INSERT INTO relations (id, data) VALUES (?, ?)");
-        psInsertStreet = createPreparedStatement("INSERT INTO Streets (hash, data) VALUES (?, ?)");
+        psInsertWayStreet = createPreparedStatement("INSERT INTO Streets (hash, data) VALUES (?, ?)");
+        psInsertWayStreetUnnamed = createPreparedStatement("INSERT INTO waystreets_unnamed (id, data) VALUES (?, ?)");
 
         psSelectNode = createPreparedStatement("SELECT data FROM nodes WHERE id=?");
         psSelectWay = createPreparedStatement("SELECT data FROM ways WHERE id=?");
         psSelectRelation = createPreparedStatement("SELECT data FROM relations WHERE id=?");
-        psSelectStreets = createPreparedStatement("SELECT data from Streets where hash=?");
+        psSelectWayStreets = createPreparedStatement("SELECT data from Streets where hash=?");
+        psSelectWayStreetsUnnamed = createPreparedStatement("SELECT data from waystreets_unnamed where isd=?");
 
         baos = new ByteArrayOutputStream();
         dosw = new DataOutputStoreWriter(new DataOutputStream(baos));
@@ -111,13 +116,19 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         sql +=        " )";
         stmt.execute(sql);
 
+        sql = "CREATE TABLE waystreets_unnamed ( ";
+        sql += "id BIGINT NOT NULL PRIMARY KEY, ";
+        sql += COL_DATA + " BLOB";
+        sql +=        " )";
+        stmt.execute(sql);
+
         stmt.close();
     }
 
     public void createWayStreetIndex() {
         try {
             // finalize inserts of streets
-            psInsertStreet.executeBatch();
+            psInsertWayStreet.executeBatch();
             streetInsertBatchSize = 0;
 
             String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
@@ -314,13 +325,13 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     public void insertWayStreet(int hash, Street street) {
 
         try {
-            psInsertStreet.setInt(1, hash);
-            psInsertStreet.setBytes(2, street.getAsBytes());
-            psInsertStreet.addBatch();
+            psInsertWayStreet.setInt(1, hash);
+            psInsertWayStreet.setBytes(2, street.getAsBytes());
+            psInsertWayStreet.addBatch();
 
             streetInsertBatchSize++;
             if (streetInsertBatchSize % 1000 == 0){
-                psInsertStreet.executeBatch();
+                psInsertWayStreet.executeBatch();
                 streetInsertBatchSize = 0;
             }
 
@@ -335,10 +346,10 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         List<Street> loadedStreets = new ArrayList<>();
         try {
 
-            psSelectStreets.clearParameters();
-            psSelectStreets.setInt(1, hash);
+            psSelectWayStreets.clearParameters();
+            psSelectWayStreets.setInt(1, hash);
 
-            ResultSet rs = psSelectStreets.executeQuery();
+            ResultSet rs = psSelectWayStreets.executeQuery();
 
             while (rs.next()) {
                 byte[] data = rs.getBytes(1);
@@ -351,6 +362,46 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         return loadedStreets;
     }
 
+    // INSERT SELECT UNNAMED WAYSTREETS
+
+    public void insertWayStreetUnnamed(Street street) {
+
+        try {
+            psInsertWayStreetUnnamed.setLong(1, street.getOsmId());
+            psInsertWayStreetUnnamed.setBytes(2, street.getAsBytes());
+            psInsertWayStreetUnnamed.addBatch();
+
+            waystreetUnnamedInsertBatchSize++;
+            if (waystreetUnnamedInsertBatchSize % 1000 == 0){
+                psInsertWayStreetUnnamed.executeBatch();
+                waystreetUnnamedInsertBatchSize = 0;
+            }
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "insertWayStreetUnnamed(), problem with query", e);
+        }
+    }
+
+
+    public Street selectWayStreetUnnamed(long id){
+
+        try {
+            psSelectWayStreetsUnnamed.clearParameters();
+            psSelectWayStreetsUnnamed.setLong(1, id);
+
+            ResultSet rs = psSelectWayStreetsUnnamed.executeQuery();
+
+            while (rs.next()) {
+                byte[] data = rs.getBytes(1);
+                return new Street(data);
+            }
+        } catch (Exception e) {
+            Logger.e(TAG, "selectWayStreetUnnamed(), problem with query", e);
+        }
+        return null;
+    }
+
+    // SERIALIZATION
 
     private byte[] serializeEntity (Entity entity){
 
@@ -368,7 +419,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
 
     /**
-     * Execute not finished batch statemen
+     * Execute not finished batch statemetn
      */
     public void finalizeBatchStatement() {
 

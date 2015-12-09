@@ -67,6 +67,9 @@ public abstract class ADataContainer {
 
     public abstract List<Street> getWayStreetsFromCache(int hash);
 
+    protected abstract void insertWayStreetUnnamedToCache(Street street);
+
+    public abstract Street getWayStreetsUnnamedFromCache(long osmId);
 
 
     public void addNode(Node node) {
@@ -107,7 +110,15 @@ public abstract class ADataContainer {
         streetHashSet.add(hash);
     }
 
-	public void destroy() {
+    public void addWayStreetUnnamed(Street street){
+        amountOfWayStreetUsed++;
+        insertWayStreetUnnamedToCache(street);
+    }
+
+
+
+
+    public void destroy() {
 		// print results
         Logger.i(TAG, "finished...");
 		Logger.i(TAG, "total processed nodes: " + amountOfNodesUsed + " / " + amountOfNodesTested);
@@ -218,6 +229,7 @@ public abstract class ADataContainer {
     public Set<Integer> getStreetHashSet() {
         return streetHashSet;
     }
+
 
 
 }

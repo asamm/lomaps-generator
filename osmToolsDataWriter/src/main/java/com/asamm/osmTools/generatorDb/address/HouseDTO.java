@@ -6,6 +6,7 @@ import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
+import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class HouseDTO {
 
     private static final String TAG = HouseDTO.class.getSimpleName();
 
-    private static final int COORDINATE_POW = 100000;
+    public static final int COORDINATE_POW = 100000;
 
     /** House number */
     private String number;
@@ -43,24 +44,33 @@ public class HouseDTO {
         setName(name);
         this.postCodeId = postCodeId;
 
-        Logger.i(TAG, "Convert house to DTO : " +
-                "\n HouseCenter: " + Utils.geomToGeoJson(center) +
-                "\n Street:  " + street.toString());
+        MultiLineString mls = street.getGeometry();
+        Coordinate streetFirstNode = mls.getCoordinates()[0];
+        int dLon = (int) Math.round((streetFirstNode.x - center.getX()) * COORDINATE_POW);
+        int dLat = (int) Math.round((streetFirstNode.y - center.getY()) * COORDINATE_POW);
 
-            MultiLineString mls = street.getGeometry();
-            Coordinate[] coordinates = mls.getCoordinates();
+        this.lon = Utils.intToShort(dLon);
+        this.lat = Utils.intToShort(dLat);
+    }
 
-            //Coordinate streetFirstNode = street.getGeometry().getCoordinates()[0];
-            Coordinate streetFirstNode = coordinates[0];
+    public HouseDTO (DataReaderBigEndian dr) throws IOException {
+        if (dr.available() == 0){
+            throw new IOException("Invalid size");
+        }
+        byte bHeader = dr.readBytes(1)[0];
 
-            int dLon = (int) Math.round((streetFirstNode.x - center.getX()) * COORDINATE_POW);
-            int dLat = (int) Math.round((streetFirstNode.y - center.getY()) * COORDINATE_POW);
+        if (isHouseNumberDefined(bHeader)){
+            this.number = dr.readString();
+        }
+        if (isHouseNameDefined(bHeader)){
+            this.name = dr.readString();
+        }
+        if (isPostcodeIdDefined(bHeader)){
+            this.postCodeId = dr.readInt();
+        }
 
-
-            this.lon = Utils.intToShort(dLon);
-            this.lat = Utils.intToShort(dLat);
-
-
+        this.lon = dr.readShort();
+        this.lat = dr.readShort();
     }
 
 
@@ -74,54 +84,76 @@ public class HouseDTO {
         this.postCodeId = -1;
     }
 
-    private boolean isHouseNumberDefined (byte header){
-        if (((header >> 0) & 1) == 1){
-            return true;
-        }
-        return false;
-    }
 
-    private boolean isHouseNameDefined (byte header){
-        if (((header >> 1) & 1) == 1){
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isPostcodeIdDefined(byte header){
-        if (((header >> 2) & 1) == 1){
-            return true;
-        }
-        return false;
-    }
-
+    /**
+     * Serialize object to byte array
+     * @return Serialized object
+     */
     public byte[] getAsBytes() {
 
-        DataWriterBigEndian dr = new DataWriterBigEndian();
+        DataWriterBigEndian dw = new DataWriterBigEndian();
 
         try {
 
             byte header = createHeader();
             if (isHouseNumberDefined(header)){
-                dr.writeString(number);
+                dw.writeString(number);
             }
             if (isHouseNameDefined(header)){
-                dr.writeString(name);
+                dw.writeString(name);
             }
             if (isPostcodeIdDefined(header)){
-                dr.writeInt(postCodeId);
+                dw.writeInt(postCodeId);
             }
-            dr.writeShort(lon);
-            dr.writeShort(lat);
+            dw.writeShort(lon);
+            dw.writeShort(lat);
 
         } catch (IOException e) {
             Logger.e(TAG, "getAsBytes() - Can not serialize house: " + this.toString(), e );
             e.printStackTrace();
         }
-        return dr.toByteArray();
+        return dw.toByteArray();
     }
 
+    /**
+     * Test if serialized house data contains house number
+     * @param bHeader first byte of serialized house
+     * @return true is data contains information about house number
+     */
+    private boolean isHouseNumberDefined (byte bHeader){
+        if (((bHeader >> 0) & 1) == 1){
+            return true;
+        }
+        return false;
+    }
 
+    /**
+     * Test if serialized house data contains house name
+     * @param bHeader first byte of serialized house
+     * @return true is data contains information about house name
+     */
+    private boolean isHouseNameDefined (byte bHeader){
+        if (((bHeader >> 1) & 1) == 1){
+            return true;
+        }
+        return false;
+    }
+    /**
+     * Test if serialized house data contains post code for house
+     * @param bHeader first byte of serialized house
+     * @return true is data contains information about post code
+     */
+    private boolean isPostcodeIdDefined(byte bHeader){
+        if (((bHeader >> 2) & 1) == 1){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Create first byte that holds information which values are serialized
+      * @return byte inform if house number, name or postcode db id is can be serialized
+     */
     private byte createHeader () {
 
         byte b = (byte) 0;
