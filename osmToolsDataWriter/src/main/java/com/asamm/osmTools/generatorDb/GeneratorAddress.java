@@ -8,6 +8,7 @@ import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
+import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
@@ -42,18 +43,6 @@ public class GeneratorAddress extends AGenerator {
 
     private List<Boundary> boundaries;
 
-    /** Center city and the best boundary for it*/
-    private BiDiHashMap<City, Boundary> centerCityBoundaryMap;
-
-    /** List of cities that are in the boundary*/
-    private THashMap<Boundary, List<City>> citiesInBoundaryMap;
-
-    /** Ids of relation that contains information about street and houses*/
-    private TLongList streetRelations;
-
-    /** JTS in memory index of center geometries for cities*/
-    private STRtree cityCenterIndex;
-
     /** Set of method that help to create boundary objects */
     BoundaryController boundaryFactory;
     StreetController sc;
@@ -75,11 +64,7 @@ public class GeneratorAddress extends AGenerator {
         this.boundaryFactory = new BoundaryController(this);
         this.cities = new ArrayList<>();
         this.boundaries = new ArrayList<>();
-        this.centerCityBoundaryMap = new BiDiHashMap<>();
-        this.citiesInBoundaryMap = new THashMap<>();
-        this.streetRelations = new TLongArrayList();
 
-        cityCenterIndex = new STRtree();
 
         initialize();
     }
@@ -112,14 +97,14 @@ public class GeneratorAddress extends AGenerator {
 
         // ---- step 4 create list of cities that are in boundary ----
         Logger.i(TAG, "=== Step 4 - find all cities inside boundaries ===");
-        findAllCitiesForBoundary();
+        findAllCitiesForBoundary(dc);
 
         Logger.i(TAG, "=== Step 4B - find parent cities ===");
-        findParentCitiesForVillages();
+        findParentCitiesForVillages(dc);
 
         // ---- step 5 write cities to DB ----
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
-        insertCitiesToDB();
+        insertCitiesToDB(dc);
 
 
 
@@ -138,21 +123,27 @@ public class GeneratorAddress extends AGenerator {
         // ----- step 8 create houses ------
         Logger.i(TAG, "=== Step 8 - create houses ===");
         Logger.i(TAG, "Create houses from relations");
-        hc.createHousesFromRelations(streetRelations);
+        hc.createHousesFromRelations();
         Logger.i(TAG, "Create houses from ways");
         hc.createHousesFromWays();
         Logger.i(TAG, "Create houses from nodes");
         hc.createHousesFromNodes();
+
+        Logger.i(TAG, "Create houses for unnamed streets");
+        dc.clearWayStreetCache();
+        hc.processHouseWithoutStreet(sc);
+
+
         Logger.i(TAG, "Clear duplicated houses ");
         ((DatabaseAddress) db).deleteDuplicatedHouses();
         ((DatabaseAddress) db).buildHouseIndexes();
 
-        // ----- step 9 simplify geoms ------
-        Logger.i(TAG, "=== Step 9 - simplify street and city geoms ===");
-        simplifyGeoms ();
+        // ----- step 10 simplify geoms ------
+        Logger.i(TAG, "=== Step 10 - simplify street and city geoms ===");
+        simplifyGeoms (dc);
 
         // ----- step 10 set houses as blob to streets ------
-        Logger.i(TAG, "=== Step 10 - update streets, write houses data ===");
+        Logger.i(TAG, "=== Step 11 - update streets, write houses data ===");
         updateStreetsWriteHouses();
 
         Logger.i(TAG, "Finding cities for every street way takes: " + sc.timeFindStreetCities/1000.0 + " sec" );
@@ -184,7 +175,6 @@ public class GeneratorAddress extends AGenerator {
     /**************************************************/
 
     void loadCityPlaces(ADataContainer dc) {
-        cityCenterIndex = new STRtree();
         TLongList nodeIds = dc.getNodeIds();
 
         for (int i=0, size = nodeIds.size(); i < size; i++) {
@@ -216,7 +206,7 @@ public class GeneratorAddress extends AGenerator {
             }
             // add crated city into list and also into index
             cities.add(city);
-            cityCenterIndex.insert(city.getCenter().getEnvelopeInternal(), city);
+            IndexController.getInstance().insertCity(city.getCenter().getEnvelopeInternal(), city);
         }
 
         Logger.i(TAG, "loadCityPlaces: " + cities.size() + " cities were created and loaded into cache");
@@ -327,13 +317,13 @@ public class GeneratorAddress extends AGenerator {
                 if (cityFound.isValid()){
                     boundary.setAdminCenterId(cityFound.getOsmId());
                     cities.add(cityFound);
-                    cityCenterIndex.insert(cityFound.getCenter().getEnvelopeInternal(), cityFound);
+                    IndexController.getInstance().insertCity(cityFound.getCenter().getEnvelopeInternal(), cityFound);
                 }
             }
 
             if (cityFound != null){
                 // OK we have center city for boundary > put them into cache and compare priority
-                registerBoundaryForCity (boundary, cityFound);
+                registerBoundaryForCity (dc, boundary, cityFound);
             }
             else {
                // Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
@@ -347,10 +337,11 @@ public class GeneratorAddress extends AGenerator {
      * @param boundary new boundary that should registered for center city
      * @param city center city
      */
-    private void registerBoundaryForCity(Boundary boundary, City city) {
+    private void registerBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
 
         // try to obtain previous registered boundary for city
-        Boundary oldBoundary = this.centerCityBoundaryMap.getValue(city);
+        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
+        Boundary oldBoundary = centerCityBoundaryMap.getValue(city);
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
             centerCityBoundaryMap.put(city, boundary);
@@ -395,9 +386,11 @@ public class GeneratorAddress extends AGenerator {
     /**
      * For every boundary make list of cities that are in the boundary poly
      */
-    private void findAllCitiesForBoundary() {
+    private void findAllCitiesForBoundary(ADataContainer dc) {
 
+        THashMap<Boundary, List<City>> citiesInBoundaryMap = dc.getCitiesInBoundaryMap();
         Boundary boundary = null;
+        STRtree cityCenterIndex = IndexController.getInstance().getCityCenterIndex();
         for (int i=0, size = boundaries.size(); i < size; i++){
 
             boundary = boundaries.get(i);
@@ -416,10 +409,10 @@ public class GeneratorAddress extends AGenerator {
     /**
      * For villages neighbour or
      */
-    private void findParentCitiesForVillages() {
+    private void findParentCitiesForVillages(ADataContainer dc) {
 
         for (City city : cities){
-            City parentCity = boundaryFactory.findParentCityForVillages(city);
+            City parentCity = boundaryFactory.findParentCityForVillages(dc, city);
             // avoid the parent that are the same as city itself
 
             if (parentCity != null && parentCity.getOsmId() != city.getOsmId()){
@@ -432,9 +425,10 @@ public class GeneratorAddress extends AGenerator {
     /*  STEP 5 - write cities into DB
     /**************************************************/
 
-    private void insertCitiesToDB() {
-
+    private void insertCitiesToDB(ADataContainer dc) {
+        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
         City city;
+
         for (int i = 0, size = cities.size() ; i < size;  i++){
             city = cities.get(i);
             Boundary boundary = centerCityBoundaryMap.getValue(city);
@@ -452,7 +446,9 @@ public class GeneratorAddress extends AGenerator {
     /*  STEP 9 - simplify geoms
     /**************************************************/
 
-    private void simplifyGeoms() {
+    private void simplifyGeoms(ADataContainer dc) {
+
+        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
         DatabaseAddress databaseAddress = getDatabaseAddress();
         long start = System.currentTimeMillis();
 
@@ -597,31 +593,6 @@ public class GeneratorAddress extends AGenerator {
     }
 
 
-
-
-    public List<City> getClosestCities (Point centerPoint, int minNumber){
-
-        double distance = 5000;
-
-        List cityFromIndex = new ArrayList();
-
-        int numOfResize = 0;
-        while (cityFromIndex.size() < minNumber) {
-            //Logger.i(TAG,"Extends bounding box");
-            Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-            cityFromIndex = cityCenterIndex.query(searchBound.getEnvelopeInternal());
-            distance = distance * 2;
-            numOfResize++;
-            if (numOfResize == 4){
-                //Logger.i(TAG, "MAx num of resize reached");
-                break;
-            }
-        }
-
-        return cityFromIndex;
-    }
-
-
     /**************************************************/
     /*             Inherited methods
     /**************************************************/
@@ -655,19 +626,8 @@ public class GeneratorAddress extends AGenerator {
         return cities;
     }
 
-    public BiDiHashMap<City, Boundary> getCenterCityBoundaryMap() {
-        return centerCityBoundaryMap;
-    }
-
-    public THashMap<Boundary, List<City>> getCitiesInBoundaryMap() {
-        return citiesInBoundaryMap;
-    }
-
     public DatabaseAddress getDatabaseAddress (){
         return (DatabaseAddress) db;
     }
 
-    public TLongList getStreetRelations() {
-        return streetRelations;
-    }
 }

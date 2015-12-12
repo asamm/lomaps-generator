@@ -91,6 +91,11 @@ public class DataContainerRam extends ADataContainer {
     }
 
     @Override
+    public void clearWayStreetCache() {
+        wayStreets = new THashMap<>();
+    }
+
+    @Override
     public List<Street> getWayStreetsFromCache(int hash) {
         return wayStreets.get(hash);
     }
@@ -107,8 +112,12 @@ public class DataContainerRam extends ADataContainer {
     }
 
     @Override
-    public Street getWayStreetsUnnamedFromCache(long osmId) {
-        return wayStreetsUnnamed.get(osmId);
+    public List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds) {
+        List<Street> ids = new ArrayList<>();
+        for (Long id : osmIds){
+            ids.add(wayStreetsUnnamed.get(id));
+        }
+        return ids;
     }
 
 

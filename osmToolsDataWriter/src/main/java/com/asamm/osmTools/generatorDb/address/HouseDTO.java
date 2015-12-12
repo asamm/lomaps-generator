@@ -46,8 +46,8 @@ public class HouseDTO {
 
         MultiLineString mls = street.getGeometry();
         Coordinate streetFirstNode = mls.getCoordinates()[0];
-        int dLon = (int) Math.round((streetFirstNode.x - center.getX()) * COORDINATE_POW);
-        int dLat = (int) Math.round((streetFirstNode.y - center.getY()) * COORDINATE_POW);
+        int dLon = (int) Math.round((center.getX() - streetFirstNode.x) * COORDINATE_POW);
+        int dLat = (int) Math.round((center.getY() - streetFirstNode.y) * COORDINATE_POW);
 
         this.lon = Utils.intToShort(dLon);
         this.lat = Utils.intToShort(dLat);
@@ -96,6 +96,7 @@ public class HouseDTO {
         try {
 
             byte header = createHeader();
+            dw.write(header);
             if (isHouseNumberDefined(header)){
                 dw.writeString(number);
             }
