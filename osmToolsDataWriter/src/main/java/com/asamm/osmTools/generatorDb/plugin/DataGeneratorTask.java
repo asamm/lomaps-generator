@@ -45,8 +45,8 @@ public class DataGeneratorTask implements Sink {
 
 				// prepare data container
 				int size = (int) (conf.getFileDatabase().length() / 1024L / 1024L);
-                Logger.i(TAG, "Source size:" + size + ", max:" + 500);
-				if (size <= 500) {
+                Logger.i(TAG, "Source size:" + size + ", max:" + 600);
+				if (size <= 600) {
                     Logger.d(TAG, "creating data container: RAM");
 					dc = new DataContainerRam(nodeHandler);
 				} else {

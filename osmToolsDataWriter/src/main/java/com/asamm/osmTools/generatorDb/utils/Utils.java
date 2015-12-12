@@ -1,13 +1,17 @@
 package com.asamm.osmTools.generatorDb.utils;
 
+import com.asamm.osmTools.generatorDb.address.House;
+import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.vividsolutions.jts.awt.PointShapeFactory;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
+import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.text.Normalizer;
+import java.util.List;
 import java.util.zip.Deflater;
 
 /**
@@ -181,6 +185,30 @@ public class Utils {
         return gsf.createRectangle();
     }
 
+
+    /**
+     * Create multiLine string from LineStrings
+     * @param lineStrings lines to merge
+     * @return
+     */
+    public static MultiLineString mergeLinesToMultiLine(List<LineString> lineStrings) {
+
+        GeometryFactory geometryFactory = new GeometryFactory();
+        MultiLineString mls = null;
+        int linesSize = lineStrings.size();
+        if (linesSize == 1){
+            mls = geometryFactory.createMultiLineString(new LineString[]{lineStrings.get(0)});
+        }
+        else if (linesSize > 1) {
+            mls = (MultiLineString)  geometryFactory.buildGeometry(lineStrings);
+        }
+        return mls;
+    }
+
+//    public MultiPoint housesToMultiPoint (List<House> houses){
+//
+//
+//    }
 
     /**
      * Convert distance in meters to degres in specific point on sphere

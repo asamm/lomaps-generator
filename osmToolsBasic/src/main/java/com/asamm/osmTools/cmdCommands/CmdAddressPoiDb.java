@@ -109,8 +109,8 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("addr:interpolation=*");
         addCommand("address:type=*");
 
-        addCommand("landuse=residential");
-        addCommand("building=*");
+//        addCommand("landuse=residential");
+//        addCommand("building=*");
 
         addCommand("--used-node");
         addCommand("idTrackerType=Dynamic");
@@ -134,8 +134,8 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("addr:interpolation=*");
         addCommand("address:type=*");
 
-        addCommand("landuse=residential");
-        addCommand("building=*");
+//        addCommand("landuse=residential");
+//        addCommand("building=*");
 
         addCommand("--used-way");
         addCommand("--used-node");

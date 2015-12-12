@@ -8,6 +8,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKBWriter;
 import gnu.trove.iterator.TLongIterator;
+import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import locus.api.objects.Storable;
 import locus.api.utils.DataReaderBigEndian;
@@ -16,6 +17,7 @@ import locus.api.utils.DataWriterBigEndian;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by voldapet on 2015-08-22 .
@@ -46,7 +48,7 @@ public class Street extends Storable {
     /** keep information if street were created from track or path */
     private boolean isPath;
 
-    private List<House> houses;
+    private THashSet<House> houses;
 
     /** JTS multiline geometry of the street*/
     private MultiLineString geometry;
@@ -104,7 +106,7 @@ public class Street extends Storable {
         this.cityIds = new TLongHashSet();
         this.isIn = new ArrayList<>();
         this.isPath = false;
-        this.houses = new ArrayList<>();
+        this.houses = new THashSet<>();
         this.geometry = new GeometryFactory().createMultiLineString(null);
 
     }
@@ -134,7 +136,7 @@ public class Street extends Storable {
         isPath = dr.readBoolean();
 
         size = dr.readInt();
-        houses = new ArrayList<>();
+        houses = new THashSet<>();
         for (int i=0; i < size; i++){
             houses.add(new House(dr));
         }
@@ -252,11 +254,11 @@ public class Street extends Storable {
         this.isPath = isPath;
     }
 
-    public List<House> getHouses() {
+    public THashSet<House> getHouses() {
         return houses;
     }
 
-    public void setHouses(List<House> houses) {
+    public void setHouses(THashSet<House> houses) {
         this.houses = houses;
     }
 
@@ -275,6 +277,7 @@ public class Street extends Storable {
                 ", osmId=" + osmId +
                 ", name='" + name + '\'' +
                 ", isIn=" + isIn +
+                ", cityIds size=" + cityIds.size() +
                 ", isPath=" + isPath +
                 ", houses size=" + houses.size() +
                 ", geometry=" + Utils.geomToGeoJson(geometry) +

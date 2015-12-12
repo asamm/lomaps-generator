@@ -1,13 +1,10 @@
 package com.asamm.osmTools.generatorDb.db;
 
 import com.asamm.osmTools.generatorDb.address.*;
+import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.prep.PreparedGeometry;
-import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
@@ -89,13 +86,7 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = false;
-
-    /** JTS in memory index of geometries of joined streets*/
-    private STRtree streetGeomIndex;
-
-    /** Custom geom index only for dummy streets created from cities or places*/
-    private Quadtree dummyStreetGeomIndex;
+    private static boolean hasHousesTableWithGeom = true;
 
 
     public DatabaseAddress(File file) throws Exception {
@@ -110,8 +101,6 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         initPreparedStatements();
 
-        streetGeomIndex = new STRtree();
-        dummyStreetGeomIndex = new Quadtree();
 
         postCodesMap = new THashMap<>();
         pathStreetIds = new TIntArrayList();
@@ -541,10 +530,9 @@ public class DatabaseAddress extends ADatabaseHandler {
     /**
      * Insert street into Address database
      * @param street street to insert
-     * @param isDummy set true for dummy streets because of different index
      * @return id of inserted street. This is not OSM id
      */
-    public long insertStreet(Street street, boolean isDummy){
+    public long insertStreet(Street street){
         try {
             int id = streetIdSequence++;
             psInsertStreet.clearParameters();
@@ -563,16 +551,8 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertStreet.execute();
 
             //register street in JTS memory index - use it later for houses
-            if (isDummy){
-                // It's seem that QuadTree index has some issue with points. If I use centroid as
-                // geom to index then query return all streets around
-                Geometry geomFake = Utils.createRectangle(street.getGeometry().getCoordinate(), 50);
-                dummyStreetGeomIndex.insert(geomFake.getEnvelopeInternal(), street);
+            IndexController.getInstance().insertStreet(street.getGeometry().getEnvelopeInternal(), street);
 
-            }
-            else {
-                streetGeomIndex.insert(street.getGeometry().getEnvelopeInternal(), street);
-            }
 
             // register id of path or track street > to remove such street later if they are without houses
             if (street.isPath()){
@@ -735,7 +715,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             // now insert created dummy street into the database
             for (Street street : streetsToInsert){
                 //Logger.i(TAG, "Insert dummy street: " + street.toString());
-                insertStreet(street, false);
+                insertStreet(street);
             }
 
         } catch (SQLException e) {
@@ -865,7 +845,7 @@ public class DatabaseAddress extends ADatabaseHandler {
      * @param streetName name of street to select
      * @return street or null of no street for such name ans city exists
      */
-    public Street selectStreetByNames (String cityName, String streetName){
+    public List<Street> selectStreetByNames (String cityName, String streetName){
 
         //Logger.i(TAG, "Select street for city: " + cityName + " And sreet name: " + streetName);
         if (cityName.length() == 0 ||streetName.length() == 0 ){
@@ -873,7 +853,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             return null;
         }
 
-        Street streetLoaded = null;
+        List<Street> streetsLoaded = new ArrayList<>();
         try{
             psSelectStreetByNames.setString(1, Utils.normalizeString(cityName));
             psSelectStreetByNames.setString(2, Utils.normalizeString(streetName));
@@ -882,7 +862,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             while (rs.next()){
 
-                streetLoaded = new Street();
+                Street streetLoaded = new Street();
                 streetLoaded.setId(rs.getInt(1));
                 String name = rs.getString(2);
                 String nameNorm = rs.getString(3);
@@ -896,9 +876,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                     MultiLineString mls = (MultiLineString) wkbReader.read(data);
                     streetLoaded.setGeometry(mls);
                 }
+                streetsLoaded.add(streetLoaded);
             }
-
-            return streetLoaded;
 
         } catch (SQLException e) {
             Logger.e(TAG, "selectStreetByNames(), problem with query", e);
@@ -908,7 +887,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             e.printStackTrace();
         }
 
-        return streetLoaded;
+        return streetsLoaded;
     }
 
     /**
@@ -1117,78 +1096,6 @@ public class DatabaseAddress extends ADatabaseHandler {
     /**************************************************/
 
 
-
-    public List<Street> getStreetsAround(Point centerPoint, int minNumber) {
-
-        double distance = 200;
-
-        List<Street> streetsFromIndex = new ArrayList();
-
-        int numOfResize = 0;
-        Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-        while (streetsFromIndex.size() < minNumber) {
-            //Logger.i(TAG,"getStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
-            streetsFromIndex = streetGeomIndex.query(searchBound.getEnvelopeInternal());
-            if (numOfResize == 4) {
-                //Logger.i(TAG, "getStreetsAround(): Max num of resize reached for center point: " + Utils.geomToGeoJson(centerPoint));
-                break;
-            }
-            numOfResize++;
-            distance = distance * 2;
-            searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-        }
-//
-//        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
-//        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
-//            Street street = streetsFromIndex.get(i);
-//            if ( !pg.intersects(street.getGeometry().getEnvelope())){
-//                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
-//                streetsFromIndex.remove(i);
-//            }
-//        }
-        return streetsFromIndex;
-    }
-
-    /**
-     * Select nearest streets
-     * @param centerPoint
-     * @param minNumber
-     * @return
-     */
-    public List<Street> getDummyStreetsAround(Point centerPoint, int minNumber) {
-
-        double distance = 200;
-
-        List<Street> streetsFromIndex = new ArrayList();
-        Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-        int numOfResize = 0;
-        while (streetsFromIndex.size() < minNumber) {
-
-            //Logger.i(TAG,"getDummyStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
-            streetsFromIndex = dummyStreetGeomIndex.query(searchBound.getEnvelopeInternal());
-            if (numOfResize == 4) {
-                //Logger.i(TAG, "getDummyStreetsAround(): Max num of resize reached for center point: " + Utils.geomToGeoJson(centerPoint));
-                break;
-            }
-            numOfResize++;
-            distance = distance * 2;
-            searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
-        }
-
-        // FILTER - Quadtree return only items that MAY intersect > it's needed to check it
-
-        PreparedGeometry pg = PreparedGeometryFactory.prepare(searchBound);
-        for (int i = streetsFromIndex.size() -1; i >= 0; i--){
-            Street street = streetsFromIndex.get(i);
-            if ( !pg.intersects(street.getGeometry().getEnvelope())){
-                //Logger.i(TAG, "getDummyStreetsAround(): remove street because not intersect: " + street.toString());
-                streetsFromIndex.remove(i);
-            }
-        }
-
-        return streetsFromIndex;
-    }
-
     /**
      * Search for houses that have the same center geom and the same housenumber
      * and delete duplicated record
@@ -1226,8 +1133,6 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
         return postCodeId;
     }
-
-
 
     /**
      * Get current value of id of last inserted street

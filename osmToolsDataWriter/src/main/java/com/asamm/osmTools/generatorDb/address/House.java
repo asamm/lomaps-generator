@@ -62,23 +62,27 @@ public class House extends Storable{
         this.center = center;
     }
 
-//    public House (HouseDTO houseDTO, Coordinate streetFirstNode){
-//
-//        double lon = (streetFirstNode.x + houseDTO.getLon() * HouseDTO.COORDINATE_POW);
-//        double lat = (streetFirstNode.y + houseDTO.getLat() * HouseDTO.COORDINATE_POW);
-//
-//        setNumber(houseDTO.getNumber());
-//        setName(houseDTO.getName());
-//        setPostCode(houseDTO.getPostCodeId());
-//
-//
-//
-//    }
+    /**
+     * Test if street name for house is defined
+     * @return true if house has street name
+     */
+    public boolean hasStreetName () {
+        return streetName.length() > 0;
+    }
 
+    /**
+     * Test if place name for house is defined
+     * @return true if place name is defined
+     */
+    public boolean hasPlaceName () {
+        return streetName.length() > 0;
+    }
 
     /**************************************************/
     /*             STORABLE PART
     /**************************************************/
+
+
 
     @Override
     protected int getVersion() {

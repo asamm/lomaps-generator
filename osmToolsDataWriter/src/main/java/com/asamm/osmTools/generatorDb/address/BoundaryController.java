@@ -4,13 +4,13 @@ import com.asamm.osmTools.generatorDb.GeneratorAddress;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
+import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
@@ -28,9 +28,6 @@ public class BoundaryController {
     /** Needed for generation boundaries from relation. Ways with this ids very already use for generation of bounds*/
     private TLongList processedWays;
 
-    /** JTS index of boundary geometries (their) envelopes*/
-    STRtree boundaryGeomIndex;
-
     /** Instance of geometry factory for creation boundary geoms*/
     private GeometryFactory geometryFactory;
 
@@ -41,8 +38,6 @@ public class BoundaryController {
         this.ga = ga;
         processedWays = new TLongArrayList();
         geometryFactory = new GeometryFactory();
-        boundaryGeomIndex = new STRtree();
-
     }
 
 
@@ -171,7 +166,7 @@ public class BoundaryController {
 
         //Logger.i(TAG, "Administrative/place entity: " + boundary.toString());
 
-        boundaryGeomIndex.insert(boundary.getGeom().getEnvelopeInternal(), boundary);
+        IndexController.getInstance().insertBoundary(boundary.getGeom().getEnvelopeInternal(), boundary);
         return boundary;
     }
 
@@ -352,11 +347,12 @@ public class BoundaryController {
     }
 
     /**
-     *
-     * @param city
-     * @return
+     * Look for parent city for villages, hamlets or suburbs
+     * @param dc temporary data container
+     * @param city city to find parent
+     * @return parent city or null if was not possible to find parent city
      */
-    public City findParentCityForVillages (City city) {
+    public City findParentCityForVillages (ADataContainer dc, City city) {
 
         City parentCity = null;
 
@@ -367,7 +363,8 @@ public class BoundaryController {
 
         PreparedGeometry pgCenter = PreparedGeometryFactory.prepare(city.getCenter());
 
-        List<Boundary> parentBoundaries = boundaryGeomIndex.query(pgCenter.getGeometry().getEnvelopeInternal());
+        List<Boundary> parentBoundaries = IndexController.getInstance().getBoundaryGeomIndex()
+                .query(pgCenter.getGeometry().getEnvelopeInternal());
 
         // from the list of boundaries from query find such that cover the center of city and find the one with the best admin level
         Boundary parentBoundary = null;
@@ -390,7 +387,7 @@ public class BoundaryController {
 
          // get the center city for the parent boundary
         if (parentBoundary != null){
-            parentCity = ga.getCenterCityBoundaryMap().getKey(parentBoundary);
+            parentCity = dc.getCenterCityBoundaryMap().getKey(parentBoundary);
         }
         return parentCity;
     }

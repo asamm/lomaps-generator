@@ -75,7 +75,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         psSelectWay = createPreparedStatement("SELECT data FROM ways WHERE id=?");
         psSelectRelation = createPreparedStatement("SELECT data FROM relations WHERE id=?");
         psSelectWayStreets = createPreparedStatement("SELECT data from Streets where hash=?");
-        psSelectWayStreetsUnnamed = createPreparedStatement("SELECT data from waystreets_unnamed where isd=?");
+        psSelectWayStreetsUnnamed = createPreparedStatement("SELECT data from waystreets_unnamed where id=?");
 
         baos = new ByteArrayOutputStream();
         dosw = new DataOutputStoreWriter(new DataOutputStream(baos));
@@ -135,6 +135,16 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             executeStatement(sql);
         } catch (SQLException e) {
             Logger.e(TAG, "createWayStreetIndex(), problem with query", e);
+        }
+    }
+
+
+    public void dropWayStreetIndex() {
+        try {
+            String sql = "DROP INDEX IF EXISTS  idx_streets_hash";
+            executeStatement(sql);
+        } catch (SQLException e) {
+            Logger.e(TAG, "dropWayStreetIndex(), problem with query", e);
         }
     }
 
@@ -362,6 +372,20 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         return loadedStreets;
     }
 
+    /**
+     * IMPORTANT - delete all wayStreet from DB
+     */
+    public void deleteWayStreetData() {
+        try {
+            String sql = "DELETE FROM "+TN_STREETS;
+            executeStatement(sql);
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "deleteWayStreetData(), problem with query", e);
+        }
+    }
+
+
     // INSERT SELECT UNNAMED WAYSTREETS
 
     public void insertWayStreetUnnamed(Street street) {
@@ -399,6 +423,49 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             Logger.e(TAG, "selectWayStreetUnnamed(), problem with query", e);
         }
         return null;
+    }
+
+    /**
+     * Select unnamed streets based on osmIds
+     * @param ids ids of streets to select
+     * @return list of loaded streets from tmp database
+     */
+    public List<Street> selectWayStreetsUnnamed(List<Long> ids){
+
+        List<Street> streets = new ArrayList<>();
+
+        String sql = "SELECT data FROM waystreets_unnamed WHERE id IN ";
+        StringBuilder isInIds = new StringBuilder("(");
+        for (int i = 0, size = ids.size(); i < size; i++){
+            if (i==0){
+                isInIds.append(ids.get(i));
+            }
+            else {
+                isInIds.append(",").append(ids.get(i));
+            }
+        }
+        isInIds.append(")");
+
+        sql += isInIds.toString();
+
+        ResultSet rs = null;
+        try {
+            rs = getStmt().executeQuery(sql);
+            for (int i=0; rs.next(); i++) {
+                byte[] data = rs.getBytes(1);
+
+                if (data == null){
+                    Logger.i(TAG, " selectWayStreetsUnnamed(): Can not create unnamed street with id; SQL: " + sql);
+                    continue;
+                }
+                Street street = new Street(data);
+                streets.add(street);
+            }
+
+        } catch (Exception e) {
+            Logger.e(TAG, "selectWayStreetsUnnamed(), problem with query", e);
+        }
+        return streets;
     }
 
     // SERIALIZATION
@@ -494,5 +561,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             return new Street();
         }
     }
+
+
 
 }

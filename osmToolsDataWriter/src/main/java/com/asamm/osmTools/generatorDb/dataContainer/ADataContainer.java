@@ -1,12 +1,17 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
 import com.asamm.osmTools.generatorDb.AWriterDefinition;
+import com.asamm.osmTools.generatorDb.address.Boundary;
+import com.asamm.osmTools.generatorDb.address.City;
+import com.asamm.osmTools.generatorDb.address.House;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.data.RelationEx;
 import com.asamm.osmTools.generatorDb.data.WayEx;
+import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
 import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.hash.THashMap;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
@@ -27,8 +32,25 @@ public abstract class ADataContainer {
 	private TLongList wayIds;
     private TLongList relationIds;
     private Set<Integer> streetHashSet;
-	
-	// counters
+
+
+    /**
+     * Map for houses that have defined the street name or place name but was not possible to find street for them
+     * Key for map is the streetName or placeName
+     * */
+    private THashMap<String, List<House>> housesWithoutStreet;
+
+    /** Center city and the best boundary for it*/
+    private BiDiHashMap<City, Boundary> centerCityBoundaryMap;
+
+    /** List of cities that are in the boundary*/
+    private THashMap<Boundary, List<City>> citiesInBoundaryMap;
+
+    /** Ids of relation that contains information about street and houses*/
+    private TLongList streetRelations;
+
+
+    // counters
 	private int amountOfNodesTested = 0;
 	private int amountOfNodesUsed = 0;
 	private int amountOfWaysTested = 0;
@@ -36,6 +58,7 @@ public abstract class ADataContainer {
 	private int amountOfRelationsTested = 0;
 	private int amountOfRelationsUsed = 0;
     protected int amountOfWayStreetUsed = 0;
+    protected int amountOfWayStreetUnnamedUsed = 0;
 	
 	public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
 		this.writerDefinition = writerDefinition;
@@ -43,6 +66,10 @@ public abstract class ADataContainer {
 		this.wayIds = new TLongArrayList();
         this.relationIds = new TLongArrayList();
         this.streetHashSet = new HashSet<>();
+        this.housesWithoutStreet = new THashMap<>();
+        this.centerCityBoundaryMap = new BiDiHashMap<>();
+        this.citiesInBoundaryMap = new THashMap<>();
+        this.streetRelations = new TLongArrayList();
 	}
 	
 	public abstract void insertNodeToCache(Node node);
@@ -52,6 +79,8 @@ public abstract class ADataContainer {
     public abstract void insertRelationToCache (Relation relation);
 
     public abstract void finalizeWayStreetCaching();
+
+    public abstract void clearWayStreetCache();
 
     public abstract Node getNodeFromCache(long id);
 
@@ -69,7 +98,7 @@ public abstract class ADataContainer {
 
     protected abstract void insertWayStreetUnnamedToCache(Street street);
 
-    public abstract Street getWayStreetsUnnamedFromCache(long osmId);
+    public abstract List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds);
 
 
     public void addNode(Node node) {
@@ -111,8 +140,27 @@ public abstract class ADataContainer {
     }
 
     public void addWayStreetUnnamed(Street street){
-        amountOfWayStreetUsed++;
+        amountOfWayStreetUnnamedUsed++;
         insertWayStreetUnnamedToCache(street);
+    }
+
+    public void addHouseWithoutStreet(House house) {
+
+        //Logger.i(TAG, "addHouseWithoutStreet (): " + house.toString());
+
+        String key = (house.getStreetName().length() > 0) ? house.getStreetName() : house.getPlace();
+        if (key.length() <= 0){
+            // no key no record
+            return;
+        }
+
+        List<House> houses = housesWithoutStreet.get(key);
+        if (houses == null){
+            houses = new ArrayList<>();
+        }
+        houses.add(house);
+        housesWithoutStreet.put(key, houses);
+
     }
 
 
@@ -125,6 +173,7 @@ public abstract class ADataContainer {
 		Logger.i(TAG, "total processed ways: " + amountOfWaysUsed + " / " + amountOfWaysTested);
 		Logger.i(TAG, "total processed relations: " + amountOfRelationsUsed + " / " + amountOfRelationsTested);
         Logger.i(TAG, "total processed ways to streets: " + amountOfWayStreetUsed );
+        Logger.i(TAG, "total processed ways for unnamed streets: " + amountOfWayStreetUnnamedUsed );
 	}
 
     public Node getNode (long nodeId){
@@ -230,6 +279,19 @@ public abstract class ADataContainer {
         return streetHashSet;
     }
 
+    public THashMap<String, List<House>> getHousesWithoutStreet() {
+        return housesWithoutStreet;
+    }
 
+    public BiDiHashMap<City, Boundary> getCenterCityBoundaryMap() {
+        return centerCityBoundaryMap;
+    }
 
+    public THashMap<Boundary, List<City>> getCitiesInBoundaryMap() {
+        return citiesInBoundaryMap;
+    }
+
+    public TLongList getStreetRelations() {
+        return streetRelations;
+    }
 }

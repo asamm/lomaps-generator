@@ -93,6 +93,11 @@ public class DataContainerHdd extends ADataContainer {
         dbData.createWayStreetIndex();
     }
 
+    @Override
+    public void clearWayStreetCache() {
+        dbData.deleteWayStreetData ();
+        dbData.dropWayStreetIndex();
+    }
 
     @Override
     public void insertWayStreetToCache(int hash, Street street) {
@@ -110,8 +115,8 @@ public class DataContainerHdd extends ADataContainer {
     }
 
     @Override
-    public Street getWayStreetsUnnamedFromCache(long osmId) {
-        return dbData.selectWayStreetUnnamed (osmId);
+    public List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds) {
+        return dbData.selectWayStreetsUnnamed (osmIds);
     }
 
 

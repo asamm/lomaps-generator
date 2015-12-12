@@ -4,7 +4,7 @@
  */
 package com.asamm.osmTools;
 
-import com.asamm.locus.features.dbAddressPoi.DbAddressPoiConst;
+import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.mapConfig.ItemMap;
@@ -20,9 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -415,10 +413,10 @@ class Actions {
 //        cmdGen.execute();
 
         // Address generation
-//        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
-//        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
-//        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
-//        cmdAddressSimpl.execute();
+        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
+        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
+        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
+        cmdAddressSimpl.execute();
 
         CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
         cmdAddres.addGeneratorAddress();
@@ -708,13 +706,13 @@ class Actions {
         Date dateVersion = sdf.parse(Parameters.getVersionName());
 
         // insert version of map
-        dbData.insertData(DbAddressPoiConst.VAL_AREA, itemMap.getItemAreaGeoJson().toJSONString());
-        dbData.insertData(DbAddressPoiConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
-        dbData.insertData(DbAddressPoiConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
-        dbData.insertData(DbAddressPoiConst.VAL_REGION_ID, itemMap.getRegionId());
-        dbData.insertData(DbAddressPoiConst.VAL_VERSION, Parameters.getVersionName());
-        dbData.insertData(DbAddressPoiConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
-        dbData.insertData(DbAddressPoiConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
+        dbData.insertData(LoMapsDbConst.VAL_AREA, itemMap.getItemAreaGeoJson().toJSONString());
+        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
+        dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
+        dbData.insertData(LoMapsDbConst.VAL_REGION_ID, itemMap.getRegionId());
+        dbData.insertData(LoMapsDbConst.VAL_VERSION, Parameters.getVersionName());
+        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
+        dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
 
 
         dbData.commit(true);
