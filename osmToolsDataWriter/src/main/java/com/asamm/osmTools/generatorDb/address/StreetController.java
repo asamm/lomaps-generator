@@ -29,6 +29,10 @@ import java.util.List;
  */
 public class StreetController {
 
+    public interface OnJoinStreetListener {
+        public void onJoin(Street street);
+    }
+
     private static final String TAG = StreetController.class.getSimpleName();
 
     private ADataContainer dc;
@@ -48,8 +52,6 @@ public class StreetController {
     public long timeFindCityTestByGeom = 0;
 
     public long timeJoinWaysToStreets = 0;
-    public long timeInsertStreetSql = 0;
-
 
     public StreetController(ADataContainer dc, GeneratorAddress ga){
 
@@ -84,8 +86,6 @@ public class StreetController {
             if (type == null){
                 continue;
             }
-
-
 
             if ( !(type.equals(OSMTagKey.STREET.getValue())
                     || type.equals(OSMTagKey.ASSOCIATED_STREET.getValue())
@@ -146,7 +146,9 @@ public class StreetController {
     }
 
 
-
+    /**
+     *
+     */
     public void createWayStreetFromWays() {
 
         TLongList wayIds = dc.getWayIds();
@@ -191,9 +193,6 @@ public class StreetController {
                 dc.addWayStreet(wayStreet);
             }
         }
-
-        // combine all tmp street ways into streets
-        joinWayStreets();
     }
 
 
@@ -203,7 +202,7 @@ public class StreetController {
      * be more then one street in the city. For this reason we fix it by splitting the joined
      * street into independent streets
      */
-    public void joinWayStreets() {
+    public void joinWayStreets(OnJoinStreetListener onJoinStreetListener) {
 
         Logger.i(TAG, "Start to join ways into streets and insert them into DB");
         long start = System.currentTimeMillis();
@@ -289,23 +288,8 @@ public class StreetController {
                 street.setHouses(houses);
                 street.setPath(isPath);
 
-                // SEPARATE PART (city can have more streets with the same name)
-
-                if (mls.getNumGeometries() == 1){
-                    // street has simple line geom insert it into DB
-                    long start3 = System.currentTimeMillis();
-                    long id = databaseAddress.insertStreet(street);
-                    timeInsertStreetSql += System.currentTimeMillis() - start3;
-                }
-                else {
-                    // street geom has more parts. Maybe it is two different street > try to separate it
-                    List<Street> streets = splitToCityParts (street);
-                    for (Street streetToInsert : streets){
-                        long start3 = System.currentTimeMillis();
-                        long id = databaseAddress.insertStreet(streetToInsert);
-                        timeInsertStreetSql += System.currentTimeMillis() - start3;
-                    }
-                }
+                // street is create now call for other actions
+                onJoinStreetListener.onJoin(street);
             }
         }
         timeJoinWaysToStreets += System.currentTimeMillis() - start;
@@ -318,7 +302,7 @@ public class StreetController {
      * @param street street to test if it is one or more different streets
      * @return list of separated street
      */
-    private List<Street> splitToCityParts(Street street) {
+    public List<Street> splitToCityParts(Street street) {
 
         List<Street> separatedStreets = new ArrayList<>();
         MultiLineString mls = street.getGeometry();
@@ -519,7 +503,9 @@ public class StreetController {
                 citiesWithoutBound.add(city);
                 continue;
             }
-            if (streetGeomPrepared.intersects(city.getGeom())){
+
+            // TODO decide if ti test intersect or contains
+            if (streetGeomPrepared.coveredBy(city.getGeom())){
                 streetCities.add(city);
             }
         }
@@ -780,15 +766,8 @@ public class StreetController {
                     mls = mlsNext;
                 }
                 else if (mlsNext != null){
-                     Geometry joinedGeom = mls.union(mlsNext);
-
-                    if (joinedGeom instanceof MultiLineString){
-                        mls = (MultiLineString) joinedGeom;
-                    }
-                    else {
-                        LineString ls = (LineString) joinedGeom;
-                        mls = geometryFactory.createMultiLineString(new LineString[]{ls});
-                    }
+                    Geometry joinedGeom = mls.union(mlsNext);
+                    mls = Utils.geometryToMultilineString(joinedGeom);
                 }
             }
             return mls;

@@ -5,6 +5,7 @@ import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.vividsolutions.jts.awt.PointShapeFactory;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
+import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
@@ -130,6 +131,23 @@ public class Utils {
         return (2 * SPHERE_RADIUS * Math.asin(Math.sqrt(a)));
     }
 
+
+    /**
+     * Compute unacurate distance in deg from ditance in meters for specified
+     * point on sphere
+     * @param center
+     */
+    public static double distanceToDeg (Coordinate center, double distanceM){
+        //Coordinate offsets (from center) in radians
+        double dLat = distanceM / SPHERE_RADIUS;
+        double dLon = distanceM / (SPHERE_RADIUS*Math.cos(Math.PI * center.y / 180));
+
+        dLat = toDeg(dLat);
+        dLon = toDeg(dLon);
+
+        return Math.sqrt(dLat * dLat + dLon*dLon);
+    }
+
     /**
      * Convert deg angle to radians
      * @param deg angle in degrees
@@ -205,10 +223,47 @@ public class Utils {
         return mls;
     }
 
-//    public MultiPoint housesToMultiPoint (List<House> houses){
-//
-//
-//    }
+    /**
+     * Create MultiPolygon from center points of houses
+     * @param houses houses to convert their geometries into multipoint
+     * @return multipoint of centers of houses
+     */
+    public static MultiPoint housesToMultiPoint (THashSet<House> houses){
+
+        Point[] points = new Point[houses.size()];
+        int counter = 0;
+        for (House house : houses){
+            points[counter] = house.getCenter();
+            counter++;
+        }
+
+        GeometryFactory geometryFactory = new GeometryFactory();
+        return geometryFactory.createMultiPoint(points);
+    }
+
+    /**
+     * Convert geometry into MultiLineString object
+     * @param geometry geometry to convert
+     * @return multilinestring or throw exception of geometry is not possible to convert
+     */
+    public static MultiLineString geometryToMultilineString (Geometry geometry) {
+
+        MultiLineString mls = null;
+        GeometryFactory geometryFactory = new GeometryFactory();
+
+        if (geometry instanceof MultiLineString){
+            mls = (MultiLineString) geometry;
+        }
+        else if ((geometry instanceof LineString)){
+            LineString ls = (LineString) geometry;
+            mls = geometryFactory.createMultiLineString(new LineString[]{ls});
+        }
+        else {
+            throw new IllegalArgumentException("Can not convert geom to multilinestring. Geometry: " + geometry.toString());
+        }
+        return mls;
+    }
+
 
     /**
      * Convert distance in meters to degres in specific point on sphere

@@ -624,7 +624,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             return houseId;
 
         } catch (SQLException e) {
-            Logger.e(TAG, "insertWayStreet(), problem with query", e);
+            Logger.e(TAG, "insertHouse(), problem with query", e);
             e.printStackTrace();
             return 0;
         }

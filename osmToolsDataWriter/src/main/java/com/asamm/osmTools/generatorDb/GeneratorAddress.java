@@ -20,7 +20,6 @@ import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
@@ -106,19 +105,8 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
         insertCitiesToDB(dc);
 
-
-
-        // ----- Step 6 create streets from relations streets -----
-        Logger.i(TAG, "=== Step 6 - create streets from relations ===");
-        sc.createWayStreetFromRelations();
-
-        // ----- step 7 create streets from ways ------
-        Logger.i(TAG, "=== Step 7 - create streets from ways ===");
-        sc.createWayStreetFromWays();
-        Logger.i(TAG, "Create dummy streets for cities without street ===");
-        //TODO create dummy street from place=locality
-        ((DatabaseAddress) db).createDummyStreets();
-        ((DatabaseAddress) db).buildStreetNameIndex();
+        // ----- Step 6 - 7 create streets from relations streets -----
+        createStreets(dc);
 
         // ----- step 8 create houses ------
         Logger.i(TAG, "=== Step 8 - create houses ===");
@@ -151,7 +139,6 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Finding cities only compare the boundaries takes: " + sc.timeFindCityTestByGeom /1000.0 + " sec" );
 
         Logger.i(TAG, "Joining ways and preparation for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
-        Logger.i(TAG, "Insert streets: " + sc.timeInsertStreetSql /1000.0 + " sec" );
 
         Logger.i(TAG, "Houses" );
         Logger.i(TAG, "Create parse houses: " + hc.timeCreateParseHouses /1000.0 + " sec" );
@@ -440,6 +427,45 @@ public class GeneratorAddress extends AGenerator {
         }
 
         ((DatabaseAddress) db).buildCityIndexes();
+    }
+
+    /**************************************************/
+    /*  STEP 6 - 7 - Create streets
+    /**************************************************/
+
+    private void createStreets (ADataContainer dc){
+
+        Logger.i(TAG, "=== Step 6 - create streets from relations ===");
+        sc.createWayStreetFromRelations();
+
+        // ----- step 7 create streets from ways ------
+        Logger.i(TAG, "=== Step 7 - create streets from ways ===");
+        sc.createWayStreetFromWays();
+
+
+        sc.joinWayStreets(new StreetController.OnJoinStreetListener() {
+            @Override
+            public void onJoin(Street street) {
+                // SEPARATE PART (city can have more streets with the same name)
+
+                if (street.getGeometry().getNumGeometries() == 1){
+                    // street has simple line geom insert it into DB
+                    ((DatabaseAddress) db).insertStreet(street);
+                }
+                else {
+                    // street geom has more parts. Maybe it is two different street > try to separate it
+                    List<Street> streets = sc.splitToCityParts (street);
+                    for (Street streetToInsert : streets){
+                        ((DatabaseAddress) db).insertStreet(streetToInsert);
+                    }
+                }
+            }
+        });
+
+
+        //Logger.i(TAG, "Create dummy streets for cities without street ===");
+        ((DatabaseAddress) db).createDummyStreets();
+        ((DatabaseAddress) db).buildStreetNameIndex();
     }
 
     /**************************************************/
