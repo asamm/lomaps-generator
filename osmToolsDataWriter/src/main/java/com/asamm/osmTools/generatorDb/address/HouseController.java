@@ -21,6 +21,7 @@ import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -470,21 +471,56 @@ public class HouseController {
 
                 // SIMULATE STANDARD CREATION OF STREET FROM WAYSTREET
                 for (Street wayStreetUnnamed : unNamedStreets){
+                    // find the cities street is in
+
+
                     wayStreetUnnamed.setName(streetPlaceName);
-                    wayStreetUnnamed.addCityIds(sc.findCitiesForStreet(wayStreetUnnamed));
                     wayStreetUnnamed.setHouses(new THashSet<House>(hausesGrouped));
 
 //                    Logger.i(TAG, " processHouseWithoutStreet(): Cache new street for houses: " +
 //                                    streetPlaceName + ", street: " + wayStreetUnnamed.toString());
+                    // cut the geometry only around the houses
+                    MultiLineString mlsCutted = cutStreetGeom(wayStreetUnnamed.getGeometry(), wayStreetUnnamed.getHouses());
+                    wayStreetUnnamed.setGeometry(mlsCutted);
+
+                    List<City> cities = sc.findCitiesForStreet(wayStreetUnnamed);
+                    wayStreetUnnamed.addCityIds(cities);
                     dc.addWayStreet(wayStreetUnnamed);
                 }
             }
         }
 
-        sc.joinWayStreets();
+        // now join created wayStreet for houses
+        sc.joinWayStreets(new StreetController.OnJoinStreetListener() {
+            @Override
+            public void onJoin(Street street) {
+                // cut the street based on houses.
+                THashSet<House> houses = street.getHouses();
+                street.setGeometry(cutStreetGeom(street.getGeometry(), houses));
+
+                // insert street into DB
+                databaseAddress.insertStreet(street);
+                // insert houses into DB
+                for (House house : houses){
+//                    Logger.i(TAG, "Isnert house, street: " + street.toString()
+//                            + "\n house: " + house.toString() );
+                    long id = databaseAddress.insertHouse(street, house);
+//                    Logger.i(TAG, "Isnert house id " + id);
+                }
+            }
+        });
+
+
+
 
     }
 
+    /**
+     * Takes all houses that has defined same name street or the same place name.
+     * Split list on part of houses that belong to the one boundary
+     * @param housesToGroup list of houses that has defined the same street name or place name
+     * @return
+     */
     private THashMap<Boundary, List<House>> groupHousesByBoundary(List<House> housesToGroup) {
 
         THashMap<Boundary, List<House>> groupedHousesMap = new THashMap<>();
@@ -519,6 +555,31 @@ public class HouseController {
             }
         }
         return groupedHousesMap;
+    }
+
+    /**
+     * Create interestion of street geoometry with houses that related into this street
+     * @param mls original street geom create from raw OSM ways
+     * @param housesInStreet list of houses that ar part of street with multilinestring
+     * @return
+     */
+    public MultiLineString cutStreetGeom (MultiLineString mls,  THashSet<House> housesInStreet){
+
+        double bufferDeg = Utils.distanceToDeg(mls.getCoordinate(),50);
+
+        // create area aroud all houses
+        MultiPoint mp = Utils.housesToMultiPoint(housesInStreet);
+        Geometry boundary = mp.convexHull().buffer(bufferDeg);
+
+        // intersect the street geom with area of houses
+        if (mls.intersects(boundary)){
+            Geometry cuttedStreet = mls.intersection(boundary);
+            mls = Utils.geometryToMultilineString(cuttedStreet);
+//            Logger.i(TAG, "Multipoint: " + Utils.geomToGeoJson(mp));
+//            Logger.i(TAG, "Cutted geometry: " + Utils.geomToGeoJson(mls));
+        }
+
+        return mls;
     }
 
     /**
