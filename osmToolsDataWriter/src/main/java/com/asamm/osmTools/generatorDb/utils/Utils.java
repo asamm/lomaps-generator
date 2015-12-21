@@ -1,18 +1,12 @@
 package com.asamm.osmTools.generatorDb.utils;
 
-import com.asamm.osmTools.generatorDb.address.House;
-import com.asamm.osmTools.generatorDb.data.WayEx;
-import com.vividsolutions.jts.awt.PointShapeFactory;
+import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.util.GeometricShapeFactory;
-import gnu.trove.set.hash.THashSet;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.text.Normalizer;
-import java.util.List;
 import java.util.zip.Deflater;
 
 /**
@@ -20,7 +14,9 @@ import java.util.zip.Deflater;
  */
 public class Utils {
 
-    private static final float SPHERE_RADIUS =  6372800;
+    public static final float SPHERE_RADIUS =  6372800;
+
+    //private static final GeometryFactory geometryFactory = new GeometryFactory();
 
     /**
      * Compare object using equals.
@@ -162,7 +158,7 @@ public class Utils {
      * @param rad value in radians
      * @return values in degrees
      */
-    private static double toDeg (double rad){
+    public static double toDeg (double rad){
         return rad * 180 / Math.PI;
     }
 
@@ -178,90 +174,6 @@ public class Utils {
         double lonO = coordinate.x + dLon * 180/Math.PI;
 
         return new Coordinate(lonO, latO);
-    }
-
-    public static Polygon createRectangle (Coordinate center, double distance){
-        return createCircle(center, distance, 4);
-    }
-
-    public static Polygon createCircle (Coordinate center, double distance, int numPoints){
-
-        //Coordinate offsets (from center) in radians
-        double dLat = distance / SPHERE_RADIUS;
-        double dLon = distance / (SPHERE_RADIUS*Math.cos(Math.PI * center.y / 180));
-
-        dLat = toDeg(dLat);
-        dLon = toDeg(dLon);
-
-        GeometricShapeFactory gsf = new GeometricShapeFactory();
-
-        gsf.setCentre(center);
-        gsf.setWidth(dLon * 2);
-        gsf.setHeight(dLat * 2 );
-        gsf.setNumPoints(numPoints);
-
-        return gsf.createRectangle();
-    }
-
-
-    /**
-     * Create multiLine string from LineStrings
-     * @param lineStrings lines to merge
-     * @return
-     */
-    public static MultiLineString mergeLinesToMultiLine(List<LineString> lineStrings) {
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        MultiLineString mls = null;
-        int linesSize = lineStrings.size();
-        if (linesSize == 1){
-            mls = geometryFactory.createMultiLineString(new LineString[]{lineStrings.get(0)});
-        }
-        else if (linesSize > 1) {
-            mls = (MultiLineString)  geometryFactory.buildGeometry(lineStrings);
-        }
-        return mls;
-    }
-
-    /**
-     * Create MultiPolygon from center points of houses
-     * @param houses houses to convert their geometries into multipoint
-     * @return multipoint of centers of houses
-     */
-    public static MultiPoint housesToMultiPoint (THashSet<House> houses){
-
-        Point[] points = new Point[houses.size()];
-        int counter = 0;
-        for (House house : houses){
-            points[counter] = house.getCenter();
-            counter++;
-        }
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        return geometryFactory.createMultiPoint(points);
-    }
-
-    /**
-     * Convert geometry into MultiLineString object
-     * @param geometry geometry to convert
-     * @return multilinestring or throw exception of geometry is not possible to convert
-     */
-    public static MultiLineString geometryToMultilineString (Geometry geometry) {
-
-        MultiLineString mls = null;
-        GeometryFactory geometryFactory = new GeometryFactory();
-
-        if (geometry instanceof MultiLineString){
-            mls = (MultiLineString) geometry;
-        }
-        else if ((geometry instanceof LineString)){
-            LineString ls = (LineString) geometry;
-            mls = geometryFactory.createMultiLineString(new LineString[]{ls});
-        }
-        else {
-            throw new IllegalArgumentException("Can not convert geom to multilinestring. Geometry: " + geometry.toString());
-        }
-        return mls;
     }
 
 
@@ -326,5 +238,12 @@ public class Utils {
             throw new IllegalArgumentException("Can not cast value to short, value: " + number);
         }
         return (short) number;
+    }
+
+    public static void printUsedMemory() {
+        Runtime runtime = Runtime.getRuntime();
+        int mb = 1024 * 1024;
+        long usedMem = runtime.totalMemory() - runtime.freeMemory();
+        Logger.i("Utils", "Used memory: " + usedMem / mb);
     }
 }

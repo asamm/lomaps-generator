@@ -86,7 +86,9 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = true;
+    private static boolean hasHousesTableWithGeom = false;
+
+    private static boolean hasTableOfRemovedHouses = false;
 
 
     public DatabaseAddress(File file) throws Exception {
@@ -431,6 +433,7 @@ public class DatabaseAddress extends ADatabaseHandler {
      * Build index for normalized street name and for Street_in_cities table
      */
     public void buildStreetNameIndex() {
+        commit(false);
         try {
             String sql = "CREATE INDEX "+IDX_STREETS_NAMENORM+" ON " + TN_STREETS +
                     " (" + COL_NAME_NORM+  ")";
@@ -618,6 +621,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                 int pow = (int) Math.log10(housesIdSequence);
                 if (housesIdSequence % (int) Math.pow(10 , pow) == 0){
                     Logger.i(TAG, "Inserted houses: " + housesIdSequence);
+                    Utils.printUsedMemory();
                 }
             }
 
@@ -663,19 +667,21 @@ public class DatabaseAddress extends ADatabaseHandler {
      */
     public void insertRemovedHouse (House house){
 
-        try {
-            psInsertRemovedHouse.setString(1, house.getStreetName());
-            psInsertRemovedHouse.setString(2, house.getPlace());
-            psInsertRemovedHouse.setString(3, house.getNumber());
-            psInsertRemovedHouse.setString(4, house.getName());
-            psInsertRemovedHouse.setString(5, house.getPostCode());
-            psInsertRemovedHouse.setBytes(6, wkbWriter.write(house.getCenter()));
+        if (hasTableOfRemovedHouses){
+            try {
+                psInsertRemovedHouse.setString(1, house.getStreetName());
+                psInsertRemovedHouse.setString(2, house.getPlace());
+                psInsertRemovedHouse.setString(3, house.getNumber());
+                psInsertRemovedHouse.setString(4, house.getName());
+                psInsertRemovedHouse.setString(5, house.getPostCode());
+                psInsertRemovedHouse.setBytes(6, wkbWriter.write(house.getCenter()));
 
-            psInsertRemovedHouse.execute();
+                psInsertRemovedHouse.execute();
 
-        } catch (SQLException e) {
-            Logger.e(TAG, "insertWayStreet(), problem with query", e);
-            e.printStackTrace();
+            } catch (SQLException e) {
+                Logger.e(TAG, "insertWayStreet(), problem with query", e);
+                e.printStackTrace();
+            }
         }
     }
 

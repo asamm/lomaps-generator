@@ -1,10 +1,13 @@
 package com.asamm.osmTools.generatorDb.utils;
 
+import com.asamm.osmTools.generatorDb.address.House;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
+import com.vividsolutions.jts.util.GeometricShapeFactory;
+import gnu.trove.set.hash.THashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +83,7 @@ public class GeomUtils {
      * @param coordinates list of coordinates to close
      * @return
      */
-    private static Coordinate[] closeLine (Coordinate[] coordinates){
+    public static Coordinate[] closeLine (Coordinate[] coordinates){
         // close lineString
         final int size = coordinates.length;
         Coordinate[] closed = Arrays.copyOf(coordinates, size + 1);
@@ -91,13 +94,13 @@ public class GeomUtils {
 
     /**
      * Fix invalid geometry topology using zero buffer trick
-     * @param multiPolygon geometry to fix
+     * @param geometry geometry to fix
      * @return fixed geometry as multipolygon
      */
-    private static MultiPolygon fixInvalidGeom (MultiPolygon multiPolygon){
+    public static MultiPolygon fixInvalidGeom (Geometry geometry){
         // Logger.i(TAG, "Fix invalid geom: " + geomToGeoJson(multiPolygon));
 
-        Geometry geom = multiPolygon.buffer(0.0);
+        Geometry geom = geometry.buffer(0.0);
 
         int numOfGeom = geom.getNumGeometries();
         Polygon[] polygons = new Polygon[numOfGeom];
@@ -105,9 +108,9 @@ public class GeomUtils {
         for (int i=0; i< numOfGeom; i++){
             polygons[i] = (Polygon) geom.getGeometryN(i);
         }
-        multiPolygon = geometryFactory.createMultiPolygon(polygons);
+        MultiPolygon mp = geometryFactory.createMultiPolygon(polygons);
         //Logger.i(TAG, "Fixed multiPoly: " + geomToGeoJson(multiPolygon));
-        return multiPolygon;
+        return mp;
     }
 
     /**
@@ -140,4 +143,83 @@ public class GeomUtils {
         return geometryFactory.createPolygon(coordinates);
     }
 
+    /**
+     * Convert geometry into MultiLineString object
+     * @param geometry geometry to convert
+     * @return multilinestring or throw exception of geometry is not possible to convert
+     */
+    public static MultiLineString geometryToMultilineString (Geometry geometry) {
+
+        MultiLineString mls = null;
+
+        if (geometry instanceof MultiLineString){
+            mls = (MultiLineString) geometry;
+        }
+        else if ((geometry instanceof LineString)){
+            LineString ls = (LineString) geometry;
+            mls = geometryFactory.createMultiLineString(new LineString[]{ls});
+        }
+        else {
+            throw new IllegalArgumentException("Can not convert geom to multilinestring. Geometry: " + geometry.toString());
+        }
+        return mls;
+    }
+
+    /**
+     * Create MultiPolygon from center points of houses
+     * @param houses houses to convert their geometries into multipoint
+     * @return multipoint of centers of houses
+     */
+    public static MultiPoint housesToMultiPoint (THashSet<House> houses){
+
+        Point[] points = new Point[houses.size()];
+        int counter = 0;
+        for (House house : houses){
+            points[counter] = house.getCenter();
+            counter++;
+        }
+
+        return geometryFactory.createMultiPoint(points);
+    }
+
+    /**
+     * Create multiLine string from LineStrings
+     * @param lineStrings lines to merge
+     * @return
+     */
+    public static MultiLineString mergeLinesToMultiLine(List<LineString> lineStrings) {
+
+        MultiLineString mls = null;
+        int linesSize = lineStrings.size();
+        if (linesSize == 1){
+            mls = geometryFactory.createMultiLineString(new LineString[]{lineStrings.get(0)});
+        }
+        else if (linesSize > 1) {
+            mls = (MultiLineString) geometryFactory.buildGeometry(lineStrings);
+        }
+        return mls;
+    }
+
+    public static Polygon createCircle (Coordinate center, double distance, int numPoints){
+
+        //Coordinate offsets (from center) in radians
+        double dLat = distance / Utils.SPHERE_RADIUS;
+        double dLon = distance / (Utils.SPHERE_RADIUS*Math.cos(Math.PI * center.y / 180));
+
+        dLat = Utils.toDeg(dLat);
+        dLon = Utils.toDeg(dLon);
+
+        GeometricShapeFactory gsf = new GeometricShapeFactory();
+
+        gsf.setCentre(center);
+        gsf.setWidth(dLon * 2);
+        gsf.setHeight(dLat * 2 );
+        gsf.setNumPoints(numPoints);
+
+        return gsf.createRectangle();
+    }
+
+    public static Polygon createRectangle (Coordinate center, double distance){
+        return createCircle(center, distance, 4);
+    }
 }

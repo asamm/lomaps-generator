@@ -130,9 +130,19 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             // finalize inserts of streets
             psInsertWayStreet.executeBatch();
             streetInsertBatchSize = 0;
+            // test if index exist
+            String sql = "SELECT * FROM sqlite_master where name = 'idx_streets_hash'";
+            ResultSet rs = getStmt().executeQuery(sql);
 
-            String sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
-            executeStatement(sql);
+            if (rs.next()){
+                sql = "REINDEX idx_streets_hash ";
+                executeStatement(sql);
+            }
+            else{
+                sql = "CREATE INDEX idx_streets_hash ON " + TN_STREETS + " (" + COL_HASH+  ")";
+                executeStatement(sql);
+            }
+
         } catch (SQLException e) {
             Logger.e(TAG, "createWayStreetIndex(), problem with query", e);
         }
@@ -141,6 +151,9 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
     public void dropWayStreetIndex() {
         try {
+
+            commit(false);
+            //restartConnection(); // nasty workaround how to solve locked tables
             String sql = "DROP INDEX IF EXISTS  idx_streets_hash";
             executeStatement(sql);
         } catch (SQLException e) {
@@ -376,6 +389,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
      * IMPORTANT - delete all wayStreet from DB
      */
     public void deleteWayStreetData() {
+
         try {
             String sql = "DELETE FROM "+TN_STREETS;
             executeStatement(sql);

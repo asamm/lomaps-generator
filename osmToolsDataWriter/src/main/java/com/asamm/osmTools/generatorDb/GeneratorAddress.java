@@ -85,37 +85,47 @@ public class GeneratorAddress extends AGenerator {
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
         loadCityPlaces(dc);
+        Utils.printUsedMemory();
 
         // ---- step 2 create boundaries -----
         Logger.i(TAG, "=== Step 2 - create boundaries ===");
         loadBoundaries(dc);
+        Utils.printUsedMemory();
 
         // ---- step 3 find center city for boundary -----
         Logger.i(TAG, "=== Step 3 - find center city for boundary ===");
         findCenterCityForBoundary(dc);
+        Utils.printUsedMemory();
 
         // ---- step 4 create list of cities that are in boundary ----
         Logger.i(TAG, "=== Step 4 - find all cities inside boundaries ===");
         findAllCitiesForBoundary(dc);
+        Utils.printUsedMemory();
 
         Logger.i(TAG, "=== Step 4B - find parent cities ===");
         findParentCitiesForVillages(dc);
+        Utils.printUsedMemory();
 
         // ---- step 5 write cities to DB ----
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
         insertCitiesToDB(dc);
+        Utils.printUsedMemory();
 
         // ----- Step 6 - 7 create streets from relations streets -----
         createStreets(dc);
+        Utils.printUsedMemory();
 
         // ----- step 8 create houses ------
         Logger.i(TAG, "=== Step 8 - create houses ===");
         Logger.i(TAG, "Create houses from relations");
         hc.createHousesFromRelations();
+        Utils.printUsedMemory();
         Logger.i(TAG, "Create houses from ways");
         hc.createHousesFromWays();
+        Utils.printUsedMemory();
         Logger.i(TAG, "Create houses from nodes");
         hc.createHousesFromNodes();
+        Utils.printUsedMemory();
 
         Logger.i(TAG, "Create houses for unnamed streets");
         dc.clearWayStreetCache();
@@ -141,11 +151,13 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "Joining ways and preparation for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
 
         Logger.i(TAG, "Houses" );
-        Logger.i(TAG, "Create parse houses: " + hc.timeCreateParseHouses /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house: " + hc.timeFindStreetForHouse /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using name from DB: " + hc.timeFindStreetSelectFromDB /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using similar name: " + hc.timeFindStreetSimilarName /1000.0 + " sec" );
-        Logger.i(TAG, "Find street for house using the nearest: " + hc.timeFindStreetNearest /1000.0 + " sec" );
+        Logger.i(TAG, "Process Houses without street: " + hc.timeProcessHouseWithoutStreet /1000.0 + " sec" );
+        Logger.i(TAG, "House without street group by boundary: " + hc.timeGroupByBoundary /1000.0 + " sec" );
+        Logger.i(TAG, "House without street find cut street geom by hauses: " + hc.timeCutWayStreetByHouses /1000.0 + " sec" );
+        Logger.i(TAG, "House without street find cut street CONVEX HULL: " + hc.timeCutWaysConvexHull /1000.0 + " sec" );
+        Logger.i(TAG, "House without street find cut street INTERSECTION: " + hc.timeCutWaysIntersection /1000.0 + " sec" );
+        Logger.i(TAG, "House without street nearest streets for grouped houses: " + hc.timeFindNearestForGroup /1000.0 + " sec" );
+        Logger.i(TAG, "House without street find the nearest street for house: " + hc.timeFindNearestForGroupedHouse /1000.0 + " sec" );
 
         Logger.i(TAG, "NUm of loaded houses as byte[] to update streets: " + ((DatabaseAddress) db).housesPreparedAsBlobForStreets );
 
@@ -338,7 +350,7 @@ public class GeneratorAddress extends AGenerator {
                 && oldBoundary.getName().equalsIgnoreCase(boundary.getName())){
             // this condition is inspiration from OSMand probably can happen that there
             // are to boundaries for the same city
-            MultiPolygon newBounds = (MultiPolygon) oldBoundary.getGeom().union(boundary.getGeom());
+            MultiPolygon newBounds = GeomUtils.fixInvalidGeom(oldBoundary.getGeom().union(boundary.getGeom()));
             oldBoundary.setGeom(newBounds);
 
             Logger.i(TAG, "Boundaries are similar -> union boundaries for =  " +  oldBoundary.getId() + " and " + boundary.getId());
@@ -464,7 +476,7 @@ public class GeneratorAddress extends AGenerator {
 
 
         //Logger.i(TAG, "Create dummy streets for cities without street ===");
-        ((DatabaseAddress) db).createDummyStreets();
+        //((DatabaseAddress) db).createDummyStreets();
         ((DatabaseAddress) db).buildStreetNameIndex();
     }
 

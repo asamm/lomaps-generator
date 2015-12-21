@@ -147,6 +147,27 @@ public abstract class ADatabaseHandler {
 		return text;
 	}
 
+    protected void restartConnection () {
+        commit(true);
+        try {
+            conn = DriverManager.getConnection(
+                    "jdbc:sqlite:" + dbFile.getAbsolutePath());
+
+            conn.setAutoCommit(false);
+
+            stmt = conn.createStatement();
+            stmt.setQueryTimeout(30);
+
+            // set ready flag
+            ready = true;
+        }
+        catch (SQLException e) {
+            Logger.e(TAG, "restartConnection()", e);
+            e.printStackTrace();
+        }
+
+    }
+
     protected void vacuum () {
 
         try {

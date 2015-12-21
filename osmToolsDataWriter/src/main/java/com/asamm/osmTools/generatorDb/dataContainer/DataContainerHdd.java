@@ -4,6 +4,7 @@ import com.asamm.osmTools.generatorDb.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.db.DatabaseDataTmp;
 import com.asamm.osmTools.utils.Logger;
+import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -95,8 +96,10 @@ public class DataContainerHdd extends ADataContainer {
 
     @Override
     public void clearWayStreetCache() {
-        dbData.deleteWayStreetData ();
-        dbData.dropWayStreetIndex();
+        streetHashSet = new THashSet<>();
+        dbData.deleteWayStreetData();
+        //dbData.dropWayStreetIndex();
+
     }
 
     @Override
