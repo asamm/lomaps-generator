@@ -238,11 +238,13 @@ public class House extends Storable{
 
 
 
-//    @Override
-//    public int hashCode() {
-//        int hash = 1;
-//        hash = hash * 17 + Long.valueOf(osmId).hashCode();
-//        hash = hash * 31 + number.hashCode();
-//        return hash;
-//    }
+    @Override
+    public int hashCode() {
+        int hash = 17;
+        hash = hash * 37 + center.hashCode();
+        hash = hash * 37 + number.hashCode();
+        //hash = hash * 37 + streetName.hashCode();
+        //hash = hash * 37 + place.hashCode();
+        return hash;
+    }
 }

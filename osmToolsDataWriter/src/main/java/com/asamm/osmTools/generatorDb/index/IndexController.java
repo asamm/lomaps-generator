@@ -2,14 +2,12 @@ package com.asamm.osmTools.generatorDb.index;
 
 import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.generatorDb.address.City;
-import com.asamm.osmTools.generatorDb.address.House;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.index.strtree.STRtree;
 
 import java.util.ArrayList;
@@ -72,7 +70,7 @@ public class IndexController {
         int numOfResize = 0;
         while (cityFromIndex.size() < minNumber) {
             //Logger.i(TAG,"Extends bounding box");
-            Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
+            Polygon searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
             cityFromIndex = cityCenterIndex.query(searchBound.getEnvelopeInternal());
             distance = distance * 2;
             numOfResize++;
@@ -107,7 +105,7 @@ public class IndexController {
         List<Street> streetsFromIndex = new ArrayList();
 
         int numOfResize = 0;
-        Polygon searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
+        Polygon searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
         while (streetsFromIndex.size() < minNumber) {
             //Logger.i(TAG,"getStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
             streetsFromIndex = streetGeomIndex.query(searchBound.getEnvelopeInternal());
@@ -117,7 +115,7 @@ public class IndexController {
             }
             numOfResize++;
             distance = distance * 2;
-            searchBound = Utils.createRectangle(centerPoint.getCoordinate(), distance);
+            searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
         }
         return streetsFromIndex;
     }

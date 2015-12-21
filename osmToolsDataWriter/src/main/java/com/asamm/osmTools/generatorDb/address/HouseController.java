@@ -7,6 +7,7 @@ import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
@@ -21,12 +22,8 @@ import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
-import sun.rmi.runtime.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,13 +38,6 @@ public class HouseController {
 
     private static final String TAG = HouseController.class.getSimpleName();
 
-    public long timeFindStreetForHouse = 0;
-    public long timeFindStreetAroundByName = 0;
-    public long timeFindStreetSelectFromDB = 0;
-    public long timeFindStreetSimilarName = 0;
-    public long timeFindStreetAroundDummy = 0;
-    public long timeFindStreetNearest = 0;
-    public long timeCreateParseHouses = 0;
 
     // number of houses where we was not able to find proper street
     public int removedHousesWithDefinedPlace = 0;
@@ -55,6 +45,14 @@ public class HouseController {
     public int numOfStreetForHousesUsingSqlSelect = 0;
 
 
+    public long timeProcessHouseWithoutStreet = 0;
+    public long timeGroupByBoundary = 0;
+    public long timeCutWayStreetByHouses = 0;
+    public long timeCutWaysConvexHull = 0;
+    public long timeCutWaysIntersection = 0;
+
+    public long timeFindNearestForGroup = 0;
+    public long timeFindNearestForGroupedHouse = 0;
 
     ADataContainer dc;
 
@@ -125,30 +123,21 @@ public class HouseController {
 
                     long start = System.currentTimeMillis();
                     houses.addAll(createHouse(entityH));
-                    timeCreateParseHouses += System.currentTimeMillis() - start;
                 }
             }
 
             // try to create house from relation itself, eq: https://www.openstreetmap.org/relation/1857530
-
-            long start = System.currentTimeMillis();
             houses.addAll(createHouse(relation));
-            timeCreateParseHouses += System.currentTimeMillis() - start;
 
             // test if new houses has defined the street name
             for (House house : houses) {
-
-                start = System.currentTimeMillis();
                 Street street = findStreetForHouse(house);
-                timeFindStreetForHouse += System.currentTimeMillis() - start;
                 if (street == null){
 
                     // try to search street again but set the name parse from relation
                     if (name != null && name.length() > 0) {
                         house.setStreetName(name);
-                        start = System.currentTimeMillis();
                         street = findStreetForHouse(house);
-                        timeFindStreetForHouse += System.currentTimeMillis() - start;
                         if (street == null){
                             //Logger.i(TAG, "Can not find street for house: " + house.toString());
                             continue;
@@ -170,13 +159,11 @@ public class HouseController {
             WayEx way = dc.getWay(wayId);
             long start = System.currentTimeMillis();
             List<House> houses = createHouse(way);
-            timeCreateParseHouses += System.currentTimeMillis() - start;;
 
             for(House house : houses) {
 
                 start = System.currentTimeMillis();
                 Street street = findStreetForHouse(house);
-                timeFindStreetForHouse += System.currentTimeMillis() - start;
                 if (street == null){
                     //Logger.w(TAG, "createHousesFromWays(): Can not find street for house: " + house.toString());
                     continue;
@@ -196,13 +183,11 @@ public class HouseController {
 
             long start = System.currentTimeMillis();
             List<House> houses = createHouse(node);
-            timeCreateParseHouses += System.currentTimeMillis() - start;
 
             for(House house : houses) {
 
                 start = System.currentTimeMillis();
                 Street street = findStreetForHouse(house);
-                timeFindStreetForHouse += System.currentTimeMillis() - start;
                 if (street == null){
                     //Logger.w(TAG, "createHousesFromNodes(): Can not find street for house: " + house.toString());
                     continue;
@@ -345,25 +330,10 @@ public class HouseController {
             //Logger.i(TAG, "Looking for nearest street for house: ");
             long start = System.currentTimeMillis();
             List<Street> streetsAround = IndexController.getInstance().getStreetsAround(house.getCenter(), 15);
-
-            double minDistance = Float.MAX_VALUE;
-            Point houseCenter = house.getCenter();
-            for (Street street : streetsAround) {
-                if (nearestStreet == null){
-                    nearestStreet =  street;
-                }
-
-                double distance = DistanceOp.distance(houseCenter, street.getGeometry());
-                if (distance < minDistance){
-                    minDistance = distance;
-                    nearestStreet = street;
-                }
-            }
-            timeFindStreetNearest += System.currentTimeMillis() - start;
+            nearestStreet = getNearestStreetFromAround (house.getCenter(), streetsAround);
         }
         return nearestStreet;
     }
-
 
     /**
      * Find the corresponding street for house based on place name
@@ -387,7 +357,6 @@ public class HouseController {
         if (house.getCityName().length() > 0 ){
             long start = System.currentTimeMillis();
             List<Street> streets = databaseAddress.selectStreetByNames(house.getCityName(), nameToCompare);
-            timeFindStreetSelectFromDB += System.currentTimeMillis() - start;
             for (Street street : streets){
                 Point streetCentroid = street.getGeometry().getCentroid();
                 if ( !streetCentroid.isValid()){
@@ -419,12 +388,36 @@ public class HouseController {
         if (maxSimilarityScore > 0.9){
 //                Logger.i(TAG, "Sim: "+maxSimilarityScore+" For house "+house.getOsmId() +" with streetname: " + addrStreetName +
 //                " was, found street:  " + maxSimilarStreet.toString());
-            timeFindStreetSimilarName += System.currentTimeMillis() - startSim;
             return maxSimilarStreet;
         }
 
         return null;
     }
+
+
+    /**
+     * Select the nearest street from specified point
+     * @param center center point to find the nearest street
+     * @param streetsAround list of streets that are around the house
+     * @return nearest street or null if list is empty
+     */
+    private Street getNearestStreetFromAround(Point center, List<Street> streetsAround) {
+        Street nearestStreet = null;
+        double minDistance = Float.MAX_VALUE;
+        for (Street street : streetsAround) {
+            if (nearestStreet == null){
+                nearestStreet =  street;
+            }
+
+            double distance = DistanceOp.distance(center, street.getGeometry());
+            if (distance < minDistance){
+                minDistance = distance;
+                nearestStreet = street;
+            }
+        }
+        return nearestStreet;
+    }
+
 
 
     /**************************************************/
@@ -435,6 +428,8 @@ public class HouseController {
      * When no street was found for house then check the  streets without name
      */
     public void processHouseWithoutStreet (StreetController sc){
+
+        long start = System.currentTimeMillis();
 
         BiDiHashMap<City, Boundary>  centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
 
@@ -460,8 +455,8 @@ public class HouseController {
                     continue;
                 }
 
-                MultiPolygon mpBuffer = bufferHouses(hausesGrouped, 200);
-                List<Street> unNamedStreets = IndexController.getInstance().getUnnamedWayStreets(dc, mpBuffer);
+                // for every house of grouped houses find the nearest unnamed way street
+                List<Street> unNamedStreets = findNearestWayStreetsForGroupedHouses(hausesGrouped);
 
                 if (unNamedStreets.size() == 0){
 //                    Logger.i(TAG, " processHouseWithoutStreet(): Can not find any unnamed street for grouped houses: " +
@@ -469,26 +464,33 @@ public class HouseController {
                     continue;
                 }
 
+                //create boundary around grouped houses for clipping the wayStreet
+                Geometry convexBoundary = createConvexHullOfHouses(new THashSet<House>(hausesGrouped));
+
                 // SIMULATE STANDARD CREATION OF STREET FROM WAYSTREET
-                for (Street wayStreetUnnamed : unNamedStreets){
+                Street wayStreet = null;
+                for (int i = 0,size = unNamedStreets.size(); i < size; i++){
                     // find the cities street is in
+                    wayStreet = unNamedStreets.get(i);
 
+                    // only the first waystreet contains the houses (due to joining waystreets)
+                    if (i == 0){
+                        wayStreet.setHouses(new THashSet<House>(hausesGrouped));
+                    }
 
-                    wayStreetUnnamed.setName(streetPlaceName);
-                    wayStreetUnnamed.setHouses(new THashSet<House>(hausesGrouped));
-
-//                    Logger.i(TAG, " processHouseWithoutStreet(): Cache new street for houses: " +
-//                                    streetPlaceName + ", street: " + wayStreetUnnamed.toString());
+                    wayStreet.setName(streetPlaceName);
                     // cut the geometry only around the houses
-                    MultiLineString mlsCutted = cutStreetGeom(wayStreetUnnamed.getGeometry(), wayStreetUnnamed.getHouses());
-                    wayStreetUnnamed.setGeometry(mlsCutted);
+                    MultiLineString mlsCutted = cutStreetGeom(wayStreet.getGeometry(), convexBoundary);
+                    wayStreet.setGeometry(mlsCutted);
 
-                    List<City> cities = sc.findCitiesForStreet(wayStreetUnnamed);
-                    wayStreetUnnamed.addCityIds(cities);
-                    dc.addWayStreet(wayStreetUnnamed);
+                    List<City> cities = sc.findCitiesForStreet(wayStreet);
+                    wayStreet.addCityIds(cities);
+                    dc.addWayStreet(wayStreet);
                 }
             }
         }
+
+        timeProcessHouseWithoutStreet += System.currentTimeMillis() - start;
 
         // now join created wayStreet for houses
         sc.joinWayStreets(new StreetController.OnJoinStreetListener() {
@@ -496,32 +498,29 @@ public class HouseController {
             public void onJoin(Street street) {
                 // cut the street based on houses.
                 THashSet<House> houses = street.getHouses();
-                street.setGeometry(cutStreetGeom(street.getGeometry(), houses));
-
+                //street.setGeometry(cutStreetGeom(street.getGeometry(), houses));
                 // insert street into DB
                 databaseAddress.insertStreet(street);
                 // insert houses into DB
                 for (House house : houses){
 //                    Logger.i(TAG, "Isnert house, street: " + street.toString()
 //                            + "\n house: " + house.toString() );
-                    long id = databaseAddress.insertHouse(street, house);
+                    databaseAddress.insertHouse(street, house);
 //                    Logger.i(TAG, "Isnert house id " + id);
                 }
             }
         });
-
-
-
-
     }
 
     /**
      * Takes all houses that has defined same name street or the same place name.
      * Split list on part of houses that belong to the one boundary
      * @param housesToGroup list of houses that has defined the same street name or place name
-     * @return
+     * @return list of houses grouped by boundary area
      */
     private THashMap<Boundary, List<House>> groupHousesByBoundary(List<House> housesToGroup) {
+
+        long start = System.currentTimeMillis();
 
         THashMap<Boundary, List<House>> groupedHousesMap = new THashMap<>();
 
@@ -532,8 +531,6 @@ public class HouseController {
 
             index.insert(house.getCenter().getEnvelopeInternal(), house);
         }
-
-        // for every boundary find any houses
 
         Collection<Boundary> boundaries = dc.getCenterCityBoundaryMap().getValues();
         for (Boundary boundary : boundaries){
@@ -554,32 +551,88 @@ public class HouseController {
                 groupedHousesMap.put(boundary, housesFromIndex);
             }
         }
+        timeGroupByBoundary += System.currentTimeMillis() - start;
         return groupedHousesMap;
     }
 
+
     /**
-     * Create interestion of street geoometry with houses that related into this street
-     * @param mls original street geom create from raw OSM ways
-     * @param housesInStreet list of houses that ar part of street with multilinestring
+     * For every house find the nearest unnamed waystreet.
+     * @param hausesGrouped houses that
      * @return
      */
-    public MultiLineString cutStreetGeom (MultiLineString mls,  THashSet<House> housesInStreet){
+    private List<Street> findNearestWayStreetsForGroupedHouses (List<House> hausesGrouped){
 
-        double bufferDeg = Utils.distanceToDeg(mls.getCoordinate(),50);
+        long start = System.currentTimeMillis();
 
-        // create area aroud all houses
-        MultiPoint mp = Utils.housesToMultiPoint(housesInStreet);
-        Geometry boundary = mp.convexHull().buffer(bufferDeg);
+        THashSet nearestStreets = new THashSet();
+        // make buffer around every house and find any osm street that intersect
+        MultiPolygon mpBuffer = bufferHouses(hausesGrouped, 200);
+        List<Street> unNamedStreets = IndexController.getInstance().getUnnamedWayStreets(dc, mpBuffer);
 
+        // it can happen that also wrong street are selected. It's needed to find only the closest one for every house
+        STRtree index = new STRtree();
+        for (Street street : unNamedStreets){
+            index.insert(street.getGeometry().getEnvelopeInternal(), street);
+        }
+
+        // for every house select street that intersect with buffer
+
+        int size = mpBuffer.getNumGeometries();
+        for (int i=0; i < size; i++){
+            Geometry geom = mpBuffer.getGeometryN(i);
+            List<Street> watStreetsToTest = index.query(geom.getEnvelopeInternal());
+
+            // now find the nearest street from index
+            long start2 =System.currentTimeMillis();
+            Street nearestWayStreet = getNearestStreetFromAround(geom.getCentroid(), watStreetsToTest);
+            timeFindNearestForGroupedHouse += System.currentTimeMillis() - start2;
+            if (nearestWayStreet != null){
+                nearestStreets.add(nearestWayStreet);
+            }
+        }
+
+        timeFindNearestForGroup += System.currentTimeMillis() - start;
+        return new ArrayList<Street>(nearestStreets);
+    }
+
+
+    /**
+     * Create interesection of street geoometry with houses that related into this street
+     * @param mls original street geom create from raw OSM ways
+     * @param convexBoundary border area that is around the houses
+     * @return
+     */
+    public MultiLineString cutStreetGeom (MultiLineString mls,  Geometry convexBoundary){
         // intersect the street geom with area of houses
-        if (mls.intersects(boundary)){
-            Geometry cuttedStreet = mls.intersection(boundary);
-            mls = Utils.geometryToMultilineString(cuttedStreet);
+        long start = System.currentTimeMillis();
+        if (mls.intersects(convexBoundary)){
+            long start3 = System.currentTimeMillis();
+            Geometry cuttedStreet = mls.intersection(convexBoundary);
+            mls = GeomUtils.geometryToMultilineString(cuttedStreet);
+            timeCutWaysIntersection += System.currentTimeMillis() - start3;
 //            Logger.i(TAG, "Multipoint: " + Utils.geomToGeoJson(mp));
 //            Logger.i(TAG, "Cutted geometry: " + Utils.geomToGeoJson(mls));
         }
-
+        timeCutWayStreetByHouses += System.currentTimeMillis() - start;
         return mls;
+    }
+
+    /**
+     * Create boundary polygon around set of houses
+     * @param groupedHouses list of houses in one boundary
+     * @return geometry that is around the houses. It is convex hull not the concave hull that is better
+     */
+    private Geometry createConvexHullOfHouses (THashSet<House> groupedHouses){
+        long start = System.currentTimeMillis();
+
+        // create area around all houses
+        MultiPoint mp = GeomUtils.housesToMultiPoint(groupedHouses);
+        double bufferDeg = Utils.distanceToDeg(mp.getCoordinate(),50);
+        Geometry boundary = mp.convexHull().buffer(bufferDeg);
+
+        timeCutWaysConvexHull += System.currentTimeMillis() - start;
+        return boundary;
     }
 
     /**
@@ -588,12 +641,12 @@ public class HouseController {
      * @param housesToBuffer size of buffer in meters
      * @return
      */
-    private MultiPolygon bufferHouses (List<House> housesToBuffer, double buffer){
+    private MultiPolygon  bufferHouses (List<House> housesToBuffer, double buffer){
 
         int size = housesToBuffer.size();
         Polygon[] polygons = new Polygon[size];
         for (int i=0; i < size ; i++){
-            polygons[i] = Utils.createRectangle(housesToBuffer.get(i).getCenter().getCoordinate(), buffer);
+            polygons[i] = GeomUtils.createRectangle(housesToBuffer.get(i).getCenter().getCoordinate(), buffer);
         }
         return geometryFactory.createMultiPolygon(polygons);
     }
@@ -793,7 +846,7 @@ public class HouseController {
         int endValue = 0;
         int step = ait.getStep();
 
-        if ( ait == AddrInterpolationType.ALPHABETIC){
+        if (AddrInterpolationType.ALPHABETIC == ait){
             startValue = getLastChar(startHouseNum);
             endValue = getLastChar(endHouse.getNumber());
         }
@@ -811,7 +864,7 @@ public class HouseController {
             }
         }
 
-        if (ait == AddrInterpolationType.INTEGER){
+        if (AddrInterpolationType.INTEGER == ait){
             // obtain step for this specific type interpolation
             step = Integer.valueOf(interpolationValue);
         }

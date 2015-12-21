@@ -31,7 +31,7 @@ public abstract class ADataContainer {
 	private TLongList nodeIds;
 	private TLongList wayIds;
     private TLongList relationIds;
-    private Set<Integer> streetHashSet;
+    protected Set<Integer> streetHashSet;
 
 
     /**

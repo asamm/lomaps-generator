@@ -6,6 +6,7 @@ import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
@@ -213,6 +214,8 @@ public class StreetController {
         Iterator<Integer> iterator = dc.getStreetHashSet().iterator();
         TLongHashSet cityIds = new TLongHashSet();
         THashSet<House> houses = new THashSet<>();
+        THashSet<Geometry> waysGeomsToJoin = new THashSet<>();
+        LineMerger lineMerger = new LineMerger();
 
         while (iterator.hasNext()){
 
@@ -225,7 +228,8 @@ public class StreetController {
                 continue;
             }
 
-            LineMerger lineMerger = new LineMerger();
+            //Logger.i(TAG, "Num of streets for hash: " + hash + " streets: " + wayStreets.size() + " name: " + wayStreets.get(0).getName());
+
 
             // how it works: takes the last wayStreet then subiterate all waystreet with the same name and try
             // to find other wayStreet from that share at least on cityId. If found it join it with the waystreet from
@@ -233,30 +237,35 @@ public class StreetController {
             // Because different wayStreet can have different cityIds it's needed to iterate several times.
 
             for (int i = wayStreets.size() -1; i >= 0; i--){
+
                 lineMerger = new LineMerger();
+                waysGeomsToJoin = new THashSet<>();
                 Street wayStreet = wayStreets.get(i);
                 wayStreets.remove(i);
 
                 cityIds = wayStreet.getCityIds();
                 boolean isPath = wayStreet.isPath();
                 houses = wayStreet.getHouses();
-                lineMerger.add(wayStreet.getGeometry());
+                //lineMerger.add(wayStreet.getGeometry());
+                waysGeomsToJoin.add(wayStreet.getGeometry());
                 boolean sameStreetFounded = false;
 
                 do {
                     sameStreetFounded = false;
                     for (int j = i-1; j >= 0; j--){
                         Street wayStreetToJoin = wayStreets.get(j);
- //                       if (wayStreet.getName().equals("Mikulovice")) {
-//                            Logger.i(TAG, "test streeet: " + wayStreetToJoin.toString());
- //                       }
+                        if (wayStreet.getName().equals("Lipec")) {
+                            Logger.i(TAG, "test street: " + wayStreetToJoin.toString());
+                            Logger.i(TAG, "Num of houses for Lipec: " + houses.size());
+                        }
 
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
 //                            if (wayStreet.getName().equals("Friedhofstraße")) {
 //                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
 //                            }
-                            lineMerger.add(wayStreetToJoin.getGeometry());
+                            //lineMerger.add(wayStreetToJoin.getGeometry());
+                            waysGeomsToJoin.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
                             houses.addAll(wayStreetToJoin.getHouses());
                             isPath = (isPath) ? true : wayStreet.isPath();
@@ -271,8 +280,9 @@ public class StreetController {
                 } while (sameStreetFounded);
 
                 // CREATE STREET GEOM
+                lineMerger.add(waysGeomsToJoin);
                 List<LineString> lineStrings =  new ArrayList<LineString>(lineMerger.getMergedLineStrings());
-                MultiLineString mls = Utils.mergeLinesToMultiLine(lineStrings);
+                MultiLineString mls = GeomUtils.mergeLinesToMultiLine(lineStrings);
                 if (mls == null) {
                     Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
                     continue;
@@ -767,7 +777,7 @@ public class StreetController {
                 }
                 else if (mlsNext != null){
                     Geometry joinedGeom = mls.union(mlsNext);
-                    mls = Utils.geometryToMultilineString(joinedGeom);
+                    mls = GeomUtils.geometryToMultilineString(joinedGeom);
                 }
             }
             return mls;
