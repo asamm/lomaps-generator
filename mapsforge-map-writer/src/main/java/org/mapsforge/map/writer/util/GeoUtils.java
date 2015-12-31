@@ -1,5 +1,6 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
+ * Copyright 2015 lincomatic
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -14,22 +15,6 @@
  */
 package org.mapsforge.map.writer.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.mapsforge.core.model.LatLong;
-import org.mapsforge.core.util.LatLongUtils;
-import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.writer.model.TDNode;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileCoordinate;
-import org.mapsforge.map.writer.model.WayDataBlock;
-
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
@@ -43,6 +28,22 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.TopologyException;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
+
+import org.mapsforge.core.model.LatLong;
+import org.mapsforge.core.util.LatLongUtils;
+import org.mapsforge.core.util.MercatorProjection;
+import org.mapsforge.map.writer.model.TDNode;
+import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileCoordinate;
+import org.mapsforge.map.writer.model.WayDataBlock;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Provides utility functions for the maps preprocessing.
@@ -97,10 +98,10 @@ public final class GeoUtils {
 			if (!geometry.isValid()) {
 				// this should stop the problem of non-noded intersections that trigger an error when
 				// clipping
-				LOGGER.log(Level.WARNING, "invalid geometry prior to tile clipping, trying to repair " + way.getId());
+				LOGGER.warning("invalid geometry prior to tile clipping, trying to repair " + way.getId());
 				geometry = JTSUtils.repairInvalidPolygon(geometry);
 				if (!geometry.isValid()) {
-					LOGGER.log(Level.WARNING, "invalid geometry even after attempt to fix " + way.getId());
+					LOGGER.warning("invalid geometry even after attempt to fix " + way.getId());
 				}
 			}
 			ret = tileBBJTS.intersection(geometry);
@@ -109,11 +110,11 @@ public final class GeoUtils {
 			// we need to investigate this more closely and write approriate test cases
 			// for now, I check whether the resulting polygon is valid and if not try to repair it
 			if ((ret instanceof Polygon || ret instanceof MultiPolygon) && !ret.isValid()) {
-				LOGGER.log(Level.WARNING, "clipped way is not valid, trying to repair it: " + way.getId());
+				LOGGER.warning("clipped way is not valid, trying to repair it: " + way.getId());
 				ret = JTSUtils.repairInvalidPolygon(ret);
 				if (ret == null) {
 					way.setInvalid(true);
-					LOGGER.log(Level.WARNING, "could not repair invalid polygon: " + way.getId());
+					LOGGER.warning("could not repair invalid polygon: " + way.getId());
 				}
 			}
 		} catch (TopologyException e) {
@@ -231,8 +232,7 @@ public final class GeoUtils {
 				}
 			}
 		} catch (TopologyException e) {
-			LOGGER.log(Level.FINE,
-					"encountered error during mapping of a way to corresponding tiles, way id: " + way.getId());
+			LOGGER.fine("encountered error during mapping of a way to corresponding tiles, way id: " + way.getId());
 			return Collections.emptySet();
 		}
 
@@ -308,34 +308,53 @@ public final class GeoUtils {
 			for (int i = 0; i < mp.getNumGeometries(); i++) {
 				Polygon p = (Polygon) mp.getGeometryN(i);
 				List<Integer> outer = toCoordinateList(p.getExteriorRing());
-				List<List<Integer>> inner = new ArrayList<>();
-				for (int j = 0; j < p.getNumInteriorRing(); j++) {
-					inner.add(toCoordinateList(p.getInteriorRingN(j)));
+				if (outer.size() / 2 > 0) {
+					List<List<Integer>> inner = new ArrayList<>();
+					for (int j = 0; j < p.getNumInteriorRing(); j++) {
+						List<Integer> innr = toCoordinateList(p.getInteriorRingN(j));
+						if (innr.size() / 2 > 0) {
+							inner.add(innr);
+						}
+					}
+					res.add(new WayDataBlock(outer, inner));
 				}
-				res.add(new WayDataBlock(outer, inner));
 			}
 		} else if (geometry instanceof Polygon) {
 			Polygon p = (Polygon) geometry;
 			List<Integer> outer = toCoordinateList(p.getExteriorRing());
-			List<List<Integer>> inner = new ArrayList<>();
-			for (int i = 0; i < p.getNumInteriorRing(); i++) {
-				inner.add(toCoordinateList(p.getInteriorRingN(i)));
+			if (outer.size() / 2 > 0) {
+				List<List<Integer>> inner = new ArrayList<>();
+				for (int i = 0; i < p.getNumInteriorRing(); i++) {
+					List<Integer> innr = toCoordinateList(p.getInteriorRingN(i));
+					if (innr.size() / 2 > 0) {
+						inner.add(innr);
+					}
+				}
+				res.add(new WayDataBlock(outer, inner));
 			}
-			res.add(new WayDataBlock(outer, inner));
 		} else if (geometry instanceof MultiLineString) {
 			MultiLineString ml = (MultiLineString) geometry;
 			for (int i = 0; i < ml.getNumGeometries(); i++) {
 				LineString l = (LineString) ml.getGeometryN(i);
-				res.add(new WayDataBlock(toCoordinateList(l), null));
+				List<Integer> outer = toCoordinateList(l);
+				if (outer.size() / 2 > 0) {
+					res.add(new WayDataBlock(outer, null));
+				}
 			}
 		} else if (geometry instanceof LinearRing || geometry instanceof LineString) {
-			res.add(new WayDataBlock(toCoordinateList(geometry), null));
+			List<Integer> outer = toCoordinateList(geometry);
+			if (outer.size() / 2 > 0) {
+				res.add(new WayDataBlock(outer, null));
+			}
 		} else if (geometry instanceof GeometryCollection) {
 			GeometryCollection gc = (GeometryCollection) geometry;
 			for (int i = 0; i < gc.getNumGeometries(); i++) {
 				List<WayDataBlock> recursiveResult = toWayDataBlockList(gc.getGeometryN(i));
 				for (WayDataBlock wayDataBlock : recursiveResult) {
-					res.add(wayDataBlock);
+					List<Integer> outer = wayDataBlock.getOuterWay();
+					if (outer.size() / 2 > 0) {
+						res.add(wayDataBlock);
+					}
 				}
 			}
 		}

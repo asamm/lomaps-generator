@@ -1,5 +1,6 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
+ * Copyright 2015 lincomatic
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -14,21 +15,16 @@
  */
 package org.mapsforge.map.writer;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.core.util.LatLongUtils;
@@ -48,16 +44,21 @@ import org.mapsforge.map.writer.util.Constants;
 import org.mapsforge.map.writer.util.GeoUtils;
 import org.mapsforge.map.writer.util.JTSUtils;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Writes the binary file format for mapsforge maps.
@@ -289,7 +290,7 @@ public final class MapFileWriter {
 	private static final short BITMAP_MULTIPLE_WAY_BLOCKS = 8;
 	// bitmap flags for pois and ways
 	private static final short BITMAP_NAME = 128;
-	private static final short BITMAP_PREFERRED_LANGUAGE = 16;
+	private static final short BITMAP_PREFERRED_LANGUAGES = 16;
 
 	// bitmap flags for ways
 	private static final short BITMAP_REF = 32;
@@ -325,7 +326,8 @@ public final class MapFileWriter {
 
 	private static final TileInfo TILE_INFO = TileInfo.getInstance();
 
-	private static final int tileSize = 256; // needed for optimal simplification, but set to constant here TODO
+	//private static final int tileSize = 256; // needed for optimal simplification, but set to constant here TODO
+	private static final int tileSize = 512; // needed for optimal simplification, but set to constant here TODO
 
 	private static final Charset UTF8_CHARSET = Charset.forName("utf8");
 
@@ -404,8 +406,8 @@ public final class MapFileWriter {
 		if (configuration.hasMapStartZoomLevel()) {
 			infoByte |= BITMAP_MAP_START_ZOOM;
 		}
-		if (configuration.getPreferredLanguage() != null) {
-			infoByte |= BITMAP_PREFERRED_LANGUAGE;
+		if (configuration.getPreferredLanguages() != null && !configuration.getPreferredLanguages().isEmpty()) {
+			infoByte |= BITMAP_PREFERRED_LANGUAGES;
 		}
 		if (configuration.getComment() != null) {
 			infoByte |= BITMAP_COMMENT;
@@ -559,12 +561,10 @@ public final class MapFileWriter {
 			int firstWayStartLat = wpr.getWayDataBlocks().get(0).getOuterWay().get(0).intValue();
 			int firstWayStartLon = wpr.getWayDataBlocks().get(0).getOuterWay().get(1).intValue();
 
-			wayBuffer
-					.put(Serializer.getVariableByteSigned(LatLongUtils.degreesToMicrodegrees(wpr.getLabelPosition().latitude)
-							- firstWayStartLat));
-			wayBuffer
-					.put(Serializer.getVariableByteSigned(LatLongUtils.degreesToMicrodegrees(wpr.getLabelPosition().longitude)
-							- firstWayStartLon));
+			wayBuffer.put(Serializer.getVariableByteSigned(LatLongUtils.degreesToMicrodegrees(wpr.getLabelPosition().latitude)
+					- firstWayStartLat));
+			wayBuffer.put(Serializer.getVariableByteSigned(LatLongUtils.degreesToMicrodegrees(wpr.getLabelPosition().longitude)
+					- firstWayStartLon));
 		}
 
 		if (wpr.getWayDataBlocks().size() > 1) {
@@ -660,8 +660,12 @@ public final class MapFileWriter {
 		}
 
 		// PREFERRED LANGUAGE
-		if (configuration.getPreferredLanguage() != null) {
-			writeUTF8(configuration.getPreferredLanguage(), containerHeaderBuffer);
+		if (configuration.getPreferredLanguages() != null && !configuration.getPreferredLanguages().isEmpty()) {
+			String langStr = "";
+			for (String preferredLanguage : configuration.getPreferredLanguages()) {
+				langStr += (langStr.length() > 0 ? "," : "") + preferredLanguage;
+			}
+			writeUTF8(langStr, containerHeaderBuffer);
 		}
 
 		// COMMENT
@@ -963,8 +967,7 @@ public final class MapFileWriter {
 
 	private static void writeTileSignature(TileCoordinate tileCoordinate, ByteBuffer tileBuffer) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(DEBUG_STRING_TILE_HEAD).append(tileCoordinate.getX()).append(",").append(tileCoordinate.getY())
-				.append(DEBUG_STRING_TILE_TAIL);
+		sb.append(DEBUG_STRING_TILE_HEAD).append(tileCoordinate.getX()).append(",").append(tileCoordinate.getY()).append(DEBUG_STRING_TILE_TAIL);
 		tileBuffer.put(sb.toString().getBytes(UTF8_CHARSET));
 		// append withespaces so that block has 32 bytes
 		appendWhitespace(DEBUG_BLOCK_SIZE - sb.toString().getBytes(UTF8_CHARSET).length, tileBuffer);
@@ -978,7 +981,11 @@ public final class MapFileWriter {
 	private static void writeWay(List<Integer> wayNodes, int currentTileLat, int currentTileLon, ByteBuffer buffer) {
 		// write the amount of way nodes to the file
 		// wayBuffer
-		buffer.put(Serializer.getVariableByteUnsigned(wayNodes.size() / 2));
+		int wayNodeCount = wayNodes.size() / 2;
+		if (wayNodeCount < 2) {
+			LOGGER.warning("Invalid way node count: " + wayNodeCount);
+		}
+		buffer.put(Serializer.getVariableByteUnsigned(wayNodeCount));
 
 		// write the way nodes:
 		// the first node is always stored with four bytes
