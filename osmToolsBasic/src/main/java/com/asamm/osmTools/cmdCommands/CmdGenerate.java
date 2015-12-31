@@ -112,7 +112,7 @@ public class CmdGenerate extends Cmd {
     
     private void addPrefLang() {
         if (getMap().getPrefLang() != null){
-            addCommand("preferred-language="+getMap().getPrefLang());
+            addCommand("preferred-languages="+getMap().getPrefLang());
         }
     }
     
@@ -161,7 +161,7 @@ public class CmdGenerate extends Cmd {
     private void addSimplificationFactor () {
         //default
         //addCommand("simplification-factor=2.5");
-        addCommand("simplification-factor=4");
+        addCommand("simplification-factor=5");
     }
 
 

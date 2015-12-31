@@ -65,9 +65,9 @@ public class DataGeneratorTask implements Sink {
                     Logger.i(TAG, "creating data container: RAM");
                     dc = new DataContainerRam(addressDefinition);
 
-                    Logger.i(TAG, "creating data container: HDD");
-                    dc = new DataContainerHdd(addressDefinition,
-                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
+//                    Logger.i(TAG, "creating data container: HDD");
+//                    dc = new DataContainerHdd(addressDefinition,
+//                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
                 } else {
                     Logger.i(TAG, "creating data container: HDD");
                     dc = new DataContainerHdd(addressDefinition,
