@@ -117,6 +117,7 @@ public class Parameters {
     private static String mOsmosisExe;
     private static String mOgr2ogr;
     private static String mPythonDir;
+    private static String mPython2Dir;
     private static String mShp2osmDir;
 
     private static String mPreShellCommand;
@@ -257,6 +258,10 @@ public class Parameters {
 
     public static String getPythonDir() {
         return mPythonDir;
+    }
+
+    public static String getPython2Dir() {
+        return mPython2Dir;
     }
 
     public static String getShp2osmDir() {
@@ -520,9 +525,10 @@ public class Parameters {
 
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
-            phyghtDir = "/usr/bin/phyghtmap";
+            phyghtDir = "/usr/local/bin/phyghtmap";
             mOgr2ogr = "/usr/bin/ogr2ogr";
-            mPythonDir = "/opt/python3.3/bin/python3";
+            mPythonDir = "/usr/bin/python3";
+            mPython2Dir = "/usr/bin/python2";
             mPreShellCommand = "";
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
@@ -530,6 +536,7 @@ public class Parameters {
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
             mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
             mPythonDir = "C:\\Python27\\python.exe";
+            mPython2Dir = "C:\\Python27\\python.exe";
             mPreShellCommand = "c:\\work\\cygwin64\\bin\\bash.exe -c '";
             mPostShellCommand = "'";
         } else {

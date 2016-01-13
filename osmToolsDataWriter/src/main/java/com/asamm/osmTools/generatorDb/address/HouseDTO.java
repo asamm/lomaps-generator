@@ -49,8 +49,19 @@ public class HouseDTO {
         int dLon = (int) Math.round((center.getX() - streetFirstNode.x) * COORDINATE_POW);
         int dLat = (int) Math.round((center.getY() - streetFirstNode.y) * COORDINATE_POW);
 
-        this.lon = Utils.intToShort(dLon);
-        this.lat = Utils.intToShort(dLat);
+        try {
+            this.lon = Utils.intToShort(dLon);
+            this.lat = Utils.intToShort(dLat);
+        }
+        catch (IllegalArgumentException e){
+            Logger.w(TAG, "Can not convert house to DTO object. Street is too fare");
+            Logger.w(TAG, "House: " + this.toString() +
+                 "\nHouse center: " + Utils.geomToGeoJson(center) +
+                 "\nStreet: " + street.toString());
+            throw new IllegalArgumentException("Can not cast value to short, value: " + number);
+        }
+
+
     }
 
     public HouseDTO (DataReaderBigEndian dr) throws IOException {

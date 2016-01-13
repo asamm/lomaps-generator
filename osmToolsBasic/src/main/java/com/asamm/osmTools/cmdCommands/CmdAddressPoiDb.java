@@ -113,7 +113,7 @@ public class CmdAddressPoiDb extends Cmd {
 //        addCommand("building=*");
 
         addCommand("--used-node");
-        addCommand("idTrackerType=Dynamic");
+       // addCommand("idTrackerType=Dynamic");
 
         addCommand("outPipe.0=Ways");
 

@@ -132,7 +132,7 @@ public class IndexController {
     /**
      * Select unnamed street that intersect with given multipolygon
      * @param multiPolygon region to select streets
-     * @return list of streets that intersect or lay inside of geiven area
+     * @return list of streets that intersect or lay inside of given area
      */
     public List<Street> getUnnamedWayStreets(ADataContainer dc, MultiPolygon multiPolygon) {
 
@@ -140,12 +140,17 @@ public class IndexController {
         List<Long> streetIds = streetUnnamedGeomIndex.query(multiPolygon.getEnvelopeInternal());
         List<Street> wayStreets = dc.getWayStreetsUnnamedFromCache(streetIds);
 
-        for (int i = wayStreets.size() -1; i >= 0; i--){
-            Street streetToFilter = wayStreets.get(i);
-            if ( !pg.intersects(streetToFilter.getGeometry())){
-                wayStreets.remove(i);
-            }
-        }
+
+//        // TODO is it really needed to filter queried ways if intersect with multipolygon??
+//
+//        for (int i = wayStreets.size() -1; i >= 0; i--){
+//            Street streetToFilter = wayStreets.get(i);
+//            if ( !pg.intersects(streetToFilter.getGeometry())){
+//                wayStreets.remove(i);
+//            }
+//        }
+
+
         return wayStreets;
     }
 

@@ -229,7 +229,7 @@ public class BoundaryController {
     }
 
     /**
-     * Says how priority agains other admin_level has boundary. The lower priority is better. OsmAnd ispiration
+     * Says how priority agains other admin_level has boundary. The lower priority is better. OA inspiration
      * @param boundary boundary to check
      * @return return number from 1 - 6 as mark that says how "good" is admin level for boundary.
      * The lower value has better priority

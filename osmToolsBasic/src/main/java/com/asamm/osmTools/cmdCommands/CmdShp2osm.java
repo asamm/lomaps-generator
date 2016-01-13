@@ -24,8 +24,8 @@ public class CmdShp2osm extends Cmd{
         this.output = output;
         
         // test if python is installed in defined dir
-        if (!new File(Parameters.getPythonDir()).exists()){
-            throw new IllegalArgumentException ("Python in location" + Parameters.getPythonDir() +"  does not exist!");
+        if (!new File(Parameters.getPython2Dir()).exists()){
+            throw new IllegalArgumentException ("Python in location" + Parameters.getPython2Dir() +"  does not exist!");
         }
         
         //test if shp2osm.py scripot exist
@@ -35,7 +35,7 @@ public class CmdShp2osm extends Cmd{
     }
     
     public void createCmd(){
-        addCommand(Parameters.getPythonDir());
+        addCommand(Parameters.getPython2Dir());
         addCommand(Parameters.getShp2osmDir());
         addCommand(input);
         addCommand("--obj-count");

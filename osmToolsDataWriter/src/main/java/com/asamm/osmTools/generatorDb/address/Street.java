@@ -16,6 +16,7 @@ import locus.api.utils.DataWriterBigEndian;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -125,6 +126,7 @@ public class Street extends Storable {
     @Override
     protected void readObject(int version, DataReaderBigEndian dr) throws IOException {
 
+        osmId = dr.readLong();
         cityId = dr.readLong();
         name = dr.readString();
         //read list of cityIds
@@ -153,6 +155,7 @@ public class Street extends Storable {
     @Override
     protected void writeObject(DataWriterBigEndian dw) throws IOException {
 
+        dw.writeLong(osmId);
         dw.writeLong(cityId);
         dw.writeString(name);
         // write list of city ids
@@ -272,16 +275,22 @@ public class Street extends Storable {
 
     @Override
     public String toString() {
-        return "Street{" +
+        String str =  "Street{" +
                 "id=" + id +
                 ", osmId=" + osmId +
                 ", name='" + name + '\'' +
                 ", isIn=" + isIn +
-                ", cityIds size=" + cityIds.size() +
-                ", isPath=" + isPath +
+                ", cityIds=[";
+
+        TLongIterator iterator = cityIds.iterator();
+        while (iterator.hasNext()){
+            str += iterator.next() + ", " ;
+        }
+        str +="], isPath=" + isPath +
                 ", houses size=" + houses.size() +
                 ", geometry=" + Utils.geomToGeoJson(geometry) +
                 '}';
+        return str;
     }
 
 
