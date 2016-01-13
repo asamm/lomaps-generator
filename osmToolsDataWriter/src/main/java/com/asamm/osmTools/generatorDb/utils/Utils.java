@@ -232,7 +232,7 @@ public class Utils {
         return true;
     }
 
-    public static short intToShort (int number){
+    public static short intToShort (int number) throws IllegalArgumentException {
 
         if (number > Short.MAX_VALUE || number < Short.MIN_VALUE) {
             throw new IllegalArgumentException("Can not cast value to short, value: " + number);

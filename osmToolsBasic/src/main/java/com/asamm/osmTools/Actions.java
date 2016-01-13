@@ -401,27 +401,27 @@ class Actions {
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
         // firstly simplify source file
-        CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
-        cmd.addTaskSimplify(definition);
-        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
-        cmd.execute();
-
-        // now execute db poi generating
-        CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
-        cmdGen.addGeneratorDb();
-        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-        cmdGen.execute();
+//        CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
+//        cmd.addTaskSimplify(definition);
+//        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
+//        cmd.execute();
+//
+//        // now execute db poi generating
+//        CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
+//        cmdGen.addGeneratorDb();
+//        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
+//        cmdGen.execute();
 
         // Address generation
-//        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
-//        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
-//        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
-//        cmdAddressSimpl.execute();
-//
-//        CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
-//        cmdAddres.addGeneratorAddress();
-//        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
-//        cmdAddres.execute();
+        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
+        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
+        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
+        cmdAddressSimpl.execute();
+
+        CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
+        cmdAddres.addGeneratorAddress();
+        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
+        cmdAddres.execute();
 
         // edit - do not pack database it'll be packed together with map file itself
         // after generating, pack file and delete original
@@ -693,8 +693,12 @@ class Actions {
             return;
         }
 
-        File dbAddressPoi = new File(itemMap.getPathAddressPoiDb());
-        DatabaseData dbData = new DatabaseData(dbAddressPoi);
+        File dbAddressPoiFile = new File(itemMap.getPathAddressPoiDb());
+        if (dbAddressPoiFile.getParentFile() != null) {
+            dbAddressPoiFile.getParentFile().mkdirs();
+        }
+
+        DatabaseData dbData = new DatabaseData(dbAddressPoiFile);
 
         // read description from definition json
         JSONParser parser = new JSONParser();

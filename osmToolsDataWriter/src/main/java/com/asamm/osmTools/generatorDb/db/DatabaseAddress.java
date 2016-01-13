@@ -86,9 +86,9 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = false;
+    private static boolean hasHousesTableWithGeom = true;
 
-    private static boolean hasTableOfRemovedHouses = false;
+    private static boolean hasTableOfRemovedHouses = true;
 
 
     public DatabaseAddress(File file) throws Exception {
@@ -111,7 +111,7 @@ public class DatabaseAddress extends ADatabaseHandler {
     private void initPreparedStatements() throws SQLException {
         // create prepared statemennts
         psInsertCity = createPreparedStatement(
-                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+COL_PLACE_NAME+", "+COL_CENTER_GEOM+", "+COL_GEOM+
+                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+COL_PARENT_CITY_NAME+", "+COL_CENTER_GEOM+", "+COL_GEOM+
                         ") VALUES (?, ?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
 
         psInsertCityNames = createPreparedStatement( "INSERT INTO "+ TN_CITIES_NAMES +
@@ -131,8 +131,9 @@ public class DatabaseAddress extends ADatabaseHandler {
                         ") VALUES (?, ?, ?, ?, ?, ?,  ?, GeomFromWKB(?, 4326))");
 
         psInsertRemovedHouse =  createPreparedStatement(
-                "INSERT INTO "+ TN_HOUSES_REMOVED +" ("+COL_STREET_NAME+", "+COL_PLACE_NAME+",  "+COL_NUMBER+", " +COL_NAME+", "+COL_POST_CODE+", "+COL_CENTER_GEOM+
-                        ") VALUES (?, ?, ?, ?, ?,  GeomFromWKB(?, 4326))");
+                "INSERT INTO "+ TN_HOUSES_REMOVED +" ("+COL_STREET_NAME+", "+COL_PLACE_NAME+",  "+COL_NUMBER+", "
+                        +COL_NAME+", "+COL_POST_CODE+", "+COL_TYPE+", "+COL_CENTER_GEOM+
+                        ") VALUES (?, ?, ?, ?, ?, ?,  GeomFromWKB(?, 4326))");
 
         psInsertPostCode = createPreparedStatement(
                 "INSERT INTO "+ TN_POSTCODES +" ("+COL_ID+", "+COL_POST_CODE+") VALUES (?, ?)");
@@ -243,7 +244,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         String sql = "CREATE TABLE "+TN_CITIES+" (";
 		sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
 		sql += COL_TYPE+" INT NOT NULL, ";
-        sql += COL_PLACE_NAME+" TEXT ) ";
+        sql += COL_PARENT_CITY_NAME+" TEXT ) ";
 		executeStatement(sql);
 
 		// creating a Center Geometry column fro Cities
@@ -308,7 +309,8 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_PLACE_NAME + " TEXT, ";
         sql += COL_NUMBER+" TEXT NOT NULL, ";
         sql += COL_NAME+ " TEXT,  ";
-        sql += COL_POST_CODE+" TEXT ) ";
+        sql += COL_POST_CODE +" TEXT, ";
+        sql += COL_TYPE+" TEXT ) ";
         executeStatement(sql);
 
         // creating a Center Geometry column of centers of removed houses
@@ -341,6 +343,10 @@ public class DatabaseAddress extends ADatabaseHandler {
             executeStatement(sql);
         }
 
+        if ( !hasTableOfRemovedHouses){
+            sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES_REMOVED;
+            executeStatement(sql);
+        }
         super.destroy();
     }
 
@@ -388,6 +394,11 @@ public class DatabaseAddress extends ADatabaseHandler {
             commit(false);
             if (hasHousesTableWithGeom){
                 String sql = "SELECT CreateSpatialIndex('" + TN_HOUSES + "', '"+COL_CENTER_GEOM+"')";
+                executeStatement(sql);
+            }
+
+            if (hasTableOfRemovedHouses){
+                String sql = "SELECT CreateSpatialIndex('" + TN_HOUSES_REMOVED + "', '"+COL_CENTER_GEOM+"')";
                 executeStatement(sql);
             }
 
@@ -665,7 +676,7 @@ public class DatabaseAddress extends ADatabaseHandler {
      * Temporary method that create table with houses for which was not able to find proper street
      * @param house removed house
      */
-    public void insertRemovedHouse (House house){
+    public void insertRemovedHouse (House house, String reason){
 
         if (hasTableOfRemovedHouses){
             try {
@@ -674,7 +685,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertRemovedHouse.setString(3, house.getNumber());
                 psInsertRemovedHouse.setString(4, house.getName());
                 psInsertRemovedHouse.setString(5, house.getPostCode());
-                psInsertRemovedHouse.setBytes(6, wkbWriter.write(house.getCenter()));
+                psInsertRemovedHouse.setString(6, reason);
+                psInsertRemovedHouse.setBytes(7, wkbWriter.write(house.getCenter()));
 
                 psInsertRemovedHouse.execute();
 

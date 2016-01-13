@@ -230,7 +230,6 @@ public class StreetController {
 
             //Logger.i(TAG, "Num of streets for hash: " + hash + " streets: " + wayStreets.size() + " name: " + wayStreets.get(0).getName());
 
-
             // how it works: takes the last wayStreet then subiterate all waystreet with the same name and try
             // to find other wayStreet from that share at least on cityId. If found it join it with the waystreet from
             // parent loop. then delete it.
@@ -254,16 +253,16 @@ public class StreetController {
                     sameStreetFounded = false;
                     for (int j = i-1; j >= 0; j--){
                         Street wayStreetToJoin = wayStreets.get(j);
-                        if (wayStreet.getName().equals("Lipec")) {
-                            Logger.i(TAG, "test street: " + wayStreetToJoin.toString());
-                            Logger.i(TAG, "Num of houses for Lipec: " + houses.size());
-                        }
+//                        if (wayStreet.getName().equals("Via Verdi")) {
+//                            Logger.i(TAG, "test street: " + wayStreetToJoin.toString());
+//                            Logger.i(TAG, "Num of houses for Via Verdi " + houses.size());
+//                        }
 
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
-//                            if (wayStreet.getName().equals("Friedhofstraße")) {
-//                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
-//                            }
+                            if (wayStreet.getName().equals("Via Verdi")) {
+                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
+                            }
                             //lineMerger.add(wayStreetToJoin.getGeometry());
                             waysGeomsToJoin.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
@@ -308,7 +307,7 @@ public class StreetController {
     /**
      * Joined street can lay in more then one city. But some times it's not one street but
      * two different street with the same name. This method identify if geometry of street
-     * is only one street or if it is two or more different citiyes
+     * is only one street or if it is two or more different cities
      * @param street street to test if it is one or more different streets
      * @return list of separated street
      */

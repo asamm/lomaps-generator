@@ -45,7 +45,7 @@ public class Boundary {
     }
 
     public boolean isValid() {
-        if (adminLevel > 0 && adminLevel < 4){
+        if (adminLevel < 4){
             //max admin level that city can have is admin_level=4
             return false;
         }

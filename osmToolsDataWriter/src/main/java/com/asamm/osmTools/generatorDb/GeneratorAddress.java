@@ -434,7 +434,6 @@ public class GeneratorAddress extends AGenerator {
             if (boundary != null){
                 city.setGeom(boundary.getGeom());
             }
-
             ((DatabaseAddress) db).insertCity(city, boundary);
         }
 

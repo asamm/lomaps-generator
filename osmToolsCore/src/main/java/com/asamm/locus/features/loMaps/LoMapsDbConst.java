@@ -46,6 +46,7 @@ public class LoMapsDbConst {
     public static final String COL_LANG_CODE = "langcode";
     public static final String COL_STREET_NAME = "streetname";
     public static final String COL_PLACE_NAME = "placename";
+    public static final String COL_PARENT_CITY_NAME = "parentcityname";
     public static final String COL_LON = "lon";
     public static final String COL_LAT = "lat";
 	

@@ -311,7 +311,7 @@ public class HouseController {
 
             nearestStreet = findNamedStreet(addrStreetName, 2500, house);
             if (nearestStreet == null){
-                databaseAddress.insertRemovedHouse(house);
+                //databaseAddress.insertRemovedHouse(house);
                 dc.addHouseWithoutStreet (house);
             }
 
@@ -321,7 +321,7 @@ public class HouseController {
             // street name is not defined but we have place name. This is common for villages
             nearestStreet = findNamedStreet(addrPlaceName, 4500, house);
             if (nearestStreet == null){
-                databaseAddress.insertRemovedHouse(house);
+                //databaseAddress.insertRemovedHouse(house);
                 dc.addHouseWithoutStreet(house);
             }
         }
@@ -440,27 +440,42 @@ public class HouseController {
 
             // this houses has the same streetName or the same placeName
             List<House> houses = entry.getValue();
-            if (houses.size() < 2 ){
+            int sizeHouses = houses.size();
+            if (sizeHouses < 2 ){
                 // at least two houses of the same name are required
+                // TODO when only sigle house has defined the place is removed. is it correct?
+                if (sizeHouses == 1){
+                    databaseAddress.insertRemovedHouse(houses.get(0), "Only one house with placename: " + streetPlaceName);
+                }
                 continue;
             }
             // GROUP HOUSES BY BOUNDARY
             THashMap<Boundary, List<House>> groupedHousesMap = groupHousesByBoundary(houses);
+
             for (Map.Entry<Boundary, List<House>> entryG : groupedHousesMap.entrySet()){
                 Boundary boundary = entryG.getKey();
                 List<House> hausesGrouped = entryG.getValue();
 
-                if (hausesGrouped.size() < 2){
-                    // at least two houses same name in every boundary are required
+                int sizeGroupedHouses = hausesGrouped.size();
+                if (sizeGroupedHouses < 2){
+                    // at least two houses with the same placename in every boundary are required
+                    if (sizeGroupedHouses == 1){
+                        databaseAddress.insertRemovedHouse(houses.get(0),"Onle one house in boundary: " + boundary.getName());
+                    }
                     continue;
                 }
 
-                // for every house of grouped houses find the nearest unnamed way street
+                // for every house in boundary grouped houses find the nearest unnamed way street
                 List<Street> unNamedStreets = findNearestWayStreetsForGroupedHouses(hausesGrouped);
 
                 if (unNamedStreets.size() == 0){
 //                    Logger.i(TAG, " processHouseWithoutStreet(): Can not find any unnamed street for grouped houses: " +
 //                                    streetPlaceName + ", and boundary: " + boundary.toString());
+                    for (House houseToRemove : hausesGrouped){
+                        databaseAddress.insertRemovedHouse(houseToRemove, "" +
+                                "Not found street for grouped houses with placeName: " +
+                                streetPlaceName + ", and boundary: " + boundary.getName());
+                    }
                     continue;
                 }
 
@@ -483,6 +498,11 @@ public class HouseController {
                     MultiLineString mlsCutted = cutStreetGeom(wayStreet.getGeometry(), convexBoundary);
                     wayStreet.setGeometry(mlsCutted);
 
+                    if (wayStreet.getName().equals("Na Vrchách")){
+                        Logger.i(TAG, "Cutted street: " + wayStreet.toString()
+                                + "\n convexBoundary: " + Utils.geomToGeoJson(convexBoundary));
+                    }
+
                     List<City> cities = sc.findCitiesForStreet(wayStreet);
                     wayStreet.addCityIds(cities);
                     dc.addWayStreet(wayStreet);
@@ -502,9 +522,12 @@ public class HouseController {
                 // insert street into DB
                 databaseAddress.insertStreet(street);
                 // insert houses into DB
-                for (House house : houses){
-//                    Logger.i(TAG, "Isnert house, street: " + street.toString()
-//                            + "\n house: " + house.toString() );
+                for (House house : houses) {
+
+                    if (street.getName().equals("Na Vrchách")){
+                        Logger.i(TAG, "Insert house, street: " + street.toString()
+                                + "\n house: " + house.toString() );
+                    }
                     databaseAddress.insertHouse(street, house);
 //                    Logger.i(TAG, "Isnert house id " + id);
                 }
@@ -567,17 +590,23 @@ public class HouseController {
 
         THashSet nearestStreets = new THashSet();
         // make buffer around every house and find any osm street that intersect
-        MultiPolygon mpBuffer = bufferHouses(hausesGrouped, 200);
+        MultiPolygon mpBuffer = bufferHouses(hausesGrouped, 100);
+        if (hausesGrouped.size() > 1){
+            String placeName = hausesGrouped.get(0).getPlace();
+            Logger.i(TAG, "Buffer for housesGrouped, placename: " + placeName + "; " + Utils.geomToGeoJson(mpBuffer));
+        }
+
         List<Street> unNamedStreets = IndexController.getInstance().getUnnamedWayStreets(dc, mpBuffer);
 
-        // it can happen that also wrong street are selected. It's needed to find only the closest one for every house
+        // it can happen that more then one street is selected. It's needed to find only the closest one for every house
+        // crate index from ways that are around grouped houses
         STRtree index = new STRtree();
         for (Street street : unNamedStreets){
             index.insert(street.getGeometry().getEnvelopeInternal(), street);
+            Logger.i(TAG, "Inser street to index: " + street.toString());
         }
 
-        // for every house select street that intersect with buffer
-
+        // for every house (every buffer around house) find the closest way
         int size = mpBuffer.getNumGeometries();
         for (int i=0; i < size; i++){
             Geometry geom = mpBuffer.getGeometryN(i);
@@ -598,7 +627,7 @@ public class HouseController {
 
 
     /**
-     * Create interesection of street geoometry with houses that related into this street
+     * Create intersection of street geometry with houses that related into this street
      * @param mls original street geom create from raw OSM ways
      * @param convexBoundary border area that is around the houses
      * @return
