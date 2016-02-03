@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb.utils;
 
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
@@ -129,7 +130,7 @@ public class Utils {
 
 
     /**
-     * Compute unacurate distance in deg from ditance in meters for specified
+     * Compute unacurate distance in deg from distance in meters for specified
      * point on sphere
      * @param center
      */
@@ -143,6 +144,19 @@ public class Utils {
 
         return Math.sqrt(dLat * dLat + dLon*dLon);
     }
+
+    /**
+     * Compute the shortest distance between two geoms. It usable to get forexample
+     * distance between closest point on street and other point
+     * @param geom1 first geom to test distance
+     * @param geom2 next geometry
+     * @return distance in meters
+     */
+    public static double getDistanceNearest (Geometry geom1, Geometry geom2){
+        Coordinate[] coordinates = DistanceOp.nearestPoints(geom1, geom2);
+        return getDistance(coordinates[0].x , coordinates[0].y, coordinates[1].x , coordinates[1].y);
+    }
+
 
     /**
      * Convert deg angle to radians

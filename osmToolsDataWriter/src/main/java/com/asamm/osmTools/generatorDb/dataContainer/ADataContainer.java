@@ -62,6 +62,7 @@ public abstract class ADataContainer {
 	
 	public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
 		this.writerDefinition = writerDefinition;
+
 		this.nodeIds = new TLongArrayList();
 		this.wayIds = new TLongArrayList();
         this.relationIds = new TLongArrayList();
@@ -71,7 +72,23 @@ public abstract class ADataContainer {
         this.citiesInBoundaryMap = new THashMap<>();
         this.streetRelations = new TLongArrayList();
 	}
-	
+
+
+    /**
+     * IMPORTANT delete all object be sure what you do
+     */
+    public void clearAll (){
+
+        this.nodeIds = null;
+        this.wayIds = null;
+        this.relationIds = null;
+        this.streetHashSet = null;
+        this.housesWithoutStreet = null;
+        this.centerCityBoundaryMap = null;
+        this.citiesInBoundaryMap = null;
+        this.streetRelations = null;
+    }
+
 	public abstract void insertNodeToCache(Node node);
 	
 	public abstract void insertWayToCache(Way way);

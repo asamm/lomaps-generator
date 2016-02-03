@@ -18,6 +18,12 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
     String[] validPlaceNodes =  {"city", "town" , "village", "hamlet", "suburb", "district" };
 
+
+
+    // what level of admin boundaries will be used for admin areas
+    private int regionAdminLevel = 6;
+
+
     public WriterAddressDefinition () {
 
     }
@@ -91,6 +97,7 @@ public class WriterAddressDefinition extends AWriterDefinition{
             }
 
             if (tag.getValue().equals(OSMTagKey.STREET.getValue()) || tag.getValue().equals(OSMTagKey.ASSOCIATED_STREET.getValue())) {
+                //Logger.i(TAG, "Street relation id: " + entity.getId());
                 return true;
             }
 
@@ -105,5 +112,13 @@ public class WriterAddressDefinition extends AWriterDefinition{
             }
         }
         return false;
+    }
+
+    public int getRegionAdminLevel() {
+        return regionAdminLevel;
+    }
+
+    public void setRegionAdminLevel(int level) {
+        regionAdminLevel = level;
     }
 }

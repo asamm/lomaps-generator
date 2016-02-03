@@ -53,6 +53,10 @@ public class House extends Storable{
         super(dr);
     }
 
+    public House (byte[] data) throws IOException {
+        super(data);
+    }
+
     public House(long osmId, String number, String name, String postCode, Point center) {
 
         this.osmId = osmId;

@@ -65,6 +65,7 @@ public class CmdGenerate extends Cmd {
         addTagConf(Parameters.getContourTagMapping());
         addZoomIntervalContour();
         addBboxEnlargement(1);
+        //ddWayClipping();
         //addMapComment();
     }
 
@@ -87,6 +88,7 @@ public class CmdGenerate extends Cmd {
         addTagConf(Parameters.mTouristTagMapping);
         //addDebugFile();
         addZoomInterval();
+        //addWayClipping();
         addSimplificationFactor();
         addBboxEnlargement(10);
         addMapComment();
@@ -162,6 +164,10 @@ public class CmdGenerate extends Cmd {
         //default
         //addCommand("simplification-factor=2.5");
         addCommand("simplification-factor=5");
+    }
+
+    private void addWayClipping () {
+        addCommand("way-clipping=false");
     }
 
 

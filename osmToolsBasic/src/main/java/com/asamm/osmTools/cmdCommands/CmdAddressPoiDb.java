@@ -124,8 +124,8 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("highway=*");
         addCommand("boundary=*");
         addCommand("place=*");
-        addCommand("*=street");
-        addCommand("*=associatedStreet");
+        addCommand("type=street");
+        addCommand("type=associatedStreet");
         addCommand("addr:housenumber=*");
         addCommand("addr:housename=*");
         addCommand("addr:street=*");
@@ -173,6 +173,7 @@ public class CmdAddressPoiDb extends Cmd {
 
         //addReadPbf(getMap().getPathSource());
         addReadPbf(mFileTempMap.getAbsolutePath());
+
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
         addCommand("-fileDb=" + mFilePoiDb);

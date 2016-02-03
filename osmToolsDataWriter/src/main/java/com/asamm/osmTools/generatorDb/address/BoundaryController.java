@@ -8,6 +8,7 @@ import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
@@ -352,11 +353,12 @@ public class BoundaryController {
      * @param city city to find parent
      * @return parent city or null if was not possible to find parent city
      */
-    public City findParentCityForVillages (ADataContainer dc, City city) {
+    public City findParentCityAndRegion(ADataContainer dc, City city) {
 
         City parentCity = null;
 
         City.CityType type = city.getType();
+        // find parent city only for villages subburs etc.
         if (type == City.CityType.CITY || type == City.CityType.TOWN){
             return null;
         }
@@ -390,5 +392,38 @@ public class BoundaryController {
             parentCity = dc.getCenterCityBoundaryMap().getKey(parentBoundary);
         }
         return parentCity;
+    }
+
+    /**
+     * Find admin region in which is city
+     * @param city to find region for
+     * @return parent region in which city is in or null if there is no region for city
+     */
+    public Region findParentRegion (City city){
+
+        PreparedGeometry pgCenter = PreparedGeometryFactory.prepare(city.getCenter());
+
+        List<Region> parentRegions = IndexController.getInstance().getRegionGeomIndex()
+                .query(pgCenter.getGeometry().getEnvelopeInternal());
+        Region parentRegion = null;
+        for (Region region : parentRegions){
+
+            if (pgCenter.intersects(region.getGeom())){
+                if (parentRegion != null){
+                    // there is other region where city is in. compare it with previous by name and by area
+                    if (city.getIsIn().toLowerCase().contains(region.getName().toLowerCase())){
+                        parentRegion = region;
+                    }
+                    else if (region.getGeom().getArea() > parentRegion.getGeom().getArea()){
+                        parentRegion = region;
+                    }
+                }
+                else {
+                    parentRegion = region;
+                }
+            }
+        }
+
+        return parentRegion;
     }
 }

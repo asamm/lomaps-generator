@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb.index;
 
 import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.generatorDb.address.City;
+import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
@@ -21,6 +22,8 @@ public class IndexController {
 
     private static IndexController instance = null;
 
+    /** JTS index of regions geometries (their) envelopes*/
+    private STRtree regionGeomIndex;
 
     /** JTS in memory index of center geometries for cities*/
     private STRtree cityCenterIndex;
@@ -41,6 +44,7 @@ public class IndexController {
 
 
     private IndexController() {
+        regionGeomIndex = new STRtree();
         cityCenterIndex = new STRtree();
         boundaryGeomIndex = new STRtree();
         streetUnnamedGeomIndex = new STRtree();
@@ -55,6 +59,28 @@ public class IndexController {
         }
         return instance;
     }
+
+
+    /**
+     * Use only if know what it does.
+     * It clear all indexes
+     */
+    public void clearAll() {
+
+        regionGeomIndex = null;
+        cityCenterIndex = null;
+        boundaryGeomIndex = null;
+        streetUnnamedGeomIndex = null;
+        streetGeomIndex = null;
+    }
+
+
+    // INDEX OF REGION GEOMETRIES
+
+    public void insertRegion(Region region) {
+        regionGeomIndex.insert(region.getGeom().getEnvelopeInternal() , region);
+    }
+
     // CITY CENTER GEOM INDEX
 
     public void insertCity(Envelope envelope, City city) {
@@ -220,5 +246,8 @@ public class IndexController {
     }
 
 
+    public STRtree getRegionGeomIndex() {
+        return regionGeomIndex;
+    }
 
 }

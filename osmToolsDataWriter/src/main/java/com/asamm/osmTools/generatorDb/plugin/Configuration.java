@@ -4,7 +4,7 @@ import java.io.File;
 
 public class Configuration {
 
-	public enum GenerateType {
+    public enum GenerateType {
 		ADDRESS, POI
 	}
 
@@ -18,7 +18,7 @@ public class Configuration {
 	// source file
 	private File fileDb;
     private File fileConfig;
-	
+
 	// testing part
 	public boolean testing;
 	public int reportFrom;
@@ -143,4 +143,5 @@ public class Configuration {
 			}	
 		}
 	}
+
 }

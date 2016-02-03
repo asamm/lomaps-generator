@@ -108,7 +108,7 @@ public abstract class ADatabaseHandler {
 	}
 	
 	protected void commit(boolean closeConnection) {
-		try {
+        try {
 			if (conn != null) {
 				conn.commit();
 				if (closeConnection ) {

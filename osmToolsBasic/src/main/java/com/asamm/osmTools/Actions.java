@@ -644,9 +644,9 @@ class Actions {
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Generating separeted contour map: "+map.getPathGenerateContour());
+                Logger.i(TAG, "Generating separated contour map: "+map.getPathGenerateContour());
 
-                Main.mySimpleLog.print("\nGenerate contous: "+map.getName()+" ...");
+                Main.mySimpleLog.print("\nGenerate contours: "+map.getName()+" ...");
                 cgc.execute();
 
                 // clean tmp

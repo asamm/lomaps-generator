@@ -1,11 +1,13 @@
 package com.asamm.osmTools.generatorDb.utils;
 
 import com.asamm.osmTools.generatorDb.address.House;
+import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
+import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
 import gnu.trove.set.hash.THashSet;
 
@@ -222,4 +224,31 @@ public class GeomUtils {
     public static Polygon createRectangle (Coordinate center, double distance){
         return createCircle(center, distance, 4);
     }
+
+    // SIMPLIFICATION
+
+    /**
+     *
+     * @param multiPolygon Multipolygon to simplify
+     * @return
+     */
+    public static MultiPolygon simplifyCityRegionGeom(MultiPolygon multiPolygon) {
+
+        if (multiPolygon == null){
+            return null;
+        }
+
+        double distanceDeg = Utils.distanceToDeg(multiPolygon.getCoordinate(), 100);
+        Geometry geometry = DouglasPeuckerSimplifier.simplify(multiPolygon, distanceDeg);
+
+        MultiPolygon mp;
+        if (geometry instanceof Polygon) {
+            mp = geometryFactory.createMultiPolygon(new Polygon[]{(Polygon) geometry});
+        } else {
+            mp = (MultiPolygon) geometry;
+        }
+
+        return mp;
+    }
+
 }

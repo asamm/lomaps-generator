@@ -94,6 +94,9 @@ public class City {
     /** Administrative place for villages */
     private City parentCity;
 
+    /** Admin region where city is in*/
+    private Region region;
+
     /** Boundary of city - can be null*/
     private MultiPolygon geom;
 
@@ -204,6 +207,15 @@ public class City {
     public void setParentCity(City parentCity) {
         this.parentCity = parentCity;
     }
+
+    public Region getRegion() {
+        return region;
+    }
+
+    public void setRegion(Region region) {
+        this.region = region;
+    }
+
 
     public MultiPolygon getGeom() {
         return geom;
