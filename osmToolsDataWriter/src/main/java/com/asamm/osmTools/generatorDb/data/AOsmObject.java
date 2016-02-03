@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb.data;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.generatorDb.utils.OsmTagUsage;
+import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -63,6 +64,11 @@ public abstract class AOsmObject {
 	
 	protected void handleTags() {
 		// parse tags - http://wiki.openstreetmap.org/wiki/Key:KEY
+        if (entity.getTags() == null){
+            Logger.i(TAG, "handleTags(): Entity tags are null, entity: " + entity.getId());
+            return;
+        }
+
 		for (Tag tag : entity.getTags()) {
 			String key = tag.getKey().toLowerCase(Locale.ENGLISH);
 			String value = tag.getValue();

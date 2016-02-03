@@ -15,6 +15,7 @@ import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
+import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
@@ -51,6 +52,8 @@ public class StreetController {
     public long timeFindStreetCities = 0;
     public long timeLoadNereastCities = 0;
     public long timeFindCityTestByGeom = 0;
+    public long timeFindCityTestByDistance = 0;
+    public long timeFindCityFindNearest = 0;
 
     public long timeJoinWaysToStreets = 0;
 
@@ -75,7 +78,7 @@ public class StreetController {
         for (int i=0, size = relationIds.size(); i < size; i++) {
 
             long relationId = relationIds.get(i);
-            //Logger.i(TAG, "Create street for relation id: " + relationId);
+            //Logger.i(TAG, " createWayStreetFromRelations() Create street for relation id: " + relationId);
 
             Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
@@ -88,13 +91,14 @@ public class StreetController {
                 continue;
             }
 
-            if ( !(type.equals(OSMTagKey.STREET.getValue())
+            if ( !( type.equals(OSMTagKey.STREET.getValue())
                     || type.equals(OSMTagKey.ASSOCIATED_STREET.getValue())
                     || type.equals((OSMTagKey.MULTIPOLYGON.getValue())))){
+                //Logger.i(TAG, "createWayStreetFromRelations() Skip relation id: " + relationId);
                 continue;
             }
 
-            // remember that this relation can be street (later use it for generation og houses)
+            // remember that this relation can be street (later use it for generation of houses)
             dc.getStreetRelations().add(relationId);
 
             List<String> isInList = new ArrayList<>();
@@ -119,6 +123,7 @@ public class StreetController {
             }
 
             // create street geom
+            //Logger.i(TAG, "Create street geom from relation id: " + relationId);
             MultiLineString mls = createStreetGeom(relation);
 
             if (mls == null) {
@@ -171,7 +176,7 @@ public class StreetController {
             // create street geom
             MultiLineString mls = createStreetGeom(way);
             if (mls == null) {
-                // probably associtate Address relation that does not contain any street member > skip it
+                // probably associate Address relation that does not contain any street member > skip it
                 continue;
             }
 
@@ -180,17 +185,18 @@ public class StreetController {
             wayStreet.setOsmId(wayId);
             wayStreet.setPath(isPath(way));
 
-            // find all cities where street can be in it or is close to city
-            long start = System.currentTimeMillis();
-            List<City> cities = findCitiesForStreet(wayStreet);
-            timeFindStreetCities += System.currentTimeMillis() - start;
-            wayStreet.addCityIds(cities);
-
             if (name == null || name.length() == 0) {
                 dc.addWayStreetUnnamed(wayStreet);
                 IndexController.getInstance().insertStreetUnnamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
             }
             else {
+
+                // find all cities where street can be in it or is close to city
+                long start = System.currentTimeMillis();
+                List<City> cities = findCitiesForStreet(wayStreet);
+                timeFindStreetCities += System.currentTimeMillis() - start;
+                wayStreet.addCityIds(cities);
+
                 dc.addWayStreet(wayStreet);
             }
         }
@@ -260,9 +266,9 @@ public class StreetController {
 
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
-                            if (wayStreet.getName().equals("Via Verdi")) {
-                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
-                            }
+//                            if (wayStreet.getName().equals("Via Verdi")) {
+//                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
+//                            }
                             //lineMerger.add(wayStreetToJoin.getGeometry());
                             waysGeomsToJoin.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
@@ -303,6 +309,8 @@ public class StreetController {
         }
         timeJoinWaysToStreets += System.currentTimeMillis() - start;
     }
+
+
 
     /**
      * Joined street can lay in more then one city. But some times it's not one street but
@@ -487,7 +495,6 @@ public class StreetController {
 
         // create index from rest of cities if boundary exist
         List<City> citiesWithoutBound = new ArrayList<>();
-        start = System.currentTimeMillis();
 
         // TODO there are two ways how to check if city contains the street > test it for speed
 //        STRtree cityBoundsIndex = new STRtree();
@@ -504,6 +511,7 @@ public class StreetController {
 //        List<City> result = cityBoundsIndex.query(street.getGeometry().getEnvelopeInternal());
 //        streetCities.addAll(result);
 
+        start = System.currentTimeMillis();
         PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry());
         for (City city : cities){
             MultiPolygon mp = city.getGeom();
@@ -513,17 +521,19 @@ public class StreetController {
                 continue;
             }
 
-            // TODO decide if ti test intersect or contains
-            if (streetGeomPrepared.coveredBy(city.getGeom())){
+            // TODO decide if to test intersect or contains
+            if (streetGeomPrepared.intersects(city.getGeom())){
                 streetCities.add(city);
             }
         }
 
         timeFindCityTestByGeom += System.currentTimeMillis() - start;
 
+
         // RECOGNIZE BY DISTANCE
 
         // for rest of cities that does not have defined the bounds check distance
+        start = System.currentTimeMillis();
         for (City city : citiesWithoutBound){
 
             // boundary is not defined > if relative distance is lower 0.2
@@ -535,30 +545,40 @@ public class StreetController {
                 streetCities.add(city);
             }
         }
+        timeFindCityTestByDistance += System.currentTimeMillis() - start;
 
+
+        // GET CLOSEST FROM LOADED
+
+        start = System.currentTimeMillis();
         if (streetCities.isEmpty()) {
             // iterate again the cities and try to find the closest
-            City city = getClosestCity(street.getGeometry().getCentroid());
+            City city = getClosestCity(street.getGeometry().getCentroid(), cities);
 
             if (city != null){
-                streetCities.add(city);
-            }
-            else {
-                Logger.e(TAG, "Can not find city for street: " + street.getName()
-                        + " geometry: " + Utils.geomToGeoJson(street.getGeometry()));
+                // test how fare is the nearest city
+                double distance = Utils.getDistance(streetCentroid, city.getCenter());
+                if (distance / city.getType().getRadius() < 0.5){
+                    streetCities.add(city);
+                }
+                else {
+                    //TODO WRITE THESE STREETS INTO CUSTOM TABLE AND CHECK WHICH STREET ARE REMOVED
+//                    Logger.e(TAG, "Can not find city for street: " + street.getName()
+//                            + " geometry: " + Utils.geomToGeoJson(street.getGeometry()));
+                }
             }
         }
+        timeFindCityFindNearest += System.currentTimeMillis() - start;
+
         return streetCities;
     }
 
     /**
-     * Try to find the closest city to specific point
+     * Select the closest city from the list
      * @param point Center for search
      * @return the closest city or null if no cities was found
      */
-    private City getClosestCity (Point point) {
-
-        List<City> cities = ga.getCities(); //all cities for map
+    private City getClosestCity (Point point, List<City> cities) {
 
         if (point == null || cities.size() == 0){
             return null;
@@ -744,12 +764,14 @@ public class StreetController {
         else if (entity.getType() == EntityType.Relation){
 
             Relation relation = (Relation) entity;
-            MultiLineString mls = null;
+            LineMerger lineMerger = new LineMerger();
+            MultiLineString mlsNext = null;
 
             for (RelationMember rm : relation.getMembers()){
-                MultiLineString mlsNext = null;
-
-                if (rm.getMemberType() == EntityType.Way){
+                if (rm.getMemberType() == EntityType.Node){
+                    continue;
+                }
+                else if (rm.getMemberType() == EntityType.Way){
 
                     Way way = dc.getWayFromCache(rm.getMemberId());
                     if (way == null){
@@ -758,27 +780,26 @@ public class StreetController {
 
                     if (rm.getMemberRole() == null || !rm.getMemberRole().equals("street")) {
                         //some relation does not have defined the member > try to guess if it is street
-                        if ( !isStreetWay(way)){
-                            continue;
+                        if ( isStreetWay(way)){
+                            mlsNext = createStreetGeom(way);
                         }
                     }
-
-                    mlsNext = createStreetGeom(way);
                 }
                 else if (rm.getMemberType() == EntityType.Relation){
+                    if (rm.getMemberId() == entity.getId()){
+                        Logger.w(TAG, "The child member is the same relation as parent. Parent id: " + entity.getId());
+                        continue;
+                    }
                     Relation re = dc.getRelationFromCache(rm.getMemberId());
                     mlsNext = createStreetGeom(re);
                 }
 
-                // combine linestrings
-                if (mls == null ){
-                    mls = mlsNext;
-                }
-                else if (mlsNext != null){
-                    Geometry joinedGeom = mls.union(mlsNext);
-                    mls = GeomUtils.geometryToMultilineString(joinedGeom);
+                if (mlsNext != null){
+                    lineMerger.add(mlsNext);
                 }
             }
+            List<LineString> lineStrings =  new ArrayList<LineString>(lineMerger.getMergedLineStrings());
+            MultiLineString mls = GeomUtils.mergeLinesToMultiLine(lineStrings);
             return mls;
         }
         return null;
@@ -800,6 +821,5 @@ public class StreetController {
         LineString ls = geometryFactory.createLineString(wayEx.getCoordinates());
         return geometryFactory.createMultiLineString(new LineString[]{ls});
     }
-
 }
 

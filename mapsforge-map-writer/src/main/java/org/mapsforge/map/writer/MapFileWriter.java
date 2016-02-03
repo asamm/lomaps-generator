@@ -167,7 +167,6 @@ public final class MapFileWriter {
 				LOGGER.info("Large geometry " + this.way.getId() + " (" + processedGeometry.getCoordinates().length + " coords, down from " + originalGeometry.getCoordinates().length + " coords)");
 			}
 
-
 			List<WayDataBlock> blocks = GeoUtils.toWayDataBlockList(processedGeometry);
 			if (blocks == null) {
 				return null;

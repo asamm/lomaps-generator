@@ -252,6 +252,8 @@ abstract class Cmd {
 
             // break program when wrong exit value
             if (exitVal != 0){
+                System.out.println("Wrong return value from sub command, exit value: " + exitVal);
+                
                 String errorMsg = "exception happened when run cmd: \n" + getCmdLine();
                 throw new IllegalArgumentException(errorMsg);
             }

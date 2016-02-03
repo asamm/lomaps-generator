@@ -29,7 +29,7 @@ public class CmdUpload  extends  Cmd{
             throw new IllegalArgumentException ("Python in location" + Parameters.getPythonDir() +"  does not exist!");
         }
 
-        //test if shp2osm.py scripot exist
+        //test if shp2osm.py script exist
         if (!new File (Parameters.getShp2osmDir()).exists()){
             throw new IllegalArgumentException ("Shp2Osm script in location" + Parameters.getShp2osmDir() +"  does not exist!");
         }
@@ -48,7 +48,10 @@ public class CmdUpload  extends  Cmd{
             throw new IllegalArgumentException ("Upload fails  unknown action " + mUploadAction);
         }
 
-        // set defigintion file
+        addCommand("--isDev");
+        addCommand("false");
+
+        // set definition file
         addCommand("--defFile");
         addCommand(Parameters.getUploadDefinitionJsonPath());
     }

@@ -4,6 +4,7 @@ import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKBWriter;
@@ -91,9 +92,8 @@ public class Street extends Storable {
         if (cityIds.size() <= 0){
             return false;
         }
-//        if (cityId == 0) {
-//            return false;
-//        }
+
+
         return true;
     }
 
@@ -271,6 +271,18 @@ public class Street extends Storable {
 
     public void setGeometry(MultiLineString geometry) {
         this.geometry = geometry;
+    }
+
+    /**
+     * Get centroid of street geom and convert it into integer coordinates
+     * @return coordinates of centroid as integer array [lon, lat]
+     */
+    public int[] getOriginForHouseDTO(){
+        Point centroid = geometry.getEnvelope().getCentroid();
+        int lon = (int) Math.round(centroid.getX() * HouseDTO.COORDINATE_POW);
+        int lat = (int) Math.round(centroid.getY() * HouseDTO.COORDINATE_POW);
+
+        return new int[]{lon, lat};
     }
 
     @Override

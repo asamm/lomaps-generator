@@ -1,10 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
@@ -44,21 +41,24 @@ public class HouseDTO {
         setName(name);
         this.postCodeId = postCodeId;
 
-        MultiLineString mls = street.getGeometry();
-        Coordinate streetFirstNode = mls.getCoordinates()[0];
-        int dLon = (int) Math.round((center.getX() - streetFirstNode.x) * COORDINATE_POW);
-        int dLat = (int) Math.round((center.getY() - streetFirstNode.y) * COORDINATE_POW);
+        int[] origin = street.getOriginForHouseDTO();
+        int dLon = (int) Math.round((center.getX()) * COORDINATE_POW) - origin[0];
+        int dLat = (int) Math.round((center.getY()) * COORDINATE_POW) - origin[1];
 
         try {
             this.lon = Utils.intToShort(dLon);
             this.lat = Utils.intToShort(dLat);
         }
         catch (IllegalArgumentException e){
+
             Logger.w(TAG, "Can not convert house to DTO object. Street is too fare");
             Logger.w(TAG, "House: " + this.toString() +
                  "\nHouse center: " + Utils.geomToGeoJson(center) +
-                 "\nStreet: " + street.toString());
-            throw new IllegalArgumentException("Can not cast value to short, value: " + number);
+                 "\ndistance: " + Utils.getDistance(center, street.getGeometry().getCentroid())+
+                 "\nstreet: " + street.toString()+
+                 "\ndlon: "+ dLon +
+                 "\ndLat: "    +dLat );
+            throw new IllegalArgumentException(e);
         }
 
 
