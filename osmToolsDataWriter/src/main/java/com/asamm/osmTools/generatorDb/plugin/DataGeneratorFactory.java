@@ -14,6 +14,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
 	private static final String PARAM_TESTING_REPORT_FROM = "-testingFrom";
 	private static final String PARAM_TESTING_REPORT_COUNT = "-testingCount";
     private static final String PARAM_DATA_CONTAINER_TYPE = "-dataContainerType";
+    private static final String PARAM_DATA_REGION_ADMIN_LEVEL = "-regionAdminLevel";
 
 	@Override
 	protected TaskManager createTaskManagerImpl(TaskConfiguration taskConfig) {
@@ -40,6 +41,12 @@ class DataGeneratorFactory extends TaskManagerFactory {
         if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS ){
             conf.setDataContainerType(getStringArgument(
                     taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
+
+
+            if (doesArgumentExist(taskConfig, PARAM_DATA_REGION_ADMIN_LEVEL)){
+                conf.setRegionAdminLevel(
+                        getStringArgument(taskConfig, PARAM_DATA_REGION_ADMIN_LEVEL).trim());
+            }
         }
 
 		// validate configuration

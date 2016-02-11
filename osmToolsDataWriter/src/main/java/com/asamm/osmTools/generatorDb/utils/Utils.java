@@ -112,6 +112,10 @@ public class Utils {
         return getDistance(p1.getY(), p1.getX(), p2.getY(), p2.getX());
     }
 
+    public static double getDistance(Coordinate c1, Coordinate c2){
+        return getDistance(c1.y, c1.x, c2.y, c2.x);
+    }
+
     public static double getDistance(double lat1, double lon1, double lat2, double lon2){
         //  for how to see: http://www.movable-type.co.uk/scripts/latlong.html
         // use simplified version that use OsmAnd

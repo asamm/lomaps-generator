@@ -38,7 +38,7 @@ public class Street extends Storable {
     /** Name of the street */
     private String name;
 
-    /** OSM id of place in which is street located. basicaly is used only for wayStreet when crate hash */
+    /** OSM id of place in which is street located. basicaly is used only for wayStreet when create hash */
     private long cityId;
 
     /** IDs of cities in which can be this way*/
@@ -215,7 +215,14 @@ public class Street extends Storable {
         }
     }
 
-    public void addCityIds (List<City> cities) {
+    public void setCities (List<City> cities) {
+        cityIds.clear();
+        for (City city : cities) {
+            cityIds.add(city.getOsmId());
+        }
+    }
+
+    public void addCities(List<City> cities) {
 
         for (City city : cities) {
             cityIds.add(city.getOsmId());

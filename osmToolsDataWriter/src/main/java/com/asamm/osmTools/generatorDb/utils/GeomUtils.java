@@ -13,6 +13,7 @@ import gnu.trove.set.hash.THashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -153,14 +154,31 @@ public class GeomUtils {
     public static MultiLineString geometryToMultilineString (Geometry geometry) {
 
         MultiLineString mls = null;
-
-        if (geometry instanceof MultiLineString){
+        if (geometry instanceof Point){
+            // create empty multipoly
+            mls = geometryFactory.createMultiLineString(new LineString[]{});
+        }
+        else if (geometry instanceof MultiLineString){
             mls = (MultiLineString) geometry;
         }
         else if ((geometry instanceof LineString)){
             LineString ls = (LineString) geometry;
             mls = geometryFactory.createMultiLineString(new LineString[]{ls});
         }
+        else if (geometry instanceof  GeometryCollection){
+            // try to separate linestring from elements
+            LineMerger lineMerger = new LineMerger();
+            int size = geometry.getNumGeometries();
+            for (int i=0; i < size; i++){
+                Geometry geom = geometry.getGeometryN(i);
+                if (geom instanceof  LineString){
+                    lineMerger.add(geom);
+                }
+            }
+            Collection<LineString> lineStrings = lineMerger.getMergedLineStrings();
+            mls = mergeLinesToMultiLine(lineStrings);
+        }
+
         else {
             throw new IllegalArgumentException("Can not convert geom to multilinestring. Geometry: " + geometry.toString());
         }
@@ -189,12 +207,12 @@ public class GeomUtils {
      * @param lineStrings lines to merge
      * @return
      */
-    public static MultiLineString mergeLinesToMultiLine(List<LineString> lineStrings) {
+    public static MultiLineString mergeLinesToMultiLine(Collection<LineString> lineStrings) {
 
         MultiLineString mls = null;
         int linesSize = lineStrings.size();
         if (linesSize == 1){
-            mls = geometryFactory.createMultiLineString(new LineString[]{lineStrings.get(0)});
+            mls = geometryFactory.createMultiLineString(new LineString[]{lineStrings.iterator().next()});
         }
         else if (linesSize > 1) {
             mls = (MultiLineString) geometryFactory.buildGeometry(lineStrings);
@@ -225,6 +243,7 @@ public class GeomUtils {
         return createCircle(center, distance, 4);
     }
 
+
     // SIMPLIFICATION
 
     /**
@@ -238,7 +257,7 @@ public class GeomUtils {
             return null;
         }
 
-        double distanceDeg = Utils.distanceToDeg(multiPolygon.getCoordinate(), 100);
+        double distanceDeg = Utils.distanceToDeg(multiPolygon.getCoordinate(), 50);
         Geometry geometry = DouglasPeuckerSimplifier.simplify(multiPolygon, distanceDeg);
 
         MultiPolygon mp;

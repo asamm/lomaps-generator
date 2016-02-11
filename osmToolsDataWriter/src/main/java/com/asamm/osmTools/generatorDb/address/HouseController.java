@@ -19,6 +19,7 @@ import com.vividsolutions.jts.linearref.LengthIndexedLine;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import com.vividsolutions.jts.operation.union.UnaryUnionOp;
+import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
@@ -89,13 +90,10 @@ public class HouseController {
      */
     public void createHousesFromRelations (){
 
-        TLongList streetRelations = dc.getStreetRelations();
+        TLongIterator iterator = dc.getStreetRelations().iterator();
+        while (iterator.hasNext()) {
 
-        for (int i=0, size = streetRelations.size(); i < size; i++) {
-
-            long relationId = streetRelations.get(i);
-
-            Relation relation = dc.getRelationFromCache(relationId);
+            Relation relation = dc.getRelationFromCache(iterator.next());
             if (relation == null) {
                 continue;
             }
@@ -123,14 +121,7 @@ public class HouseController {
                     else if (rm.getMemberType() == EntityType.Node){
                         entityH = dc.getNodeFromCache(rm.getMemberId());
                     }
-
-                    if (entityH == null){
-                        Logger.i(TAG, "createHousesFromRelations() - Can not get address relation member from cache. " +
-                                "Relation: " + relationId + ", relation member: " + rm.getMemberId());
-                        continue;
-                    }
-
-                    long start = System.currentTimeMillis();
+                    // create house from way or node
                     houses.addAll(createHouse(entityH));
                 }
             }
@@ -149,16 +140,13 @@ public class HouseController {
                 }
 
                 Street street = findStreetForHouse(house);
-                if (street == null){
-                    //Logger.i(TAG, "Can not find street for house: " + house.toString());
-                    continue;
-                }
-                else {
+                if (street != null) {
                     //Logger.i(TAG, "Insert house with id: " + house.getOsmId());
                     houseIdsFromRelations.add(house.getOsmId());
                     databaseAddress.insertHouse(street, house);
                 }
             }
+
         }
     }
 
@@ -228,7 +216,9 @@ public class HouseController {
     private List<House> createHouse (Entity entity) {
 
         List<House> houses = new ArrayList<>();
-
+        if (entity == null){
+            return houses;
+        }
 
         String addrInterpolationValue = OsmUtils.getTagValue(entity, OsmConst.OSMTagKey.ADDR_INTERPOLATION);
         if (addrInterpolationValue != null){
@@ -344,20 +334,18 @@ public class HouseController {
             }
         }
         else {
-            // GET THE NEAREST STREET FOR HOUSE WITHOUT STREET NAME OR PLACE NAME
-            //Logger.i(TAG, "Looking for nearest street for house: ");
+            // GET THE NEAREST NAMED STREET FOR HOUSE WITHOUT STREET NAME OR PLACE NAME
+
             List<Street> streetsAround = IndexController.getInstance().getStreetsAround(house.getCenter(), 15);
             nearestStreet = getNearestStreetFromAround (house.getCenter(), streetsAround);
 
-            double distance = Utils.getDistanceNearest(nearestStreet.getGeometry(), house.getCenter());
-            if (distance > 150){
-                // founded street is too fare and the house does not have defined the placename nor streetname
-                City city = getClosestLowestCity(house);
+            if (nearestStreet == null || Utils.getDistanceNearest(nearestStreet.getGeometry(), house.getCenter()) > 75){
+                // founded named street is too fare and the house does not have defined the placename nor streetname
+                City city = findSmallestCityIsIn(house);
                 if (city != null){
-                    Logger.i(TAG, "findStreetForHouse(): Set placename " + city.getName() + " for house: " + house.toString());
+                    //Logger.i(TAG, "findStreetForHouse(): Set placename " + city.getName() + " for house: " + house.toString());
                     house.setPlace(city.getName());
                 }
-
                 // process this house again during houses without street. It can be assigned to unnamed street around house
                 dc.addHouseWithoutStreet(house);
                 return null;
@@ -454,7 +442,7 @@ public class HouseController {
      * @param house house to find city
      * @return city where house is in bound
      */
-    private City getClosestLowestCity (House house){
+    private City findSmallestCityIsIn(House house){
 
         City cityForHouse = null;
 
@@ -504,7 +492,7 @@ public class HouseController {
             if (streetPlaceName.startsWith("FIXME")){
                 continue; // some places has defined name as 'FIX ME' grrrr
             }
-            Logger.i(TAG, " processHouseWithoutStreet() - process place or street name: " + streetPlaceName );
+            //Logger.i(TAG, " processHouseWithoutStreet() - process place or street name: " + streetPlaceName );
 
             // this houses has the same streetName or the same placeName
             List<House> houses = entry.getValue();
@@ -517,17 +505,17 @@ public class HouseController {
                 continue;
             }
             // GROUP HOUSES BY BOUNDARY
-            THashMap<Boundary, List<House>> groupedHousesMap = groupHousesByBoundary(houses);
+            THashMap<City, List<House>> groupedHousesMap = groupHousesByBoundary(houses);
 
-            for (Map.Entry<Boundary, List<House>> entryG : groupedHousesMap.entrySet()){
-                Boundary boundary = entryG.getKey();
+            for (Map.Entry<City, List<House>> entryG : groupedHousesMap.entrySet()){
+                City city = entryG.getKey();
                 List<House> hausesGrouped = entryG.getValue();
 
                 int sizeGroupedHouses = hausesGrouped.size();
                 if (sizeGroupedHouses < 2){
                     // at least two houses with the same placename in every boundary are required
                     if (sizeGroupedHouses == 1){
-                        databaseAddress.insertRemovedHouse(houses.get(0),"Only one house in boundary: " + boundary.getName());
+                        databaseAddress.insertRemovedHouse(houses.get(0), "Only one house in city: " + city.getName());
                     }
                     continue;
                 }
@@ -546,7 +534,7 @@ public class HouseController {
                     for (House houseToRemove : hausesGrouped){
                         databaseAddress.insertRemovedHouse(houseToRemove, "" +
                                 "Not found street for grouped houses with placeName: " +
-                                streetPlaceName + ", and boundary: " + boundary.getName());
+                                streetPlaceName + ", and city: " + city.getName());
                     }
                     continue;
                 }
@@ -567,7 +555,7 @@ public class HouseController {
 //
 //                    wayStreet.setName(streetPlaceName);
 //                    // cut the geometry only around the houses
-//                    MultiLineString mlsCutted = cutStreetGeom(wayStreet.getGeometry(), convexBoundary);
+//                    MultiLineString mlsCutted = cutMlsByBoundary(wayStreet.getGeometry(), convexBoundary);
 //                    wayStreet.setGeometry(mlsCutted);
 //
 //                    if (wayStreet.getName().equals("Na Vrchách")){
@@ -576,11 +564,11 @@ public class HouseController {
 //                    }
 //
 //                    List<City> cities = sc.findCitiesForStreet(wayStreet);
-//                    wayStreet.addCityIds(cities);
+//                    wayStreet.addCities(cities);
 //                    dc.addWayStreet(wayStreet);
 //                }
 
-                // create one street for group of house. You can not create street right now because
+                // create one street for group of houses. You can not create street right now because
                 // there can be houses with same place from parent / child boundary
                 Street wayStreet = new Street();
                 wayStreet.setHouses(new THashSet<House>(hausesGrouped));
@@ -588,16 +576,24 @@ public class HouseController {
                 // cut the geometry only around the houses
 
                 long start3 = System.currentTimeMillis();
-                MultiLineString mlsCutted = createGeomUnnamedWayStreets(mpBuffer, unNamedWayStreets);
+                MultiLineString mlsCutted = createGeomUnnamedWayStreets(city, mpBuffer, unNamedWayStreets);
+
+                if (mlsCutted == null || mlsCutted.isEmpty()){
+                    Logger.w(TAG, "processHouseWithoutStreet(): Not able create geometry for street of grouped houses: " +
+                            "\n " + Utils.geomToGeoJson(mpBuffer));
+                    for (House houseToRemove : hausesGrouped){
+                        databaseAddress.insertRemovedHouse(houseToRemove, "" +
+                                "Not able to create cut multilinestring : " +
+                                streetPlaceName + ", and city: " + city.getName());
+                    }
+                    continue;
+                }
                 wayStreet.setGeometry(mlsCutted);
                 timeCreateUnamedStreetGeom += System.currentTimeMillis() - start3;
 
                 List<City> cities = sc.findCitiesForStreet(wayStreet);
-                wayStreet.addCityIds(cities);
+                wayStreet.addCities(cities);
                 dc.addWayStreet(wayStreet);
-
-                Logger.i(TAG, " processHouseWithoutStreet() - create street: " + wayStreet.toString() );
-
             }
         }
 
@@ -625,11 +621,11 @@ public class HouseController {
      * @param housesToGroup list of houses that has defined the same street name or place name
      * @return list of houses grouped by boundary area
      */
-    private THashMap<Boundary, List<House>> groupHousesByBoundary(List<House> housesToGroup) {
+    private THashMap<City, List<House>> groupHousesByBoundary(List<House> housesToGroup) {
 
         long start = System.currentTimeMillis();
 
-        THashMap<Boundary, List<House>> groupedHousesMap = new THashMap<>();
+        THashMap<City, List<House>> groupedHousesMap = new THashMap<>();
 
         // prepare temporary index for houses of the same name
         STRtree index = new STRtree();
@@ -639,8 +635,12 @@ public class HouseController {
             index.insert(house.getCenter().getEnvelopeInternal(), house);
         }
 
-        Collection<Boundary> boundaries = dc.getCenterCityBoundaryMap().getValues();
-        for (Boundary boundary : boundaries){
+        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
+        Collection<City> cities = dc.getCities();
+
+        for (City city : cities){
+            Boundary boundary = centerCityBoundaryMap.getValue(city);
+
             if (boundary == null){
                 continue;
             }
@@ -655,7 +655,7 @@ public class HouseController {
                 }
             }
             if (housesFromIndex.size() > 0){
-                groupedHousesMap.put(boundary, housesFromIndex);
+                groupedHousesMap.put(city, housesFromIndex);
             }
         }
         timeGroupByBoundary += System.currentTimeMillis() - start;
@@ -704,11 +704,13 @@ public class HouseController {
     /**
      * Prepare geometry for waystreets that are around grouped hauses. Join way's geoms into one multiline
      * and this multiline is cut by the multipolygon of buffered houses
+     * @param city city for whih are houses grouped
      * @param bufferedHouses multipolygon define geoms that cut the multiline of ways
      * @param unNamedWayStreets wayStreets from this ways will be create the final geom
      * @return joined geometry that is cut by houses buffer
      */
-    public MultiLineString createGeomUnnamedWayStreets (MultiPolygon bufferedHouses, List<Street> unNamedWayStreets){
+    public MultiLineString createGeomUnnamedWayStreets (
+            City city, MultiPolygon bufferedHouses, List<Street> unNamedWayStreets){
 
         //Logger.i(TAG, "Buffers of houses: " + Utils.geomToGeoJson(bufferedHouses));
         // join the ways into one line
@@ -728,10 +730,14 @@ public class HouseController {
         // join polygon into one geometry
         UnaryUnionOp unaryUnionOp = new UnaryUnionOp(geomsToJoins);
         Geometry joinedBuffers = unaryUnionOp.union();
-        //Logger.i(TAG, "Joined buffers: " + Utils.geomToGeoJson(joinedBuffers));
-        // cut the line by the joined geometry
-        //Logger.i(TAG, "Line to cut: " + Utils.geomToGeoJson(mls));
-        mls = cutStreetGeom(mls, joinedBuffers);
+
+        // cut the line by the joined geometry > the result is multiline around the houses
+        mls = cutMlsByBoundary(mls, joinedBuffers);
+        // cut it again to cut part of streets that are outside of city boundary
+        if (city.getGeom() != null || city.getGeom().isValid()) {
+            mls = cutMlsByBoundary(mls, city.getGeom());
+        }
+
         //Logger.i(TAG, "Cutted line: " + Utils.geomToGeoJson(mls));
         return mls;
     }
@@ -739,15 +745,15 @@ public class HouseController {
     /**
      * Create intersection of street geometry with houses that related into this street
      * @param mls original street geom create from raw OSM ways
-     * @param convexBoundary border area that is around the houses
-     * @return
+     * @param cutGeom border area to cut the linestring
+     * @return cut linestring that are only inside the boundary geom
      */
-    public MultiLineString cutStreetGeom (MultiLineString mls,  Geometry convexBoundary){
+    public MultiLineString cutMlsByBoundary(MultiLineString mls, Geometry cutGeom){
         // intersect the street geom with area of houses
         long start = System.currentTimeMillis();
-        if (mls.intersects(convexBoundary)){
+        if (mls.intersects(cutGeom)){
             long start3 = System.currentTimeMillis();
-            Geometry cuttedStreet = mls.intersection(convexBoundary);
+            Geometry cuttedStreet = mls.intersection(cutGeom);
             mls = GeomUtils.geometryToMultilineString(cuttedStreet);
             timeCutWaysIntersection += System.currentTimeMillis() - start3;
 //            Logger.i(TAG, "Multipoint: " + Utils.geomToGeoJson(mp));

@@ -21,12 +21,14 @@ import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.THashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class GeneratorAddress extends AGenerator {
@@ -36,7 +38,7 @@ public class GeneratorAddress extends AGenerator {
     /**
      * All places created from nodes or from relations
      * */
-    private List<City> cities;
+    //private List<City> cities;
 
     private List<Boundary> boundaries;
 
@@ -59,7 +61,7 @@ public class GeneratorAddress extends AGenerator {
         this.addressDefinition = addressDefinition;
 
         this.boundaryController = new BoundaryController(this);
-        this.cities = new ArrayList<>();
+        //this.cities = new ArrayList<>();
         this.boundaries = new ArrayList<>();
 
         initialize();
@@ -78,6 +80,9 @@ public class GeneratorAddress extends AGenerator {
 
         Logger.i(TAG, "=== Step 0 - testing residential ===");
         //createResidentialAreas(dc);
+//
+//        double similarity = StringUtils.getJaroWinklerDistance("Oberangern", "Oberbayern");
+//        Logger.i(TAG, "Similarity : " + similarity);
 
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
@@ -216,11 +221,11 @@ public class GeneratorAddress extends AGenerator {
                 continue;
             }
             // add crated city into list and also into index
-            cities.add(city);
+            dc.addCity(city);
             IndexController.getInstance().insertCity(city.getCenter().getEnvelopeInternal(), city);
         }
 
-        Logger.i(TAG, "loadCityPlaces: " + cities.size() + " cities were created and loaded into cache");
+        Logger.i(TAG, "loadCityPlaces: " + dc.getCitiesMap().size() + " cities were created and loaded into cache");
     }
 
     /**************************************************/
@@ -233,20 +238,32 @@ public class GeneratorAddress extends AGenerator {
         TLongList relationIds = dc.getRelationIds();
 
         for (int i=0, size = relationIds.size(); i < size; i++) {
-            Relation relation = dc.getRelationFromCache(relationIds.get(i));
+            long relationId = relationIds.get(i);
+
+            if (relationId == 34360283 || relationId == 2135916){
+                Logger.i(TAG, "Start process relation id: " + relationId);
+            }
+
+            Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
+                if (relationId == 34360283 || relationId == 2135916){
+                    Logger.i(TAG, "Can not load boundary from cache " + relation.getId());
+                }
+
                 continue;
             }
 
             Boundary boundary = boundaryController.create(dc, relation);
 
-            if (boundary == null){
-                //Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
+            if (boundary == null || !boundary.isValid()){
+                if (relationId == 34360283 || relationId == 2135916){
+                    Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
+                }
                 continue;
             }
 
-            if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundariesRegions: Add boundary from relation to cache: " + boundary.toString());
+            if (boundary.getAdminLevel() >= addressDefinition.getRegionAdminLevel()){
+                // use only boundaries that are same or smaller level then needed level for region boundaries
                 boundaries.add(boundary);
                 createRegion(boundary);
             }
@@ -257,13 +274,13 @@ public class GeneratorAddress extends AGenerator {
             Way way = dc.getWayFromCache(wayIds.get(i));
             Boundary boundary = boundaryController.create(dc, way);
 
-            if (boundary == null){
+            if (boundary == null || !boundary.isValid()){
                 //Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
                 continue;
             }
 
-            if (boundary.isValid()){
-                //Logger.i(TAG, "loadBoundariesRegions: Add boundary from way to cache: " + boundary.toString());
+            if (boundary.getAdminLevel() >= addressDefinition.getRegionAdminLevel()){
+                // use only boundaries that are same or smaller level then needed level for region boundaries
                 boundaries.add(boundary);
                 createRegion(boundary);
             }
@@ -299,6 +316,7 @@ public class GeneratorAddress extends AGenerator {
 
             String boundaryName = boundary.getName().toLowerCase();
             String altBoundaryName = boundary.getShortName().toLowerCase();
+            Collection<City> cities = dc.getCities();
 
             City cityFound = null;
             if(boundary.hasAdminCenterId()) {
@@ -329,6 +347,10 @@ public class GeneratorAddress extends AGenerator {
                     if (boundaryController.hasSimilarName(boundary, city)) {
                         if (boundary.getGeom().contains(city.getCenter())) {
                             // city has similar name boundary and is in bounds > use it as center
+//                            if (boundaryController.canBeSetAsCenterCity (boundary, city)){
+//                                cityFound = city;
+//                                break;
+//                            }
                             cityFound = city;
                             break;
                         }
@@ -342,7 +364,7 @@ public class GeneratorAddress extends AGenerator {
                 cityFound = createMissingCity(boundary);
                 if (cityFound.isValid()){
                     boundary.setAdminCenterId(cityFound.getOsmId());
-                    cities.add(cityFound);
+                    dc.addCity(cityFound);
                     IndexController.getInstance().insertCity(cityFound.getCenter().getEnvelopeInternal(), cityFound);
                 }
             }
@@ -365,11 +387,18 @@ public class GeneratorAddress extends AGenerator {
      */
     private void registerBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
 
+        if (city.getOsmId() == 60806241){
+            Logger.i(TAG, "****** Find boundary for city: " + city.toString());
+        }
+
         // try to obtain previous registered boundary for city
         BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
         Boundary oldBoundary = centerCityBoundaryMap.getValue(city);
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
+            if (city.getOsmId() == 60806241){
+                Logger.i(TAG, "Put A boundary " + boundary.toString());
+            }
             centerCityBoundaryMap.put(city, boundary);
         }
         else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
@@ -385,8 +414,21 @@ public class GeneratorAddress extends AGenerator {
             int oldBoundaryPriority = boundaryController.getCityBoundaryPriority(oldBoundary, city);
             int newBoundaryPriority = boundaryController.getCityBoundaryPriority(boundary, city);
 
+
+            if (city.getOsmId() == 60806241) {
+                Logger.i(TAG, " Compare boundaries :" +
+                        "\n old prioriy: " + oldBoundaryPriority + ", boundary: " + oldBoundary.toString() +
+                        "\n new prioriy: " + newBoundaryPriority + ", boundary: " + boundary.toString());
+            }
+
+
             if (newBoundaryPriority < oldBoundaryPriority){
                 centerCityBoundaryMap.put(city, boundary);
+
+                if (city.getOsmId() == 60806241){
+                    Logger.i(TAG, "PutB boundary " + boundary.toString());
+                }
+
             }
         }
     }
@@ -394,7 +436,6 @@ public class GeneratorAddress extends AGenerator {
     private City createMissingCity (Boundary boundary){
 
         //Logger.i(TAG, "Create missing city for boundary: "  + boundary.getName());
-
 
         City city = new City(boundary.getCityType());
         city.setOsmId(boundary.getId());
@@ -433,17 +474,13 @@ public class GeneratorAddress extends AGenerator {
     }
 
     /**
-     * For villages neighbour or
+     * For all cities find parent city (if any) and region is in
      */
     private void findParentCitiesForVillages(ADataContainer dc) {
-
+        Collection<City> cities = dc.getCities();
         for (City city : cities){
-            City parentCity = boundaryController.findParentCityAndRegion(dc, city);
-            // avoid the parent that are the same as city itself
-
-            if (parentCity != null && parentCity.getOsmId() != city.getOsmId()){
-                city.setParentCity(parentCity);
-            }
+            City parentCity = boundaryController.findParentCity(dc, city);
+            city.setParentCity(parentCity); // can return null
 
             Region parentRegion = boundaryController.findParentRegion(city);
             if (parentRegion != null){
@@ -460,10 +497,9 @@ public class GeneratorAddress extends AGenerator {
 
     private void insertCitiesToDB(ADataContainer dc) {
         BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
-        City city;
+        Collection<City> cities = dc.getCities();
 
-        for (int i = 0, size = cities.size() ; i < size;  i++){
-            city = cities.get(i);
+        for (City city : cities){
             Boundary boundary = centerCityBoundaryMap.getValue(city);
             if (boundary != null){
                 city.setGeom(boundary.getGeom());
@@ -492,18 +528,34 @@ public class GeneratorAddress extends AGenerator {
 
         sc.joinWayStreets(new StreetController.OnJoinStreetListener() {
             @Override
-            public void onJoin(Street street) {
-                // SEPARATE PART (city can have more streets with the same name)
+            public void onJoin(Street streetToInsert) {
 
-                if (street.getGeometry().getNumGeometries() == 1){
-                    // street has simple line geom insert it into DB
-                    ((DatabaseAddress) db).insertStreet(street);
+                List<Street> streetsToInsert = new ArrayList<Street>();
+
+                // SPLIT BASED ON TOP LEVEL CITIES GEOMS
+                Envelope envelope = streetToInsert.getGeometry().getEnvelopeInternal();
+                double diagonalLength = Utils.getDistance(envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
+
+                if (diagonalLength > 30000){
+                    streetsToInsert = sc.splitGeomByParentCities(streetToInsert);
                 }
                 else {
-                    // street geom has more parts. Maybe it is two different street > try to separate it
-                    List<Street> streets = sc.splitToCityParts (street);
-                    for (Street streetToInsert : streets){
-                        ((DatabaseAddress) db).insertStreet(streetToInsert);
+                    streetsToInsert.add(streetToInsert);
+                }
+
+                // SEPARATE PART (city can have more streets with the same name)
+
+                for (Street street : streetsToInsert){
+                    if (street.getGeometry().getNumGeometries() == 1){
+                        // street has simple line geom insert it into DB
+                        ((DatabaseAddress) db).insertStreet(street);
+                    }
+                    else {
+                        // street geom has more parts. Maybe it is two different street > try to separate it
+                        List<Street> streetsByNames = sc.splitToCityParts (street);
+                        for (Street street2 : streetsByNames){
+                            ((DatabaseAddress) db).insertStreet(street2);
+                        }
                     }
                 }
             }
@@ -542,7 +594,6 @@ public class GeneratorAddress extends AGenerator {
      */
     private void clearUnusedData(ADataContainer dc) {
 
-        cities = null;
         boundaries = null;
         IndexController.getInstance().clearAll ();
         dc.clearAll();
@@ -561,10 +612,18 @@ public class GeneratorAddress extends AGenerator {
         byte[] data = null;
         Street street = null;
 
+        long timeWriteHousesSelectStreet = 0;
+        long timeWriteHousesCreateHouseBlob = 0;
+        long timeWriteHousesUpdateStreet = 0;
+        long timeWriteHousesDeleteStreet = 0;
+
+
         for (int id = 0; id <= lastStreetId; id++ ){
 
             // load street from database
+            long start = System.currentTimeMillis();
             street = databaseAddress.selectStreet(id);
+            timeWriteHousesSelectStreet += System.currentTimeMillis() - start;
 
             if (street == null){
                 continue;
@@ -577,21 +636,37 @@ public class GeneratorAddress extends AGenerator {
             }
 
             // load all houses for this street and create blob from them
+            start = System.currentTimeMillis();
             data = databaseAddress.createHousesDTOblob(street);
+            timeWriteHousesCreateHouseBlob += System.currentTimeMillis() - start;
 
             if (data == null || data.length == 0){
+                start = System.currentTimeMillis();
                 if (pathStreetIds.contains(id)){
                     // reduce named path and tracks. It street is path or track street without any house > remove it
                     // TODO improve compare distance form the city
                     databaseAddress.deleteStreet(id);
                 }
+                timeWriteHousesDeleteStreet += System.currentTimeMillis() - start;
                 continue;
             }
-
+            start = System.currentTimeMillis();
             databaseAddress.updateStreetHouseBlob(id, data);
+            timeWriteHousesUpdateStreet += System.currentTimeMillis() - start;
+
 
         }
         databaseAddress.finalizeUpdateStreetHouseBlob();
+
+
+        Logger.i(TAG, "Write house blobs, select streets : " + timeWriteHousesSelectStreet /1000.0 + " sec" );
+        Logger.i(TAG, "Write house blobs, create blobs : " + timeWriteHousesCreateHouseBlob /1000.0 + " sec" );
+        Logger.i(TAG, "Create house blobs, select houses : " + databaseAddress.timeDtoSelectHouses /1000.0 + " sec" );
+        Logger.i(TAG, "Create house blobs, de serialize house : " + databaseAddress.timeDtoDeSerializeHouse /1000.0 + " sec" );
+        Logger.i(TAG, "Create house blobs, Crate DTO: " + databaseAddress.timeDtoCreateDTO /1000.0 + " sec" );
+        Logger.i(TAG, "Create house blobs, zip data: " + databaseAddress.timeDtoZipData /1000.0 + " sec" );
+        Logger.i(TAG, "Write house blobs, delete empty path  streets : " + timeWriteHousesDeleteStreet /1000.0 + " sec" );
+        Logger.i(TAG, "Write house blobs, insert write  streets : " + timeWriteHousesUpdateStreet /1000.0 + " sec" );
     }
 
 
@@ -719,11 +794,6 @@ public class GeneratorAddress extends AGenerator {
     /**************************************************/
     /*              Getters
     /**************************************************/
-
-
-    public List<City> getCities() {
-        return cities;
-    }
 
     public DatabaseAddress getDatabaseAddress (){
         return (DatabaseAddress) db;
