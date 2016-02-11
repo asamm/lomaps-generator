@@ -29,6 +29,12 @@ public class DatabaseAddress extends ADatabaseHandler {
 
     public static final String DEFAULT_LANG_CODE = "def";
 
+    public long timeDtoSelectHouses = 0;
+    public long timeDtoDeSerializeHouse = 0;
+    public long timeDtoCreateDTO = 0;
+    public long timeDtoZipData = 0;
+
+
     /** increment for street. Streets have own ids there is NO relation with OSM id*/
     private int streetIdSequence = 0;
 
@@ -101,9 +107,9 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = true;
+    private static boolean hasHousesTableWithGeom = false;
 
-    private static boolean hasTableOfRemovedHouses = true;
+    private static boolean hasTableOfRemovedHouses = false;
 
 
     public DatabaseAddress(File file) throws Exception {
@@ -138,7 +144,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                 "SELECT "+COL_ID+" FROM "+ TN_REGIONS +" WHERE "+COL_ID+" = ?");
 
         psInsertCity = createPreparedStatement(
-                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+COL_PARENT_CITY_NAME+", "+ COL_REGION_ID + ", "+
+                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
                         COL_CENTER_GEOM+", "+COL_GEOM+
                         ") VALUES (?, ?, ?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
 
@@ -191,10 +197,6 @@ public class DatabaseAddress extends ADatabaseHandler {
                 "UPDATE "+ TN_STREETS + " Set "+COL_GEOM+" = " +
                         "GeomFromWKB(?, 4326) where "+COL_ID+" = ?" );
 
-//        psSimplifyCityGeom = createPreparedStatement(
-//                "UPDATE "+ TN_CITIES + " Set "+COL_GEOM+" = " +
-//                        "GeomFromWKB(?, 4326) where "+COL_ID+" = ?" );
-
         psDeleteStreet = createPreparedStatement("DELETE FROM " + TN_STREETS + " WHERE "+COL_ID+" = ? ");
 
         psDeleteStreetCities = createPreparedStatement("DELETE FROM " + TN_STREET_IN_CITIES + " WHERE "+COL_STREET_ID+" = ? ");
@@ -210,6 +212,12 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             // remove indexes
 
+            sql = "DROP INDEX IF EXISTS " + IDX_REGIONS_NAMES_LANGCODE;
+            executeStatement(sql);
+
+            sql = "DROP INDEX IF EXISTS " + IDX_REGIONS_NAMES_CITYID;
+            executeStatement(sql);
+
             sql = "DROP INDEX IF EXISTS " + IDX_CITIES_NAMES_NAMENORM;
             executeStatement(sql);
 
@@ -222,6 +230,14 @@ public class DatabaseAddress extends ADatabaseHandler {
             sql = "DROP INDEX IF EXISTS " + IDX_STREETS_IN_CITIES_CITYID;
             executeStatement(sql);
 
+            sql = "DROP INDEX IF EXISTS " + IDX_STREETS_IN_CITIES_STREETID;
+            executeStatement(sql);
+
+            sql = "DROP VIEW IF EXISTS " + VIEW_CITIES_DEF_NAMES;
+            executeStatement(sql);
+
+            sql = "DELETE FROM VIEWS_GEOMETRY_COLUMNS WHERE view_name = '" + VIEW_CITIES_DEF_NAMES.toLowerCase() + "'";
+            executeStatement(sql);
 
 
             sql = "SELECT DisableSpatialIndex('" + TN_REGIONS + "', '"+COL_GEOM+"')";
@@ -316,7 +332,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql = "CREATE TABLE "+TN_CITIES+" (";
 		sql += COL_ID+" BIGINT NOT NULL PRIMARY KEY,";
 		sql += COL_TYPE+" INT NOT NULL, ";
-        sql += COL_PARENT_CITY_NAME+" TEXT, ";
+        sql += COL_PARENT_CITY_ID +" BIGINT, ";
         sql += COL_REGION_ID + " BIGINT )";
 		executeStatement(sql);
 
@@ -402,36 +418,41 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         buildRegionBoundaryIndex();
 
+        buildRegionNamesIndexes();
+
         buildCityBoundaryIndex();
 
         buildStreetGeomIndex();
 
+        buildViews();
+
         commit(false);
-        String sql = "";
 
         psInsertHouse.close();
         psSelectHousesInStreet.close();
+        psSelectHousesInStreet.close();
+        psInsertStreet.close();
+        psDeleteStreet.close();
 
         // compress street geom
-        sql = "UPDATE " + TN_STREETS +" SET "+ COL_GEOM+ " = CompressGeometry("+COL_GEOM+")";
+        String sql = "UPDATE " + TN_STREETS +" SET "+ COL_GEOM+ " = CompressGeometry("+COL_GEOM+")";
         executeStatement(sql);
 
+        // ugly workaround how to avoid Locked database when try to remove house table
+        commit(false);
+        restartConnection();
 
         if ( !hasHousesTableWithGeom){
-            sql =  "SELECT DisableSpatialIndex ('" + TN_HOUSES + "', '"+COL_CENTER_GEOM+"')";
-            executeStatement(sql);
             sql = "DROP TABLE IF EXISTS  idx_"+ TN_HOUSES +"_"+COL_CENTER_GEOM;
             executeStatement(sql);
             sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES;
             executeStatement(sql);
         }
 
-
         if ( !hasTableOfRemovedHouses){
             sql = "DROP TABLE IF EXISTS  "+ TN_HOUSES_REMOVED;
             executeStatement(sql);
         }
-
 
         super.destroy();
     }
@@ -469,6 +490,28 @@ public class DatabaseAddress extends ADatabaseHandler {
         }
     }
 
+
+    /**
+     * Build spatial index for city center point and index for city names
+     */
+    public void buildRegionNamesIndexes() {
+        try {
+            commit(false);
+
+            String sql = "CREATE INDEX "+ IDX_REGIONS_NAMES_LANGCODE +" ON " + TN_REGIONS_NAMES +
+                    " (" + COL_LANG_CODE+ ")";
+            executeStatement(sql);
+
+            sql = "CREATE INDEX " + IDX_REGIONS_NAMES_CITYID + " ON " + TN_REGIONS_NAMES +
+                    " (" + COL_CITY_ID+ ")";
+            executeStatement(sql);
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "buildCityNamesIndexes(), problem with query", e);
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Build spatial index for city center point and index for city names
      */
@@ -479,7 +522,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             executeStatement(sql);
 
             sql = "CREATE INDEX "+IDX_CITIES_NAMES_NAMENORM+" ON " + TN_CITIES_NAMES +
-                    " (" + COL_NAME_NORM+ ")";
+                    " (" + COL_NAME_NORM+ ", " + COL_LANG_CODE + ")";
             executeStatement(sql);
 
             sql = "CREATE INDEX " + IDX_CITIES_NAMES_CITYID + " ON " + TN_CITIES_NAMES +
@@ -548,10 +591,36 @@ public class DatabaseAddress extends ADatabaseHandler {
                     " (" + COL_CITY_ID+  ")";
             executeStatement(sql);
 
+            sql = "CREATE INDEX "+IDX_STREETS_IN_CITIES_STREETID+" ON " + TN_STREET_IN_CITIES +
+                    " (" + COL_STREET_ID+  ")";
+            executeStatement(sql);
+
         } catch (SQLException e) {
             Logger.e(TAG, "buildStreetNameIndex(), problem with query", e);
             e.printStackTrace();
         }
+    }
+
+    public void buildViews () {
+        try {
+            String sql = "CREATE VIEW " + VIEW_CITIES_DEF_NAMES + " AS ";
+            sql += "SELECT " + TN_CITIES+".ROWID as ROWID, " + TN_CITIES+"."+COL_ID +", " + TN_CITIES_NAMES+"."+COL_NAME + ", ";
+            sql += TN_CITIES_NAMES+"."+COL_NAME_NORM + ", " + TN_CITIES+"."+COL_GEOM+ " ";
+            sql += "FROM " + TN_CITIES + " ";
+            sql += "JOIN "+ TN_CITIES_NAMES + " ON " + TN_CITIES +"."+ COL_ID + " = " + TN_CITIES_NAMES +"."+ COL_CITY_ID + " ";
+            sql += "WHERE "+ TN_CITIES_NAMES +"."+ COL_LANG_CODE + " = '" + DEFAULT_LANG_CODE + "'";
+
+            executeStatement(sql);
+
+            sql = "INSERT INTO VIEWS_GEOMETRY_COLUMNS VALUES ('" + VIEW_CITIES_DEF_NAMES.toLowerCase()+ "', '";
+            sql += COL_GEOM + "', 'rowid', '" +TN_CITIES.toLowerCase()+ "', '" + COL_GEOM + "', 1)";
+            executeStatement(sql);
+
+        } catch (SQLException e) {
+            Logger.e(TAG, "buildViews(), problem with query", e);
+            e.printStackTrace();
+        }
+
     }
 
     /**************************************************/
@@ -632,8 +701,9 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             City parentCity = city.getParentCity();
             if (parentCity != null){
-                psInsertCity.setString(3, parentCity.getName());
+                psInsertCity.setLong(3, parentCity.getOsmId());
             }
+
             if (region != null){
                 psInsertCity.setLong(4, region.getOsmId());
             }
@@ -980,6 +1050,7 @@ public class DatabaseAddress extends ADatabaseHandler {
     public byte[] createHousesDTOblob(Street street){
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
+
         // first write origin of houses (it is centroid of the street)
         int[] origin = street.getOriginForHouseDTO();
         baos.write(origin[0]);
@@ -987,18 +1058,24 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         int count = 0; // counter how many houses were converted to DTO
         try {
+
+            long start = System.currentTimeMillis();
             psSelectHousesInStreet.clearParameters();
             psSelectHousesInStreet.setInt(1, street.getId());
             ResultSet rs = psSelectHousesInStreet.executeQuery();
             House house = null;
             byte[] dataDTO = null;
+            timeDtoSelectHouses += System.currentTimeMillis() - start;
 
             // read every loaded house from database, deserializate house object and create DTO object from it
             while (rs.next()){
 
+                start = System.currentTimeMillis();
                 house = new House(rs.getBytes(1));
+                timeDtoDeSerializeHouse += System.currentTimeMillis() - start;
 
                 // crate simplified version od house with relative coordinates
+                start = System.currentTimeMillis();
                 HouseDTO houseDTO = new HouseDTO(
                         house.getNumber(),
                         house.getName(),
@@ -1006,6 +1083,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                         house.getCenter(),
                         street);
                 dataDTO = houseDTO.getAsBytes();
+                timeDtoCreateDTO += System.currentTimeMillis() - start;
+
 
                 if (dataDTO != null) {
                     housesPreparedAsBlobForStreets++;
@@ -1031,7 +1110,11 @@ public class DatabaseAddress extends ADatabaseHandler {
             return null;
         }
 
-        return Utils.compressByteArray(baos.toByteArray());
+        long start = System.currentTimeMillis();
+        byte[] dataZipped = Utils.compressByteArray(baos.toByteArray());
+        timeDtoZipData += System.currentTimeMillis() - start;
+
+        return dataZipped;
     }
 
 

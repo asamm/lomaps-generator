@@ -181,12 +181,15 @@ public class CmdAddressPoiDb extends Cmd {
         File file = new File(getMap().getPathSource());
 
         int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 400) {
+        if (size <= 500) {
             addCommand("-dataContainerType=ram");
         }
         else {
             addCommand("-dataContainerType=hdd");
         }
+
+        if (getMap().getAddressRegionLevel() != null)
+        addCommand("-regionAdminLevel=" + getMap().getAddressRegionLevel());
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {

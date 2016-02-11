@@ -27,8 +27,11 @@ public class AItemMap {
     private String mRegionId;
     // directory name
     private String mDir;
-
+    // folder for generation
     private String mDirGen;
+    // address DB boundary admin level for address region boundaries
+    private String mAddressRegionLevel;
+
     // URL source for map file
     private String mUrl;
     private String mCycleNode;
@@ -51,6 +54,7 @@ public class AItemMap {
             mRegionId = parent.getRegionId();
             mDir = parent.getDir();
             mDirGen = parent.getDirGen();
+            mAddressRegionLevel = parent.getAddressRegionLevel();
             mUrl = parent.getUrl();
             mCycleNode = parent.getCycleNode();
             mContourSep = parent.getContourSep();
@@ -68,6 +72,7 @@ public class AItemMap {
         mRegionId = "";
         mDir = "";
         mDirGen = "";
+        mAddressRegionLevel = "";
         mUrl = "";
         mCycleNode = "";
         mContourSep = "";
@@ -91,6 +96,12 @@ public class AItemMap {
         if (mDir.length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. " +
                     "Invalid argument dir: " + mDir + ", name:" + mName);
+        }
+
+        // check address db region value
+        if (mAddressRegionLevel.length() > 0 && !Utils.isNumeric(mAddressRegionLevel)){
+            throw new IllegalArgumentException("Input XML is not valid. " +
+                    "Invalid argument addressRegionLevel: " + mAddressRegionLevel + ", name:" + mName);
         }
 
         // check extract action
@@ -192,6 +203,12 @@ public class AItemMap {
         }
         mDirGen = Consts.fixDirectoryPath(mDirGen);
 
+        // addressRegionLevel
+        attrValue = parser.getAttributeValue(null, "addressRegionLevel");
+        if (attrValue != null){
+            mAddressRegionLevel = attrValue;
+        }
+
         // other basis parameters
         if (parser.getAttributeValue(null, "url") != null) {
             mUrl = parser.getAttributeValue(null, "url");
@@ -250,6 +267,14 @@ public class AItemMap {
         return mDirGen;
     }
 
+    public String getAddressRegionLevel() {
+        return mAddressRegionLevel;
+    }
+
+    public void setAddressRegionLevel(String addressRegionLevel) {
+        this.mAddressRegionLevel = addressRegionLevel;
+    }
+
     public String getUrl() {
         return mUrl;
     }
@@ -273,4 +298,5 @@ public class AItemMap {
     public boolean requireCoastline() {
         return mRequireCoastline;
     }
+
 }

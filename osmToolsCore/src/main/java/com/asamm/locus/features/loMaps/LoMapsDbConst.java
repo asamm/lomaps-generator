@@ -18,14 +18,14 @@ public class LoMapsDbConst {
 
     // ADDRESSES TABLES
     public static final String TN_REGIONS = "Regions";
-    public static final String TN_REGIONS_NAMES = "Region_Names";
+    public static final String TN_REGIONS_NAMES = "Regions_Names";
     public static final String TN_CITIES = "Cities";
     public static final String TN_CITIES_NAMES = "Cities_Names";
     public static final String TN_STREETS = "Streets";
     public static final String TN_STREET_IN_CITIES = "Street_In_Cities";
     public static final String TN_HOUSES = "Houses";
     public static final String TN_HOUSES_REMOVED = "Houses_Removed";
-    public static final String TN_POSTCODES = "postcodes";
+    public static final String TN_POSTCODES = "Postcodes";
 
     // METADATA TABLE
 
@@ -47,7 +47,7 @@ public class LoMapsDbConst {
     public static final String COL_NAME_NORM = "namenorm";
     public static final String COL_STREET_NAME = "streetname";
     public static final String COL_PLACE_NAME = "placename";
-    public static final String COL_PARENT_CITY_NAME = "parentcityname";
+    public static final String COL_PARENT_CITY_ID = "parentcityid";
     public static final String COL_LON = "lon";
     public static final String COL_LAT = "lat";
 	
@@ -68,11 +68,18 @@ public class LoMapsDbConst {
 
     // NAMES OF INDEXES
 
+    public static final String IDX_REGIONS_NAMES_LANGCODE = "idx_regions_names_langcode";
+    public static final String IDX_REGIONS_NAMES_CITYID = "idx_regions_names_cityid";
     public static final String IDX_CITIES_NAMES_NAMENORM = "idx_cities_names_namenorm";
     public static final String IDX_CITIES_NAMES_CITYID = "idx_cities_names_cityid";
     public static final String IDX_STREETS_NAMENORM = "idx_streets_namenorm";
     public static final String IDX_STREETS_IN_CITIES_CITYID = "idx_strees_in_cities_cityid";
+    public static final String IDX_STREETS_IN_CITIES_STREETID = "idx_strees_in_cities_streetid";
     public static final String IDX_HOUSES_STREETID = "idx_houses_streetid";
+
+    // NAMES IF VIEW
+
+    public static final String VIEW_CITIES_DEF_NAMES = "View_Cities_Def_Names";
 
     // METADATA TABLE KEYS
 

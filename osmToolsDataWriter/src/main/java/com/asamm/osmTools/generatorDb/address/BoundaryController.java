@@ -15,6 +15,7 @@ import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.List;
@@ -213,19 +214,24 @@ public class BoundaryController {
                 //boundary was created from relation that has tag place. So it's the best boundary for city
                 return 0;
             }
-            else if(city.getOsmId() == boundary.getAdminCenterId()){
+
+            // TODO again comparsion based on admin center id was removed because bigger region can have defined the admin but smaller not
+            else if(boundary.getAdminLevel() >= 8 && city.getOsmId() == boundary.getAdminCenterId()){
                 return adminLevelPriority;  // return 1 - 6
             }
-            return 10 + adminLevelPriority; // return 11 - 16, priority was made based on name
+            return 10 + adminLevelPriority; // return 11 - 16,
         }
         else {
-            // boundary and city has different name
-            if(city.getOsmId() == boundary.getAdminCenterId()) {
+            //boundary and city has different name
+            if( boundary.getAdminLevel() >= 8 && city.getOsmId() == boundary.getAdminCenterId()) {
                 return 20 + adminLevelPriority;
             }
             else {
                 return 30  + adminLevelPriority;
             }
+            // TODO consider if is needed to compare adminCenterId. It makes troubles for UpperOsterreich
+            // due to this has LINZ as the best boundary whole upperosterreich region
+            //return 30  + adminLevelPriority;
         }
     }
 
@@ -264,61 +270,61 @@ public class BoundaryController {
         }
         return adminLevelPriority;
     }
-
-    /**
-     * Get priority of parent boundary for city. Priority relate on type of city
-     * @param city City for which compare the priority of possible parent boundaries
-     * @param boundary Parent boundary to check
-     * @return the number form 1 - 6. When lower is better
-     */
-    private int getParentAdminLevelPriority(City city, Boundary boundary) {
-
-        int adminLevelPriority = 5;
-        int adminLevel = boundary.getAdminLevel();
-
-        if (adminLevel > 0) {
-            City.CityType type = city.getType();
-            if (type == City.CityType.CITY || type == City.CityType.TOWN){
-                // FOR Cities and Town boundaries prefer the county or higher region
-                if(adminLevel == 7) {
-                    adminLevelPriority = 1;
-                }
-                else if(adminLevel == 6) {
-                    adminLevelPriority = 2;
-                }
-                else if(adminLevel == 5) {
-                    adminLevelPriority = 3;
-                }
-                else {
-                    adminLevelPriority = 4;
-                }
-            }
-
-            else {
-                // find priority for village, hamlet or suburb
-                if(adminLevel == 8) {
-                    adminLevelPriority = 1;
-                }
-                else if(adminLevel == 7) {
-                    adminLevelPriority = 2;
-                }
-                else if(adminLevel == 6) {
-                    adminLevelPriority = 3;
-                }
-                else if(adminLevel == 9) {
-                    adminLevelPriority = 4;
-                }
-                else if(adminLevel == 10) {
-                    adminLevelPriority = 5;
-                }
-                else {
-                    adminLevelPriority = 6;
-                }
-            }
-        }
-
-        return adminLevelPriority;
-    }
+//
+//    /**
+//     * Get priority of parent boundary for city. Priority relate on type of city
+//     * @param city City for which compare the priority of possible parent boundaries
+//     * @param boundary Parent boundary to check
+//     * @return the number form 1 - 6. When lower is better
+//     */
+//    private int getParentAdminLevelPriority(City city, Boundary boundary) {
+//
+//        int adminLevelPriority = 5;
+//        int adminLevel = boundary.getAdminLevel();
+//
+//        if (adminLevel > 0) {
+//            City.CityType type = city.getType();
+//            if (type == City.CityType.CITY || type == City.CityType.TOWN){
+//                // FOR Cities and Town boundaries prefer the county or higher region
+//                if(adminLevel == 7) {
+//                    adminLevelPriority = 1;
+//                }
+//                else if(adminLevel == 6) {
+//                    adminLevelPriority = 2;
+//                }
+//                else if(adminLevel == 5) {
+//                    adminLevelPriority = 3;
+//                }
+//                else {
+//                    adminLevelPriority = 4;
+//                }
+//            }
+//
+//            else {
+//                // find priority for village, hamlet or suburb
+//                if(adminLevel == 8) {
+//                    adminLevelPriority = 1;
+//                }
+//                else if(adminLevel == 7) {
+//                    adminLevelPriority = 2;
+//                }
+//                else if(adminLevel == 6) {
+//                    adminLevelPriority = 3;
+//                }
+//                else if(adminLevel == 9) {
+//                    adminLevelPriority = 4;
+//                }
+//                else if(adminLevel == 10) {
+//                    adminLevelPriority = 5;
+//                }
+//                else {
+//                    adminLevelPriority = 6;
+//                }
+//            }
+//        }
+//
+//        return adminLevelPriority;
+//    }
 
 
     /**
@@ -344,16 +350,54 @@ public class BoundaryController {
         if (bShortName.startsWith(cName+" ") || bShortName.endsWith(" "+ cName) || bShortName.contains( " " + cName + " ")){
             return true;
         }
+
+        if (cName.startsWith(bName+" ") || cName.endsWith(" "+ bName) || cName.contains( " " + bName + " ")){
+            return true;
+        }
+
+        //compare using similarity
+        double similarity = StringUtils.getJaroWinklerDistance(bName, cName);
+        if (similarity > 0.89){
+            return true;
+        }
+
+        similarity = StringUtils.getJaroWinklerDistance(bShortName, cName);
+        if (similarity > 0.89){
+            return true;
+        }
+
         return false;
     }
 
+//    /**
+//     * It can happen that some small village or hamlet can have similar city as boundary for big area. It's
+//     * needed to limit such villages and do not allow to assign such boundaries for small city even of they
+//     * have similar name. Boundary with admin level > 5 can be automatically used for every city level
+//     * @param boundary boundary that should be assigned to the city
+//     * @param city city that we found as possible center city
+//     * @return true if city level can be used for boundary
+//     */
+//    public boolean canBeSetAsCenterCity(Boundary boundary, City city) {
+//
+//        if (boundary.getAdminLevel() > 5){
+//            // this is not so big boundary automatically use it
+//            return true;
+//        }
+//
+//        if (city.getType().getTypeCode() <= City.CityType.VILLAGE.getTypeCode()){
+//            return true;
+//        }
+//        // this city is SUBURB, HAMLET OR DISTRICT and boundary is something on admin <= 5 do not allow to use it as center
+//        return false;
+//    }
+
     /**
-     * Look for parent city for villages, hamlets or suburbs
+     * Look for parent city for city.
      * @param dc temporary data container
      * @param city city to find parent
      * @return parent city or null if was not possible to find parent city
      */
-    public City findParentCityAndRegion(ADataContainer dc, City city) {
+    public City findParentCity(ADataContainer dc, City city) {
 
         City parentCity = null;
 
@@ -374,7 +418,7 @@ public class BoundaryController {
 
         for (Boundary boundary : parentBoundaries){
             if (pgCenter.intersects(boundary.getGeom())){
-                int priority = getParentAdminLevelPriority(city, boundary);
+                int priority = getAdminLevelPriority(boundary);
 
                 if (parentBoundary == null){
                     parentBoundary = boundary;
@@ -390,6 +434,11 @@ public class BoundaryController {
          // get the center city for the parent boundary
         if (parentBoundary != null){
             parentCity = dc.getCenterCityBoundaryMap().getKey(parentBoundary);
+
+            if (parentCity != null && parentCity.getOsmId() == city.getOsmId()){
+                // find the same city return null
+                return null;
+            }
         }
         return parentCity;
     }
@@ -426,4 +475,7 @@ public class BoundaryController {
 
         return parentRegion;
     }
+
+
+
 }

@@ -59,6 +59,7 @@ public class DataGeneratorTask implements Sink {
             else if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS) {
                 Logger.i(TAG, "Start address generator");
                 WriterAddressDefinition addressDefinition = new WriterAddressDefinition();
+                addressDefinition.setRegionAdminLevel(conf.getRegionAdminLevel());
 
                 if (conf.getDataContainerType() == Configuration.DataContainerType.RAM) {
 

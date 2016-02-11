@@ -1,5 +1,7 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
+import com.asamm.osmTools.generatorDb.utils.Utils;
+
 import java.io.File;
 
 public class Configuration {
@@ -26,6 +28,9 @@ public class Configuration {
 
     // data container type (HDD/RAM)
     private DataContainerType dataContainerType;
+
+    /** define which boundaries (which admin level) will be used for creation region boundaries */
+    private int regionAdminLevel = 6;
 
 	// GENERATE TYPE
 	
@@ -58,6 +63,33 @@ public class Configuration {
 					"type parameter '" + type + "' incorrect. Supported types are 'address' or 'poi'");
 		}
 	}
+
+    // REGION ADMIN LEVEL
+
+    /**
+     * Get boundary level to use for generation of region boundaries
+     * @return admin level. Default value admin_level = 6;
+     */
+    public int getRegionAdminLevel () {
+        return regionAdminLevel;
+    }
+
+    /**
+     * Set which boundary will be used as regioni boundary
+     * @param strAdminLevel string represent integer 4 - 7
+     */
+    public void setRegionAdminLevel (String strAdminLevel) {
+        if (strAdminLevel == null || strAdminLevel.length() == 0) {
+            regionAdminLevel = 6;
+            return;
+        }
+        if (!Utils.isNumeric(strAdminLevel)){
+            throw new IllegalArgumentException(
+                    "admin level parameter: '" + strAdminLevel + "' incorrect. Please define numeric value range 4 - 8");
+        }
+
+        regionAdminLevel = Integer.valueOf(strAdminLevel);
+    }
 	
 	// DATABASE FILE SOURCE
 	

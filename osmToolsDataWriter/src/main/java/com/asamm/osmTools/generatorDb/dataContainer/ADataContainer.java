@@ -27,12 +27,20 @@ public abstract class ADataContainer {
 	private AWriterDefinition writerDefinition;
 
 
-    // ids of elements stored in cache
+    /** OSM ids of cached nodes*/
 	private TLongList nodeIds;
-	private TLongList wayIds;
+
+    /** OSM ids of cached ways*/
+    private TLongList wayIds;
+
+    /** OSM ids of cached relations*/
     private TLongList relationIds;
+
+    /** hash for serialized streetways in cache */
     protected Set<Integer> streetHashSet;
 
+    /** Storage for city, key is city id */
+    private THashMap<Long, City> citiesMap;
 
     /**
      * Map for houses that have defined the street name or place name but was not possible to find street for them
@@ -67,6 +75,8 @@ public abstract class ADataContainer {
 		this.wayIds = new TLongArrayList();
         this.relationIds = new TLongArrayList();
         this.streetHashSet = new HashSet<>();
+
+        this.citiesMap = new THashMap<>();
         this.housesWithoutStreet = new THashMap<>();
         this.centerCityBoundaryMap = new BiDiHashMap<>();
         this.citiesInBoundaryMap = new THashMap<>();
@@ -83,6 +93,7 @@ public abstract class ADataContainer {
         this.wayIds = null;
         this.relationIds = null;
         this.streetHashSet = null;
+        this.citiesMap = null;
         this.housesWithoutStreet = null;
         this.centerCityBoundaryMap = null;
         this.citiesInBoundaryMap = null;
@@ -310,5 +321,25 @@ public abstract class ADataContainer {
 
     public TLongList getStreetRelations() {
         return streetRelations;
+    }
+
+    public THashMap<Long, City> getCitiesMap() {
+        return citiesMap;
+    }
+
+    public void setCitiesMap(THashMap<Long, City> citiesMap) {
+        this.citiesMap = citiesMap;
+    }
+
+    public City getCity (long cityId){
+        return citiesMap.get(cityId);
+    }
+
+    public Collection<City> getCities (){
+        return citiesMap.values();
+    }
+
+    public void addCity (City city){
+        citiesMap.put(city.getOsmId(), city);
     }
 }

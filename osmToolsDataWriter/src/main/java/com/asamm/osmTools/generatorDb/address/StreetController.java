@@ -15,7 +15,6 @@ import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
-import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
@@ -23,6 +22,7 @@ import gnu.trove.set.hash.TLongHashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -115,6 +115,7 @@ public class StreetController {
                     isInList = getIsInList(way);
                     break;
                 }
+
             }
 
             if (name == null || name.length() == 0){
@@ -126,8 +127,9 @@ public class StreetController {
             //Logger.i(TAG, "Create street geom from relation id: " + relationId);
             MultiLineString mls = createStreetGeom(relation);
 
-            if (mls == null) {
-                // probably associtate Address relation that does not contain any street member > skip it
+            if (mls == null || mls.getCoordinates().length == 0) {
+                // probably associtate Address relation that does not contain any street member > try to create geom
+                // from unnamed streets if relation has some houses
                 //Logger.i(TAG, "can not create street geom from relation id: " + relationId);
                 continue;
             }
@@ -138,7 +140,7 @@ public class StreetController {
 
             // find all cities where street can be in it or is close to city
             List<City> cities = findCitiesForStreet(wayStreet);
-            wayStreet.addCityIds(cities);
+            wayStreet.addCities(cities);
 
 
             if (name == null || name.length() == 0) {
@@ -151,6 +153,28 @@ public class StreetController {
         }
     }
 
+//    private List<RelationMember> getHouseMembersCenters (Relation relation){
+//        List<RelationMember> houseMembers = new ArrayList<>();
+//
+//        for (RelationMember rm : relation.getMembers()){
+//            String role = rm.getMemberRole();
+//            if (role.equals("house") || role.equals("address")){
+//                Entity entityH = null;
+//                if (rm.getMemberType() == EntityType.Way) {
+//                    entityH = dc.getWayFromCache(rm.getMemberId());
+//                }
+//                else if (rm.getMemberType() == EntityType.Node){
+//                    entityH = dc.getNodeFromCache(rm.getMemberId());
+//                }
+//
+//                if (entityH != null){
+//                    Point center = HouseController.ge
+//                }
+//            }
+//
+//        }
+//
+//    }
 
     /**
      *
@@ -195,7 +219,7 @@ public class StreetController {
                 long start = System.currentTimeMillis();
                 List<City> cities = findCitiesForStreet(wayStreet);
                 timeFindStreetCities += System.currentTimeMillis() - start;
-                wayStreet.addCityIds(cities);
+                wayStreet.addCities(cities);
 
                 dc.addWayStreet(wayStreet);
             }
@@ -286,15 +310,15 @@ public class StreetController {
 
                 // CREATE STREET GEOM
                 lineMerger.add(waysGeomsToJoin);
-                List<LineString> lineStrings =  new ArrayList<LineString>(lineMerger.getMergedLineStrings());
+                Collection<LineString> lineStrings = lineMerger.getMergedLineStrings();
                 MultiLineString mls = GeomUtils.mergeLinesToMultiLine(lineStrings);
                 if (mls == null) {
-                    Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
+                    //Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
                     continue;
                 }
 
                 // CREATE STREET
-                // now we joined all wayStreet with the same name and that are in the same city.
+                // now we joined all wayStreet with the same name that are in the same city.
 
                 Street street = new Street();
                 street.setName(wayStreet.getName());
@@ -310,7 +334,116 @@ public class StreetController {
         timeJoinWaysToStreets += System.currentTimeMillis() - start;
     }
 
+    /**
+     * Try to find cities where street is in it. And then split street into stand alone streets based on cities geom
+     * IMPORTANT - method does not handle the houses. So use it only when crate streets
+     * @param streetToSplit street to split into several streets
+     * @return list of street and their geoms are cutted by city geoms
+     */
+    public List<Street> splitGeomByParentCities (Street streetToSplit) {
 
+        List<Street> streets = new ArrayList<>();
+           // PREPARE LIST OF TOP CITIES
+        List<City> topCities = getTopLevelCities(streetToSplit, City.CityType.TOWN);
+
+        if (topCities.size() <= 1){
+            // streets contains only one city
+            streets.add(streetToSplit);
+            return streets;
+        }
+
+        // SPLIT STREETS BY CITIES GEOM
+
+        //Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
+
+        for (City city : topCities){
+
+            Street street = new Street();
+            street.setName(streetToSplit.getName());
+            street.setHouses(streetToSplit.getHouses());
+            street.setPath(streetToSplit.isPath());
+
+            //Logger.i(TAG, "Line for cut: " + Utils.geomToGeoJson(streetToSplit.getGeometry()));
+            Geometry geomIntersection = streetToSplit.getGeometry().intersection(city.getGeom());
+            // the result can be GeomCollection try to convert it into Lines
+            MultiLineString mls = GeomUtils.geometryToMultilineString(geomIntersection);
+
+            // test if there is any intersection
+            if (mls == null || !mls.isValid() || mls.isEmpty()){
+                continue;
+            }
+
+            Coordinate[] coordinates = mls.getCoordinates();
+            double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length-1]);
+
+            //Logger.i(TAG, "Intersection line: " + Utils.geomToGeoJson(mls));
+            if (lengthM > 10) {
+                // set geometry from intersection to new street
+                street.setGeometry(mls);
+                street.addCities(findCitiesForStreet(street));
+                streets.add(street);
+            }
+
+            // remove intersection part from source street
+            Geometry geomDifference = streetToSplit.getGeometry().difference(city.getGeom());
+            streetToSplit.setGeometry(GeomUtils.geometryToMultilineString(geomDifference));
+            //Logger.i(TAG, "Difference line: " +geomDifference.getLength() + "; " + Utils.geomToGeoJson(geomDifference));
+        }
+
+        // TEST IF SOURCE STREET CAN BE STILL USED AS PROPER STREET
+        if ( !streetToSplit.getGeometry().isEmpty()){
+            // compute distace between and the last point of line
+            Coordinate[] coordinates = streetToSplit.getGeometry().getCoordinates();
+            double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length - 1]);
+            if (lengthM > 10){
+                // this street is longer then 10 meters use it as street > need to update list of cities
+                streetToSplit.setCities(findCitiesForStreet(streetToSplit));
+                streets.add(streetToSplit);
+            }
+        }
+
+        return streets;
+    }
+
+    /**
+     * Compare cities and get the most top level cities
+     * @param street street to get the cities
+     * @param typeLevel only cities on the same or higher level will loaded
+     * @return list of the most parent top level cities.
+     */
+    private List<City> getTopLevelCities (Street street, City.CityType typeLevel){
+
+
+
+        List<City> topCities = new ArrayList<>();
+
+        TLongHashSet cityIds = street.getCityIds();
+        TLongIterator iterator = cityIds.iterator();
+
+        int topCityTypeCode = typeLevel.getTypeCode(); // the lower code means bigger city
+        while (iterator.hasNext()){
+            City city = dc.getCity(iterator.next());
+            if (city == null || city.getGeom() == null){
+                continue;
+            }
+
+            int cityType = city.getType().getTypeCode();
+            if (cityType <= topCityTypeCode){
+
+                // test if new city can be parent of any any current city in topLevel list
+                for (int i = topCities.size() -1; i >= 0; i-- ){
+                    City cityInList = topCities.get(i);
+                    City parentCity = cityInList.getParentCity();
+                    if (parentCity != null && parentCity.getOsmId() == city.getOsmId()){
+                        // this is parent city for this one > replace it
+                        topCities.remove(i);
+                    }
+                }
+                topCities.add(city);
+            }
+        }
+        return topCities;
+    }
 
     /**
      * Joined street can lay in more then one city. But some times it's not one street but
@@ -343,14 +476,14 @@ public class StreetController {
             return separatedStreets;
         }
 
-        // for every geometry create new street object with the same name but find the street is in again
+        // for every geometry create new street object with the same name but find the cities again
         for (MultiLineString mlsSep : mlsSeparated){
 
             Street streetSep = new Street();
             streetSep.setName(street.getName());
             streetSep.setGeometry(mlsSep);
             List<City> cities = findCitiesForStreet(streetSep);
-            streetSep.addCityIds(cities);
+            streetSep.addCities(cities);
             streetSep.setHouses(street.getHouses());
             streetSep.setPath(street.isPath());
 
@@ -461,20 +594,18 @@ public class StreetController {
         //Logger.i(TAG, " findCitiesForStreet() - looking for cities for street: " + street.toString() );
 
         List<City> streetCities = new ArrayList<>(); // cities where street is in it
-        Point streetCentroid = street.getGeometry().getCentroid();
+        if (street.getGeometry().isEmpty()){
+            // street does not contains any geometry
+            return streetCities;
+        }
 
+        Point streetCentroid = street.getGeometry().getCentroid();
         if ( !streetCentroid.isValid()){
             // centroid for street with same points is NaN. This is workaround
             streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
         }
 
-        // decide if cities are iterate from memory or based on DB results
         long start = System.currentTimeMillis();
-//        List<City> cities = ga.getCities(); //all cities for map
-//        if (cities.size() > 100){
-//            cities = databaseAddress.loadNearestCities(streetCentroid, 30);
-//        }
-
         List<City> cities = IndexController.getInstance().getClosestCities(streetCentroid, 30);
         timeLoadNereastCities += System.currentTimeMillis() - start;
 
@@ -513,6 +644,7 @@ public class StreetController {
 
         start = System.currentTimeMillis();
         PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry());
+        //PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry().getEnvelope().getCentroid());
         for (City city : cities){
             MultiPolygon mp = city.getGeom();
             if (mp == null){
@@ -520,6 +652,7 @@ public class StreetController {
                 citiesWithoutBound.add(city);
                 continue;
             }
+
 
             // TODO decide if to test intersect or contains
             if (streetGeomPrepared.intersects(city.getGeom())){
@@ -603,18 +736,9 @@ public class StreetController {
 
     private MultiLineString unionStreetGeom (Street s1, Street s2){
         Geometry joinedGeom = s1.getGeometry().union(s2.getGeometry());
-
-        MultiLineString mlsJoined;
-        if (joinedGeom instanceof MultiLineString){
-            mlsJoined = (MultiLineString) joinedGeom;
-        }
-        else {
-            LineString ls = (LineString) joinedGeom;
-            mlsJoined = geometryFactory.createMultiLineString(new LineString[]{ls});
-        }
-
-        return mlsJoined;
+        return GeomUtils.geometryToMultilineString(joinedGeom);
     }
+
 
 
 
