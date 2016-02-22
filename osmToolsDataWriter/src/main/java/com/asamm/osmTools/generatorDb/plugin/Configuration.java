@@ -7,7 +7,7 @@ import java.io.File;
 public class Configuration {
 
     public enum GenerateType {
-		ADDRESS, POI
+		ADDRESS, COUNTRY_BOUNDARY, POI
 	}
 
     public enum DataContainerType {

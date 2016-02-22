@@ -39,6 +39,7 @@ public class LoMapsDbConst {
     public static final String COL_TYPE = "type";
     public static final String COL_NUMBER = "number";
     public static final String COL_POST_CODE = "postcode";
+    public static final String COL_POST_CODE_ID = "postcodeId";
     public static final String COL_GEOM = "geom";
     public static final String COL_CENTER_GEOM = "center";
     public static final String COL_VALUE = "value";
@@ -70,6 +71,7 @@ public class LoMapsDbConst {
 
     public static final String IDX_REGIONS_NAMES_LANGCODE = "idx_regions_names_langcode";
     public static final String IDX_REGIONS_NAMES_CITYID = "idx_regions_names_cityid";
+    public static final String IDX_CITIES_LON_LAT = "idx_cities_lon_lat";
     public static final String IDX_CITIES_NAMES_NAMENORM = "idx_cities_names_namenorm";
     public static final String IDX_CITIES_NAMES_CITYID = "idx_cities_names_cityid";
     public static final String IDX_STREETS_NAMENORM = "idx_streets_namenorm";

@@ -1,5 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -17,9 +18,7 @@ import locus.api.utils.DataWriterBigEndian;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by voldapet on 2015-08-22 .
@@ -92,8 +91,6 @@ public class Street extends Storable {
         if (cityIds.size() <= 0){
             return false;
         }
-
-
         return true;
     }
 
@@ -286,10 +283,7 @@ public class Street extends Storable {
      */
     public int[] getOriginForHouseDTO(){
         Point centroid = geometry.getEnvelope().getCentroid();
-        int lon = (int) Math.round(centroid.getX() * HouseDTO.COORDINATE_POW);
-        int lat = (int) Math.round(centroid.getY() * HouseDTO.COORDINATE_POW);
-
-        return new int[]{lon, lat};
+        return GeomUtils.pointToIntegerValues(centroid);
     }
 
     @Override

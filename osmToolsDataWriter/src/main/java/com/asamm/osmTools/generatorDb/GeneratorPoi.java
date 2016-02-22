@@ -1,10 +1,12 @@
 package com.asamm.osmTools.generatorDb;
 
 import java.io.File;
+import java.util.List;
 
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.generatorDb.data.WayEx;
+import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabasePoi;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
@@ -33,12 +35,25 @@ public class GeneratorPoi extends AGenerator {
 		return new DatabasePoi(outputDb, nodeHandler);
 	}
 
-	@Override
-	protected AOsmObject addNodeImpl(Node node, ADatabaseHandler db) {
+    @Override
+    public void proceedData(ADataContainer dc) {
+        // handle nodes
+        List<Node> nodes = dc.getNodes();
+        for (int i = 0, m = nodes.size(); i < m; i++) {
+            addNodeImpl(nodes.get(i), db);
+        }
+
+        // handle ways
+        List<WayEx> ways = dc.getWays();
+        for (int i = 0, m = ways.size(); i < m; i++) {
+            addWayImp(ways.get(i), db);
+        }
+    }
+
+   	protected AOsmObject addNodeImpl(Node node, ADatabaseHandler db) {
 		return addObject(node, db);
 	}
 
-	@Override
 	protected AOsmObject addWayImp(WayEx way, ADatabaseHandler db) {
 		return addObject(way, db);
 	}

@@ -1,5 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Point;
@@ -16,8 +17,6 @@ import java.io.IOException;
 public class HouseDTO {
 
     private static final String TAG = HouseDTO.class.getSimpleName();
-
-    public static final int COORDINATE_POW = 100000;
 
     /** House number */
     private String number;
@@ -41,9 +40,11 @@ public class HouseDTO {
         setName(name);
         this.postCodeId = postCodeId;
 
+        // convert coordinates of center of house and center of street into simplified integer values
         int[] origin = street.getOriginForHouseDTO();
-        int dLon = (int) Math.round((center.getX()) * COORDINATE_POW) - origin[0];
-        int dLat = (int) Math.round((center.getY()) * COORDINATE_POW) - origin[1];
+        int[] centerI = GeomUtils.pointToIntegerValues(center);
+        int dLon = centerI[0] - origin[0];
+        int dLat = centerI[1] - origin[1];
 
         try {
             this.lon = Utils.intToShort(dLon);

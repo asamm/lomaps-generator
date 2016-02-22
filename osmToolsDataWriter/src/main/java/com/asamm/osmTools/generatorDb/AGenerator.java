@@ -38,23 +38,7 @@ public abstract class AGenerator {
 	
 	// DATA HANDLING
 	
-	public void proceedData(ADataContainer dc) {
-		// handle nodes
-        List<Node> nodes = dc.getNodes();
-		for (int i = 0, m = nodes.size(); i < m; i++) {
-			addNodeImpl(nodes.get(i), db);
-		}
-		
-		// handle ways
-        List<WayEx> ways = dc.getWays();
-        for (int i = 0, m = ways.size(); i < m; i++) {
-			addWayImp(ways.get(i), db);
-		}
-	}
-
-	protected abstract AOsmObject addNodeImpl(Node node, ADatabaseHandler db);
-
-	protected abstract AOsmObject addWayImp(WayEx way, ADatabaseHandler db);
+	public abstract void proceedData(ADataContainer dc) ;
 
 
 }

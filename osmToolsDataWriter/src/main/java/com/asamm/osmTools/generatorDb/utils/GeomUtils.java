@@ -1,10 +1,7 @@
 package com.asamm.osmTools.generatorDb.utils;
 
 import com.asamm.osmTools.generatorDb.address.House;
-import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.data.WayEx;
-import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
-import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
@@ -23,6 +20,24 @@ import java.util.List;
 public class GeomUtils {
 
     private static final GeometryFactory geometryFactory = new GeometryFactory();
+
+    // for conversion double lat lon to integer
+    private static final int COORDINATE_POW = 100000;
+
+
+    /**
+     * Convert point and its coordinate into simplified version written as two integers
+     * @param point point to convert
+     * @return aray with [lon, lat] values
+     */
+    public static int[] pointToIntegerValues(Point point){
+
+        int lonI = (int) Math.round((point.getX()) * COORDINATE_POW);
+        int latI = (int) Math.round((point.getY()) * COORDINATE_POW);
+
+        return  new int[]{lonI, latI};
+    }
+
 
     /**
      * Create multi polygon geometry

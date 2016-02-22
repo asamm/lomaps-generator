@@ -21,7 +21,6 @@ import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.THashMap;
-import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -240,25 +239,24 @@ public class GeneratorAddress extends AGenerator {
         for (int i=0, size = relationIds.size(); i < size; i++) {
             long relationId = relationIds.get(i);
 
-            if (relationId == 34360283 || relationId == 2135916){
-                Logger.i(TAG, "Start process relation id: " + relationId);
-            }
+//            if (relationId == 56106 || relationId == 2135916){
+//                Logger.i(TAG, "Start process relation id: " + relationId);
+//            }
 
             Relation relation = dc.getRelationFromCache(relationId);
             if (relation == null) {
-                if (relationId == 34360283 || relationId == 2135916){
-                    Logger.i(TAG, "Can not load boundary from cache " + relation.getId());
-                }
-
+//                if (relationId == 56106 || relationId == 2135916){
+//                    Logger.i(TAG, "Can not load boundary from cache " + relation.getId());
+//                }
                 continue;
             }
 
             Boundary boundary = boundaryController.create(dc, relation);
 
             if (boundary == null || !boundary.isValid()){
-                if (relationId == 34360283 || relationId == 2135916){
-                    Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
-                }
+//                if (relationId == 56106 || relationId == 2135916){
+//                    Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
+//                }
                 continue;
             }
 
@@ -290,15 +288,17 @@ public class GeneratorAddress extends AGenerator {
     }
 
     /**
-     * Test if boundary can be region (by admin level)
-     * @param boundary
+     * Test if boundary can be region (by admin level). If yes that region is written into database address and
+     * also into index for later when  look for region for cities
+     * @param boundary to test and create region
      */
-    private void createRegion (Boundary boundary){
-        if (boundary.getAdminLevel() == addressDefinition.getRegionAdminLevel()){
+    private void createRegion(Boundary boundary){
+         if (boundary.getAdminLevel() == addressDefinition.getRegionAdminLevel()){
 
             Region region = new Region(boundary.getId(), boundary.getName(), boundary.getNamesInternational(), boundary.getGeom());
-            IndexController.getInstance().insertRegion(region);
 
+            IndexController.getInstance().insertRegion(region);
+            ((DatabaseAddress)db).insertRegion(region);
         }
     }
 
@@ -380,7 +380,7 @@ public class GeneratorAddress extends AGenerator {
     }
 
     /**
-     * City can be center for more boundaries. Register the best boundary for city
+     * City can be center for more boundaries. createRegion the best boundary for city
      * Method compare priority of previous boundary (if exist).
      * @param boundary new boundary that should registered for center city
      * @param city center city
@@ -536,27 +536,25 @@ public class GeneratorAddress extends AGenerator {
                 Envelope envelope = streetToInsert.getGeometry().getEnvelopeInternal();
                 double diagonalLength = Utils.getDistance(envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
+                if (streetToInsert.getName().equals("Via Appia")){
+                    Logger.i(TAG, "Lenght : " + diagonalLength);
+                }
+
                 if (diagonalLength > 30000){
+                    // street is too long try to separate it based on villages, town or cities geom
                     streetsToInsert = sc.splitGeomByParentCities(streetToInsert);
+                }
+                else if (streetToInsert.getGeometry().getNumGeometries() > 1){
+                    // street geom has more parts. Maybe it is two different streets > try to separate them
+                    streetsToInsert = sc.splitToCityParts (streetToInsert);
                 }
                 else {
                     streetsToInsert.add(streetToInsert);
                 }
 
-                // SEPARATE PART (city can have more streets with the same name)
-
+                // write to DB
                 for (Street street : streetsToInsert){
-                    if (street.getGeometry().getNumGeometries() == 1){
-                        // street has simple line geom insert it into DB
-                        ((DatabaseAddress) db).insertStreet(street);
-                    }
-                    else {
-                        // street geom has more parts. Maybe it is two different street > try to separate it
-                        List<Street> streetsByNames = sc.splitToCityParts (street);
-                        for (Street street2 : streetsByNames){
-                            ((DatabaseAddress) db).insertStreet(street2);
-                        }
-                    }
+                    ((DatabaseAddress) db).insertStreet(street);
                 }
             }
         });
@@ -765,30 +763,6 @@ public class GeneratorAddress extends AGenerator {
         }
         return polygon;
     }
-
-
-    /**************************************************/
-    /*             Inherited methods
-    /**************************************************/
-
-	protected AOsmObject addNodeImpl(Node node, ADatabaseHandler db) {
- 		// generate OSM poi object
-		OsmAddress addr = OsmAddress.create(node);
-		if (addr == null) {
-			return null;
-		}
-
-		// add to database
-		if (db != null) {
-//			db.insertObject(addr);
-		} 
-		return addr;
-	}
-
-	@Override
-	protected AOsmObject addWayImp(WayEx way, ADatabaseHandler db) {
-		return null;
-	}
 
 
     /**************************************************/

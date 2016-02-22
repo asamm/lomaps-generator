@@ -40,9 +40,6 @@ public class House extends Storable{
 
     private String place;
 
-     /** Postal code */
-    private String postCode;
-
     /**  Serialized house does not contain whole postCode but only reference to table of postcodes*/
     private int postCodeId;
 
@@ -57,12 +54,12 @@ public class House extends Storable{
         super(data);
     }
 
-    public House(long osmId, String number, String name, String postCode, Point center) {
+    public House(long osmId, String number, String name, int postCodeId, Point center) {
 
         this.osmId = osmId;
         setNumber(number);
         setName(name);
-        setPostCode(postCode);
+        this.postCodeId = postCodeId;
         this.center = center;
     }
 
@@ -99,7 +96,6 @@ public class House extends Storable{
         this.osmId = 0;
         this.number = "";
         this.name = "";
-        this.postCode = "";
         this.streetName = "";
         this.cityName = "";
         this.place = "";
@@ -111,7 +107,7 @@ public class House extends Storable{
         this.osmId = dr.readLong();
         this.number = dr.readString();
         this.name = dr.readString();
-        this.postCode = dr.readString();
+        this.postCodeId = dr.readInt();
 
         WKBReader wkbReader = new WKBReader();
         int count = dr.readInt();
@@ -127,7 +123,7 @@ public class House extends Storable{
         dw.writeLong(osmId);
         dw.writeString(number);
         dw.writeString(name);
-        dw.writeString(postCode);
+        dw.writeInt(postCodeId);
 
         WKBWriter wkbWriter = new WKBWriter();
         byte[] geomData = wkbWriter.write(center);
@@ -206,17 +202,6 @@ public class House extends Storable{
         }
     }
 
-    public String getPostCode() {
-        return postCode;
-    }
-
-    public void setPostCode(String postCode) {
-        if (postCode != null){
-            this.postCode = postCode;
-        }
-    }
-
-
     public int getPostCodeId() {
         return postCodeId;
     }
@@ -234,7 +219,6 @@ public class House extends Storable{
                 ", streetName='" + streetName + '\'' +
                 ", cityName='" + cityName + '\'' +
                 ", place='" + place + '\'' +
-                ", postCode='" + postCode + '\'' +
                 ", postCodeId='" + postCodeId + '\'' +
                 ", center=" + Utils.geomToGeoJson(center) +
                 '}';
