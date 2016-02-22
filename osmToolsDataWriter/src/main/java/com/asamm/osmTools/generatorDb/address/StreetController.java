@@ -11,6 +11,7 @@ import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
@@ -21,6 +22,7 @@ import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -344,17 +346,19 @@ public class StreetController {
 
         List<Street> streets = new ArrayList<>();
            // PREPARE LIST OF TOP CITIES
-        List<City> topCities = getTopLevelCities(streetToSplit, City.CityType.TOWN);
+        List<City> topCities = getTopLevelCities(streetToSplit, City.CityType.VILLAGE);
 
         if (topCities.size() <= 1){
             // streets contains only one city
+//            if (streetToSplit.getName().equals("Via Appia")){
+//                Logger.i(TAG, "There is only one top city >  nothing to cut");
+//            }
             streets.add(streetToSplit);
             return streets;
         }
 
         // SPLIT STREETS BY CITIES GEOM
-
-        //Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
+        // Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
 
         for (City city : topCities){
 
@@ -391,8 +395,10 @@ public class StreetController {
         }
 
         // TEST IF SOURCE STREET CAN BE STILL USED AS PROPER STREET
-        if ( !streetToSplit.getGeometry().isEmpty()){
-            // compute distace between and the last point of line
+        // remove short segments from rest of the street
+        streetToSplit.setGeometry(removeShortSegments(streetToSplit.getGeometry(), 10));
+        if ( streetToSplit.getGeometry() != null && !streetToSplit.getGeometry().isEmpty()){
+            // compute distance between first and the last point of line
             Coordinate[] coordinates = streetToSplit.getGeometry().getCoordinates();
             double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length - 1]);
             if (lengthM > 10){
@@ -748,6 +754,36 @@ public class StreetController {
     /*                  OTHER UTILS
     /**************************************************/
 
+    /**
+     * Check if multilinestring contains some short lines. Such short segments are removed from geometry
+     * If MultiLineString contains only one geom is automatically returned
+     * @param mls geom to check
+     * @param minLength minimal length that is accepted
+     * @return
+     */
+    private MultiLineString removeShortSegments (MultiLineString mls, double minLength){
+
+        int numSegments = mls.getNumGeometries();
+        if (numSegments <= 1 ){
+            return mls;
+        }
+        LineMerger lm = new LineMerger();
+
+        for (int i=0; i < numSegments; i++){
+            Geometry segment = mls.getGeometryN(i);
+            Coordinate[] coordinates = segment.getCoordinates();
+            double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length - 1]);
+            if (lengthM > minLength){
+                // this line is longer then 10 meters use it for street
+                lm.add(segment);
+            }
+        }
+
+        lm.getMergedLineStrings();
+
+        List<LineString> lineStrings =  new ArrayList<LineString>(lm.getMergedLineStrings());
+        return GeomUtils.mergeLinesToMultiLine(lineStrings);
+    }
 
     /**
      * Test if way is type Highway and of proper type. Platform is not

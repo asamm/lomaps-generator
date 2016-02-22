@@ -1,5 +1,6 @@
 package com.asamm.osmTools.generatorDb.utils;
 
+import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
@@ -8,6 +9,7 @@ import org.wololo.jts2geojson.GeoJSONWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.text.Normalizer;
+import java.util.List;
 import java.util.zip.Deflater;
 
 /**
@@ -152,6 +154,7 @@ public class Utils {
     /**
      * Compute the shortest distance between two geoms. It usable to get forexample
      * distance between closest point on street and other point
+     *
      * @param geom1 first geom to test distance
      * @param geom2 next geometry
      * @return distance in meters

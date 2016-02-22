@@ -14,11 +14,11 @@ import java.util.Collection;
  */
 public class WriterAddressDefinition extends AWriterDefinition{
 
+
     private static final String TAG = WriterAddressDefinition.class.getSimpleName();
 
+    // only this values for osm tag place can be used for cities
     String[] validPlaceNodes =  {"city", "town" , "village", "hamlet", "suburb", "district" };
-
-
 
     // what level of admin boundaries will be used for admin areas
     private int regionAdminLevel = 6;
