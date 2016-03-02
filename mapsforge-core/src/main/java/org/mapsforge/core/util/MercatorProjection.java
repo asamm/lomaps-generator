@@ -50,7 +50,8 @@ public final class MercatorProjection {
 	// from operations that require a tileSize parameter (which is effectively cancelled
 	// out). A shortcut version of those operations should be implemented and then this
 	// variable be removed.
-	private static final int DUMMY_TILE_SIZE = 256;
+	//private static final int DUMMY_TILE_SIZE = 256;
+    private static final int DUMMY_TILE_SIZE = 512;
 
 	/**
 	 * Calculates the distance on the ground that is represented by a single pixel on the map.
@@ -104,7 +105,11 @@ public final class MercatorProjection {
 	 *             if the given scale factor is < 1
 	 */
 	public static long getMapSizeWithScaleFactor(double scaleFactor, int tileSize) {
-		if (scaleFactor < 1) {
+
+        // TODO asamm workaround due to changed tileSize
+        tileSize = 256;
+
+        if (scaleFactor < 1) {
 			throw new IllegalArgumentException("scale factor must not < 1 " + scaleFactor);
 		}
 		return (long) (tileSize * (Math.pow(2, scaleFactorToZoomLevel(scaleFactor))));
@@ -118,7 +123,11 @@ public final class MercatorProjection {
 	 *             if the given zoom level is negative.
 	 */
 	public static long getMapSize(byte zoomLevel, int tileSize) {
-		if (zoomLevel < 0) {
+
+        // TODO asamm workaround due to changed tileSize
+        tileSize = 256;
+
+        if (zoomLevel < 0) {
 			throw new IllegalArgumentException("zoom level must not be negative: " + zoomLevel);
 		}
 		return (long) tileSize << zoomLevel;

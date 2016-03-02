@@ -43,14 +43,16 @@ public class HouseController {
     private static final String TAG = HouseController.class.getSimpleName();
 
     // how fare can be unnamed street from house without street name
-    private static final double MAX_DISTANCE_UNNAMED_STREET = 200;
+    private static final int MAX_DISTANCE_UNNAMED_STREET = 200;
 
     // How fare can be named street for house that have defined address name
-    private static final double MAX_DISTANCE_NAMED_STREET = 400;
+    private static final int MAX_DISTANCE_NAMED_STREET = 400;
 
     // How fare can be named street for house that have defined only place name
-    private static final double MAX_DISTANCE_PLACENAME_STREET = 500;
+    private static final int MAX_DISTANCE_PLACENAME_STREET = 500;
 
+    // Maximal diagonal length of envelope of street created from grouped houses of unnamed street
+    private static final int MAX_DIAGONAL_LENGTH_UNNAMED_STREET = 10000;
 
     // number of houses where we was not able to find proper street
     public int removedHousesWithDefinedPlace = 0;
@@ -475,7 +477,7 @@ public class HouseController {
     /**
      * When no street was found for house then check the  streets without name
      */
-    public void processHouseWithoutStreet (StreetController sc){
+    public void processHouseWithoutStreet (final StreetController sc){
 
         long start = System.currentTimeMillis();
 
@@ -569,14 +571,21 @@ public class HouseController {
         // now join created wayStreet for houses
         sc.joinWayStreets(new StreetController.OnJoinStreetListener() {
             @Override
-            public void onJoin(Street street) {
-                // cut the street based on houses.
-                THashSet<House> houses = street.getHouses();
-                // insert street into DB
-                databaseAddress.insertStreet(street);
-                // insert houses into DB
-                for (House house : houses) {
-                    databaseAddress.insertHouse(street, house);
+            public void onJoin(Street joinedStreet) {
+
+                // split streets from different places (due to belorusia)
+                List<Street> streetsToInsert = sc.splitToCityParts(joinedStreet);
+
+                // write to DB
+                for (Street street : streetsToInsert){
+
+                    THashSet<House> houses = street.getHouses();
+                    // insert street into DB
+                    databaseAddress.insertStreet(street);
+                    // insert houses into DB
+                    for (House house : houses) {
+                        databaseAddress.insertHouse(street, house);
+                    }
                 }
             }
         });

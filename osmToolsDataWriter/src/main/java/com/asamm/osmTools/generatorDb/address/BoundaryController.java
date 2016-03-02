@@ -33,11 +33,7 @@ public class BoundaryController {
     /** Instance of geometry factory for creation boundary geoms*/
     private GeometryFactory geometryFactory;
 
-    /** The worker that maintain generation of adresses*/
-    private GeneratorAddress ga;
-
-    public BoundaryController(GeneratorAddress ga) {
-        this.ga = ga;
+    public BoundaryController() {
         processedWays = new TLongArrayList();
         geometryFactory = new GeometryFactory();
     }
@@ -52,7 +48,7 @@ public class BoundaryController {
      */
     public  Boundary create (ADataContainer dc, Entity entity) {
 
-        if (entity.getType() == EntityType.Node){
+        if (entity == null || entity.getType() == EntityType.Node){
             return null;
         }
 
@@ -215,7 +211,7 @@ public class BoundaryController {
                 return 0;
             }
 
-            // TODO again comparsion based on admin center id was removed because bigger region can have defined the admin but smaller not
+            // IMPORTANT comparison based on admin center id was limited because bigger region can have defined the admin but smaller not
             else if(boundary.getAdminLevel() >= 8 && city.getOsmId() == boundary.getAdminCenterId()){
                 return adminLevelPriority;  // return 1 - 6
             }
@@ -236,7 +232,8 @@ public class BoundaryController {
     }
 
     /**
-     * Says how priority agains other admin_level has boundary. The lower priority is better. OA inspiration
+     * Says how priority has admin_level for boundary. The lower priority is better. OA inspiration
+     *
      * @param boundary boundary to check
      * @return return number from 1 - 6 as mark that says how "good" is admin level for boundary.
      * The lower value has better priority
@@ -445,6 +442,7 @@ public class BoundaryController {
 
     /**
      * Find admin region in which is city
+     *
      * @param city to find region for
      * @return parent region in which city is in or null if there is no region for city
      */

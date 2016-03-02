@@ -94,6 +94,15 @@ public class Street extends Storable {
         return true;
     }
 
+    /**
+     * Test if Street has assigned any house
+     *
+     * @return true if has assigned at least one house
+     */
+    public boolean hasHouses () {
+        return (houses != null || houses.size() > 0);
+    }
+
 
 
     public void reset() {

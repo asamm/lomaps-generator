@@ -251,6 +251,11 @@ public class ItemMap extends AItemMap {
         return str + ".json";
     }
 
+    public String getPathCountryBoundaryGeoJson () {
+        String str = mPathPolygon.substring(0, mPathPolygon.lastIndexOf("."));
+        return str + "_country.geojson";
+    }
+
     public String getPathContour() {
         return mPathContour;
     }

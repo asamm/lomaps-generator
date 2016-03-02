@@ -146,7 +146,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         psInsertCity = createPreparedStatement(
                 "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
-                        COL_LON+", " + COL_LAT+", "+COL_GEOM+
+                        COL_LON+", " + COL_LAT+ ", " + COL_GEOM+
                         ") VALUES (?, ?, ?, ?, ?, ?, GeomFromWKB(?, 4326))");
 
         psInsertCityNames = createPreparedStatement( "INSERT INTO "+ TN_CITIES_NAMES +
@@ -336,7 +336,6 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_LAT + " INT )";
 		executeStatement(sql);
 
-
         // creating a Boundary Geometry column
         sql = "SELECT AddGeometryColumn('"+TN_CITIES+"', ";
         sql += "'"+COL_GEOM+"', 4326, 'MULTIPOLYGON', 'XY')";
@@ -407,6 +406,9 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_ID + " INTEGER PRIMARY KEY, ";
         sql += COL_POST_CODE + " TEXT) ";
         executeStatement(sql);
+
+        // Create index for city before insert them (this is workaround how to avoid error when index was empty)
+        buildCityBoundaryIndex();
 	}
 
     @Override
@@ -415,8 +417,6 @@ public class DatabaseAddress extends ADatabaseHandler {
         buildRegionBoundaryIndex();
 
         buildRegionNamesIndexes();
-
-        buildCityBoundaryIndex();
 
         buildCityLonLatIndex();
 
@@ -723,7 +723,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertCity.setInt(5, centerI[0]);
             psInsertCity.setInt(6, centerI[1]);
 
-            if (boundary != null){
+            if (boundary != null ){
                 Geometry geomSimplified = GeomUtils.simplifyCityRegionGeom(boundary.getGeom());
                 psInsertCity.setBytes(7, wkbWriter.write(geomSimplified));
             }

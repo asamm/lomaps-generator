@@ -46,6 +46,7 @@ import org.mapsforge.map.writer.model.TileData;
 import org.mapsforge.map.writer.model.TileGridLayout;
 import org.mapsforge.map.writer.model.WayResolver;
 import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
+import org.mapsforge.map.writer.util.Constants;
 import org.mapsforge.map.writer.util.GeoUtils;
 
 import com.vividsolutions.jts.geom.TopologyException;
@@ -428,8 +429,8 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
 		assert tileCoordinateLeft <= tileCoordinateRight;
 		assert tileCoordinateLeft - tileCoordinateRight + 1 < Integer.MAX_VALUE;
 
-		LOGGER.finer("basezoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) + "\t+n_horizontal: "
-				+ (tileCoordinateRight - tileCoordinateLeft + 1));
+		LOGGER.fine("basezoom: " + this.zoomIntervalConfiguration.getBaseZoom(zoomIntervalIndex) + "\t+n_horizontal: "
+                + (tileCoordinateRight - tileCoordinateLeft + 1));
 
 		return (int) (tileCoordinateRight - tileCoordinateLeft + 1);
 	}

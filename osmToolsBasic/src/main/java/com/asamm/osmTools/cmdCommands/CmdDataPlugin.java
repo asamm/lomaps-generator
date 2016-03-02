@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by menion on 28.7.14.
  */
-public class CmdAddressPoiDb extends Cmd {
+public class CmdDataPlugin extends Cmd {
 
     private File mFileTempMap;
 
@@ -26,7 +26,7 @@ public class CmdAddressPoiDb extends Cmd {
      */
     private File mFilePoiDb;
 
-    public CmdAddressPoiDb(ItemMap map) {
+    public CmdDataPlugin(ItemMap map) {
         super(map, ExternalApp.OSMOSIS);
 
         // set parameters
@@ -39,7 +39,7 @@ public class CmdAddressPoiDb extends Cmd {
         return mFilePoiDb;
     }
 
-    public void addTaskSimplify(WriterPoiDefinition definition) throws IOException {
+    public void addTaskSimplifyForPoi(WriterPoiDefinition definition) throws IOException {
         //FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadSource();
@@ -72,7 +72,7 @@ public class CmdAddressPoiDb extends Cmd {
         addWritePbf(mFileTempMap.getAbsolutePath(), true);
     }
 
-    public void addTaskSimplifyForAddress(WriterPoiDefinition definition) throws IOException {
+    public void addTaskSimplifyForAddress() throws IOException {
 
         addReadSource();
         addCommand("--tf");
@@ -155,7 +155,7 @@ public class CmdAddressPoiDb extends Cmd {
         addWritePbf(mFileTempMap.getAbsolutePath(), true);
     }
 
-    public void addGeneratorDb() {
+    public void addGeneratorPoiDb() {
         FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadPbf(mFileTempMap.getAbsolutePath());
@@ -177,6 +177,8 @@ public class CmdAddressPoiDb extends Cmd {
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
         addCommand("-fileDb=" + mFilePoiDb);
+        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
+
 
         File file = new File(getMap().getPathSource());
 
@@ -188,8 +190,31 @@ public class CmdAddressPoiDb extends Cmd {
             addCommand("-dataContainerType=hdd");
         }
 
-        if (getMap().getAddressRegionLevel() != null)
-        addCommand("-regionAdminLevel=" + getMap().getAddressRegionLevel());
+        // add map id is not defined then use map name as id
+        if (getMap().getAddressRegionLevel() != null){
+            String mapId = getMap().getId();
+            if (mapId == null || mapId.length() == 0){
+                mapId = getMap().getName();
+            }
+            addCommand("-mapId=" + mapId);
+        }
+    }
+
+    /**
+     * Prepare commnad line for generation precise country boundary
+     */
+    public void addGeneratorCountryBoundary() {
+
+        //addReadPbf(mFileTempMap.getAbsolutePath());
+        addReadPbf(getMap().getPathSource());
+
+        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
+        addCommand("-type=country");
+        addCommand("-name=" + getMap().getName());
+        addCommand("-fileGeom=" + getMap().getPathCountryBoundaryGeoJson());
+
+        // TODO add country admin level into config xml
+        addCommand("-countryAdminLevel=" + "2");
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {
@@ -219,4 +244,6 @@ public class CmdAddressPoiDb extends Cmd {
             addCommand(key + "=" + value);
         }
     }
+
+
 }

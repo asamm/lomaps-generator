@@ -15,6 +15,9 @@ import org.openstreetmap.osmosis.core.task.v0_6.Sink;
 import java.io.File;
 import java.util.Map;
 
+import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.DataContainerType;
+import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.GenerateType;
+
 /**
  * An Osmosis plugin that reads OpenStreetMap data
  * 
@@ -24,27 +27,27 @@ public class DataGeneratorTask implements Sink {
 
     private static final String TAG = DataGeneratorTask.class.getSimpleName();
 
-	// task configuration
-	private Configuration conf;
-
 	// container for all data
 	private ADataContainer dc = null;
 	// generator for result database
     private AGenerator generator = null;
 
-	DataGeneratorTask(Configuration config) {
+	DataGeneratorTask(AConfiguration config) {
         Logger.d(TAG, "DataGeneratorTask(), start");
 
-		// store configuration
-		this.conf = config;
 
 		// read all data
 		try {
-			if (conf.getGenerateType() == Configuration.GenerateType.POI) {
-				WriterPoiDefinition nodeHandler = new WriterPoiDefinition(config.getFileConfig());
+
+            // POI GENERATOR
+
+			if (config.getGenerateType() == GenerateType.POI) {
+
+                ConfigurationPoi confPoi = (ConfigurationPoi) config;
+                WriterPoiDefinition nodeHandler = new WriterPoiDefinition(confPoi.getFileConfig());
 
 				// prepare data container
-				int size = (int) (conf.getFileDatabase().length() / 1024L / 1024L);
+				int size = (int) (confPoi.getFileDatabase().length() / 1024L / 1024L);
                 Logger.i(TAG, "Source size:" + size + ", max:" + 600);
 				if (size <= 500) {
                     Logger.d(TAG, "creating data container: RAM");
@@ -52,33 +55,49 @@ public class DataGeneratorTask implements Sink {
 				} else {
                     Logger.d(TAG, "creating data container: HDD");
 					dc = new DataContainerHdd(nodeHandler,
-							new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
+							new File(confPoi.getFileDatabase().getAbsolutePath()+ ".temp"));
 				}
-				generator = new GeneratorPoi(conf.getFileDatabase(), nodeHandler);
+				generator = new GeneratorPoi(confPoi.getFileDatabase(), nodeHandler);
 			}
-            else if (conf.getGenerateType() == Configuration.GenerateType.ADDRESS) {
+
+            // ADDRESS GENERATOR
+
+            else if (config.getGenerateType() == GenerateType.ADDRESS) {
                 Logger.i(TAG, "Start address generator");
-                WriterAddressDefinition addressDefinition = new WriterAddressDefinition();
-                addressDefinition.setRegionAdminLevel(conf.getRegionAdminLevel());
 
-                if (conf.getDataContainerType() == Configuration.DataContainerType.RAM) {
+                ConfigurationAddress confAddress = (ConfigurationAddress) config;
+                WriterAddressDefinition addressDefinition = new WriterAddressDefinition(confAddress);
 
+                // crate RAM or HDD storage for all entities
+                if (confAddress.getDataContainerType() == DataContainerType.RAM) {
                     Logger.i(TAG, "creating data container: RAM");
                     dc = new DataContainerRam(addressDefinition);
-
-//                    Logger.i(TAG, "creating data container: HDD");
-//                    dc = new DataContainerHdd(addressDefinition,
-//                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
                 } else {
                     Logger.i(TAG, "creating data container: HDD");
                     dc = new DataContainerHdd(addressDefinition,
-                            new File(config.getFileDatabase().getAbsolutePath()+ ".temp"));
+                            new File(confAddress.getFileDatabase().getAbsolutePath()+ ".temp"));
                 }
 
-                generator = new GeneratorAddress(
-                        addressDefinition,
-                        new File(config.getFileDatabase().getAbsolutePath()));
+                generator = new GeneratorAddress(addressDefinition);
 			}
+
+            // COUNTRY BOUNDARY GENERATOR
+
+            else if (config.getGenerateType() == GenerateType.COUNTRY_BOUNDARY){
+                Logger.i(TAG, "Start country boundary generator");
+                ConfigurationCountry confCountry = (ConfigurationCountry) config;
+
+                WriterCountryBoundaryDefinition wcbDefinition = new WriterCountryBoundaryDefinition();
+                wcbDefinition.setAdminLevel(confCountry.getAdminLevel());
+
+                Logger.i(TAG, "creating data container: RAM");
+                dc = new DataContainerRam(wcbDefinition);
+
+                generator = new GeneratorCountryBoundary(
+                        wcbDefinition,
+                        new File(confCountry.getFileGeom().getAbsolutePath()));
+            }
+
 		} catch (Exception e) {
             Logger.e(TAG, "DataGeneratorTask(), problem with preparations", e);
 			generator = null;
@@ -87,7 +106,7 @@ public class DataGeneratorTask implements Sink {
 		// check generator
 		if (dc == null || generator == null) {
 			throw new IllegalArgumentException("DataContainer (" + dc + "), or Generator (" + generator + "), " +
-					"cannot be initialized for type:" + conf.getGenerateType());
+					"cannot be initialized for type:" + config.getGenerateType());
 		}
 	}
 
@@ -121,9 +140,9 @@ public class DataGeneratorTask implements Sink {
 	public final void complete() {
 
         dc.finalizeCaching();
-		Logger.d(TAG, "complete reading, start generating");
+		Logger.i(TAG, "complete reading, start generating");
 
-		// generate database
+		// GENERATE DATA
 		generator.proceedData(dc);
 
 		// destroy data
