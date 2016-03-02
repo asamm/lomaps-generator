@@ -82,6 +82,8 @@ public class Parameters {
     // path to base config file for address/poi database
     private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
 
+    private static final String mConfigAddressPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_address.xml";
+
     private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUpload" + Consts.FILE_SEP + "upload_definition.json";
 
     private static final String mMapDescriptionDefinition = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "map_description_definition.json";
@@ -202,6 +204,10 @@ public class Parameters {
 
     public static String getConfigApDbPath() {
         return mConfigApDbPath;
+    }
+
+    public static String getConfigAddressPath () {
+        return mConfigAddressPath;
     }
 
     public static String getUploadDefinitionJsonPath() {

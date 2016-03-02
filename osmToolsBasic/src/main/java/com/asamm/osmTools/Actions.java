@@ -382,6 +382,14 @@ class Actions {
     // ACTION ADDRESS/POI DATABASE
 
     private void actionAddressPoiDatabase(ItemMap map) throws Exception {
+
+        // GENERATE COUNTRY PRECISE BOUNDARY GEOM
+        CmdDataPlugin cmdDataCountryBoundary = new CmdDataPlugin(map);
+        cmdDataCountryBoundary.addGeneratorCountryBoundary();
+        Logger.i(TAG, "Generate country boundary, command: " + cmdDataCountryBoundary.getCmdLine() );
+        //cmdDataCountryBoundary.execute();
+
+
         // check if we want to generate GraphHopper data
         if (!map.hasAction(Parameters.Action.ADDRESS_POI_DB)) {
             return;
@@ -394,42 +402,34 @@ class Actions {
             return;
         }
 
-
         // load definitions
 
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
-        // firstly simplify source file
-//        CmdAddressPoiDb cmd = new CmdAddressPoiDb(map);
-//        cmd.addTaskSimplify(definition);
+//        // firstly simplify source file
+//        CmdDataPlugin cmd = new CmdDataPlugin(map);
+//        cmd.addTaskSimplifyForPoi(definition);
 //        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
 //        cmd.execute();
 //
 //        // now execute db poi generating
-//        CmdAddressPoiDb cmdGen = new CmdAddressPoiDb(map);
-//        cmdGen.addGeneratorDb();
+//        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
+//        cmdGen.addGeneratorPoiDb();
 //        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
 //        cmdGen.execute();
 
-        // Address generation
-        CmdAddressPoiDb cmdAddressSimpl = new CmdAddressPoiDb(map);
-        cmdAddressSimpl.addTaskSimplifyForAddress(definition);
+        //Address generation
+        CmdDataPlugin cmdAddressSimpl = new CmdDataPlugin(map);
+        cmdAddressSimpl.addTaskSimplifyForAddress();
         Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
         cmdAddressSimpl.execute();
 
-        CmdAddressPoiDb cmdAddres = new CmdAddressPoiDb(map);
+        CmdDataPlugin cmdAddres = new CmdDataPlugin(map);
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
         cmdAddres.execute();
 
-        // edit - do not pack database it'll be packed together with map file itself
-        // after generating, pack file and delete original
-//        File generatedDb = cmdGen.getFileTempDb();
-//        Utils.compressFile(generatedDb.getAbsolutePath(), map.getPathAddressPoiDb());
-//
-//        // delete generated db
-//        FileUtils.deleteQuietly(generatedDb);
     }
 
     // ACTION COASTLINE

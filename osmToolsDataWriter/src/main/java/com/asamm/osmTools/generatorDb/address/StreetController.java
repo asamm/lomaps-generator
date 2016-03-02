@@ -20,9 +20,9 @@ import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
+import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,6 +38,11 @@ public class StreetController {
     }
 
     private static final String TAG = StreetController.class.getSimpleName();
+
+    // maximal distance between linestring (it's envelope) that is accepted that is part of the same street
+    private static final int MAX_DISTANCE_BETWEEN_STREET_SEGMENTS = 300;
+
+
 
     private ADataContainer dc;
 
@@ -222,6 +227,9 @@ public class StreetController {
                 List<City> cities = findCitiesForStreet(wayStreet);
                 timeFindStreetCities += System.currentTimeMillis() - start;
                 wayStreet.addCities(cities);
+                if (wayId == 34967495 ){
+                    Logger.i(TAG, "Add way street into datacontainer: " + wayStreet.toString());
+                }
 
                 dc.addWayStreet(wayStreet);
             }
@@ -285,23 +293,21 @@ public class StreetController {
                     sameStreetFounded = false;
                     for (int j = i-1; j >= 0; j--){
                         Street wayStreetToJoin = wayStreets.get(j);
-//                        if (wayStreet.getName().equals("Via Verdi")) {
-//                            Logger.i(TAG, "test street: " + wayStreetToJoin.toString());
-//                            Logger.i(TAG, "Num of houses for Via Verdi " + houses.size());
-//                        }
+                        if (wayStreet.getName().equals("Vestermarksvej")) {
+                            Logger.i(TAG, "test way street: " + wayStreetToJoin.toString());
+                        }
 
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
 //                            if (wayStreet.getName().equals("Via Verdi")) {
 //                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
 //                            }
-                            //lineMerger.add(wayStreetToJoin.getGeometry());
                             waysGeomsToJoin.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
                             houses.addAll(wayStreetToJoin.getHouses());
                             isPath = (isPath) ? true : wayStreet.isPath();
 
-                            // remove this street way
+                            // remove this street way because was proccessed
                             wayStreets.remove(j);
                             j--;
                             i--;
@@ -339,6 +345,7 @@ public class StreetController {
     /**
      * Try to find cities where street is in it. And then split street into stand alone streets based on cities geom
      * IMPORTANT - method does not handle the houses. So use it only when crate streets
+     *
      * @param streetToSplit street to split into several streets
      * @return list of street and their geoms are cutted by city geoms
      */
@@ -455,13 +462,14 @@ public class StreetController {
      * Joined street can lay in more then one city. But some times it's not one street but
      * two different street with the same name. This method identify if geometry of street
      * is only one street or if it is two or more different cities
-     * @param street street to test if it is one or more different streets
+     *
+     * @param streetToSplit street to test if it is one or more different streets
      * @return list of separated street
      */
-    public List<Street> splitToCityParts(Street street) {
+    public List<Street> splitToCityParts(Street streetToSplit) {
 
         List<Street> separatedStreets = new ArrayList<>();
-        MultiLineString mls = street.getGeometry();
+        MultiLineString mls = streetToSplit.getGeometry();
         int numGeomElements = mls.getNumGeometries();
 
         //Logger.i(TAG, "splitToCityParts(): Num of multilinestreet: " + numGeomElements + " street: " + street.toString());
@@ -478,7 +486,7 @@ public class StreetController {
 
         if (mlsSeparated.size() <= 1){
             // all linestring are from the same street
-            separatedStreets.add(street);
+            separatedStreets.add(streetToSplit);
             return separatedStreets;
         }
 
@@ -486,16 +494,26 @@ public class StreetController {
         for (MultiLineString mlsSep : mlsSeparated){
 
             Street streetSep = new Street();
-            streetSep.setName(street.getName());
+            streetSep.setName(streetToSplit.getName());
             streetSep.setGeometry(mlsSep);
             List<City> cities = findCitiesForStreet(streetSep);
             streetSep.addCities(cities);
-            streetSep.setHouses(street.getHouses());
-            streetSep.setPath(street.isPath());
+            streetSep.setPath(streetToSplit.isPath());
 
             separatedStreets.add(streetSep);
 
             //Logger.i(TAG, "splitToCityParts(): New separated street: " + streetSep.toString());
+        }
+
+        // test if street for splitting has any house
+        if (streetToSplit.hasHouses()){
+            for (House house : streetToSplit.getHouses()){
+                // for every house find the nearest street from splitted streets
+                Street nearestStreet = getNearestStreet(house.getCenter(), separatedStreets);
+                if (nearestStreet != null){
+                    nearestStreet.addHouse(house);
+                }
+            }
         }
 
         return separatedStreets;
@@ -504,7 +522,7 @@ public class StreetController {
     /**
      * Due to system of joining way streets can be joined two or more different streets
      * with the same name into one street. This method identify geometries that
-     * are far away from each other and create saparate geometries for
+     * are far away from each other and create separate geometries for
      * every particular street
      * @param elements list of linestring, this is result of joining ways with the same name in city
      * @return geometries for new separate streets
@@ -512,15 +530,14 @@ public class StreetController {
     private List<MultiLineString> splitGeomDifferentStreets(List<LineString> elements){
 
         // max distance between elements where we expect that are in the same street
-        double maxDistance = 150;
-        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), maxDistance/2);
+        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), MAX_DISTANCE_BETWEEN_STREET_SEGMENTS);
 
         // list geoms for separated streets
         List<MultiLineString> splittedMls = new ArrayList<>();
 
         List<LineString> lsList = new ArrayList<>();
 
-        // create temp index of line strings
+        // create temp index of line strings of source geom
         Quadtree index = new Quadtree();
         for (int i=0; i < elements.size(); i++){
             index.insert(elements.get(i).getEnvelopeInternal(), i);
@@ -533,7 +550,7 @@ public class StreetController {
 
         boolean hasOtherElements = true;
         while (hasOtherElements){
-
+            // get ids of line string around the first linestring
             List<Integer> result = index.query(envelope);
             int resultSize = result.size();
             if (resultSize == 0){
@@ -610,20 +627,19 @@ public class StreetController {
             // centroid for street with same points is NaN. This is workaround
             streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
         }
-
         long start = System.currentTimeMillis();
-        List<City> cities = IndexController.getInstance().getClosestCities(streetCentroid, 30);
+        List<City> citiesAround = IndexController.getInstance().getClosestCities(streetCentroid, 30);
         timeLoadNereastCities += System.currentTimeMillis() - start;
 
         //RECOGNIZE BY IS IN TAG
 
         List<String> isInNames = street.getIsIn();
         if (isInNames.size() > 0){
-            for (int i = cities.size() - 1; i >= 0; i--){
-                City city = cities.get(i);
+            for (int i = citiesAround.size() - 1; i >= 0; i--){
+                City city = citiesAround.get(i);
                 if (isInNames.contains(city.getName())){
                     streetCities.add(city);
-                    cities.remove(i);
+                    citiesAround.remove(i);
                 }
             }
         }
@@ -633,34 +649,16 @@ public class StreetController {
         // create index from rest of cities if boundary exist
         List<City> citiesWithoutBound = new ArrayList<>();
 
-        // TODO there are two ways how to check if city contains the street > test it for speed
-//        STRtree cityBoundsIndex = new STRtree();
-//        for (City city : cities){
-//            MultiPolygon mp = city.getGeom();
-//            if (mp == null){
-//                // this city does not have defined the bound geometry
-//                citiesWithoutBound.add(city);
-//                continue;
-//            }
-//            cityBoundsIndex.insert(city.getGeom().getEnvelopeInternal(), city);
-//        }
-//        // search all cities that intersect or contain street
-//        List<City> result = cityBoundsIndex.query(street.getGeometry().getEnvelopeInternal());
-//        streetCities.addAll(result);
-
         start = System.currentTimeMillis();
         PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry());
         //PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry().getEnvelope().getCentroid());
-        for (City city : cities){
+        for (City city : citiesAround){
             MultiPolygon mp = city.getGeom();
             if (mp == null){
                 // this city does not have defined the bound geometry
                 citiesWithoutBound.add(city);
                 continue;
             }
-
-
-            // TODO decide if to test intersect or contains
             if (streetGeomPrepared.intersects(city.getGeom())){
                 streetCities.add(city);
             }
@@ -672,27 +670,28 @@ public class StreetController {
         // RECOGNIZE BY DISTANCE
 
         // for rest of cities that does not have defined the bounds check distance
-        start = System.currentTimeMillis();
-        for (City city : citiesWithoutBound){
+        if (streetCities.size() == 0){
+            start = System.currentTimeMillis();
+            for (City city : citiesWithoutBound){
 
-            // boundary is not defined > if relative distance is lower 0.2
-            double distance = Utils.getDistance(streetCentroid, city.getCenter());
-            if (distance / city.getType().getRadius() < 0.2){
+                // boundary is not defined > if relative distance is lower 0.2
+                double distance = Utils.getDistance(streetCentroid, city.getCenter());
+                if (distance / city.getType().getRadius() < 0.2){
 //                if (wayId == 7980116) {
 //                    Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
 //                }
-                streetCities.add(city);
+                    streetCities.add(city);
+                }
             }
+            timeFindCityTestByDistance += System.currentTimeMillis() - start;
         }
-        timeFindCityTestByDistance += System.currentTimeMillis() - start;
-
 
         // GET CLOSEST FROM LOADED
 
         start = System.currentTimeMillis();
-        if (streetCities.isEmpty()) {
+        if (streetCities.size() == 0) {
             // iterate again the cities and try to find the closest
-            City city = getClosestCity(street.getGeometry().getCentroid(), cities);
+            City city = getNearestCity(street.getGeometry().getCentroid(), citiesAround);
 
             if (city != null){
                 // test how fare is the nearest city
@@ -717,7 +716,7 @@ public class StreetController {
      * @param point Center for search
      * @return the closest city or null if no cities was found
      */
-    private City getClosestCity (Point point, List<City> cities) {
+    private City getNearestCity(Point point, List<City> cities) {
 
         if (point == null || cities.size() == 0){
             return null;
@@ -745,8 +744,31 @@ public class StreetController {
         return GeomUtils.geometryToMultilineString(joinedGeom);
     }
 
+    /**
+     * Find nearest street from defined list and point
+     *
+     * @param center point from which is searched nearest street
+     * @param streets list of streets from which want to get nearest one
+     * @return return nearest street
+     */
+    private Street getNearestStreet(Point center, List<Street> streets){
 
-
+        Street nearestStreet = null;
+        double minDistance = 0;
+        for (Street street : streets) {
+            if (nearestStreet == null){
+                nearestStreet = street;
+                minDistance = Utils.getDistanceNearest(center,street.getGeometry());
+                continue;
+            }
+            double distance = Utils.getDistanceNearest(center, street.getGeometry());
+            if (distance < minDistance){
+                minDistance = distance;
+                nearestStreet = street;
+            }
+        }
+        return nearestStreet;
+    }
 
 
 
