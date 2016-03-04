@@ -407,17 +407,17 @@ class Actions {
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
-//        // firstly simplify source file
-//        CmdDataPlugin cmd = new CmdDataPlugin(map);
-//        cmd.addTaskSimplifyForPoi(definition);
-//        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
-//        cmd.execute();
-//
-//        // now execute db poi generating
-//        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
-//        cmdGen.addGeneratorPoiDb();
-//        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-//        cmdGen.execute();
+        // firstly simplify source file
+        CmdDataPlugin cmd = new CmdDataPlugin(map);
+        cmd.addTaskSimplifyForPoi(definition);
+        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
+        cmd.execute();
+
+        // now execute db poi generating
+        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
+        cmdGen.addGeneratorPoiDb();
+        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
+        cmdGen.execute();
 
         //Address generation
         CmdDataPlugin cmdAddressSimpl = new CmdDataPlugin(map);
@@ -596,34 +596,14 @@ class Actions {
                     map.getPathSource() + " does not exist.");
         }
 
+        TimeWatch time = new TimeWatch();
         // prepare cmd line and string for log
         String logStr = "Merging maps: "+map.getPathSource() +" and ";
-
         CmdMerge cm = new CmdMerge(map);
-        cm.addReadPbf(map.getPathSource());
-        if (isCoastline){
-            cm.addReadPbf(map.getPathCoastline());
-            cm.addMerge();
-            logStr += "coastlines: " + map.getPathCoastline() + " ";
-        }
+        cm.createCmd();
 
-        if (isTourist){
-            cm.addReadXml(map.getPathTourist());
-            //cm.addBoundingPolygon(map);
-            cm.addMerge();
-            logStr += "tourist: " +map.getPathTourist() + " ";
-        }
-        if (isContour){
-            cm.addReadPbf(map.getPathContour());
-            cm.addMerge();
-            logStr += "contours: "+map.getPathContour()+ " ";
-        }
-        cm.addBuffer();
-        cm.addWritePbf(map.getPathMerge(), true);
-
-        TimeWatch time = new TimeWatch();
-        Logger.i(TAG, logStr);
         Main.mySimpleLog.print("\nMarging: "+map.getName()+" ...");
+        Logger.i(TAG, "Merge map parts, command: " + cm.getCmdLine() );
         cm.execute();
         Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
         time.stopCount();

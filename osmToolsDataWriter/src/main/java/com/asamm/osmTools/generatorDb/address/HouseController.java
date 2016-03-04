@@ -560,7 +560,7 @@ public class HouseController {
                 wayStreet.setGeometry(mlsCutted);
                 timeCreateUnamedStreetGeom += System.currentTimeMillis() - start3;
 
-                List<City> cities = sc.findCitiesForStreet(wayStreet);
+                List<City> cities = sc.findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn());
                 wayStreet.addCities(cities);
                 dc.addWayStreet(wayStreet);
             }
