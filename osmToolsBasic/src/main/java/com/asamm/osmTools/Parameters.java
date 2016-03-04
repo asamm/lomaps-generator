@@ -138,7 +138,9 @@ public class Parameters {
     
     public static String htmlMapHeaderFile = Consts.DIR_BASE + "config" +
             Consts.FILE_SEP + "maps_header.html";
-    public static String htmlMapPath; 
+    public static String htmlMapPath;
+
+    private static String mCustomDataDir;
     
     // TOURIST
 
@@ -160,7 +162,7 @@ public class Parameters {
     public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<String, Integer>();
     public static  ArrayList<String> hikingColourType;
 
-    // description in headero of map file
+    // description in header of map file
     public static String MAP_COMMENT =
             "<div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
             + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
@@ -174,6 +176,8 @@ public class Parameters {
 
     private static final int mDbDataPoiVersion = 1;
     private static final int mDbDataAddressVersion = 1;
+
+
 
 
     /***************************************************/
@@ -218,7 +222,6 @@ public class Parameters {
         return mMapDescriptionDefinition;
     }
 
-
     public static String getContourTagMapping() {
         return mContourTagMapping;
     }
@@ -255,9 +258,6 @@ public class Parameters {
         return mHgtDir;
     }
 
-//    public static String getmOutputXml() {
-//        return mOutputXml;
-//    }
     public static String getOgr2ogr() {
         return mOgr2ogr;
     }
@@ -300,6 +300,11 @@ public class Parameters {
         return mGraphHopperExe;
     }
 
+    public static String getCustomDataDir() {
+        return mCustomDataDir;
+    }
+
+
     // DB META DATA PARAMS
 
     public static int getDbDataPoiVersion() {
@@ -309,6 +314,7 @@ public class Parameters {
     public static int getDbDataAddressVersion() {
         return mDbDataAddressVersion;
     }
+
 
     /***************************************************/
     /*               BASIC FUNCTIONS                   */
@@ -528,6 +534,8 @@ public class Parameters {
         // graphHopper path
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
                 getAbsolutePath();
+
+        mCustomDataDir = Consts.DIR_BASE + "custom_data";
 
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();

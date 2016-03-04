@@ -20,7 +20,6 @@ import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
-import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.util.ArrayList;
@@ -146,7 +145,7 @@ public class StreetController {
             wayStreet.setPath(isPath(relation));
 
             // find all cities where street can be in it or is close to city
-            List<City> cities = findCitiesForStreet(wayStreet);
+            List<City> cities = findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn() );
             wayStreet.addCities(cities);
 
 
@@ -224,7 +223,7 @@ public class StreetController {
 
                 // find all cities where street can be in it or is close to city
                 long start = System.currentTimeMillis();
-                List<City> cities = findCitiesForStreet(wayStreet);
+                List<City> cities = findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn());
                 timeFindStreetCities += System.currentTimeMillis() - start;
                 wayStreet.addCities(cities);
                 if (wayId == 34967495 ){
@@ -391,7 +390,7 @@ public class StreetController {
             if (lengthM > 10) {
                 // set geometry from intersection to new street
                 street.setGeometry(mls);
-                street.addCities(findCitiesForStreet(street));
+                street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn()));
                 streets.add(street);
             }
 
@@ -410,7 +409,7 @@ public class StreetController {
             double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length - 1]);
             if (lengthM > 10){
                 // this street is longer then 10 meters use it as street > need to update list of cities
-                streetToSplit.setCities(findCitiesForStreet(streetToSplit));
+                streetToSplit.setCities(findCitiesForPlace(streetToSplit.getGeometry(), streetToSplit.getIsIn()));
                 streets.add(streetToSplit);
             }
         }
@@ -496,7 +495,7 @@ public class StreetController {
             Street streetSep = new Street();
             streetSep.setName(streetToSplit.getName());
             streetSep.setGeometry(mlsSep);
-            List<City> cities = findCitiesForStreet(streetSep);
+            List<City> cities = findCitiesForPlace(streetSep.getGeometry(), streetSep.getIsIn());
             streetSep.addCities(cities);
             streetSep.setPath(streetToSplit.isPath());
 
@@ -609,31 +608,31 @@ public class StreetController {
     }
 
     /**
-     * Find cities where street is in it.
-     * @param street street to find in which cities is
-     * @return cities that contain tested street
+     * Find cities where center of geometry can be in it
+     *
+     * @param geometry geometry to find the cities
+     * @return cities that contain tested geom
      */
-    public List<City> findCitiesForStreet(Street street) {
-        //Logger.i(TAG, " findCitiesForStreet() - looking for cities for street: " + street.toString() );
+    public List<City> findCitiesForPlace(Geometry geometry, List<String> isInNames) {
+        //Logger.i(TAG, " findCitiesForPlace() - looking for cities for street: " + street.toString() );
 
         List<City> streetCities = new ArrayList<>(); // cities where street is in it
-        if (street.getGeometry().isEmpty()){
+        if (geometry.isEmpty()){
             // street does not contains any geometry
             return streetCities;
         }
 
-        Point streetCentroid = street.getGeometry().getCentroid();
-        if ( !streetCentroid.isValid()){
+        Point centroid = geometry.getCentroid();
+        if ( !centroid.isValid()){
             // centroid for street with same points is NaN. This is workaround
-            streetCentroid = geometryFactory.createPoint(street.getGeometry().getCoordinate());
+            centroid = geometryFactory.createPoint(geometry.getCoordinate());
         }
         long start = System.currentTimeMillis();
-        List<City> citiesAround = IndexController.getInstance().getClosestCities(streetCentroid, 30);
+        List<City> citiesAround = IndexController.getInstance().getClosestCities(centroid, 30);
         timeLoadNereastCities += System.currentTimeMillis() - start;
 
         //RECOGNIZE BY IS IN TAG
 
-        List<String> isInNames = street.getIsIn();
         if (isInNames.size() > 0){
             for (int i = citiesAround.size() - 1; i >= 0; i--){
                 City city = citiesAround.get(i);
@@ -650,7 +649,7 @@ public class StreetController {
         List<City> citiesWithoutBound = new ArrayList<>();
 
         start = System.currentTimeMillis();
-        PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry());
+        PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(geometry);
         //PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry().getEnvelope().getCentroid());
         for (City city : citiesAround){
             MultiPolygon mp = city.getGeom();
@@ -675,7 +674,7 @@ public class StreetController {
             for (City city : citiesWithoutBound){
 
                 // boundary is not defined > if relative distance is lower 0.2
-                double distance = Utils.getDistance(streetCentroid, city.getCenter());
+                double distance = Utils.getDistance(centroid, city.getCenter());
                 if (distance / city.getType().getRadius() < 0.2){
 //                if (wayId == 7980116) {
 //                    Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
@@ -691,11 +690,11 @@ public class StreetController {
         start = System.currentTimeMillis();
         if (streetCities.size() == 0) {
             // iterate again the cities and try to find the closest
-            City city = getNearestCity(street.getGeometry().getCentroid(), citiesAround);
+            City city = getNearestCity(geometry.getCentroid(), citiesAround);
 
             if (city != null){
                 // test how fare is the nearest city
-                double distance = Utils.getDistance(streetCentroid, city.getCenter());
+                double distance = Utils.getDistance(centroid, city.getCenter());
                 if (distance / city.getType().getRadius() < 0.5){
                     streetCities.add(city);
                 }
