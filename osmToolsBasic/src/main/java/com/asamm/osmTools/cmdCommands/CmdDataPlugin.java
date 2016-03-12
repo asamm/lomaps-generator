@@ -21,6 +21,8 @@ public class CmdDataPlugin extends Cmd {
 
     private File mFileTempMap;
 
+    private static final int COUNTRY_BOUND_ADMIN_LEVEL = 2;
+
     /**
      * Definition where will be poiDb created
      */
@@ -37,6 +39,35 @@ public class CmdDataPlugin extends Cmd {
 
     public File getFileTempDb() {
         return mFilePoiDb;
+    }
+
+    public void addTaskSimplifyForCountry () throws IOException {
+
+        addReadSource();
+        addCommand("--tf");
+        addCommand("reject-relations");
+        addCommand("--tf");
+        addCommand("accept-ways");
+        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
+        addCommand("--used-node");
+        addCommand("outPipe.0=Ways");
+
+        // add second task
+        addReadSource();
+        addCommand("--tf");
+        addCommand("accept-relations");
+        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
+        addCommand("--used-way");
+        addCommand("--used-node");
+        addCommand("outPipe.0=Relations");
+
+        // add merge task
+        addCommand("--merge");
+        addCommand("inPipe.0=Ways");
+        addCommand("inPipe.1=Relations");
+
+        // add export path
+        addWritePbf(mFileTempMap.getAbsolutePath(), true);
     }
 
     public void addTaskSimplifyForPoi(WriterPoiDefinition definition) throws IOException {
@@ -173,15 +204,10 @@ public class CmdDataPlugin extends Cmd {
 
         //addReadPbf(getMap().getPathSource());
         addReadPbf(mFileTempMap.getAbsolutePath());
-
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
-        addCommand("-fileDb=" + mFilePoiDb);
-        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
-
 
         File file = new File(getMap().getPathSource());
-
         int size = (int) (file.length() / 1024L / 1024L);
         if (size <= 500) {
             addCommand("-dataContainerType=ram");
@@ -190,14 +216,19 @@ public class CmdDataPlugin extends Cmd {
             addCommand("-dataContainerType=hdd");
         }
 
-        // add map id is not defined then use map name as id
-        if (getMap().getAddressRegionLevel() != null){
+        // add map id if is not defined then use map name as id
+        if (getMap().getCountryName() != null){
             String mapId = getMap().getId();
             if (mapId == null || mapId.length() == 0){
                 mapId = getMap().getName();
             }
             addCommand("-mapId=" + mapId);
         }
+        //addCommand("-countryName=" + getMap().getCountryName());
+        addCommand("-fileDb=" + mFilePoiDb);
+        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
+        addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
+        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
     }
 
     /**
@@ -206,15 +237,15 @@ public class CmdDataPlugin extends Cmd {
     public void addGeneratorCountryBoundary() {
 
         //addReadPbf(mFileTempMap.getAbsolutePath());
-        addReadPbf(getMap().getPathSource());
+        addReadPbf(mFileTempMap.getAbsolutePath());
 
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=country");
-        addCommand("-name=" + getMap().getName());
-        addCommand("-fileGeom=" + getMap().getPathCountryBoundaryGeoJson());
+        addCommand("-countryName=" + getMap().getCountryName());
+        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
 
-        // TODO add country admin level into config xml
-        addCommand("-countryAdminLevel=" + "2");
+        // TODO it's needed to defined admin level? Probably all countries are in level=2
+        addCommand("-countryAdminLevel=" + COUNTRY_BOUND_ADMIN_LEVEL);
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {

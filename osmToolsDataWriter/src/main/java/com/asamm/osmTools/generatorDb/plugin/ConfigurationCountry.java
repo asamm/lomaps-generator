@@ -20,7 +20,8 @@ public class ConfigurationCountry extends AConfiguration {
      * */
     private int adminLevel = 2;
 
-    private String mapName = "";
+
+    private String countryName = "";
 
     public ConfigurationCountry () {
         genType = GenerateType.COUNTRY_BOUNDARY;
@@ -62,13 +63,13 @@ public class ConfigurationCountry extends AConfiguration {
         adminLevel = Integer.valueOf(strAdminLevel);
     }
 
-    public String getMapName() {
-        return mapName;
+    public String getCountryName() {
+        return countryName;
     }
 
-    public void setMapName(String mapName) {
-        if (mapName != null){
-            this.mapName = mapName;
+    public void setCountryName(String countryName) {
+        if (countryName != null){
+            this.countryName = countryName;
         }
     }
 }

@@ -1,11 +1,8 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
 import gnu.trove.map.hash.THashMap;
-
-import java.util.Map;
 
 /**
  * Created by voldapet on 2015-08-14 .
@@ -105,7 +102,7 @@ public class Region {
         return "Region{" +
                 "id=" + osmId +
                 ", name='" + name + '\'' +
-                ", geom=" + Utils.geomToGeoJson(geom) +
+                ", geom=" + GeomUtils.geomToGeoJson(geom) +
                 '}';
     }
 }

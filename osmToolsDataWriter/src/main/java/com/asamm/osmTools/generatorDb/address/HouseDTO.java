@@ -54,7 +54,7 @@ public class HouseDTO {
 
             Logger.w(TAG, "Can not convert house to DTO object. Street is too fare");
             Logger.w(TAG, "House: " + this.toString() +
-                 "\nHouse center: " + Utils.geomToGeoJson(center) +
+                 "\nHouse center: " + GeomUtils.geomToGeoJson(center) +
                  "\ndistance: " + Utils.getDistance(center, street.getGeometry().getCentroid())+
                  "\nstreet: " + street.toString()+
                  "\ndlon: "+ dLon +

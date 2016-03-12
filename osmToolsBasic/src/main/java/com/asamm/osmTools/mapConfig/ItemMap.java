@@ -142,6 +142,15 @@ public class ItemMap extends AItemMap {
             throw new IllegalArgumentException("Input XML is not valid. " +
                     "Invalid argument file: " + mName );
         }
+
+
+        // check country name
+        if (hasAction(Parameters.Action.ADDRESS_POI_DB) || hasAction(Parameters.Action.GENERATE)) {
+            if (getCountryName().length() == 0 ) {
+                throw new IllegalArgumentException("Input XML is not valid. " +
+                        "Nor readable name nor country name is not defined for map or it's parent - name:" + mName);
+            }
+        }
     }
 
     public void setPaths(){
@@ -210,6 +219,23 @@ public class ItemMap extends AItemMap {
 
     public String getNameReadable() {
         return mNameReadable;
+    }
+
+    /**
+     * Get readable name of country in which is item. If country name is not defined returns readable name of map item
+     *
+     * @return name of country in readable form or empty string if is not defined
+     */
+    @Override
+    public String getCountryName() {
+
+        String countryName = super.getCountryName();
+        if (countryName == null || countryName.length() == 0){
+            return mNameReadable;
+        }
+        else{
+            return countryName;
+        }
     }
 
     public String getPrefLang() {
@@ -374,7 +400,6 @@ public class ItemMap extends AItemMap {
 
     /**
      * Read definition of map polygon from GeoJson
-     * @param map
      * @return
      */
     public JSONObject getItemAreaGeoJson() {

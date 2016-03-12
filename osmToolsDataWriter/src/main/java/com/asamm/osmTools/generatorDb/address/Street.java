@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -55,12 +54,12 @@ public class Street extends Storable {
     private MultiLineString geometry;
 
     public Street (){
-
+        reset();
     }
 
 
     public Street(String name, List<String> isInList, MultiLineString mls) {
-
+        reset();
         setName(name);
         this.isIn = isInList;
         this.geometry = mls;
@@ -72,6 +71,9 @@ public class Street extends Storable {
 
     /** Constructor for copy of object */
     public Street(Street street) {
+
+        reset();
+
         this.id = street.id;
         this.name = street.name;
         this.cityId = street.cityId;
@@ -102,7 +104,6 @@ public class Street extends Storable {
     public boolean hasHouses () {
         return (houses != null || houses.size() > 0);
     }
-
 
 
     public void reset() {
@@ -247,7 +248,9 @@ public class Street extends Storable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name != null){
+            this.name = name;
+        }
     }
 
     public List<String> getIsIn() {
@@ -255,7 +258,15 @@ public class Street extends Storable {
     }
 
     public void setIsIn(List<String> isIn) {
-        this.isIn = isIn;
+        if (isIn != null) {
+            this.isIn = isIn;
+        }
+    }
+
+    public void addIsIn(String isInName) {
+        if (isInName != null){
+            this.isIn.add(isInName);
+        }
     }
 
     public void addHouse (House house){
@@ -310,7 +321,7 @@ public class Street extends Storable {
         }
         str +="], isPath=" + isPath +
                 ", houses size=" + houses.size() +
-                ", geometry=" + Utils.geomToGeoJson(geometry) +
+                ", geometry=" + GeomUtils.geomToGeoJson(geometry) +
                 '}';
         return str;
     }

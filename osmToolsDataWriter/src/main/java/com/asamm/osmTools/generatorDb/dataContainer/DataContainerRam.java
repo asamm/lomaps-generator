@@ -4,7 +4,6 @@ import java.util.*;
 
 import com.asamm.osmTools.generatorDb.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
-import com.asamm.osmTools.utils.Logger;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -17,7 +16,7 @@ public class DataContainerRam extends ADataContainer {
 	private THashMap<Long, Way> ways;
     private THashMap<Long, Relation> relations;
     private THashMap<Integer, List<Street>> wayStreets;
-    private THashMap<Long, Street> wayStreetsUnnamed;
+    private THashMap<Long, Street> wayStreetsByOsmId;
 
 	public DataContainerRam(AWriterDefinition writerDefinition) throws Exception {
 		super(writerDefinition);
@@ -25,7 +24,7 @@ public class DataContainerRam extends ADataContainer {
 		ways = new THashMap<Long, Way>();
         relations = new THashMap<Long, Relation>();
         wayStreets = new THashMap<>();
-        wayStreetsUnnamed = new THashMap<>();
+        wayStreetsByOsmId = new THashMap<>();
 	}
 
 	@Override
@@ -107,17 +106,16 @@ public class DataContainerRam extends ADataContainer {
         return wayStreets.keySet();
     }
 
-
     @Override
-    protected void insertWayStreetUnnamedToCache(Street street) {
-        wayStreetsUnnamed.put(street.getOsmId(), street);
+    protected void insertWayStreetByOsmIdToCache(Street street) {
+        wayStreetsByOsmId.put(street.getOsmId(), street);
     }
 
     @Override
-    public List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds) {
+    public List<Street> getWayStreetsByOsmIdFromCache(List<Long> osmIds) {
         List<Street> ids = new ArrayList<>();
         for (Long id : osmIds){
-            ids.add(wayStreetsUnnamed.get(id));
+            ids.add(wayStreetsByOsmId.get(id));
         }
         return ids;
     }

@@ -87,8 +87,8 @@ public class DataGeneratorTask implements Sink {
                 Logger.i(TAG, "Start country boundary generator");
                 ConfigurationCountry confCountry = (ConfigurationCountry) config;
 
-                WriterCountryBoundaryDefinition wcbDefinition = new WriterCountryBoundaryDefinition();
-                wcbDefinition.setAdminLevel(confCountry.getAdminLevel());
+                WriterCountryBoundaryDefinition wcbDefinition = new WriterCountryBoundaryDefinition(confCountry);
+
 
                 Logger.i(TAG, "creating data container: RAM");
                 dc = new DataContainerRam(wcbDefinition);

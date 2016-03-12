@@ -10,15 +10,18 @@ import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.GenerateType;
 class DataGeneratorFactory extends TaskManagerFactory {
 
 	private static final String PARAM_TYPE = "-type";
-	private static final String PARAM_FILE_DB = "-fileDb";
-    private static final String PARAM_FILE_CONFIG = "-fileConfig";
 	private static final String PARAM_TESTING = "-testing";
 	private static final String PARAM_TESTING_REPORT_FROM = "-testingFrom";
 	private static final String PARAM_TESTING_REPORT_COUNT = "-testingCount";
     private static final String PARAM_DATA_CONTAINER_TYPE = "-dataContainerType";
     private static final String PARAM_DATA_MAP_ID = "-mapId";
+    private static final String PARAM_DATA_NAME = "-name";
+    private static final String PARAM_DATA_COUNTRY_NAME = "-countryName";
 
-    private static final String PARAM_FILE_COUNTRY_GEOM = "-fileGeom";
+    private static final String PARAM_FILE_DB = "-fileDb";
+    private static final String PARAM_FILE_CONFIG = "-fileConfig";
+    private static final String PARAM_FILE_COUNTRY_GEOM = "-fileCountryGeom";
+    private static final String PARAM_FILE_DATA_GEOM = "-fileDataGeom";
     private static final String PARAM_DATA_COUNTRY_ADMIN_LEVEL = "-countryAdminLevel";
 
 	@Override
@@ -71,22 +74,28 @@ class DataGeneratorFactory extends TaskManagerFactory {
 
             ConfigurationAddress confAddress = new ConfigurationAddress();
 
-            confAddress.setFileDatabase(getStringArgument(
-                    taskConfig, PARAM_FILE_DB, "").trim());
-            confAddress.setFileConfig(getStringArgument(
-                    taskConfig, PARAM_FILE_CONFIG, "").trim());
-
+            // if will be used RAM or HDD CONTAINER
             confAddress.setDataContainerType(getStringArgument(taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
-
-            if (doesArgumentExist(taskConfig, PARAM_DATA_MAP_ID)){
-                confAddress.setMapId(getStringArgument(taskConfig, PARAM_DATA_MAP_ID).trim());
-            }
+            // mapId to link with admin level definition from address configuration XML file
+            confAddress.setMapId(getStringArgument(taskConfig, PARAM_DATA_MAP_ID).trim());
+            // path to data of address database
+            confAddress.setFileDatabase(getStringArgument(taskConfig, PARAM_FILE_DB, "").trim());
+            // path to address configuration XML file
+            confAddress.setFileConfigXml(getStringArgument(taskConfig, PARAM_FILE_CONFIG, "").trim());
+            // path to file with geojson with bounds of map area
+            confAddress.setFileDataGeom(getStringArgument(taskConfig, PARAM_FILE_DATA_GEOM, "").trim());
+            //path to file with geojson with country border
+            confAddress.setFileCountryGeom(getStringArgument(taskConfig, PARAM_FILE_COUNTRY_GEOM, "").trim());
 
             return confAddress;
         }
 
         else if (genType ==  GenerateType.COUNTRY_BOUNDARY){
+
+
             ConfigurationCountry confCountryBoundary = new ConfigurationCountry();
+
+            confCountryBoundary.setCountryName(getStringArgument(taskConfig, PARAM_DATA_COUNTRY_NAME, "").trim());
             confCountryBoundary.setFileGeom(getStringArgument(taskConfig, PARAM_FILE_COUNTRY_GEOM, "").trim());
 
             if (doesArgumentExist(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL)){

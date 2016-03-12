@@ -1,15 +1,12 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.GeneratorAddress;
+import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
-import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
-import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.asamm.osmTools.generatorDb.utils.OsmUtils;
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.*;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
@@ -37,22 +34,10 @@ import java.util.regex.Pattern;
  * Set of methods that create house object. It consist in parsing raw OSM data, finding proper street for house
  *
  */
-public class HouseController {
+public class HouseController extends AaddressController {
 
 
     private static final String TAG = HouseController.class.getSimpleName();
-
-    // how fare can be unnamed street from house without street name
-    private static final int MAX_DISTANCE_UNNAMED_STREET = 200;
-
-    // How fare can be named street for house that have defined address name
-    private static final int MAX_DISTANCE_NAMED_STREET = 400;
-
-    // How fare can be named street for house that have defined only place name
-    private static final int MAX_DISTANCE_PLACENAME_STREET = 500;
-
-    // Maximal diagonal length of envelope of street created from grouped houses of unnamed street
-    private static final int MAX_DIAGONAL_LENGTH_UNNAMED_STREET = 10000;
 
     // number of houses where we was not able to find proper street
     public int removedHousesWithDefinedPlace = 0;
@@ -63,7 +48,7 @@ public class HouseController {
     public long timeProcessHouseWithoutStreet = 0;
     public long timeBufferHousesGeoms = 0;
     public long timeCreateUnamedStreetGeom = 0;
-    public long timeGroupByBoundary = 0;
+    public long timeGroupByCity = 0;
     public long timeCutWayStreetByHouses = 0;
     public long timeCutWaysConvexHull = 0;
     public long timeCutWaysIntersection = 0;
@@ -71,29 +56,27 @@ public class HouseController {
     public long timeFindNearestForGroup = 0;
     public long timeFindNearestForGroupedHouse = 0;
 
-    ADataContainer dc;
-
-    GeneratorAddress ga;
-
-    DatabaseAddress databaseAddress;
-
-    GeometryFactory geometryFactory;
-
-    /**The list of osm ids of houses that were created from relation and should not be created again from nodes*/
+    /**
+     * The list of osm ids of houses that were created from relation and should not be created again from nodes
+     * */
     private TLongHashSet houseIdsFromRelations;
 
-    /**
-     * Cached last street because often goes houses from the same street in sequence
-     * */
-    Street lastHouseStreet = new Street();
 
-    public HouseController(ADataContainer dc, GeneratorAddress ga) {
-        this.dc = dc;
-        this.ga = ga;
-        this.databaseAddress = ga.getDatabaseAddress();
+    public HouseController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad) {
 
-        this.geometryFactory = new GeometryFactory();
+        super(dc, databaseAddress, wad);
+
         this.houseIdsFromRelations = new TLongHashSet();
+    }
+
+    /**
+     * Test if geometry can be used as center of city or as boundary. It also check if geom is located in country area
+     *
+     * @param center center point of house check
+     * @return true if geometry can be used for address object
+     */
+    private boolean isValidGeometry (Point center){
+        return (center != null && wad.isInDatabaseArea(center));
     }
 
     /**
@@ -292,7 +275,7 @@ public class HouseController {
         int postCodeId = databaseAddress.getPostCodeId(postCode);
         Point center = getCenter(entity, dc);
 
-        if (center == null){
+        if ( !isValidGeometry(center)){
             //Logger.w(TAG, "createHouse() CAn not create center for house, OSM id: " + entity.getId());
             //can not create center for this house
             return null;
@@ -303,6 +286,8 @@ public class HouseController {
         house.setStreetName(streetName);
         house.setCityName(cityName);
         house.setPlace(placeName);
+        house.addIsIn(cityName);
+        house.addIsIn(placeName);
 
         return house;
     }
@@ -329,7 +314,7 @@ public class HouseController {
         // FIND BY STREET NAME TAG
         if (addrStreetName.length() > 0){
 
-            streetFound = findNamedStreet(addrStreetName, MAX_DISTANCE_NAMED_STREET, house);
+            streetFound = findNamedStreet(addrStreetName, Const.MAX_DISTANCE_NAMED_STREET, house);
             if (streetFound == null){
                 //databaseAddress.insertRemovedHouse(house);
                 dc.addHouseWithoutStreet (house);
@@ -339,7 +324,7 @@ public class HouseController {
         else  if ( addrPlaceName.length() > 0 ){
             // street name is not defined but we have place name. This is common for villages > check if there is street with
             // same or similar name
-            streetFound = findNamedStreet(addrPlaceName, MAX_DISTANCE_PLACENAME_STREET, house);
+            streetFound = findNamedStreet(addrPlaceName, Const.MAX_DISTANCE_PLACENAME_STREET, house);
             if (streetFound == null){
                 dc.addHouseWithoutStreet(house);
             }
@@ -351,10 +336,11 @@ public class HouseController {
 
             if (streetFound == null || Utils.getDistanceNearest(streetFound.getGeometry(), house.getCenter()) > 75){
                 // founded named street is too fare and the house does not have defined the placename nor streetname
-                City city = findSmallestCityIsIn(house);
+                City city = findNearestCityIsIn(house);
                 if (city != null){
                     //Logger.i(TAG, "findStreetForHouse(): Set placename " + city.getName() + " for house: " + house.toString());
                     house.setPlace(city.getName());
+                    house.addIsIn(city.getName());
                 }
                 // process this house again during houses without street. It can be assigned to unnamed street around house
                 dc.addHouseWithoutStreet(house);
@@ -382,7 +368,18 @@ public class HouseController {
         List<Street> streetsAround = IndexController.getInstance().getStreetsAround(house.getCenter(), 15);
         for (Street street : streetsAround) {
             if (street.getName().equalsIgnoreCase(nameToCompare)){
-                namedStreet = street;
+                // in some situation can streetsaround contains two street of the same name choose the best by distance
+                if (namedStreet != null){
+                    double distancePrevious = Utils.getDistanceNearest(namedStreet.getGeometry(), house.getCenter());
+                    double distanceNew = Utils.getDistanceNearest(street.getGeometry(), house.getCenter());
+                    // other street from streets around can be closer > if yes use it as named street for house
+                    if (distanceNew < distancePrevious){
+                        namedStreet = street;
+                    }
+                }
+                else {
+                    namedStreet = street;
+                }
             }
         }
 
@@ -424,48 +421,57 @@ public class HouseController {
         }
 
         if (namedStreet != null){
+
             double distance = Utils.getDistanceNearest(namedStreet.getGeometry(), house.getCenter());
             if (distance > maxDistance){
                 return null;
             }
         }
-
         return namedStreet;
     }
 
 
+//    /**
+//     * For house find the city where house is inside. In case that there is more then one city then return the
+//     * smallest type (village or suburbs)
+//     * @param house house to find city
+//     * @return city where house is in bound
+//     */
+//    private City findSmallestCityIsIn(House house){
+//
+//        City cityForHouse = null;
+//
+//        List<City> cities = IndexController.getInstance().getClosestCities(house.getCenter(), 30);
+//        PreparedGeometry pgCenter = PreparedGeometryFactory.prepare(house.getCenter());
+//
+//        for (City city : cities){
+//            MultiPolygon cityArea = city.getGeom();
+//            if (cityArea == null){
+//                continue;
+//            }
+//
+//            if (pgCenter.intersects(cityArea)){
+//                // house is inside this city > compare the type of city
+//                if (cityForHouse == null){
+//                    cityForHouse = city;
+//                }
+//                else if (city.getType().getTypeCode() > cityForHouse.getType().getTypeCode()){
+//                    // higher type code represent smaller city
+//                    cityForHouse = city;
+//                }
+//            }
+//        }
+//        return cityForHouse;
+//    }
+
     /**
-     * For house find the city where house is inside. In case that there is more then one city then return the
-     * smallest type (village or suburbs)
+     * For house find the cities where house is in then return the nearest one
      * @param house house to find city
-     * @return city where house is in bound
+     * @return city where house is in or null if there is no city around
      */
-    private City findSmallestCityIsIn(House house){
-
-        City cityForHouse = null;
-
-        List<City> cities = IndexController.getInstance().getClosestCities(house.getCenter(), 30);
-        PreparedGeometry pgCenter = PreparedGeometryFactory.prepare(house.getCenter());
-
-        for (City city : cities){
-            MultiPolygon cityArea = city.getGeom();
-            if (cityArea == null){
-                continue;
-            }
-
-            if (pgCenter.intersects(cityArea)){
-                // house is inside this city > compare the type of city
-                if (cityForHouse == null){
-                    cityForHouse = city;
-                }
-                else if (city.getType().getTypeCode() > cityForHouse.getType().getTypeCode()){
-                    // higher type code represent smaller city
-                    cityForHouse = city;
-                }
-            }
-        }
-
-        return cityForHouse;
+    private City findNearestCityIsIn(House house){
+        List<City> cities = StreetController.findCitiesForPlace(house.getCenter(),house.getIsIn() );
+        return StreetController.getNearestCity(house.getCenter(), cities);
     }
 
 
@@ -503,13 +509,14 @@ public class HouseController {
                 continue;
             }
             // GROUP HOUSES BY BOUNDARY
-            THashMap<City, List<House>> groupedHousesMap = groupHousesByCities(houses);
+            THashMap<City, List<House>> groupedHousesMap = groupHousesByCitiesNew(houses);
 
             for (Map.Entry<City, List<House>> entryG : groupedHousesMap.entrySet()){
                 City city = entryG.getKey();
-                List<House> hausesGrouped = entryG.getValue();
 
-                int sizeGroupedHouses = hausesGrouped.size();
+                List<House> housesGrouped = entryG.getValue();
+
+                int sizeGroupedHouses = housesGrouped.size();
                 if (sizeGroupedHouses < 2){
                     // at least two houses with the same placename in every boundary are required
                     if (sizeGroupedHouses == 1){
@@ -520,16 +527,16 @@ public class HouseController {
 
                 // make buffer around every house
                 long start2 = System.currentTimeMillis();
-                MultiPolygon mpBuffer = bufferHouses(hausesGrouped, 100);
+                MultiPolygon mpBuffer = bufferHouses(housesGrouped, 100);
                 timeBufferHousesGeoms += System.currentTimeMillis() - start2;
 
                 // for every house in boundary grouped houses find the nearest unnamed way street
-                List<Street> unNamedWayStreets = findNearestWayStreetsForGroupedHouses(mpBuffer, MAX_DISTANCE_UNNAMED_STREET);
+                List<Street> unNamedWayStreets = findNearestWayStreetsForGroupedHouses(mpBuffer, Const.MAX_DISTANCE_UNNAMED_STREET);
 
                 if (unNamedWayStreets.size() == 0){
 //                    Logger.i(TAG, " processHouseWithoutStreet(): Can not find any unnamed street for grouped houses: " +
 //                                    streetPlaceName + ", and boundary: " + city.toString());
-                    for (House houseToRemove : hausesGrouped){
+                    for (House houseToRemove : housesGrouped){
                         databaseAddress.insertRemovedHouse(houseToRemove, "" +
                                 "Not found street for grouped houses with placeName: " +
                                 streetPlaceName + ", and city: " + city.getName());
@@ -540,7 +547,7 @@ public class HouseController {
                 // create one street for group of houses. You can not create street right now because
                 // there can be houses with same place from parent / child boundary
                 Street wayStreet = new Street();
-                wayStreet.setHouses(new THashSet<House>(hausesGrouped));
+                wayStreet.setHouses(new THashSet<House>(housesGrouped));
                 wayStreet.setName(streetPlaceName);
                 // cut the geometry only around the houses
 
@@ -549,8 +556,8 @@ public class HouseController {
 
                 if (mlsCutted == null || mlsCutted.isEmpty()){
                     Logger.w(TAG, "processHouseWithoutStreet(): Not able create geometry for street of grouped houses: " +
-                            "\n " + Utils.geomToGeoJson(mpBuffer));
-                    for (House houseToRemove : hausesGrouped){
+                            "\n " + GeomUtils.geomToGeoJson(mpBuffer));
+                    for (House houseToRemove : housesGrouped){
                         databaseAddress.insertRemovedHouse(houseToRemove, "" +
                                 "Not able to create cut multilinestring : " +
                                 streetPlaceName + ", and city: " + city.getName());
@@ -560,9 +567,13 @@ public class HouseController {
                 wayStreet.setGeometry(mlsCutted);
                 timeCreateUnamedStreetGeom += System.currentTimeMillis() - start3;
 
+                // find cities for way
                 List<City> cities = sc.findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn());
                 wayStreet.addCities(cities);
-                dc.addWayStreet(wayStreet);
+                //wayStreet.addCityId(city.getOsmId());
+
+
+                dc.addWayStreetHashName(wayStreet);
             }
         }
 
@@ -573,20 +584,30 @@ public class HouseController {
             @Override
             public void onJoin(Street joinedStreet) {
 
-                // split streets from different places (due to belorusia)
-                List<Street> streetsToInsert = sc.splitToCityParts(joinedStreet);
+// for belorusian was needed to split street maybe is not needed
+//                // split streets from different places (due to belorusia)
+//                List<Street> streetsToInsert = sc.splitToCityParts(joinedStreet);
+//
+//                // write to DB
+//                for (Street street : streetsToInsert){
+//
+//                    THashSet<House> houses = street.getHouses();
+//                    // insert street into DB
+//                    databaseAddress.insertStreet(street);
+//                    // insert houses into DB
+//                    for (House house : houses) {
+//                        databaseAddress.insertHouse(street, house);
+//                    }
+//                }
 
-                // write to DB
-                for (Street street : streetsToInsert){
-
-                    THashSet<House> houses = street.getHouses();
+                    THashSet<House> houses = joinedStreet.getHouses();
                     // insert street into DB
-                    databaseAddress.insertStreet(street);
+                    databaseAddress.insertStreet(joinedStreet);
                     // insert houses into DB
                     for (House house : houses) {
-                        databaseAddress.insertHouse(street, house);
+                        databaseAddress.insertHouse(joinedStreet, house);
                     }
-                }
+
             }
         });
     }
@@ -635,15 +656,51 @@ public class HouseController {
                 groupedHousesMap.put(city, housesFromIndex);
             }
         }
-        timeGroupByBoundary += System.currentTimeMillis() - start;
+        timeGroupByCity += System.currentTimeMillis() - start;
+        return groupedHousesMap;
+    }
+
+    /**
+     * Takes all houses that has defined same name street or the same place name.
+     * Split list on part of houses that belong to the one city
+     *
+     * @param housesToGroup list of houses that has defined the same street name or place name
+     * @return list of houses grouped by boundary area
+     */
+    private THashMap<City, List<House>> groupHousesByCitiesNew(List<House> housesToGroup) {
+
+        long start = System.currentTimeMillis();
+
+        THashMap<City, List<House>> groupedHousesMap = new THashMap<>();
+
+        for (House house : housesToGroup){
+
+            // for every house find cities is in
+            List<City> cities = StreetController.findCitiesForPlace(house.getCenter(), house.getIsIn());
+            if (cities.size() == 0){
+                databaseAddress.insertRemovedHouse(house, "Can not find any city around fo house");
+                continue;
+            }
+            for (City city : cities){
+
+                List<House> housesInCity = groupedHousesMap.get(city);
+                if (housesInCity == null){
+                    housesInCity = new ArrayList<>();
+                    groupedHousesMap.put(city, housesInCity);
+                }
+                housesInCity.add(house);
+            }
+        }
+
+        timeGroupByCity += System.currentTimeMillis() - start;
         return groupedHousesMap;
     }
 
 
     /**
-     * For every house find the nearest unnamed waystreet.
+     * For every house find the nearest waystreet. It combine unnamed waystreet and also named street
      *
-     * @param mpBuffer multipolygon that is consistet from polygon around every house
+     * @param mpBuffer multipolygon from polygon around every house
      * @return list of waystreets that are nearest for every polygon in multipoly
      */
     private List<Street> findNearestWayStreetsForGroupedHouses (MultiPolygon mpBuffer, double maxDistance){
@@ -651,12 +708,16 @@ public class HouseController {
         long start = System.currentTimeMillis();
 
         THashSet nearestStreets = new THashSet();
-        List<Street> unNamedStreets = IndexController.getInstance().getUnnamedWayStreets(dc, mpBuffer);
+        List<Street> namedWayStreets = IndexController.getInstance().getNamedWayStreets(dc, mpBuffer);
+        List<Street> unnamedWayStreets = IndexController.getInstance().getUnnamedWayStreets(dc, mpBuffer);
 
         // it can happen that more then one street is selected. It's needed to find only the closest one for every house
         // crate index from ways that are around grouped houses
         STRtree index = new STRtree();
-        for (Street street : unNamedStreets){
+        for (Street street : unnamedWayStreets){
+            index.insert(street.getGeometry().getEnvelopeInternal(), street);
+        }
+        for (Street street : namedWayStreets){
             index.insert(street.getGeometry().getEnvelopeInternal(), street);
         }
 
@@ -713,7 +774,7 @@ public class HouseController {
         // cut the line by the joined geometry > the result is multiline around the houses
         mls = cutMlsByBoundary(mls, joinedBuffers);
         // cut it again to cut part of streets that are outside of city boundary
-        if (city.getGeom() != null || city.getGeom().isValid()) {
+        if (city.getGeom() != null && city.getGeom().isValid()) {
             mls = cutMlsByBoundary(mls, city.getGeom());
         }
 

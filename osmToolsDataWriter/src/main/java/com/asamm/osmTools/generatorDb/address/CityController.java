@@ -1,9 +1,11 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.GeneratorAddress;
+import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
+import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
+import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
@@ -23,30 +25,94 @@ import java.util.List;
 /**
  * Created by voldapet on 2015-08-14 .
  */
-public class BoundaryController {
+public class CityController extends AaddressController {
 
-    private static final String TAG = BoundaryController.class.getSimpleName();
+    private static final String TAG = CityController.class.getSimpleName();
 
-    /** Needed for generation boundaries from relation. Ways with this ids very already use for generation of bounds*/
+    /**
+     * Needed for generation boundaries from relation. Ways with this ids ware already use for generation of bounds
+     */
     private TLongList processedWays;
 
-    /** Instance of geometry factory for creation boundary geoms*/
-    private GeometryFactory geometryFactory;
+    public static CityController createForCountryBound (ADataContainer dc){
+        return new CityController (dc, null, null);
+    }
 
-    public BoundaryController() {
+    public CityController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad) {
+
+        super(dc, databaseAddress, wad);
+
         processedWays = new TLongArrayList();
-        geometryFactory = new GeometryFactory();
+    }
+
+
+    /**
+     * Test if geometry can be used as center of city or as boundary. It also check if geom is located in country area
+     *
+     * @param geom geometry yo check
+     * @return true if geometry can be used for address object
+     */
+    private boolean isValidGeometry (Geometry geom){
+        return (geom != null && wad.isInDatabaseArea(geom));
+    }
+
+
+    // CITIES
+
+    public void createCities() {
+        TLongList nodeIds = dc.getNodeIds();
+
+        for (int i=0, size = nodeIds.size(); i < size; i++) {
+            Node node = dc.getNodeFromCache(nodeIds.get(i));
+            if (node == null || !wad.isValidPlaceNode(node)) {
+                continue;
+            }
+
+            Point center = geometryFactory.createPoint(new Coordinate(node.getLongitude(), node.getLatitude()));
+            if ( !isValidGeometry(center)){
+                continue;
+            }
+
+            //Logger.i(TAG,"Has place node: " + node.toString());
+            String place = OsmUtils.getTagValue(node, OsmConst.OSMTagKey.PLACE);
+            City.CityType cityType = City.CityType.createFromPlaceValue(place);
+            if (cityType == null){
+                Logger.d(TAG, "Can not create CityType from place tag. " + node.toString());
+                continue;
+            }
+
+            String name = OsmUtils.getTagValue(node, OsmConst.OSMTagKey.NAME);
+
+            City city = new City(cityType);
+            city.setOsmId(node.getId());
+            city.setName(name);
+            city.setNamesInternational(OsmUtils.getNamesLangMutation(node, name));
+            city.setCenter(center);
+            city.setIsIn(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.IS_IN));
+
+            if (!city.isValid()){
+                Logger.d(TAG, "City is not valid. Do not add into city cache. City: " + city.toString());
+                continue;
+            }
+            // add crated city into list and also into index
+            dc.addCity(city);
+            IndexController.getInstance().insertCity(city.getCenter().getEnvelopeInternal(), city);
+        }
+
+        Logger.i(TAG, "loadCityPlaces: " + dc.getCitiesMap().size() + " cities were created and loaded into cache");
     }
 
 
     /**
      * Create boundary object from relation or way. Only admin boundaries with all members and closed ways
      * are converted into boundary object
-     * @param dc
-     * @param entity
-     * @return
+     *
+     * @param entity OSM entity to crate boundary from it
+     * @param isCloseRing set true when want to force close boundary geom to ring. It cause that all
+     *                    boundaries also the boundaries from neighbour country will be add into data
+     * @return boundary or null is is not possible to crate boundary from entity
      */
-    public  Boundary create (ADataContainer dc, Entity entity) {
+    public  Boundary create (Entity entity, boolean isCloseRing) {
 
         if (entity == null || entity.getType() == EntityType.Node){
             return null;
@@ -85,11 +151,11 @@ public class BoundaryController {
                 return null;
             }
 
-            MultiPolygon geom = GeomUtils.createMultiPolyFromOuterWay(wayEx);
+            MultiPolygon geom = GeomUtils.createMultiPolyFromOuterWay(wayEx, isCloseRing);
             if (geom == null){
                 return null;
             }
-            boundary.setGeom(GeomUtils.createMultiPolyFromOuterWay(wayEx));
+            boundary.setGeom(geom);
         }
         else if (entity.getType() == EntityType.Relation){
 
@@ -143,7 +209,12 @@ public class BoundaryController {
             }
 
             // for relation create multipolygon
-            boundary.setGeom(GeomUtils.createMultiPolygon(entity.getId(), outerMerger, innerMerger));
+            boundary.setGeom(GeomUtils.createMultiPolygon(entity.getId(), outerMerger, innerMerger, isCloseRing));
+        }
+
+        // test if center node is in area of database
+        if ( wad != null && !isValidGeometry(boundary.getGeom())) {
+            return null;
         }
 
         // try to recognize type of place (its only for place relation/ways
@@ -212,22 +283,19 @@ public class BoundaryController {
             }
 
             // IMPORTANT comparison based on admin center id was limited because bigger region can have defined the admin but smaller not
-            else if(boundary.getAdminLevel() >= 8 && city.getOsmId() == boundary.getAdminCenterId()){
+            else if(city.getOsmId() == boundary.getAdminCenterId()){
                 return adminLevelPriority;  // return 1 - 6
             }
             return 10 + adminLevelPriority; // return 11 - 16,
         }
         else {
             //boundary and city has different name
-            if( boundary.getAdminLevel() >= 8 && city.getOsmId() == boundary.getAdminCenterId()) {
+            if(city.getOsmId() == boundary.getAdminCenterId()) {
                 return 20 + adminLevelPriority;
             }
             else {
                 return 30  + adminLevelPriority;
             }
-            // TODO consider if is needed to compare adminCenterId. It makes troubles for UpperOsterreich
-            // due to this has LINZ as the best boundary whole upperosterreich region
-            //return 30  + adminLevelPriority;
         }
     }
 
@@ -267,67 +335,12 @@ public class BoundaryController {
         }
         return adminLevelPriority;
     }
-//
-//    /**
-//     * Get priority of parent boundary for city. Priority relate on type of city
-//     * @param city City for which compare the priority of possible parent boundaries
-//     * @param boundary Parent boundary to check
-//     * @return the number form 1 - 6. When lower is better
-//     */
-//    private int getParentAdminLevelPriority(City city, Boundary boundary) {
-//
-//        int adminLevelPriority = 5;
-//        int adminLevel = boundary.getAdminLevel();
-//
-//        if (adminLevel > 0) {
-//            City.CityType type = city.getType();
-//            if (type == City.CityType.CITY || type == City.CityType.TOWN){
-//                // FOR Cities and Town boundaries prefer the county or higher region
-//                if(adminLevel == 7) {
-//                    adminLevelPriority = 1;
-//                }
-//                else if(adminLevel == 6) {
-//                    adminLevelPriority = 2;
-//                }
-//                else if(adminLevel == 5) {
-//                    adminLevelPriority = 3;
-//                }
-//                else {
-//                    adminLevelPriority = 4;
-//                }
-//            }
-//
-//            else {
-//                // find priority for village, hamlet or suburb
-//                if(adminLevel == 8) {
-//                    adminLevelPriority = 1;
-//                }
-//                else if(adminLevel == 7) {
-//                    adminLevelPriority = 2;
-//                }
-//                else if(adminLevel == 6) {
-//                    adminLevelPriority = 3;
-//                }
-//                else if(adminLevel == 9) {
-//                    adminLevelPriority = 4;
-//                }
-//                else if(adminLevel == 10) {
-//                    adminLevelPriority = 5;
-//                }
-//                else {
-//                    adminLevelPriority = 6;
-//                }
-//            }
-//        }
-//
-//        return adminLevelPriority;
-//    }
-
 
     /**
      * Compare name of boundary with name of city and try find city with similar name as boundary
-     * @param boundary
-     * @param city
+     *
+     * @param boundary boundary to check the name with city
+     * @param city city to check its name with boundary name
      * @return true if city has similar name as boundary
      */
     public boolean hasSimilarName(Boundary boundary, City city){
@@ -390,6 +403,7 @@ public class BoundaryController {
 
     /**
      * Look for parent city for city.
+     *
      * @param dc temporary data container
      * @param city city to find parent
      * @return parent city or null if was not possible to find parent city
@@ -473,7 +487,5 @@ public class BoundaryController {
 
         return parentRegion;
     }
-
-
 
 }
