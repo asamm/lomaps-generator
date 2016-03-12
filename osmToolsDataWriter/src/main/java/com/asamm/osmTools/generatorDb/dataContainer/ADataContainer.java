@@ -66,7 +66,7 @@ public abstract class ADataContainer {
 	private int amountOfRelationsTested = 0;
 	private int amountOfRelationsUsed = 0;
     protected int amountOfWayStreetUsed = 0;
-    protected int amountOfWayStreetUnnamedUsed = 0;
+    protected int amountOfWayStreetCached = 0;
 	
 	public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
 		this.writerDefinition = writerDefinition;
@@ -124,19 +124,18 @@ public abstract class ADataContainer {
 
     public abstract List<Street> getWayStreetsFromCache(int hash);
 
-    protected abstract void insertWayStreetUnnamedToCache(Street street);
+    protected abstract void insertWayStreetByOsmIdToCache(Street street);
 
-    public abstract List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds);
+    public abstract List<Street> getWayStreetsByOsmIdFromCache(List<Long> osmIds);
 
 
     public void addNode(Node node) {
 		amountOfNodesTested++;
-		
-		// insert into database
-		insertNodeToCache(node);
-		
+
 		// store valid ID's for later
 		if (writerDefinition.isValidEntity(node)) {
+            // insert into database
+            insertNodeToCache(node);
 			nodeIds.add(node.getId());
 		}
 	}
@@ -158,7 +157,7 @@ public abstract class ADataContainer {
         }
     }
 
-    public void addWayStreet(Street street){
+    public void addWayStreetHashName(Street street){
         amountOfWayStreetUsed++;
 
         int hash = new HashCodeBuilder().append(street.getName()).toHashCode();
@@ -167,9 +166,9 @@ public abstract class ADataContainer {
         streetHashSet.add(hash);
     }
 
-    public void addWayStreetUnnamed(Street street){
-        amountOfWayStreetUnnamedUsed++;
-        insertWayStreetUnnamedToCache(street);
+    public void addWayStreetByOsmId(Street street){
+        amountOfWayStreetCached++;
+        insertWayStreetByOsmIdToCache(street);
     }
 
     public void addHouseWithoutStreet(House house) {
@@ -200,8 +199,8 @@ public abstract class ADataContainer {
 		Logger.i(TAG, "total processed nodes: " + amountOfNodesUsed + " / " + amountOfNodesTested);
 		Logger.i(TAG, "total processed ways: " + amountOfWaysUsed + " / " + amountOfWaysTested);
 		Logger.i(TAG, "total processed relations: " + amountOfRelationsUsed + " / " + amountOfRelationsTested);
-        Logger.i(TAG, "total processed ways to streets: " + amountOfWayStreetUsed );
-        Logger.i(TAG, "total processed ways for unnamed streets: " + amountOfWayStreetUnnamedUsed );
+        Logger.i(TAG, "total processed ways to streets with name: " + amountOfWayStreetUsed );
+        Logger.i(TAG, "total processed ways: " + amountOfWayStreetCached);
 	}
 
     public Node getNode (long nodeId){

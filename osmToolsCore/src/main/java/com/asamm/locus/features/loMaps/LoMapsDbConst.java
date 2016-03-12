@@ -86,6 +86,7 @@ public class LoMapsDbConst {
     // METADATA TABLE KEYS
 
     public static final String VAL_AREA = "area";
+    public static final String VAL_COUNTRY = "country";
     public static final String VAL_DESCRIPTION = "description";
     public static final String VAL_OSM_DATE = "osmdate";
     public static final String VAL_REGION_ID = "regionid";

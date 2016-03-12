@@ -1,6 +1,8 @@
 package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst;
+import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
+import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -12,12 +14,12 @@ import java.util.Collection;
  */
 public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
 
-    /**
-     * admin level for country boundary
-     */
-    private int adminLevel;
+    private ConfigurationCountry configurationCountry;
 
+    public WriterCountryBoundaryDefinition (ConfigurationCountry configurationCountry){
 
+        this.configurationCountry = configurationCountry;
+    }
 
     @Override
     public boolean isValidEntity(Entity entity) {
@@ -62,11 +64,7 @@ public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
         return false;
     }
 
-    public int getAdminLevel() {
-        return adminLevel;
-    }
-
-    public void setAdminLevel(int level) {
-        adminLevel = level;
+    public ConfigurationCountry getConfigurationCountry() {
+        return configurationCountry;
     }
 }

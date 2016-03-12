@@ -7,10 +7,7 @@ import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
-import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
-import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.asamm.osmTools.generatorDb.utils.OsmUtils;
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.*;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.index.strtree.STRtree;
@@ -36,7 +33,7 @@ public class GeneratorAddress extends AGenerator {
     private List<Boundary> boundaries;
 
     /** Set of method that help to create boundary objects */
-    BoundaryController boundaryController;
+    CityController cc;
     StreetController sc;
     HouseController hc;
 
@@ -49,11 +46,8 @@ public class GeneratorAddress extends AGenerator {
 	public GeneratorAddress(WriterAddressDefinition addressDefinition) throws Exception {
 
         Logger.d(TAG, "Prepared GeneratorAddress");
-
-
         this.outputDb = addressDefinition.getConfAddress().getFileDatabase();
         this.addressDefinition = addressDefinition;
-        this.boundaryController = new BoundaryController();
 
         this.boundaries = new ArrayList<>();
 
@@ -68,8 +62,9 @@ public class GeneratorAddress extends AGenerator {
     @Override
     public void proceedData(ADataContainer dc) {
 
-        this.sc = new StreetController(dc, this);
-        this.hc = new HouseController(dc, this);
+        this.cc = new CityController(dc, this.getDatabaseAddress(), addressDefinition);
+        this.sc = new StreetController(dc, this.getDatabaseAddress(), addressDefinition);
+        this.hc = new HouseController(dc, this.getDatabaseAddress(), addressDefinition);
 
         Logger.i(TAG, "=== Step 0 - testing residential ===");
         //createResidentialAreas(dc);
@@ -158,8 +153,8 @@ public class GeneratorAddress extends AGenerator {
 
         Logger.i(TAG, "Houses" );
         Logger.i(TAG, "Process Houses without street: " + hc.timeProcessHouseWithoutStreet /1000.0 + " sec" );
-        Logger.i(TAG, "House without street group by boundary: " + hc.timeGroupByBoundary /1000.0 + " sec" );
-        Logger.i(TAG, "House buffer geoms: " + hc.timeGroupByBoundary /1000.0 + " sec" );
+        Logger.i(TAG, "House without street group by boundary: " + hc.timeGroupByCity /1000.0 + " sec" );
+        Logger.i(TAG, "House buffer geoms: " + hc.timeGroupByCity /1000.0 + " sec" );
         Logger.i(TAG, "House without street find cut street geom by hauses: " + hc.timeCutWayStreetByHouses /1000.0 + " sec" );
         Logger.i(TAG, "House without street find cut street CONVEX HULL: " + hc.timeCutWaysConvexHull /1000.0 + " sec" );
         Logger.i(TAG, "House without street find cut street INTERSECTION: " + hc.timeCutWaysIntersection /1000.0 + " sec" );
@@ -182,41 +177,7 @@ public class GeneratorAddress extends AGenerator {
     /**************************************************/
 
     void loadCityPlaces(ADataContainer dc) {
-        TLongList nodeIds = dc.getNodeIds();
-
-        for (int i=0, size = nodeIds.size(); i < size; i++) {
-            Node node = dc.getNodeFromCache(nodeIds.get(i));
-            if (node == null || !addressDefinition.isValidPlaceNode(node)) {
-                continue;
-            }
-
-            //Logger.i(TAG,"Has place node: " + node.toString());
-            String place = OsmUtils.getTagValue(node, OsmConst.OSMTagKey.PLACE);
-            City.CityType cityType = City.CityType.createFromPlaceValue(place);
-            if (cityType == null){
-                Logger.d(TAG, "Can not create CityType from place tag. " + node.toString());
-                continue;
-            }
-
-            String name = OsmUtils.getTagValue(node, OsmConst.OSMTagKey.NAME);
-
-            City city = new City(cityType);
-            city.setOsmId(node.getId());
-            city.setName(name);
-            city.setNamesInternational(OsmUtils.getNamesLangMutation(node, name));
-            city.setCenter(new GeometryFactory().createPoint(new Coordinate(node.getLongitude(), node.getLatitude())));
-            city.setIsIn(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.IS_IN));
-
-            if (!city.isValid()){
-                Logger.d(TAG, "City is not valid. Do not add into city cache. City: " + city.toString());
-                continue;
-            }
-            // add crated city into list and also into index
-            dc.addCity(city);
-            IndexController.getInstance().insertCity(city.getCenter().getEnvelopeInternal(), city);
-        }
-
-        Logger.i(TAG, "loadCityPlaces: " + dc.getCitiesMap().size() + " cities were created and loaded into cache");
+        cc.createCities();
     }
 
     /**************************************************/
@@ -235,14 +196,14 @@ public class GeneratorAddress extends AGenerator {
 //                Logger.i(TAG, "Start process relation id: " + relationId);
 //            }
             Relation relation = dc.getRelationFromCache(relationId);
-            Boundary boundary = boundaryController.create(dc, relation);
+            Boundary boundary = cc.create(relation, false);
             checkRegisterBoundary(boundary);
         }
 
         TLongList wayIds = dc.getWayIds();
         for (int i=0, size = wayIds.size(); i < size; i++) {
             Way way = dc.getWayFromCache(wayIds.get(i));
-            Boundary boundary = boundaryController.create(dc, way);
+            Boundary boundary = cc.create(way, false);
             checkRegisterBoundary(boundary);
         }
 
@@ -331,7 +292,7 @@ public class GeneratorAddress extends AGenerator {
             // Try to find city that has similar name as boundary
             if (cityFound == null) {
                 for (City city : cities) {
-                    if (boundaryController.hasSimilarName(boundary, city)) {
+                    if (cc.hasSimilarName(boundary, city)) {
                         if (boundary.getGeom().contains(city.getCenter())) {
                             // city has similar name boundary and is in bounds > use it as center
 //                            if (boundaryController.canBeSetAsCenterCity (boundary, city)){
@@ -374,18 +335,14 @@ public class GeneratorAddress extends AGenerator {
      */
     private void registerBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
 
-        if (city.getOsmId() == 60806241){
-            Logger.i(TAG, "****** Find boundary for city: " + city.toString());
-        }
-
         // try to obtain previous registered boundary for city
         BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
         Boundary oldBoundary = centerCityBoundaryMap.getValue(city);
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
-            if (city.getOsmId() == 60806241){
-                Logger.i(TAG, "Put A boundary " + boundary.toString());
-            }
+//            if (city.getOsmId() == 60806241){
+//                Logger.i(TAG, "Put A boundary " + boundary.toString());
+//            }
             centerCityBoundaryMap.put(city, boundary);
         }
         else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
@@ -398,24 +355,11 @@ public class GeneratorAddress extends AGenerator {
         }
 
         else {
-            int oldBoundaryPriority = boundaryController.getCityBoundaryPriority(oldBoundary, city);
-            int newBoundaryPriority = boundaryController.getCityBoundaryPriority(boundary, city);
-
-
-            if (city.getOsmId() == 60806241) {
-                Logger.i(TAG, " Compare boundaries :" +
-                        "\n old prioriy: " + oldBoundaryPriority + ", boundary: " + oldBoundary.toString() +
-                        "\n new prioriy: " + newBoundaryPriority + ", boundary: " + boundary.toString());
-            }
-
+            int oldBoundaryPriority = cc.getCityBoundaryPriority(oldBoundary, city);
+            int newBoundaryPriority = cc.getCityBoundaryPriority(boundary, city);
 
             if (newBoundaryPriority < oldBoundaryPriority){
                 centerCityBoundaryMap.put(city, boundary);
-
-                if (city.getOsmId() == 60806241){
-                    Logger.i(TAG, "PutB boundary " + boundary.toString());
-                }
-
             }
         }
     }
@@ -466,10 +410,10 @@ public class GeneratorAddress extends AGenerator {
     private void findParentCitiesAndRegions(ADataContainer dc) {
         Collection<City> cities = dc.getCities();
         for (City city : cities){
-            City parentCity = boundaryController.findParentCity(dc, city);
+            City parentCity = cc.findParentCity(dc, city);
             city.setParentCity(parentCity); // can return null
 
-            Region parentRegion = boundaryController.findParentRegion(city);
+            Region parentRegion = cc.findParentRegion(city);
             if (parentRegion != null){
                 city.setRegion(parentRegion);
             }
@@ -521,9 +465,10 @@ public class GeneratorAddress extends AGenerator {
 
                 // SPLIT BASED ON TOP LEVEL CITIES GEOMS
                 Envelope envelope = streetToInsert.getGeometry().getEnvelopeInternal();
-                double diagonalLength = Utils.getDistance(envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
+                double diagonalLength = Utils.getDistance(
+                        envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
-                if (diagonalLength > 30000){
+                if (diagonalLength > Const.MAX_DIAGONAL_STREET_LENGTH){
                     // street is too long try to separate it based on villages, town or cities geom
                     streetsToInsert = sc.splitGeomByParentCities(streetToInsert);
                 }
@@ -537,7 +482,13 @@ public class GeneratorAddress extends AGenerator {
 
                 // write to DB
                 for (Street street : streetsToInsert){
-                    ((DatabaseAddress) db).insertStreet(street);
+                    //check again the diagonal length
+                    envelope = street.getGeometry().getEnvelopeInternal();
+                    diagonalLength = Utils.getDistance(
+                            envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
+                    if (diagonalLength <= Const.MAX_DIAGONAL_STREET_LENGTH) {
+                        ((DatabaseAddress) db).insertStreet(street);
+                    }
                 }
             }
         });
@@ -707,7 +658,7 @@ public class GeneratorAddress extends AGenerator {
 
         Geometry geom = DouglasPeuckerSimplifier.simplify(multiPoly, 0.0001);
 
-        com.asamm.osmTools.utils.Utils.writeStringToFile(new File("residential.geojson"),Utils.geomToGeoJson(geom) ,false);
+        com.asamm.osmTools.utils.Utils.writeStringToFile(new File("residential.geojson"), GeomUtils.geomToGeoJson(geom) ,false);
 
     }
 
@@ -725,7 +676,7 @@ public class GeneratorAddress extends AGenerator {
                 return null;
             }
             if (wayEx.isClosed()){
-                polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+                polygon =  GeomUtils.createPolyFromOuterWay(wayEx, true);
             }
         }
 
@@ -735,11 +686,11 @@ public class GeneratorAddress extends AGenerator {
                 return null;
             }
             if (wayEx.isClosed()){
-                polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+                polygon =  GeomUtils.createPolyFromOuterWay(wayEx,true);
             }
             double bufferD = Utils.metersToDeg(bufferM);
 
-            polygon =  GeomUtils.createPolyFromOuterWay(wayEx);
+            polygon =  GeomUtils.createPolyFromOuterWay(wayEx, true);
             if (polygon != null){
                 polygon = (Polygon) polygon.buffer(bufferD);
             }

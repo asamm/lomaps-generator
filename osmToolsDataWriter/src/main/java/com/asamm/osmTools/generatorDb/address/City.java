@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import gnu.trove.map.hash.THashMap;
@@ -15,7 +15,7 @@ public class City {
 
     public enum CityType {
         // types and radius
-        CITY(10000, 1), TOWN(5000, 2), VILLAGE(1300, 3), HAMLET(1000, 4), SUBURB(400, 5), DISTRICT(400, 6);
+        CITY(10000, 1), TOWN(5000, 2), VILLAGE(2000, 3), HAMLET(1000, 4), SUBURB(400, 5), DISTRICT(400, 6);
 
         /** predefined radius in meters for city type*/
         private double radius;
@@ -240,7 +240,7 @@ public class City {
                 ", coordinate=" + center +
                 ", type=" + type +
                 ", isIn='" + isIn + '\'' +
-                ", geom=" + Utils.geomToGeoJson(geom) +
+                ", geom=" + GeomUtils.geomToGeoJson(geom) +
                 '}';
     }
 }

@@ -81,12 +81,18 @@ public class OsmUtils {
         for (Tag tag : tags){
             String key = tag.getKey();
             if (key.startsWith("name:")) {
-                String nameInt = tag.getValue();
-                String langCode = key.split(":")[1];
-                if (langCode.length() == 2 && nameInt != null && nameInt.length() > 0){
-                    if ( !Utils.objectEquals(nameInt, nameDef)){
+                String nameInternational = tag.getValue();
+                String[] keyParts = key.split(":");
+                if (keyParts.length < 2){
+                    // it looks like tag with key name: > but can not parse lang code> skip it
+                    continue;
+                }
+                String langCode = keyParts[1];
+
+                if (langCode.length() == 2 && nameInternational != null && nameInternational.length() > 0){
+                    if ( !Utils.objectEquals(nameInternational, nameDef)){
                         // only languages that does not have same name as default name are added into map
-                        names.put(langCode, nameInt);
+                        names.put(langCode, nameInternational);
                     }
                 }
             }

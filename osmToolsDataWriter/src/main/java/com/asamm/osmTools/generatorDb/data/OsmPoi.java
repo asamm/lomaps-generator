@@ -71,6 +71,9 @@ public class OsmPoi extends AOsmObject {
 	
 	private void handleWay(WayEx way) {
         int size = way.getNodes().size();
+        if (size <= 0){
+            return;
+        }
         Node node = way.getNodes().get(0);
         double longitudeMin = node.getLongitude();
         double longitudeMax = node.getLongitude();

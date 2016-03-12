@@ -30,7 +30,7 @@ public class AItemMap {
     // folder for generation
     private String mDirGen;
     // address DB boundary admin level for address region boundaries
-    private String mAddressRegionLevel;
+    private String mCountryName;
 
     // URL source for map file
     private String mUrl;
@@ -54,7 +54,7 @@ public class AItemMap {
             mRegionId = parent.getRegionId();
             mDir = parent.getDir();
             mDirGen = parent.getDirGen();
-            mAddressRegionLevel = parent.getAddressRegionLevel();
+            mCountryName = parent.getCountryName();
             mUrl = parent.getUrl();
             mCycleNode = parent.getCycleNode();
             mContourSep = parent.getContourSep();
@@ -72,7 +72,7 @@ public class AItemMap {
         mRegionId = "";
         mDir = "";
         mDirGen = "";
-        mAddressRegionLevel = "";
+        mCountryName = "";
         mUrl = "";
         mCycleNode = "";
         mContourSep = "";
@@ -96,12 +96,6 @@ public class AItemMap {
         if (mDir.length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. " +
                     "Invalid argument dir: " + mDir + ", name:" + mName);
-        }
-
-        // check address db region value
-        if (mAddressRegionLevel.length() > 0 && !Utils.isNumeric(mAddressRegionLevel)){
-            throw new IllegalArgumentException("Input XML is not valid. " +
-                    "Invalid argument addressRegionLevel: " + mAddressRegionLevel + ", name:" + mName);
         }
 
         // check extract action
@@ -204,9 +198,9 @@ public class AItemMap {
         mDirGen = Consts.fixDirectoryPath(mDirGen);
 
         // addressRegionLevel
-        attrValue = parser.getAttributeValue(null, "addressRegionLevel");
+        attrValue = parser.getAttributeValue(null, "countryName");
         if (attrValue != null){
-            mAddressRegionLevel = attrValue;
+            mCountryName = attrValue;
         }
 
         // other basis parameters
@@ -267,12 +261,18 @@ public class AItemMap {
         return mDirGen;
     }
 
-    public String getAddressRegionLevel() {
-        return mAddressRegionLevel;
+
+    /**
+     * Get readable name of country in which is item.
+     *
+     * @return name of country
+     */
+    public String getCountryName() {
+        return mCountryName;
     }
 
-    public void setAddressRegionLevel(String addressRegionLevel) {
-        this.mAddressRegionLevel = addressRegionLevel;
+    public void setAddressRegionLevel(String countryName) {
+        this.mCountryName = countryName;
     }
 
     public String getUrl() {

@@ -2,14 +2,22 @@ package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
-import org.apache.commons.lang3.Range;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
+import com.vividsolutions.jts.geom.prep.PreparedGeometry;
+import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
 import org.xmlpull.v1.XmlPullParser;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 /**
@@ -27,12 +35,32 @@ public class WriterAddressDefinition extends AWriterDefinition{
     private static final String DEFAULT_MAP_ID = "default_definition";
 
 
-    // configuration parameters from plugin command lines
+    /**
+     *  Configuration parameters from plugin command lines
+     */
     private ConfigurationAddress confAddress;
 
+    /**
+     * Admin level of region boundary
+     */
     private int regionAdminLevel;
 
+    /**
+     * Admin level that can be used for city boundary
+     */
     private int[] cityAdminLevels;
+
+    /**
+     * Intersection of country border with map data area. For this intersection will be map generated
+     */
+    private Geometry databaseGeom;
+
+    /**
+     * Geom prepared for intersection queries (better performance then standard geometry)
+     */
+    private PreparedGeometry preparedDbGeom;
+
+    private final GeometryFactory geometryFactory;
 
     public WriterAddressDefinition (ConfigurationAddress confAddress) throws Exception {
 
@@ -40,9 +68,16 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         // parse XML
         parseConfigXml();
+
+        databaseGeom = createDbGeom(
+                confAddress.getFileCountryGeom().getAbsolutePath(),confAddress.getFileDataGeom().getAbsolutePath());
+        preparedDbGeom = PreparedGeometryFactory.prepare(databaseGeom);
+
+        geometryFactory = new GeometryFactory();
+
     }
 
-    @Override
+
     public boolean isValidEntity(Entity entity) {
         if (entity == null || entity.getTags() == null) {
             return false;
@@ -50,6 +85,12 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         // save all nodes into cache
         if (entity.getType() == EntityType.Node){
+//            Node node = (Node) entity;
+//            Point point = geometryFactory.createPoint(new Coordinate(node.getLongitude(), node.getLatitude()));
+//            if (preparedDbGeom.intersects(point)){
+//                return true;
+//            }
+//            return false;
             return true;
         }
 
@@ -172,12 +213,17 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
     // PARSE DEF XML
 
+    /**
+     * Parse address configuration xml to get possible admin levels for city and region boundaries
+     *
+     * @throws Exception
+     */
     private void parseConfigXml() throws Exception {
 
         // if of map for which is address defined and for which we search the level definition
         final String mapId = confAddress.getMapId();
 
-        XmlParser parser = new XmlParser(confAddress.getFileConfig()) {
+        XmlParser parser = new XmlParser(confAddress.getFileConfigXml()) {
 
             boolean isInMaps = false;
 
@@ -226,7 +272,7 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
 
     /**
-     * Convert string cml value into array of integer that define supported admin levels for cities
+     * Convert string of admin levels value into array of integer that define supported admin levels for cities
      *
      * @param strCityLevels
      * @param parser
@@ -265,4 +311,57 @@ public class WriterAddressDefinition extends AWriterDefinition{
         }
         return Integer.parseInt(strRegionLevel);
     }
+
+    // DATABASE AREA
+
+    /**
+     * Read geoJson areas from files and create JTS geom as intersection of these polygons
+     *
+     * @param dataGeomPath path to geojson file that define map area
+     * @param countryGeomPath path to geojson file that define country borders
+     * @return intersection geometry of both areas
+     */
+    public static Geometry createDbGeom(String dataGeomPath, String countryGeomPath ) {
+
+        // read country boundaries
+        String geoJsonCountry = com.asamm.osmTools.utils.Utils.readFileToString(
+                countryGeomPath, StandardCharsets.UTF_8);
+
+        String geoJsonData = com.asamm.osmTools.utils.Utils.readFileToString(
+                dataGeomPath, StandardCharsets.UTF_8);
+
+        Geometry countryPoly = GeomUtils.geoJsonToGeom(geoJsonCountry);
+        Geometry dataPoly = GeomUtils.geoJsonToGeom(geoJsonData);
+
+        // intersect both geometries
+        return countryPoly.intersection(dataPoly);
+    }
+
+    /**
+     * Tests if center point of geometry lies in country boundaries
+     *
+     * @param geometry geometry to test
+     * @return true if center point is inside the database borders
+     */
+    public boolean isInDatabaseArea (Geometry geometry){
+
+        Point centroid = geometry.getCentroid();
+        if ( !centroid.isValid()){
+            // centroid for street with same points is NaN. This is workaround
+            centroid = new GeometryFactory().createPoint(geometry.getCoordinate());
+        }
+
+        return preparedDbGeom.intersects(centroid);
+    }
+
+
+    /**
+     * Define area for which will be created addresses
+     * @return
+     */
+    public Geometry getDatabaseGeom() {
+        return databaseGeom;
+    }
+
+
 }

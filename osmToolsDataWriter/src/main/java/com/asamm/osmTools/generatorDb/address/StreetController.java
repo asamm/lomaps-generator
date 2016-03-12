@@ -1,11 +1,12 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.GeneratorAddress;
+import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
+import com.asamm.osmTools.generatorDb.utils.Const;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
@@ -30,7 +31,7 @@ import java.util.List;
 /**
  * Created by voldapet on 2015-08-21 .
  */
-public class StreetController {
+public class StreetController extends AaddressController {
 
     public interface OnJoinStreetListener {
         public void onJoin(Street street);
@@ -38,40 +39,35 @@ public class StreetController {
 
     private static final String TAG = StreetController.class.getSimpleName();
 
-    // maximal distance between linestring (it's envelope) that is accepted that is part of the same street
-    private static final int MAX_DISTANCE_BETWEEN_STREET_SEGMENTS = 300;
-
-
-
-    private ADataContainer dc;
-
-    private GeneratorAddress ga;
-
-    private DatabaseAddress databaseAddress;
-
-    private HouseController houseFactory;
-
-    private GeometryFactory geometryFactory;
-
     //TODO for production remove the time measures
 
-    public long timeFindStreetCities = 0;
-    public long timeLoadNereastCities = 0;
-    public long timeFindCityTestByGeom = 0;
-    public long timeFindCityTestByDistance = 0;
-    public long timeFindCityFindNearest = 0;
+    public static long timeFindStreetCities = 0;
+    public static long timeLoadNereastCities = 0;
+    public static long timeFindCityTestByGeom = 0;
+    public static long timeFindCityTestByDistance = 0;
+    public static long timeFindCityFindNearest = 0;
 
     public long timeJoinWaysToStreets = 0;
 
-    public StreetController(ADataContainer dc, GeneratorAddress ga){
+    public StreetController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad){
+        super(dc, databaseAddress, wad);
+    }
 
-        this.dc = dc;
-        this.ga = ga;
-        this.databaseAddress = ga.getDatabaseAddress();
+    /**
+     * Test if geometry can be used as way for street
+     *
+     * @param mls geometry to check
+     * @return true if geometry can be used for address object
+     */
+    private boolean isValidGeometry (MultiLineString mls){
 
-        this.geometryFactory = new GeometryFactory();
-
-        this.houseFactory = new HouseController(dc, ga);
+        if (mls == null || mls.getCoordinates().length == 0 ){
+            return false;
+        }
+        if ( !wad.isInDatabaseArea(mls)){
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -132,13 +128,13 @@ public class StreetController {
             // create street geom
             //Logger.i(TAG, "Create street geom from relation id: " + relationId);
             MultiLineString mls = createStreetGeom(relation);
-
-            if (mls == null || mls.getCoordinates().length == 0) {
+            if ( !isValidGeometry(mls)) {
                 // probably associtate Address relation that does not contain any street member > try to create geom
                 // from unnamed streets if relation has some houses
                 //Logger.i(TAG, "can not create street geom from relation id: " + relationId);
                 continue;
             }
+
 
             Street wayStreet = new Street (name, isInList, mls);
             wayStreet.setOsmId(relationId);
@@ -150,40 +146,19 @@ public class StreetController {
 
 
             if (name == null || name.length() == 0) {
-                IndexController.getInstance().insertStreetUnnamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
-                dc.addWayStreetUnnamed(wayStreet);
+                IndexController.getInstance().insertWayStreetUnnamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
+                dc.addWayStreetByOsmId(wayStreet);
             }
             else {
-                dc.addWayStreet(wayStreet);
+                IndexController.getInstance().insertWayStreetNamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
+                dc.addWayStreetHashName(wayStreet);
+                dc.addWayStreetByOsmId(wayStreet);
             }
         }
     }
 
-//    private List<RelationMember> getHouseMembersCenters (Relation relation){
-//        List<RelationMember> houseMembers = new ArrayList<>();
-//
-//        for (RelationMember rm : relation.getMembers()){
-//            String role = rm.getMemberRole();
-//            if (role.equals("house") || role.equals("address")){
-//                Entity entityH = null;
-//                if (rm.getMemberType() == EntityType.Way) {
-//                    entityH = dc.getWayFromCache(rm.getMemberId());
-//                }
-//                else if (rm.getMemberType() == EntityType.Node){
-//                    entityH = dc.getNodeFromCache(rm.getMemberId());
-//                }
-//
-//                if (entityH != null){
-//                    Point center = HouseController.ge
-//                }
-//            }
-//
-//        }
-//
-//    }
-
     /**
-     *
+     * For every street check if can be street and create waystreet from it
      */
     public void createWayStreetFromWays() {
 
@@ -205,7 +180,7 @@ public class StreetController {
 
             // create street geom
             MultiLineString mls = createStreetGeom(way);
-            if (mls == null) {
+            if ( !isValidGeometry(mls)) {
                 // probably associate Address relation that does not contain any street member > skip it
                 continue;
             }
@@ -216,21 +191,19 @@ public class StreetController {
             wayStreet.setPath(isPath(way));
 
             if (name == null || name.length() == 0) {
-                dc.addWayStreetUnnamed(wayStreet);
-                IndexController.getInstance().insertStreetUnnamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
+                dc.addWayStreetByOsmId(wayStreet);
+                IndexController.getInstance().insertWayStreetUnnamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
             }
             else {
-
                 // find all cities where street can be in it or is close to city
                 long start = System.currentTimeMillis();
                 List<City> cities = findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn());
                 timeFindStreetCities += System.currentTimeMillis() - start;
                 wayStreet.addCities(cities);
-                if (wayId == 34967495 ){
-                    Logger.i(TAG, "Add way street into datacontainer: " + wayStreet.toString());
-                }
 
-                dc.addWayStreet(wayStreet);
+                dc.addWayStreetHashName(wayStreet);
+                dc.addWayStreetByOsmId(wayStreet);
+                IndexController.getInstance().insertWayStreetNamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
             }
         }
     }
@@ -387,7 +360,7 @@ public class StreetController {
             double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length-1]);
 
             //Logger.i(TAG, "Intersection line: " + Utils.geomToGeoJson(mls));
-            if (lengthM > 10) {
+            if (lengthM > 10 ) {
                 // set geometry from intersection to new street
                 street.setGeometry(mls);
                 street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn()));
@@ -424,8 +397,6 @@ public class StreetController {
      * @return list of the most parent top level cities.
      */
     private List<City> getTopLevelCities (Street street, City.CityType typeLevel){
-
-
 
         List<City> topCities = new ArrayList<>();
 
@@ -529,7 +500,7 @@ public class StreetController {
     private List<MultiLineString> splitGeomDifferentStreets(List<LineString> elements){
 
         // max distance between elements where we expect that are in the same street
-        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), MAX_DISTANCE_BETWEEN_STREET_SEGMENTS);
+        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), Const.MAX_DISTANCE_BETWEEN_STREET_SEGMENTS);
 
         // list geoms for separated streets
         List<MultiLineString> splittedMls = new ArrayList<>();
@@ -613,20 +584,20 @@ public class StreetController {
      * @param geometry geometry to find the cities
      * @return cities that contain tested geom
      */
-    public List<City> findCitiesForPlace(Geometry geometry, List<String> isInNames) {
+    public static List<City> findCitiesForPlace(Geometry geometry, List<String> isInNames) {
         //Logger.i(TAG, " findCitiesForPlace() - looking for cities for street: " + street.toString() );
 
-        List<City> streetCities = new ArrayList<>(); // cities where street is in it
-        if (geometry.isEmpty()){
-            // street does not contains any geometry
-            return streetCities;
-        }
+        List<City> foundCities = new ArrayList<>(); // cities where object is in it
 
+        if (geometry.isEmpty()){
+            return foundCities;
+        }
         Point centroid = geometry.getCentroid();
         if ( !centroid.isValid()){
             // centroid for street with same points is NaN. This is workaround
-            centroid = geometryFactory.createPoint(geometry.getCoordinate());
+            centroid = new GeometryFactory().createPoint(geometry.getCoordinate());
         }
+
         long start = System.currentTimeMillis();
         List<City> citiesAround = IndexController.getInstance().getClosestCities(centroid, 30);
         timeLoadNereastCities += System.currentTimeMillis() - start;
@@ -637,7 +608,7 @@ public class StreetController {
             for (int i = citiesAround.size() - 1; i >= 0; i--){
                 City city = citiesAround.get(i);
                 if (isInNames.contains(city.getName())){
-                    streetCities.add(city);
+                    foundCities.add(city);
                     citiesAround.remove(i);
                 }
             }
@@ -659,27 +630,29 @@ public class StreetController {
                 continue;
             }
             if (streetGeomPrepared.intersects(city.getGeom())){
-                streetCities.add(city);
+                double distance = Utils.getDistance(centroid, city.getCenter());
+                if (distance / city.getType().getRadius() < Const.MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
+                    foundCities.add(city);
+                }
             }
         }
 
         timeFindCityTestByGeom += System.currentTimeMillis() - start;
 
 
-        // RECOGNIZE BY DISTANCE
+        // RECOGNIZE BY DISTANCE ONLY CITIES WITHOUT BOUNDARIES
 
         // for rest of cities that does not have defined the bounds check distance
-        if (streetCities.size() == 0){
+        if (foundCities.size() == 0){
             start = System.currentTimeMillis();
             for (City city : citiesWithoutBound){
-
-                // boundary is not defined > if relative distance is lower 0.2
+                // boundary is not defined for this city
                 double distance = Utils.getDistance(centroid, city.getCenter());
-                if (distance / city.getType().getRadius() < 0.2){
+                if (distance < city.getType().getRadius() / 2 ){
 //                if (wayId == 7980116) {
 //                    Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
 //                }
-                    streetCities.add(city);
+                    foundCities.add(city);
                 }
             }
             timeFindCityTestByDistance += System.currentTimeMillis() - start;
@@ -688,15 +661,16 @@ public class StreetController {
         // GET CLOSEST FROM LOADED
 
         start = System.currentTimeMillis();
-        if (streetCities.size() == 0) {
+        if (foundCities.size() == 0) {
             // iterate again the cities and try to find the closest
             City city = getNearestCity(geometry.getCentroid(), citiesAround);
 
             if (city != null){
                 // test how fare is the nearest city
                 double distance = Utils.getDistance(centroid, city.getCenter());
-                if (distance / city.getType().getRadius() < 0.5){
-                    streetCities.add(city);
+                if (distance / city.getType().getRadius() < Const.MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
+                    //add only cities that are far as their 3xradius
+                    foundCities.add(city);
                 }
                 else {
                     //TODO WRITE THESE STREETS INTO CUSTOM TABLE AND CHECK WHICH STREET ARE REMOVED
@@ -707,7 +681,7 @@ public class StreetController {
         }
         timeFindCityFindNearest += System.currentTimeMillis() - start;
 
-        return streetCities;
+        return foundCities;
     }
 
     /**
@@ -715,7 +689,7 @@ public class StreetController {
      * @param point Center for search
      * @return the closest city or null if no cities was found
      */
-    private City getNearestCity(Point point, List<City> cities) {
+    public static City getNearestCity(Point point, List<City> cities) {
 
         if (point == null || cities.size() == 0){
             return null;

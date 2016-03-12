@@ -1,8 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
@@ -12,6 +11,8 @@ import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Address Place named as house
@@ -39,6 +40,9 @@ public class House extends Storable{
     private String cityName;
 
     private String place;
+
+    /** Value of is_in tag, Used only for houses without sreeet*/
+    private List<String> isIn;
 
     /**  Serialized house does not contain whole postCode but only reference to table of postcodes*/
     private int postCodeId;
@@ -99,6 +103,7 @@ public class House extends Storable{
         this.streetName = "";
         this.cityName = "";
         this.place = "";
+        this.isIn = new ArrayList<>();
     }
 
     @Override
@@ -202,6 +207,26 @@ public class House extends Storable{
         }
     }
 
+    /**
+     * This value is filled only for some houses that are processed as house without street
+     * @return
+     */
+    public List<String> getIsIn() {
+        return isIn;
+    }
+
+    public void setIsIn(List<String> isIn) {
+        if (isIn != null) {
+            this.isIn = isIn;
+        }
+    }
+
+    public void addIsIn(String isInName) {
+        if (isInName != null){
+            this.isIn.add(isInName);
+        }
+    }
+
     public int getPostCodeId() {
         return postCodeId;
     }
@@ -220,7 +245,7 @@ public class House extends Storable{
                 ", cityName='" + cityName + '\'' +
                 ", place='" + place + '\'' +
                 ", postCodeId='" + postCodeId + '\'' +
-                ", center=" + Utils.geomToGeoJson(center) +
+                ", center=" + GeomUtils.geomToGeoJson(center) +
                 '}';
     }
 

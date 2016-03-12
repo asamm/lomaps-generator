@@ -6,7 +6,9 @@ package com.asamm.osmTools;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.cmdCommands.*;
+import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
+import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
@@ -16,6 +18,7 @@ import com.asamm.osmTools.tourist.Tourist;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import com.asamm.osmTools.utils.io.ZipUtils;
+import com.vividsolutions.jts.geom.Geometry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,6 +41,9 @@ class Actions {
 
     // parsed configuration of maps
     private MapSource mMapSource;
+
+    /** If was metadata table created in any action */
+    private boolean isMetadataCreated = false;
 
     protected Actions() {
         mMapSource = new MapSource();
@@ -181,6 +187,7 @@ class Actions {
                     break;
                 case ADDRESS_POI_DB:
                     actionAddressPoiDatabase(map);
+                    actionInsertMetaData(map);
                     break;
                 case COASTLINE:
                     actionCoastline(map);
@@ -383,19 +390,27 @@ class Actions {
 
     private void actionAddressPoiDatabase(ItemMap map) throws Exception {
 
-        // GENERATE COUNTRY PRECISE BOUNDARY GEOM
-        CmdDataPlugin cmdDataCountryBoundary = new CmdDataPlugin(map);
-        cmdDataCountryBoundary.addGeneratorCountryBoundary();
-        Logger.i(TAG, "Generate country boundary, command: " + cmdDataCountryBoundary.getCmdLine() );
-        //cmdDataCountryBoundary.execute();
-
-
         // check if we want to generate GraphHopper data
         if (!map.hasAction(Parameters.Action.ADDRESS_POI_DB)) {
             return;
         }
 
-        // check if file exits and we should overwrite it
+        // GENERATE COUNTRY PRECISE BOUNDARY GEOM
+//
+//        if (Parameters.isRewriteFiles() || !new File(map.getPathCountryBoundaryGeoJson()).exists()) {
+//            CmdDataPlugin cmd = new CmdDataPlugin(map);
+//            cmd.addTaskSimplifyForCountry();
+//            Logger.i(TAG, "Filter for generation country bound, command: " + cmd.getCmdLine());
+//            cmd.execute();
+//
+//            CmdDataPlugin cmdDataCountryBoundary = new CmdDataPlugin(map);
+//            cmdDataCountryBoundary.addGeneratorCountryBoundary();
+//            Logger.i(TAG, "Generate country boundary, command: " + cmdDataCountryBoundary.getCmdLine() );
+//            cmdDataCountryBoundary.execute();
+//        }
+
+
+        // check if DB file exits and we should overwrite it
         if (!Parameters.isRewriteFiles() && new File(map.getPathAddressPoiDb()).exists()) {
             Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
                     "' already exist - skipped." );
@@ -406,24 +421,24 @@ class Actions {
 
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
-
-        // firstly simplify source file
-        CmdDataPlugin cmd = new CmdDataPlugin(map);
-        cmd.addTaskSimplifyForPoi(definition);
-        Logger.i(TAG, "Simplify fir POI DB, command: " + cmd.getCmdLine() );
-        cmd.execute();
-
-        // now execute db poi generating
-        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
-        cmdGen.addGeneratorPoiDb();
-        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-        cmdGen.execute();
+//
+//        // firstly simplify source file
+//        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
+//        cmdPoiFilter.addTaskSimplifyForPoi(definition);
+//        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
+//        cmdPoiFilter.execute();
+//
+//        // now execute db poi generating
+//        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
+//        cmdGen.addGeneratorPoiDb();
+//        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
+//        cmdGen.execute();
 
         //Address generation
-        CmdDataPlugin cmdAddressSimpl = new CmdDataPlugin(map);
-        cmdAddressSimpl.addTaskSimplifyForAddress();
-        Logger.i(TAG, "Simplify for Address DB, command: " + cmdAddressSimpl.getCmdLine() );
-        cmdAddressSimpl.execute();
+        CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
+        cmdAddressFilter.addTaskSimplifyForAddress();
+        Logger.i(TAG, "Filter data for Address DB, command: " + cmdAddressFilter.getCmdLine());
+        cmdAddressFilter.execute();
 
         CmdDataPlugin cmdAddres = new CmdDataPlugin(map);
         cmdAddres.addGeneratorAddress();
@@ -668,8 +683,12 @@ class Actions {
 
     private void actionInsertMetaData (ItemMap itemMap) throws Exception {
 
-        if (!itemMap.hasAction(Parameters.Action.GENERATE) && !itemMap.hasAction(Parameters.Action.ADDRESS_POI_DB)){
-            // map hasn't any result file for compress
+        if (!itemMap.hasAction(Parameters.Action.ADDRESS_POI_DB) || !itemMap.hasAction(Parameters.Action.GENERATE)) {
+            return;
+        }
+
+        if (isMetadataCreated){
+            // this action was already performed > nothing to do
             return;
         }
 
@@ -690,7 +709,12 @@ class Actions {
         Date dateVersion = sdf.parse(Parameters.getVersionName());
 
         // insert version of map
-        dbData.insertData(LoMapsDbConst.VAL_AREA, itemMap.getItemAreaGeoJson().toJSONString());
+        // create area coverage (it's intersection of country border and data json)
+        Geometry geom = WriterAddressDefinition.createDbGeom(
+                itemMap.getPathJsonPolygon(), itemMap.getPathCountryBoundaryGeoJson());
+
+        dbData.insertData(LoMapsDbConst.VAL_AREA, GeomUtils.geomToGeoJson(geom));
+        dbData.insertData(LoMapsDbConst.VAL_COUNTRY, itemMap.getCountryName());
         dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
         dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
         dbData.insertData(LoMapsDbConst.VAL_REGION_ID, itemMap.getRegionId());
@@ -698,8 +722,8 @@ class Actions {
         dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
         dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
 
-
         dbData.commit(true);
+        isMetadataCreated = true;
     }
 
     // ACTION COMPRESS

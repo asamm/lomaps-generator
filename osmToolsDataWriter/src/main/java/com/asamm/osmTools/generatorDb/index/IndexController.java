@@ -31,26 +31,23 @@ public class IndexController {
     /** JTS index of boundary geometries (their) envelopes*/
     private STRtree boundaryGeomIndex;
 
+    /** Index of geometries of ways that has defined the name*/
+    private STRtree wayStreetNamedGeomIndex;
+
     /** Index for geometries of all ways that can be street but does not have defined the name*/
-    private STRtree streetUnnamedGeomIndex;
+    private STRtree wayStreetUnnamedGeomIndex;
 
     /** JTS in memory index of geometries of joined streets*/
-    private STRtree streetGeomIndex;
-
-    /** Custom geom index only for dummy streets created from cities or places*/
-    //private Quadtree dummyStreetGeomIndex;
-
-
+    private STRtree joinedStreetGeomIndex;
 
 
     private IndexController() {
         regionGeomIndex = new STRtree();
         cityCenterIndex = new STRtree();
         boundaryGeomIndex = new STRtree();
-        streetUnnamedGeomIndex = new STRtree();
-        streetGeomIndex = new STRtree();
- //       dummyStreetGeomIndex = new Quadtree();
-
+        wayStreetNamedGeomIndex = new STRtree();
+        wayStreetUnnamedGeomIndex = new STRtree();
+        joinedStreetGeomIndex = new STRtree();
     }
 
     public static IndexController getInstance() {
@@ -70,8 +67,9 @@ public class IndexController {
         regionGeomIndex = null;
         cityCenterIndex = null;
         boundaryGeomIndex = null;
-        streetUnnamedGeomIndex = null;
-        streetGeomIndex = null;
+        wayStreetNamedGeomIndex = null;
+        wayStreetUnnamedGeomIndex = null;
+        joinedStreetGeomIndex = null;
     }
 
 
@@ -117,11 +115,11 @@ public class IndexController {
     // STREET GEOM
 
     public void clearStreetGeomIndex() {
-        streetGeomIndex = new STRtree();
+        joinedStreetGeomIndex = new STRtree();
     }
 
     public void insertStreet(Envelope envelope, Street street) {
-        streetGeomIndex.insert(envelope, street);
+        joinedStreetGeomIndex.insert(envelope, street);
     }
 
     public List<Street> getStreetsAround(Point centerPoint, int minNumber) {
@@ -134,7 +132,7 @@ public class IndexController {
         Polygon searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
         while (streetsFromIndex.size() < minNumber) {
             //Logger.i(TAG,"getStreetsAround(): bounding box: " +Utils.geomToGeoJson(searchBound));
-            streetsFromIndex = streetGeomIndex.query(searchBound.getEnvelopeInternal());
+            streetsFromIndex = joinedStreetGeomIndex.query(searchBound.getEnvelopeInternal());
             if (numOfResize == 4) {
                 //Logger.i(TAG, "getStreetsAround(): Max num of resize reached for center point: " + Utils.geomToGeoJson(centerPoint));
                 break;
@@ -146,12 +144,33 @@ public class IndexController {
         return streetsFromIndex;
     }
 
+    // WAYSTREET NAMED
 
-    // STREET UNNAMED
+    public void insertWayStreetNamed(Envelope envelope, Street street) {
+        wayStreetNamedGeomIndex.insert(envelope, street.getOsmId());
+    }
 
 
-    public void insertStreetUnnamed(Envelope envelope, Street street) {
-        streetUnnamedGeomIndex.insert(envelope, street.getOsmId());
+    /**
+     * Select named waystreet that intersect with ENVELOPER if given multipolygon
+     *
+     * @param multiPolygon region to select named way streets
+     * @return list of streets that intersect or lay inside of envelope of given area
+     */
+    public List<Street> getNamedWayStreets(ADataContainer dc, MultiPolygon multiPolygon) {
+
+        List<Long> streetIds = wayStreetNamedGeomIndex.query(multiPolygon.getEnvelopeInternal());
+        List<Street> wayStreets = dc.getWayStreetsByOsmIdFromCache(streetIds);
+
+        return wayStreets;
+    }
+
+
+    // WAYSTREET UNNAMED
+
+
+    public void insertWayStreetUnnamed(Envelope envelope, Street street) {
+        wayStreetUnnamedGeomIndex.insert(envelope, street.getOsmId());
     }
 
 
@@ -163,8 +182,8 @@ public class IndexController {
     public List<Street> getUnnamedWayStreets(ADataContainer dc, MultiPolygon multiPolygon) {
 
         PreparedGeometry pg = PreparedGeometryFactory.prepare(multiPolygon);
-        List<Long> streetIds = streetUnnamedGeomIndex.query(multiPolygon.getEnvelopeInternal());
-        List<Street> wayStreets = dc.getWayStreetsUnnamedFromCache(streetIds);
+        List<Long> streetIds = wayStreetUnnamedGeomIndex.query(multiPolygon.getEnvelopeInternal());
+        List<Street> wayStreets = dc.getWayStreetsByOsmIdFromCache(streetIds);
 
 
 //        // TODO is it really needed to filter queried ways if intersect with multipolygon??
@@ -233,8 +252,8 @@ public class IndexController {
         return cityCenterIndex;
     }
 
-    public STRtree getStreetGeomIndex() {
-        return streetGeomIndex;
+    public STRtree getJoinedStreetGeomIndex() {
+        return joinedStreetGeomIndex;
     }
 
 //    public Quadtree getDummyStreetGeomIndex() {

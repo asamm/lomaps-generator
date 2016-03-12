@@ -14,6 +14,7 @@ import java.util.List;
 
 public class DataContainerHdd extends ADataContainer {
 
+
     private static final String TAG = DataContainerHdd.class.getSimpleName();
 
 	private DatabaseDataTmp dbData;
@@ -113,13 +114,13 @@ public class DataContainerHdd extends ADataContainer {
     }
 
     @Override
-    protected void insertWayStreetUnnamedToCache(Street street) {
-        dbData.insertWayStreetUnnamed (street);
+    protected void insertWayStreetByOsmIdToCache(Street street) {
+        dbData.insertWayStreetByOsmId(street);
     }
 
     @Override
-    public List<Street> getWayStreetsUnnamedFromCache(List<Long> osmIds) {
-        return dbData.selectWayStreetsUnnamed (osmIds);
+    public List<Street> getWayStreetsByOsmIdFromCache(List<Long> osmIds) {
+        return dbData.selectWayStreetsByOsmIds(osmIds);
     }
 
 

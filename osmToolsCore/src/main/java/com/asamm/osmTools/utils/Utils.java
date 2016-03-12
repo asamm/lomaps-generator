@@ -9,6 +9,9 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -268,5 +271,23 @@ public class Utils {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Read file and get content as String. Be sure what you do because the memmory
+     * @param path path to file to read its content
+     * @param encoding encoding of string in file
+     * @return     *
+     */
+    public static String readFileToString(String path, Charset encoding)
+    {
+        byte[] encoded = new byte[0];
+        try {
+            encoded = Files.readAllBytes(Paths.get(path));
+        } catch (IOException e) {
+            System.err.println("readFileToString(), e:" + e);
+            e.printStackTrace();
+        }
+        return new String(encoded, encoding);
     }
 }

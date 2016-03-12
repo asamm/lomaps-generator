@@ -35,13 +35,13 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     private PreparedStatement psInsertWay;
     private PreparedStatement psInsertRelation;
     private PreparedStatement psInsertWayStreet;
-    private PreparedStatement psInsertWayStreetUnnamed;
+    private PreparedStatement psInsertWayStreetByOsmId;
 
     private PreparedStatement psSelectNode;
     private PreparedStatement psSelectWay;
     private PreparedStatement psSelectRelation;
     private PreparedStatement psSelectWayStreets;
-    private PreparedStatement psSelectWayStreetsUnnamed;
+    private PreparedStatement psSelectWayStreetsByOsmId;
 
      // dynamic register for database
     private ByteArrayOutputStream baos;
@@ -56,7 +56,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     int wayInsertBatchSize = 0;
     int relationInsertBatchSize = 0;
     int streetInsertBatchSize = 0;
-    int waystreetUnnamedInsertBatchSize = 0;
+    int waystreetByOsmIdInsertBatchSize = 0;
 
     public DatabaseDataTmp(File file, boolean deleteExistingDb)
             throws Exception {
@@ -69,13 +69,13 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         psInsertWay = createPreparedStatement("INSERT INTO ways (id, data) VALUES (?, ?)");
         psInsertRelation = createPreparedStatement("INSERT INTO relations (id, data) VALUES (?, ?)");
         psInsertWayStreet = createPreparedStatement("INSERT INTO Streets (hash, data) VALUES (?, ?)");
-        psInsertWayStreetUnnamed = createPreparedStatement("INSERT INTO waystreets_unnamed (id, data) VALUES (?, ?)");
+        psInsertWayStreetByOsmId = createPreparedStatement("INSERT INTO Waystreets (id, data) VALUES (?, ?)");
 
         psSelectNode = createPreparedStatement("SELECT data FROM nodes WHERE id=?");
         psSelectWay = createPreparedStatement("SELECT data FROM ways WHERE id=?");
         psSelectRelation = createPreparedStatement("SELECT data FROM relations WHERE id=?");
         psSelectWayStreets = createPreparedStatement("SELECT data from Streets where hash=?");
-        psSelectWayStreetsUnnamed = createPreparedStatement("SELECT data from waystreets_unnamed where id=?");
+        psSelectWayStreetsByOsmId = createPreparedStatement("SELECT data from Waystreets where id=?");
 
         baos = new ByteArrayOutputStream();
         dosw = new DataOutputStoreWriter(new DataOutputStream(baos));
@@ -116,7 +116,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         sql +=        " )";
         stmt.execute(sql);
 
-        sql = "CREATE TABLE waystreets_unnamed ( ";
+        sql = "CREATE TABLE Waystreets ( ";
         sql += "id BIGINT NOT NULL PRIMARY KEY, ";
         sql += COL_DATA + " BLOB";
         sql +=        " )";
@@ -363,7 +363,11 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         }
     }
 
-
+    /**
+     * Load streets from cache by hash code from street name
+     * @param hash
+     * @return
+     */
     public List<Street> selectWayStreets(int hash){
 
         List<Street> loadedStreets = new ArrayList<>();
@@ -386,6 +390,66 @@ public class DatabaseDataTmp extends ADatabaseHandler {
     }
 
     /**
+     * Load waystreet by osm ids
+     * @param  osmIds
+     * @return
+     */
+    public List<Street> selectWayStreetsNamed(List<Long> osmIds){
+
+        List<Street> streets = new ArrayList<>();
+
+        boolean isTest = false;
+
+        String sql = "SELECT data FROM Streets WHERE id IN ";
+        StringBuilder isInIds = new StringBuilder("(");
+        for (int i = 0, size = osmIds.size(); i < size; i++){
+
+            if (osmIds.get(i) ==  30172365){
+                Logger.i(TAG, " -- selectWayStreetsNamed(): is test true");
+                isTest = true;
+            }
+
+            if (i==0){
+                isInIds.append(osmIds.get(i));
+            }
+            else {
+                isInIds.append(",").append(osmIds.get(i));
+            }
+        }
+        isInIds.append(")");
+
+        sql += isInIds.toString();
+
+        ResultSet rs = null;
+        try {
+            rs = getStmt().executeQuery(sql);
+            for (int i=0; rs.next(); i++) {
+                byte[] data = rs.getBytes(1);
+
+                if (data == null){
+                    Logger.i(TAG, " selectWayStreetsNamed(): Can not create unnamed street with id; SQL: " + sql);
+                    continue;
+                }
+                Street street = new Street(data);
+
+
+                streets.add(street);
+            }
+
+        } catch (Exception e) {
+            Logger.e(TAG, "selectWayStreetsNamed(), problem with query", e);
+        }
+
+        if (isTest){
+            for (Street street : streets){
+                Logger.i(TAG, " selectWayStreetsNamed(): loaded streets: " + street.toString());
+            }
+        }
+
+        return streets;
+    }
+
+    /**
      * IMPORTANT - delete all wayStreet from DB
      */
     public void deleteWayStreetData() {
@@ -402,53 +466,53 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
     // INSERT SELECT UNNAMED WAYSTREETS
 
-    public void insertWayStreetUnnamed(Street street) {
+    public void insertWayStreetByOsmId(Street street) {
 
         try {
-            psInsertWayStreetUnnamed.setLong(1, street.getOsmId());
-            psInsertWayStreetUnnamed.setBytes(2, street.getAsBytes());
-            psInsertWayStreetUnnamed.addBatch();
+            psInsertWayStreetByOsmId.setLong(1, street.getOsmId());
+            psInsertWayStreetByOsmId.setBytes(2, street.getAsBytes());
+            psInsertWayStreetByOsmId.addBatch();
 
-            waystreetUnnamedInsertBatchSize++;
-            if (waystreetUnnamedInsertBatchSize % 1000 == 0){
-                psInsertWayStreetUnnamed.executeBatch();
-                waystreetUnnamedInsertBatchSize = 0;
+            waystreetByOsmIdInsertBatchSize++;
+            if (waystreetByOsmIdInsertBatchSize % 1000 == 0){
+                psInsertWayStreetByOsmId.executeBatch();
+                waystreetByOsmIdInsertBatchSize = 0;
             }
 
         } catch (SQLException e) {
-            Logger.e(TAG, "insertWayStreetUnnamed(), problem with query", e);
+            Logger.e(TAG, "insertWayStreetByOsmId(), problem with query", e);
         }
     }
 
 
-    public Street selectWayStreetUnnamed(long id){
+    public Street selectWayStreetByOsmId(long id){
 
         try {
-            psSelectWayStreetsUnnamed.clearParameters();
-            psSelectWayStreetsUnnamed.setLong(1, id);
+            psSelectWayStreetsByOsmId.clearParameters();
+            psSelectWayStreetsByOsmId.setLong(1, id);
 
-            ResultSet rs = psSelectWayStreetsUnnamed.executeQuery();
+            ResultSet rs = psSelectWayStreetsByOsmId.executeQuery();
 
             while (rs.next()) {
                 byte[] data = rs.getBytes(1);
                 return new Street(data);
             }
         } catch (Exception e) {
-            Logger.e(TAG, "selectWayStreetUnnamed(), problem with query", e);
+            Logger.e(TAG, "selectWayStreetByOsmId(), problem with query", e);
         }
         return null;
     }
 
     /**
-     * Select unnamed streets based on osmIds
+     * Select waystreets based on osmIds. It can contains waystreets with name but also streets without name
      * @param ids ids of streets to select
      * @return list of loaded streets from tmp database
      */
-    public List<Street> selectWayStreetsUnnamed(List<Long> ids){
+    public List<Street> selectWayStreetsByOsmIds(List<Long> ids){
 
         List<Street> streets = new ArrayList<>();
 
-        String sql = "SELECT data FROM waystreets_unnamed WHERE id IN ";
+        String sql = "SELECT data FROM Waystreets WHERE id IN ";
         StringBuilder isInIds = new StringBuilder("(");
         for (int i = 0, size = ids.size(); i < size; i++){
             if (i==0){
@@ -469,7 +533,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
                 byte[] data = rs.getBytes(1);
 
                 if (data == null){
-                    Logger.i(TAG, " selectWayStreetsUnnamed(): Can not create unnamed street with id; SQL: " + sql);
+                    Logger.i(TAG, " selectWayStreetsByOsmIds(): Can not create waystreet with id; SQL: " + sql);
                     continue;
                 }
                 Street street = new Street(data);
@@ -477,7 +541,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             }
 
         } catch (Exception e) {
-            Logger.e(TAG, "selectWayStreetsUnnamed(), problem with query", e);
+            Logger.e(TAG, "selectWayStreetsByOsmIds(), problem with query", e);
         }
         return streets;
     }

@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb.db;
 
 import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.index.IndexController;
+import com.asamm.osmTools.generatorDb.utils.Const;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
@@ -16,7 +17,6 @@ import gnu.trove.set.hash.TLongHashSet;
 import locus.api.utils.DataWriterBigEndian;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.sql.*;
@@ -27,8 +27,6 @@ import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 public class DatabaseAddress extends ADatabaseHandler {
 
     private static final String TAG = DatabaseAddress.class.getSimpleName();
-
-    public static final String DEFAULT_LANG_CODE = "def";
 
     public long timeDtoSelectHouses = 0;
     public long timeDtoDeSerializeHouse = 0;
@@ -112,6 +110,8 @@ public class DatabaseAddress extends ADatabaseHandler {
 
     private static boolean hasTableOfRemovedHouses = true;
 
+    private static boolean hasCitiesCenterGeomColumn = true;
+
 
     public DatabaseAddress(File file) throws Exception {
 
@@ -144,10 +144,19 @@ public class DatabaseAddress extends ADatabaseHandler {
         psRegionExist = createPreparedStatement(
                 "SELECT "+COL_ID+" FROM "+ TN_REGIONS +" WHERE "+COL_ID+" = ?");
 
-        psInsertCity = createPreparedStatement(
-                "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
-                        COL_LON+", " + COL_LAT+ ", " + COL_GEOM+
-                        ") VALUES (?, ?, ?, ?, ?, ?, GeomFromWKB(?, 4326))");
+
+        if (hasCitiesCenterGeomColumn){
+            psInsertCity = createPreparedStatement(
+                    "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
+                            COL_LON+", " + COL_LAT+ ", " + COL_CENTER_GEOM+ ", " + COL_GEOM+
+                            ") VALUES (?, ?, ?, ?, ?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
+
+        }else {
+            psInsertCity = createPreparedStatement(
+                    "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
+                            COL_LON+", " + COL_LAT+ ", " + COL_GEOM+
+                            ") VALUES (?, ?, ?, ?, ?, ?, GeomFromWKB(?, 4326))");
+        }
 
         psInsertCityNames = createPreparedStatement( "INSERT INTO "+ TN_CITIES_NAMES +
                 " ("+COL_CITY_ID+", "+COL_LANG_CODE+", "+COL_NAME+", "+COL_NAME_NORM+
@@ -335,6 +344,12 @@ public class DatabaseAddress extends ADatabaseHandler {
         sql += COL_LON + " INT, ";
         sql += COL_LAT + " INT )";
 		executeStatement(sql);
+
+        if (hasCitiesCenterGeomColumn){
+            sql = "SELECT AddGeometryColumn('"+TN_CITIES+"', ";
+            sql += "'"+COL_CENTER_GEOM+"', 4326, 'POINT', 'XY')";
+            executeStatement(sql);
+        }
 
         // creating a Boundary Geometry column
         sql = "SELECT AddGeometryColumn('"+TN_CITIES+"', ";
@@ -620,10 +635,9 @@ public class DatabaseAddress extends ADatabaseHandler {
             String sql = "CREATE VIEW " + VIEW_CITIES_DEF_NAMES + " AS ";
             sql += "SELECT " + TN_CITIES+".ROWID as ROWID, " + TN_CITIES+"."+COL_ID +", " + TN_CITIES_NAMES+"."+COL_NAME + ", ";
             sql += TN_CITIES_NAMES+"."+COL_NAME_NORM + ", " + TN_CITIES+"."+COL_GEOM+ " ";
-
             sql += "FROM " + TN_CITIES + " ";
             sql += "JOIN "+ TN_CITIES_NAMES + " ON " + TN_CITIES +"."+ COL_ID + " = " + TN_CITIES_NAMES +"."+ COL_CITY_ID + " ";
-            sql += "WHERE "+ TN_CITIES_NAMES +"."+ COL_LANG_CODE + " = '" + DEFAULT_LANG_CODE + "'";
+            sql += "WHERE "+ TN_CITIES_NAMES +"."+ COL_LANG_CODE + " = '" + Const.DEFAULT_LANG_CODE + "'";
 
             executeStatement(sql);
 
@@ -660,14 +674,14 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertRegion.clearParameters();
 
             psInsertRegion.setLong(1, region.getOsmId());
-            Geometry geomSimplified = GeomUtils.simplifyCityRegionGeom(region.getGeom());
+            Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(region.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
             psInsertRegion.setBytes(2, wkbWriter.write(geomSimplified));
             psInsertRegion.execute();
 
             // INSERT REGION NAMES
 
             // add default name into list of lang mutation
-            region.addNameInternational(DEFAULT_LANG_CODE, region.getName());
+            region.addNameInternational(Const.DEFAULT_LANG_CODE, region.getName());
             Set<Map.Entry<String, String>> entrySet = region.getNamesInternational().entrySet();
             for (Map.Entry<String, String> entry : entrySet){
                 //Logger.i("TAG", " insertCity: lang Code= " + entry.getKey() + " name= " + entry.getValue() );
@@ -723,16 +737,26 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertCity.setInt(5, centerI[0]);
             psInsertCity.setInt(6, centerI[1]);
 
-            if (boundary != null ){
-                Geometry geomSimplified = GeomUtils.simplifyCityRegionGeom(boundary.getGeom());
-                psInsertCity.setBytes(7, wkbWriter.write(geomSimplified));
+            if (hasCitiesCenterGeomColumn){
+                psInsertCity.setBytes(7, wkbWriter.write(city.getCenter()));
+                if (boundary != null ){
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                    psInsertCity.setBytes(8, wkbWriter.write(geomSimplified));
+                }
             }
+            else {
+                if (boundary != null ){
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                    psInsertCity.setBytes(7, wkbWriter.write(geomSimplified));
+                }
+            }
+
             psInsertCity.execute();
 
             // INSERT CITY NAMES
 
             // add default name into list of lang mutation
-            city.addNameInternational(DEFAULT_LANG_CODE, city.getName());
+            city.addNameInternational(Const.DEFAULT_LANG_CODE, city.getName());
             Set<Map.Entry<String, String>> entrySet = city.getNamesInternational().entrySet();
             for (Map.Entry<String, String> entry : entrySet){
                 //Logger.i("TAG", " insertCity: lang Code= " + entry.getKey() + " name= " + entry.getValue() );
@@ -950,7 +974,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                 ") AS City_With_Streets ON " + TN_CITIES_NAMES + "."+ COL_CITY_ID + " = City_With_Streets." + COL_CITY_ID +
                 " JOIN " + TN_CITIES + " ON " + COL_ID + " = " + TN_CITIES_NAMES + "."+ COL_CITY_ID +
                 " WHERE City_With_Streets." + COL_CITY_ID + " IS NULL" +
-                " AND " + COL_LANG_CODE + " = \'" + DEFAULT_LANG_CODE + "\'";
+                " AND " + COL_LANG_CODE + " = \'" + Const.DEFAULT_LANG_CODE + "\'";
 
         try {
             Logger.i(TAG, sql);

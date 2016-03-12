@@ -36,22 +36,6 @@ public class Utils {
     }
 
     /**
-     * Create GeoJson string from JTS geometry
-     * @param geometry geom to convert
-     * @return geoJson string
-     */
-    public static String geomToGeoJson (Geometry geometry){
-
-        if (geometry == null){
-            return "";
-        }
-
-        GeoJSONWriter writer = new GeoJSONWriter();
-        GeoJSON json = writer.write(geometry);
-        return json.toString();
-    }
-
-    /**
      * Function use java.text.Normalizer and replace all diacritics with their codes
      * then are these codes using regular expresion replaced with empty string.
      * @param text String for normalization

@@ -2,11 +2,16 @@ package com.asamm.osmTools.generatorDb.utils;
 
 import com.asamm.osmTools.generatorDb.address.House;
 import com.asamm.osmTools.generatorDb.data.WayEx;
+import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.operation.buffer.BufferParameters;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
 import gnu.trove.set.hash.THashSet;
+import org.wololo.geojson.GeoJSON;
+import org.wololo.jts2geojson.GeoJSONReader;
+import org.wololo.jts2geojson.GeoJSONWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,12 +46,15 @@ public class GeomUtils {
 
     /**
      * Create multi polygon geometry
+     *
      * @param relId only for testing
      * @param outer lines that create outer border
      * @param inner lines of holes
+     * @param isCloseRing set true if wants to fixes not closed ring or invalid geoms
      * @return
      */
-    public static MultiPolygon createMultiPolygon (long relId, LineMerger outer, LineMerger inner){
+    public static MultiPolygon createMultiPolygon
+                (long relId, LineMerger outer, LineMerger inner, boolean isCloseRing){
 
         List<LineString> outerLines = new ArrayList<LineString>(outer.getMergedLineStrings());
         List<LineString> innerLines = new ArrayList<LineString>(inner.getMergedLineStrings());
@@ -58,35 +66,46 @@ public class GeomUtils {
 
         for (int i=0, size = outerLines.size(); i < size; i++){
             Polygon poly = null;
+            LinearRing innerRing = null;
+            LinearRing outerRing = null;
+
             Coordinate[] outerCoord = outerLines.get(i).getCoordinates();
 
             if (outerCoord.length < 3){
-                // atleast 3 cordinates are needed to close the line into ring
+                // atleast 3 coordinates are needed to close the line into ring
                 continue;
             }
 
             if ( !CoordinateArrays.isRing(outerCoord)){
                 // probably some border relation. Try to close it but it's question it is good approach
-                outerCoord = closeLine(outerCoord);
+                if (isCloseRing){
+                    outerCoord = closeLine(outerCoord);
+                }
+                else{
+                    continue;
+                }
             }
-            LinearRing outerRing = geometryFactory.createLinearRing(outerCoord);
+            outerRing = geometryFactory.createLinearRing(outerCoord);
 
             if (innerLinesSize > i){
                 Coordinate[] innerCoord = innerLines.get(i).getCoordinates();
-                if ( !CoordinateArrays.isRing(innerCoord)){
-                    innerCoord = closeLine(innerCoord);
+                if (innerCoord.length > 3){
+                    if ( !CoordinateArrays.isRing(innerCoord)){
+                        innerCoord = closeLine(innerCoord);
+                    }
+                    innerRing = geometryFactory.createLinearRing(innerCoord);
                 }
-                //Logger.i(TAG, "Relation id: " +relId + "; geometry: " + Utils.geomToGeoJson(geometryFactory.createLineString(innerCoord)));
-                LinearRing innerRing = geometryFactory.createLinearRing(innerCoord);
+            }
+
+            if (innerRing != null){
                 poly = geometryFactory.createPolygon(outerRing, new LinearRing[] {innerRing});
             }
             else {
+                // create poly only from outerring
                 poly = geometryFactory.createPolygon(outerRing);
             }
 
-            if (poly != null){
-                polygons.add(poly);
-            }
+            polygons.add(poly);
         }
 
         MultiPolygon multiPolygon = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
@@ -136,17 +155,17 @@ public class GeomUtils {
      * @param wayEx
      * @return
      */
-    public static MultiPolygon createMultiPolyFromOuterWay(WayEx wayEx){
+    public static MultiPolygon createMultiPolyFromOuterWay(WayEx wayEx, boolean isCloseRing){
 
         //Logger.i(TAG, "Create Multipolygon for simple way, id: " + way.getId());
-        Polygon poly = createPolyFromOuterWay(wayEx);
+        Polygon poly = createPolyFromOuterWay(wayEx, isCloseRing);
         if (poly == null){
             return null;
         }
         return geometryFactory.createMultiPolygon(new Polygon[]{poly});
     }
 
-    public static Polygon createPolyFromOuterWay (WayEx wayEx){
+    public static Polygon createPolyFromOuterWay (WayEx wayEx, boolean isFixInvalidPoly){
 
         Coordinate[] coordinates = wayEx.getCoordinates();
 
@@ -155,8 +174,14 @@ public class GeomUtils {
         }
 
         if ( !CoordinateArrays.isRing(coordinates)){
-            coordinates = closeLine(coordinates);
+            if (isFixInvalidPoly) {
+                coordinates = closeLine(coordinates);
+            }
+            else {
+                return null;
+            }
         }
+
 
         return geometryFactory.createPolygon(coordinates);
     }
@@ -259,20 +284,52 @@ public class GeomUtils {
     }
 
 
+    // BUFFER
+
+    /**
+     * Create buffer around given geometry. Distance is approximatly converted into deg
+     * @param geometry geometry to buffer
+     * @param distance width of buffer
+     * @return geometry represents the buffered geom
+     */
+    public static MultiPolygon bufferGeom (MultiPolygon geometry, double distance){
+
+        if (geometry == null){
+            return null;
+        }
+
+        double distanceDeg = Utils.distanceToDeg(geometry.getCoordinate(), distance);
+        Geometry geomBuf =  geometry.buffer(distanceDeg, BufferParameters.CAP_FLAT);
+
+        MultiPolygon mp;
+        if (geomBuf instanceof Polygon) {
+            mp = geometryFactory.createMultiPolygon(new Polygon[]{(Polygon) geomBuf});
+        } else {
+            mp = (MultiPolygon) geomBuf;
+        }
+
+        return mp;
+    }
+
+
     // SIMPLIFICATION
 
     /**
+     *  Simplify geometry and preserve the geom
      *
      * @param multiPolygon Multipolygon to simplify
-     * @return
+     * @param distanceTolerance All vertices in the simplified geometry will be within this
+     * distance of the original geometry.
+     *
+     * @return simplified geom
      */
-    public static MultiPolygon simplifyCityRegionGeom(MultiPolygon multiPolygon) {
+    public static MultiPolygon simplifyMultiPolygon(MultiPolygon multiPolygon, double distanceTolerance) {
 
         if (multiPolygon == null){
             return null;
         }
 
-        double distanceDeg = Utils.distanceToDeg(multiPolygon.getCoordinate(), 50);
+        double distanceDeg = Utils.distanceToDeg(multiPolygon.getCoordinate(), distanceTolerance);
         Geometry geometry = DouglasPeuckerSimplifier.simplify(multiPolygon, distanceDeg);
 
         MultiPolygon mp;
@@ -285,4 +342,33 @@ public class GeomUtils {
         return mp;
     }
 
+    // GEOJSON UTILS
+
+    /**
+     * Create GeoJson string from JTS geometry
+     * @param geometry geom to convert
+     * @return geoJson string
+     */
+    public static String geomToGeoJson (Geometry geometry){
+
+        if (geometry == null){
+            return "";
+        }
+
+        GeoJSONWriter writer = new GeoJSONWriter();
+        GeoJSON json = writer.write(geometry);
+        return json.toString();
+    }
+
+    /**
+     * Convert geoJson into JTS geometry
+     *
+     * @param geoJsonString geoJson string to convert
+     * @return jts geometry
+     */
+    public static Geometry geoJsonToGeom (String geoJsonString){
+
+        GeoJSONReader jsonReader = new GeoJSONReader();
+        return jsonReader.read(geoJsonString);
+    }
 }
