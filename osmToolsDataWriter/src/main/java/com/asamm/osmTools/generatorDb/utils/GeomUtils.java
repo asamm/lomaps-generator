@@ -226,6 +226,30 @@ public class GeomUtils {
     }
 
     /**
+     * Union two multipolygons into one mutlipolygon
+     *
+     * @param mp1 first mp to union
+     * @param mp2 seconf mp to union
+     * @return multipolygon that is union of geoms
+     */
+    public static MultiPolygon unionMultiPolygon (MultiPolygon mp1, MultiPolygon mp2){
+
+        Geometry geom =  mp1.union(mp2);
+
+        if (geom instanceof  MultiPolygon){
+            return (MultiPolygon) geom;
+        }
+        else if (geom instanceof  Polygon){
+            return geometryFactory.createMultiPolygon( new Polygon[]{(Polygon) geom});
+        }
+        else {
+
+            throw new IllegalArgumentException("Can not union two multipolygons into multipoly");
+        }
+
+    }
+
+    /**
      * Create MultiPolygon from center points of houses
      * @param houses houses to convert their geometries into multipoint
      * @return multipoint of centers of houses

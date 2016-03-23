@@ -93,9 +93,7 @@ public class DataGeneratorTask implements Sink {
                 Logger.i(TAG, "creating data container: RAM");
                 dc = new DataContainerRam(wcbDefinition);
 
-                generator = new GeneratorCountryBoundary(
-                        wcbDefinition,
-                        new File(confCountry.getFileGeom().getAbsolutePath()));
+                generator = new GeneratorCountryBoundary(wcbDefinition);
             }
 
 		} catch (Exception e) {

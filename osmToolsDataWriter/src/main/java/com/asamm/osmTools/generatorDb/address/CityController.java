@@ -86,7 +86,7 @@ public class CityController extends AaddressController {
             City city = new City(cityType);
             city.setOsmId(node.getId());
             city.setName(name);
-            city.setNamesInternational(OsmUtils.getNamesLangMutation(node, name));
+            city.setNamesInternational(OsmUtils.getNamesLangMutation(node, "name", name));
             city.setCenter(center);
             city.setIsIn(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.IS_IN));
 
@@ -223,7 +223,8 @@ public class CityController extends AaddressController {
         boundary.setAdminLevel(parseBoundaryAdminLevel(entity));
         boundary.setShortName(OsmUtils.getTagValue(entity, OSMTagKey.SHORT_NAME));
         boundary.setCityType(cityType);
-        boundary.setNamesInternational(OsmUtils.getNamesLangMutation(entity, bName));
+        boundary.setNamesInternational(OsmUtils.getNamesLangMutation(entity, "name", bName));
+        boundary.setOfficialNamesInternational(OsmUtils.getNamesLangMutation(entity, "official_name", bName));
 
 //        if (hasChildRelation){
 //            Logger.i(TAG, "Administrative/place entity id: " + entity.getId() +" has other relation as member. " +
@@ -267,6 +268,12 @@ public class CityController extends AaddressController {
      * @return priority the lower is better
      */
     public int getCityBoundaryPriority(Boundary boundary, City city) {
+
+        if (city.getOsmId() != 0 && boundary.getId() != 0 &&
+                wad.getMappedCityIdForBoundary(boundary.getId()) == city.getOsmId()){
+            // this is custom mapped combination for city and boundary > use it as the best priority
+            return 0;
+        }
 
         boolean hasSameName = boundary.getName().equalsIgnoreCase(city.getName());
 
@@ -379,27 +386,28 @@ public class CityController extends AaddressController {
         return false;
     }
 
-//    /**
-//     * It can happen that some small village or hamlet can have similar city as boundary for big area. It's
-//     * needed to limit such villages and do not allow to assign such boundaries for small city even of they
-//     * have similar name. Boundary with admin level > 5 can be automatically used for every city level
-//     * @param boundary boundary that should be assigned to the city
-//     * @param city city that we found as possible center city
-//     * @return true if city level can be used for boundary
-//     */
-//    public boolean canBeSetAsCenterCity(Boundary boundary, City city) {
-//
-//        if (boundary.getAdminLevel() > 5){
-//            // this is not so big boundary automatically use it
-//            return true;
-//        }
-//
-//        if (city.getType().getTypeCode() <= City.CityType.VILLAGE.getTypeCode()){
-//            return true;
-//        }
-//        // this city is SUBURB, HAMLET OR DISTRICT and boundary is something on admin <= 5 do not allow to use it as center
-//        return false;
-//    }
+    /**
+     * It can happen that some small village or hamlet can have similar city as boundary for big area. It's
+     * needed to limit such villages and do not allow to assign such boundaries for small city even of they
+     * have similar name. Boundary with admin level > 5 can be automatically used for every city level
+
+     * @param boundary boundary that should be assigned to the city
+     * @param city city that we found as possible center city
+     * @return true if city level can be used for boundary
+     */
+    public boolean canBeSetAsCenterCity(Boundary boundary, City city) {
+
+        if (boundary.getAdminLevel() > 5){
+            // this is not so big boundary automatically use it
+            return true;
+        }
+
+        if (city.getType().getTypeCode() <= City.CityType.VILLAGE.getTypeCode()){
+            return true;
+        }
+        // this city is SUBURB, HAMLET OR DISTRICT and boundary is something on admin <= 5 do not allow to use it as center
+        return false;
+    }
 
     /**
      * Look for parent city for city.

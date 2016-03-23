@@ -106,7 +106,7 @@ public abstract class AConfiguration {
      * @param file path to file to create
      * @return file if path is valid
      */
-    protected File checkFile(String file) {
+    protected static File checkFile(String file) {
         if (file == null || file.length() == 0) {
             throw new IllegalArgumentException(
                     "file parameter \'" + file + "\' invalid");

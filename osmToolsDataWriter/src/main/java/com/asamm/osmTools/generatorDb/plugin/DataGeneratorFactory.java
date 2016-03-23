@@ -5,6 +5,9 @@ import org.openstreetmap.osmosis.core.pipeline.common.TaskManager;
 import org.openstreetmap.osmosis.core.pipeline.common.TaskManagerFactory;
 import org.openstreetmap.osmosis.core.pipeline.v0_6.SinkManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.GenerateType;
 
 class DataGeneratorFactory extends TaskManagerFactory {
@@ -16,7 +19,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
     private static final String PARAM_DATA_CONTAINER_TYPE = "-dataContainerType";
     private static final String PARAM_DATA_MAP_ID = "-mapId";
     private static final String PARAM_DATA_NAME = "-name";
-    private static final String PARAM_DATA_COUNTRY_NAME = "-countryName";
+    private static final String PARAM_DATA_COUNTRIES = "-countries";
 
     private static final String PARAM_FILE_DB = "-fileDb";
     private static final String PARAM_FILE_CONFIG = "-fileConfig";
@@ -95,17 +98,46 @@ class DataGeneratorFactory extends TaskManagerFactory {
 
             ConfigurationCountry confCountryBoundary = new ConfigurationCountry();
 
-            confCountryBoundary.setCountryName(getStringArgument(taskConfig, PARAM_DATA_COUNTRY_NAME, "").trim());
-            confCountryBoundary.setFileGeom(getStringArgument(taskConfig, PARAM_FILE_COUNTRY_GEOM, "").trim());
-
             if (doesArgumentExist(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL)){
-                confCountryBoundary.setAdminLevel(
-                        getStringArgument(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL).trim());
+                confCountryBoundary.setAdminLevel(getStringArgument(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL).trim());
             }
+
+            String cmdCountriesAtr = getStringArgument(taskConfig, PARAM_DATA_COUNTRIES, "").trim();
+            List<ConfigurationCountry.CountryConf> countriesConf = parseCountryDefinition(cmdCountriesAtr);
+            confCountryBoundary.setCountriesConf(countriesConf);
+
             return confCountryBoundary;
         }
         else {
             throw new IllegalArgumentException("invalid generator type, ");
         }
     }
+
+    /**
+     * Parse cmd argument countries and create definitions that continas name of country and path to geojson
+     *
+     * @param cmdAtr cmd parameter "countries"
+     * @return
+     */
+    private List<ConfigurationCountry.CountryConf> parseCountryDefinition (String cmdAtr){
+
+
+        List<ConfigurationCountry.CountryConf> countriesConf = new ArrayList<>();
+        if (cmdAtr == null || cmdAtr.length() == 0){
+            return countriesConf;
+        }
+
+        String[] cmdAtrSplit = cmdAtr.split(",");
+
+        if (cmdAtrSplit.length % 2 != 0) {
+            throw  new IllegalArgumentException("Wrong number of countries elements cmd attribute : " + cmdAtr);
+        }
+
+        for (int i=0; i < cmdAtrSplit.length; i++){
+            countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i], cmdAtrSplit[++i]));
+        }
+
+        return countriesConf;
+    }
+
 }

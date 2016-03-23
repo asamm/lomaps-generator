@@ -4,21 +4,21 @@ import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
-import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
+import gnu.trove.map.TLongLongMap;
+import gnu.trove.map.hash.TLongLongHashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
 import org.xmlpull.v1.XmlPullParser;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Definition which Nodes, Ways, Relation are vital for storing in data container
@@ -51,6 +51,15 @@ public class WriterAddressDefinition extends AWriterDefinition{
     private int[] cityAdminLevels;
 
     /**
+     * Custom settings that map specific city to specific boundary
+     * Map is created like <osmBoundaryId | osmCityId>
+     */
+    //private Map<Long, Long> bundaryCityMapper;
+
+
+    private TLongLongMap bundaryCityMapper;
+
+    /**
      * Intersection of country border with map data area. For this intersection will be map generated
      */
     private Geometry databaseGeom;
@@ -63,6 +72,8 @@ public class WriterAddressDefinition extends AWriterDefinition{
     private final GeometryFactory geometryFactory;
 
     public WriterAddressDefinition (ConfigurationAddress confAddress) throws Exception {
+
+        reset ();
 
         this.confAddress = confAddress;
 
@@ -77,6 +88,11 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
     }
 
+    private void reset() {
+        regionAdminLevel = 0;
+        cityAdminLevels = new int[0];
+        bundaryCityMapper = new TLongLongHashMap();
+    }
 
     public boolean isValidEntity(Entity entity) {
         if (entity == null || entity.getTags() == null) {
@@ -210,6 +226,37 @@ public class WriterAddressDefinition extends AWriterDefinition{
         return confAddress;
     }
 
+    // CITY BOUNDARY MAPPER
+
+    /**
+     * Test if exist any boundary mapper definition for cityid
+     *
+     * @param cityId id of city to test
+     * @return true if exist specified boundary for such city
+     */
+    public boolean isMappedCityId (long cityId){
+        return bundaryCityMapper.containsValue(cityId);
+    }
+
+    /**
+     * Test if exist any custom mapper definition that say that this boundary has to be set for specific city
+     *
+     * @param boundaryId id of boundary to test
+     * @return true if this boundary has to be assigned to custom city
+     */
+    public boolean isMappedBoundaryId (long boundaryId){
+        return bundaryCityMapper.containsKey(boundaryId);
+    }
+
+    /**
+     *
+     * @param boundaryId id of boundary to get mapped city for it
+     * @return osm id of city that has to be used as center for boundary with defined id
+     */
+    public long getMappedCityIdForBoundary(long boundaryId) {
+        return bundaryCityMapper.get(boundaryId);
+    }
+
 
     // PARSE DEF XML
 
@@ -245,11 +292,10 @@ public class WriterAddressDefinition extends AWriterDefinition{
                             cityAdminLevels = parseCityRange(strCityLevels, parser);
                             regionAdminLevel = parseRegionLevel(strRegionLevel, parser);
                         }
+                    }
+                    if (tagName.equals("boundaryMapper")){
+                        parseCityBoundaryMapper (parser);
 
-                        if (id.equals(mapId)){
-                            // stop parsing because we find definition for map wih spec id
-                            return false;
-                        }
                     }
                 }
                 return true;
@@ -268,6 +314,26 @@ public class WriterAddressDefinition extends AWriterDefinition{
         };
 
         parser.parse();
+    }
+
+    /**
+     * Parse definition which city id has some boundary id
+     *
+     * @param parser xml definition parser
+     */
+    private void parseCityBoundaryMapper(XmlPullParser parser) {
+        String cityid = parser.getAttributeValue(null, "cityid");
+        String boundaryid = parser.getAttributeValue(null, "boundaryid");
+        String cityname = parser.getAttributeValue(null, "cityname");
+        String boundaryname = parser.getAttributeValue(null, "boundaryname");
+
+        if ( !Utils.isNumeric(cityid) || !Utils.isNumeric(boundaryid)){
+            throw new IllegalArgumentException("Address definition XML not valid. " +
+                    "Wrong cityid or boundaryid on line: " + parser.getLineNumber()  + ", cityid: " + cityid +
+                    ", boundaryid: " + boundaryid);
+        }
+
+        bundaryCityMapper.put(Long.valueOf(boundaryid), Long.valueOf(cityid));
     }
 
 

@@ -62,13 +62,14 @@ public class OsmUtils {
     }
 
     /**
-     * Prepare map of lang mutation of city name. Lang mutation is not in map if this lang mutation
+     * Prepare map of lang mutation of OSM tag. Lang mutation is not in map if this lang mutation
      * is the same as local default name
      * @param entity entity to get names
+     * @param tagName name of OSM tag that can have multilangual values. like name or official_name
      * @param nameDef default local name
      * @return
      */
-    public static THashMap<String, String> getNamesLangMutation(Entity entity, String nameDef){
+    public static THashMap<String, String> getNamesLangMutation(Entity entity, String tagName, String nameDef){
         THashMap<String, String> names = new THashMap<>();
 
         if (entity == null){
@@ -78,9 +79,11 @@ public class OsmUtils {
         if(tags == null){
             return names;
         }
+
+        tagName = tagName + ":";
         for (Tag tag : tags){
             String key = tag.getKey();
-            if (key.startsWith("name:")) {
+            if (key.startsWith(tagName)) {
                 String nameInternational = tag.getValue();
                 String[] keyParts = key.split(":");
                 if (keyParts.length < 2){

@@ -67,6 +67,14 @@ public class ItemMapPack extends AItemMap {
     /*               GETTERS & SETTERS                */
     /**************************************************/
 
+    /**
+     *
+     * @return maps that are in this mappack
+     */
+    public List<ItemMap> getMaps () {
+        return mMaps;
+    }
+
     public void addMap(ItemMap map) {
         this.mMaps.add(map);
     }
@@ -90,5 +98,9 @@ public class ItemMapPack extends AItemMap {
 
     public int getMapPackCount() {
         return mMapPacks.size();
+    }
+
+    public List<ItemMapPack> getMapPacks (){
+        return mMapPacks;
     }
 }

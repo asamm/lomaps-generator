@@ -37,17 +37,22 @@ public class Utils {
 
     /**
      * Function use java.text.Normalizer and replace all diacritics with their codes
-     * then are these codes using regular expresion replaced with empty string.
+     * then are these codes using regular expression replaced with empty string.
+     * In second replace all special character with space
+     *
      * @param text String for normalization
      * @return Normalized string
      */
-    public static String normalizeString(String text) {
+    public static String normalizeNames(String text) {
         if (text == null){
             return null;
         }
 
-        return Normalizer.normalize(text, Normalizer.Form.NFD)
+        // remove diacritics
+        String textNorm =  Normalizer.normalize(text, Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+        return textNorm.replaceAll("[~!@#$%^&*()\\-_+=`\\|\\\\:;'<>,.\\/?]", " ").replaceAll("[ ]{2,}", " ").trim();
     }
 
     /**************************************************/

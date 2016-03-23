@@ -21,8 +21,6 @@ public class CmdDataPlugin extends Cmd {
 
     private File mFileTempMap;
 
-    private static final int COUNTRY_BOUND_ADMIN_LEVEL = 2;
-
     /**
      * Definition where will be poiDb created
      */
@@ -41,33 +39,11 @@ public class CmdDataPlugin extends Cmd {
         return mFilePoiDb;
     }
 
-    public void addTaskSimplifyForCountry () throws IOException {
-
-        addReadSource();
-        addCommand("--tf");
-        addCommand("reject-relations");
-        addCommand("--tf");
-        addCommand("accept-ways");
-        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
-        addCommand("--used-node");
-        addCommand("outPipe.0=Ways");
-
-        // add second task
-        addReadSource();
-        addCommand("--tf");
-        addCommand("accept-relations");
-        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
-        addCommand("--used-way");
-        addCommand("--used-node");
-        addCommand("outPipe.0=Relations");
-
-        // add merge task
-        addCommand("--merge");
-        addCommand("inPipe.0=Ways");
-        addCommand("inPipe.1=Relations");
-
-        // add export path
-        addWritePbf(mFileTempMap.getAbsolutePath(), true);
+    /**
+     * Delete tmop file where are store result of filtering for pois or address
+     */
+    public void deleteTmpFile() {
+        mFileTempMap.delete();
     }
 
     public void addTaskSimplifyForPoi(WriterPoiDefinition definition) throws IOException {
@@ -209,7 +185,7 @@ public class CmdDataPlugin extends Cmd {
 
         File file = new File(getMap().getPathSource());
         int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 500) {
+        if (size <= 350) {
             addCommand("-dataContainerType=ram");
         }
         else {
@@ -229,23 +205,6 @@ public class CmdDataPlugin extends Cmd {
         addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
         addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
         addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
-    }
-
-    /**
-     * Prepare commnad line for generation precise country boundary
-     */
-    public void addGeneratorCountryBoundary() {
-
-        //addReadPbf(mFileTempMap.getAbsolutePath());
-        addReadPbf(mFileTempMap.getAbsolutePath());
-
-        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
-        addCommand("-type=country");
-        addCommand("-countryName=" + getMap().getCountryName());
-        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
-
-        // TODO it's needed to defined admin level? Probably all countries are in level=2
-        addCommand("-countryAdminLevel=" + COUNTRY_BOUND_ADMIN_LEVEL);
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {

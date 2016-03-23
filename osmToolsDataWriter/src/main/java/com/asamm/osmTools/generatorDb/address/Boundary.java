@@ -29,8 +29,11 @@ public class Boundary {
     /** OSM Id of entity that is set as center of boundary (should be a place)*/
     private long adminCenterId;
 
-    /** All possible international languages of cities, <langCode|name> */
+    /** All possible international languages  <langCode|name> */
     private THashMap<String, String> namesInternational;
+
+    /** All possible official names, <langCode|name> This is used for country borders*/
+    private THashMap<String, String> officialNamesInternational;
 
     private MultiPolygon geom;
 
@@ -155,6 +158,14 @@ public class Boundary {
 
     public void setNamesInternational(THashMap<String, String> namesInternational) {
         this.namesInternational = namesInternational;
+    }
+
+    public THashMap<String, String> getOfficialNamesInternational() {
+        return officialNamesInternational;
+    }
+
+    public void setOfficialNamesInternational(THashMap<String, String> officialNamesInternational) {
+        this.officialNamesInternational = officialNamesInternational;
     }
 
     public MultiPolygon getGeom() {

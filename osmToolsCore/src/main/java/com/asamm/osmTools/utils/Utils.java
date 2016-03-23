@@ -124,7 +124,10 @@ public class Utils {
     public static void compressFiles(List<String> files, String target) throws IOException {
         ZipOutputStream zos = null;
         try {
-            FileUtils.forceMkdir(new File(target).getParentFile());
+            File parentFolder = new File(target).getParentFile();
+            if (parentFolder != null){
+                FileUtils.forceMkdir(new File(target).getParentFile());
+            }
             zos = new ZipOutputStream(new FileOutputStream(target));
             zos.setLevel(9);
 

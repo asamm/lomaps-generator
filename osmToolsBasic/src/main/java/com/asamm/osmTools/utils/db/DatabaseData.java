@@ -128,4 +128,18 @@ public class DatabaseData {
         }
     }
 
+    public void destroy() throws SQLException {
+
+        try {
+            if (stmt != null) {
+                stmt.close();
+            }
+            // also commit
+            commit(true);
+
+        } catch (Exception e) {
+            Logger.e(TAG, "destroy()", e);
+        }
+    }
+
 }
