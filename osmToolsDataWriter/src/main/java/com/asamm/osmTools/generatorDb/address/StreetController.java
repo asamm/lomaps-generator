@@ -22,6 +22,7 @@ import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -175,6 +176,7 @@ public class StreetController extends AaddressController {
             if ( !isStreetWay(way)){
                 continue;
             }
+
 
             List<String> isInList = getIsInList(way);
 
@@ -585,7 +587,7 @@ public class StreetController extends AaddressController {
      * @return cities that contain tested geom
      */
     public static List<City> findCitiesForPlace(Geometry geometry, List<String> isInNames) {
-        //Logger.i(TAG, " findCitiesForPlace() - looking for cities for street: " + street.toString() );
+        //Logger.i(TAG, " findCitiesForPlace() - looking for cities for geom: " + GeomUtils.geomToGeoJson(geometry));
 
         List<City> foundCities = new ArrayList<>(); // cities where object is in it
 
@@ -600,6 +602,7 @@ public class StreetController extends AaddressController {
 
         long start = System.currentTimeMillis();
         List<City> citiesAround = IndexController.getInstance().getClosestCities(centroid, 30);
+        //Logger.i(TAG, " findCitiesForPlace () num of cities around: " + citiesAround.toString());
         timeLoadNereastCities += System.currentTimeMillis() - start;
 
         //RECOGNIZE BY IS IN TAG
@@ -622,7 +625,9 @@ public class StreetController extends AaddressController {
         start = System.currentTimeMillis();
         PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(geometry);
         //PreparedGeometry streetGeomPrepared = PreparedGeometryFactory.prepare(street.getGeometry().getEnvelope().getCentroid());
+
         for (City city : citiesAround){
+            //Logger.i(TAG, " findCitiesForPlace () prepare to test intersection with city: " + city.toString());
             MultiPolygon mp = city.getGeom();
             if (mp == null){
                 // this city does not have defined the bound geometry

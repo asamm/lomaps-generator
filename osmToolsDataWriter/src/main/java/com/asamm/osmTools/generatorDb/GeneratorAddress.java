@@ -181,7 +181,7 @@ public class GeneratorAddress extends AGenerator {
     }
 
     /**************************************************/
-    /*  STEP 2 - Create boundaries nad regions
+    /*  STEP 2 - Create boundaries and regions
     /**************************************************/
 
     void loadBoundariesRegions(ADataContainer dc) {
@@ -226,7 +226,8 @@ public class GeneratorAddress extends AGenerator {
             createRegion(boundary);
         }
 
-        if (addressDefinition.isCityAdminLevel(boundary.getAdminLevel())){
+        if (addressDefinition.isCityAdminLevel(boundary.getAdminLevel())
+                || addressDefinition.isMappedBoundaryId(boundary.getId())){
             // from this boundary can be created the city area
             boundaries.add(boundary);
         }
@@ -267,14 +268,20 @@ public class GeneratorAddress extends AGenerator {
             Collection<City> cities = dc.getCities();
 
             City cityFound = null;
-            if(boundary.hasAdminCenterId()) {
-                for (City city : cities) {
-                    if (city.getOsmId() == boundary.getAdminCenterId()) {
-                        cityFound = city;
-                        //Logger.i(TAG, "City were founded by admin center for boundary: "+boundary.getId()+ " city: " + city.toString());
-                        break;
-                    }
+            // Test city by custom mapper definition
+            if (addressDefinition.isMappedBoundaryId(boundary.getId())){
+                long mappedCityId = addressDefinition.getMappedCityIdForBoundary(boundary.getId());
+                cityFound = dc.getCity(mappedCityId); // can be null
+
+                if (cityFound != null){
+                    Logger.i(TAG, "Founded city by custom mapper ; city " + cityFound.toString() +
+                            "\n boundary:  " + boundary.toString());
                 }
+            }
+
+            // try to load city based on admin center id (if defined)
+            if(cityFound == null && boundary.hasAdminCenterId()) {
+                cityFound = dc.getCity(boundary.getAdminCenterId()); // can be null
             }
 
             if(cityFound == null) {
@@ -282,8 +289,10 @@ public class GeneratorAddress extends AGenerator {
                     if (boundaryName.equalsIgnoreCase(city.getName()) || altBoundaryName.equalsIgnoreCase(city.getName())){
                         if (boundary.getGeom().contains(city.getCenter())) {
                             //Logger.i(TAG, "City were founded by name and contains for boundary: "+boundary.getId()+ " city: " + city.toString());
-                            cityFound = city;
-                            break;
+                            if (cc.canBeSetAsCenterCity (boundary, city)){
+                                cityFound = city;
+                                break;
+                            }
                         }
                     }
                 }
@@ -294,13 +303,11 @@ public class GeneratorAddress extends AGenerator {
                 for (City city : cities) {
                     if (cc.hasSimilarName(boundary, city)) {
                         if (boundary.getGeom().contains(city.getCenter())) {
-                            // city has similar name boundary and is in bounds > use it as center
-//                            if (boundaryController.canBeSetAsCenterCity (boundary, city)){
-//                                cityFound = city;
-//                                break;
-//                            }
-                            cityFound = city;
-                            break;
+                            // test if city is some small village > in this case do not use it
+                            if (cc.canBeSetAsCenterCity (boundary, city)){
+                                cityFound = city;
+                                break;
+                            }
                         }
                     }
                 }

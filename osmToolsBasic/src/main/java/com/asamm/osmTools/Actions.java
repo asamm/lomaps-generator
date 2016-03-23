@@ -19,6 +19,7 @@ import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import com.asamm.osmTools.utils.io.ZipUtils;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.io.WKTWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -41,9 +42,6 @@ class Actions {
 
     // parsed configuration of maps
     private MapSource mMapSource;
-
-    /** If was metadata table created in any action */
-    private boolean isMetadataCreated = false;
 
     protected Actions() {
         mMapSource = new MapSource();
@@ -68,7 +66,7 @@ class Actions {
             // print action header to log
             printLogHeader(action);
             
-            // extract action
+            // load mappack and do actions for mappack items
             Iterator<ItemMapPack> packs = mMapSource.getMapPacksIterator();
             while (packs.hasNext()) {
                 ItemMapPack mp = packs.next();
@@ -78,6 +76,11 @@ class Actions {
                     actionExtract(mp, mMapSource);
                     continue;
                 }
+
+                if (action == Parameters.Action.ADDRESS_POI_DB){
+                    //actionCountryBorder (mp);
+                }
+
                 actionAllInOne(mp, action);
             }
 
@@ -93,6 +96,7 @@ class Actions {
             }
         }
     }
+
 
     private void parseConfigXml() throws IOException, XmlPullParserException {
         FileInputStream fis = null;
@@ -234,16 +238,16 @@ class Actions {
             ItemMap actualMap = mp.getMap(i);
 
             if (actualMap.hasAction(Parameters.Action.EXTRACT)) {
-                List<ItemMap> ar = mapTableBySourceId.get(actualMap.getSourceId());
-                if (ar == null) {
-                    ar = new ArrayList<>();
-                    mapTableBySourceId.put(actualMap.getSourceId(), ar);
+                List<ItemMap> itemsToExtract = mapTableBySourceId.get(actualMap.getSourceId());
+                if (itemsToExtract == null) {
+                    itemsToExtract = new ArrayList<>();
+                    mapTableBySourceId.put(actualMap.getSourceId(), itemsToExtract);
                 }
 
                 // test if file for extract exist. If yes don't add it into ar
                 String writeFileLocation = actualMap.getPathSource();
                 if (!new File(writeFileLocation).exists()){
-                    ar.add(actualMap);
+                    itemsToExtract.add(actualMap);
                 } else {
                     Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
                 }
@@ -317,6 +321,94 @@ class Actions {
         for (int i = 0, m = mp.getMapPackCount(); i < m; i++) {
             actionExtract(mp.getMapPack(i), ms);
         }
+    }
+
+    /**
+     * Create country boundaries for map items in mappack
+     *
+     * @param mp map pack to create countries for it's items
+     */
+    private void actionCountryBorder(ItemMapPack mp) throws IOException, InterruptedException {
+
+        // map where key is mappack id and value is list of map to generate boundaries from source
+        Map<String, List<ItemMap>> mapTableBySourceId = prepareCountriesForSource(mp);
+
+
+        // for every source run generation of country borders
+        for (Map.Entry<String, List<ItemMap>> entry : mapTableBySourceId.entrySet()) {
+
+            ItemMap sourceMap = mMapSource.getMapById(entry.getKey());
+            List<ItemMap> mapToCreate = entry.getValue();
+
+            if (mapToCreate.size() == 0){
+                continue;
+            }
+
+            // filter only boundary values from source
+            CmdCountryBorders cmdCBfilter = new CmdCountryBorders(sourceMap);
+            cmdCBfilter.addTaskFilter();
+            Logger.i(TAG, "Filter for generation country bound, command: " + cmdCBfilter.getCmdLine());
+            cmdCBfilter.execute();
+
+            CmdCountryBorders cmdBorders = new CmdCountryBorders(sourceMap);
+            cmdBorders.addGeneratorCountryBoundary();
+            cmdBorders.addCountries(mapToCreate);
+            Logger.i(TAG, "Generate country boundary, command: " + cmdBorders.getCmdLine() );
+            cmdBorders.execute();
+
+            // delete tmp file
+            //cmdBorders.deleteTmpFile();
+        }
+    }
+
+    private Map<String, List<ItemMap>> prepareCountriesForSource (ItemMapPack mp) {
+
+        // map where key is mappack id and value is list of map to generate boundaries from source
+        Map<String, List<ItemMap>> mapTableBySourceId = new HashMap<>();
+
+        // fill hash table with values in first step proccess map in mappack
+        for (ItemMap map : mp.getMaps()) {
+
+            if (!map.hasAction(Parameters.Action.GENERATE) && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)) {
+                continue;
+            }
+
+            if (!Parameters.isRewriteFiles() && new File(map.getPathCountryBoundaryGeoJson()).exists()) {
+                // boundary geom for this map exists > skip it
+                Logger.i(TAG, "Country boundaries exits for map: " + map.getNameReadable());
+                continue;
+            }
+
+            // get the source item for map
+            String sourceId = map.getSourceId();
+            // get the list of countries that will be created from source
+            List<ItemMap> mapsFromSource = mapTableBySourceId.get(sourceId);
+            if (mapsFromSource == null) {
+                mapsFromSource = new ArrayList<>();
+            }
+            mapsFromSource.add(map);
+            mapTableBySourceId.put(sourceId, mapsFromSource);
+        }
+
+        // now get submaps for mappack and their mappack...
+        for (ItemMapPack mapPack : mp.getMapPacks()){
+
+            // for every map pack get country boundaries that will be generated
+            Map<String, List<ItemMap>> sourcesSubMap = prepareCountriesForSource(mapPack);
+
+            // combine result with parent source map
+            for (Map.Entry<String, List<ItemMap>> entry : sourcesSubMap.entrySet()) {
+
+                List<ItemMap> subMaps = mapTableBySourceId.get(entry.getKey());
+                if (subMaps == null) {
+                    subMaps = new ArrayList<>();
+                }
+                subMaps.addAll(entry.getValue());
+                mapTableBySourceId.put(entry.getKey(), subMaps);
+            }
+        }
+
+        return mapTableBySourceId;
     }
 
     private class PackForExtract {
@@ -395,21 +487,6 @@ class Actions {
             return;
         }
 
-        // GENERATE COUNTRY PRECISE BOUNDARY GEOM
-//
-//        if (Parameters.isRewriteFiles() || !new File(map.getPathCountryBoundaryGeoJson()).exists()) {
-//            CmdDataPlugin cmd = new CmdDataPlugin(map);
-//            cmd.addTaskSimplifyForCountry();
-//            Logger.i(TAG, "Filter for generation country bound, command: " + cmd.getCmdLine());
-//            cmd.execute();
-//
-//            CmdDataPlugin cmdDataCountryBoundary = new CmdDataPlugin(map);
-//            cmdDataCountryBoundary.addGeneratorCountryBoundary();
-//            Logger.i(TAG, "Generate country boundary, command: " + cmdDataCountryBoundary.getCmdLine() );
-//            cmdDataCountryBoundary.execute();
-//        }
-
-
         // check if DB file exits and we should overwrite it
         if (!Parameters.isRewriteFiles() && new File(map.getPathAddressPoiDb()).exists()) {
             Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
@@ -422,17 +499,17 @@ class Actions {
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 //
-//        // firstly simplify source file
-//        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
-//        cmdPoiFilter.addTaskSimplifyForPoi(definition);
-//        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
-//        cmdPoiFilter.execute();
-//
-//        // now execute db poi generating
-//        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
-//        cmdGen.addGeneratorPoiDb();
-//        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-//        cmdGen.execute();
+        // firstly simplify source file
+        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
+        cmdPoiFilter.addTaskSimplifyForPoi(definition);
+        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
+        cmdPoiFilter.execute();
+
+        // now execute db poi generating
+        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
+        cmdGen.addGeneratorPoiDb();
+        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
+        cmdGen.execute();
 
         //Address generation
         CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
@@ -444,6 +521,9 @@ class Actions {
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
         cmdAddres.execute();
+
+        // delete tmp file
+        cmdAddres.deleteTmpFile();
 
     }
 
@@ -687,11 +767,6 @@ class Actions {
             return;
         }
 
-        if (isMetadataCreated){
-            // this action was already performed > nothing to do
-            return;
-        }
-
         File dbAddressPoiFile = new File(itemMap.getPathAddressPoiDb());
         if (dbAddressPoiFile.getParentFile() != null) {
             dbAddressPoiFile.getParentFile().mkdirs();
@@ -713,7 +788,14 @@ class Actions {
         Geometry geom = WriterAddressDefinition.createDbGeom(
                 itemMap.getPathJsonPolygon(), itemMap.getPathCountryBoundaryGeoJson());
 
-        dbData.insertData(LoMapsDbConst.VAL_AREA, GeomUtils.geomToGeoJson(geom));
+        if (! geom.isValid() || geom.isEmpty() || geom.getArea() == 0){
+            Logger.i(TAG, GeomUtils.geomToGeoJson(geom));
+            throw new IllegalArgumentException("Country map geom is not valid, map : " + itemMap.getName());
+        }
+
+        WKTWriter wktWriter = new WKTWriter();
+
+        dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
         dbData.insertData(LoMapsDbConst.VAL_COUNTRY, itemMap.getCountryName());
         dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
         dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
@@ -722,8 +804,8 @@ class Actions {
         dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
         dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
 
-        dbData.commit(true);
-        isMetadataCreated = true;
+        dbData.destroy();
+
     }
 
     // ACTION COMPRESS

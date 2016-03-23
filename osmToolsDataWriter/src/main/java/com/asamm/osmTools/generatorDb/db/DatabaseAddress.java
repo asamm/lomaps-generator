@@ -689,7 +689,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertRegionNames.setLong(1, region.getOsmId());
                 psInsertRegionNames.setString(2, entry.getKey());
                 String name = entry.getValue();
-                String nameNormalized = Utils.normalizeString(name);
+                String nameNormalized = Utils.normalizeNames(name);
                 if ( !nameNormalized.equals(name)){
                     //store full name only if normalized name is different
                     psInsertRegionNames.setString(3, name);
@@ -764,7 +764,7 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertCityNames.setLong(1, city.getOsmId());
                 psInsertCityNames.setString(2, entry.getKey());
                 String name = entry.getValue();
-                String nameNormalized = Utils.normalizeString(name);
+                String nameNormalized = Utils.normalizeNames(name);
                 if ( !nameNormalized.equals(name)){
                     //store full name only if normalized name is different
                     psInsertCityNames.setString(3, name);
@@ -825,7 +825,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertStreet.setLong(1, street.getId());
 
             String name = street.getName();
-            String nameNormalized = Utils.normalizeString(name);
+            String nameNormalized = Utils.normalizeNames(name);
             if ( !nameNormalized.equals(name)){
                 //store full name only if normalized name is different
                 psInsertStreet.setString(2, name);
@@ -1169,8 +1169,8 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         List<Street> streetsLoaded = new ArrayList<>();
         try{
-            psSelectStreetByNames.setString(1, Utils.normalizeString(cityName));
-            psSelectStreetByNames.setString(2, Utils.normalizeString(streetName));
+            psSelectStreetByNames.setString(1, Utils.normalizeNames(cityName));
+            psSelectStreetByNames.setString(2, Utils.normalizeNames(streetName));
 
             ResultSet rs = psSelectStreetByNames.executeQuery();
 
