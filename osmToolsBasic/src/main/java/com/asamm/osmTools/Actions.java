@@ -78,7 +78,7 @@ class Actions {
                 }
 
                 if (action == Parameters.Action.ADDRESS_POI_DB){
-                    //actionCountryBorder (mp);
+                    actionCountryBorder (mp);
                 }
 
                 actionAllInOne(mp, action);
@@ -357,7 +357,7 @@ class Actions {
             cmdBorders.execute();
 
             // delete tmp file
-            //cmdBorders.deleteTmpFile();
+            cmdBorders.deleteTmpFile();
         }
     }
 
@@ -373,7 +373,7 @@ class Actions {
                 continue;
             }
 
-            if (!Parameters.isRewriteFiles() && new File(map.getPathCountryBoundaryGeoJson()).exists()) {
+            if ( new File(map.getPathCountryBoundaryGeoJson()).exists()) {
                 // boundary geom for this map exists > skip it
                 Logger.i(TAG, "Country boundaries exits for map: " + map.getNameReadable());
                 continue;
@@ -509,7 +509,7 @@ class Actions {
         CmdDataPlugin cmdGen = new CmdDataPlugin(map);
         cmdGen.addGeneratorPoiDb();
         Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-        cmdGen.execute();
+        //cmdGen.execute();
 
         //Address generation
         CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
@@ -788,7 +788,12 @@ class Actions {
         Geometry geom = WriterAddressDefinition.createDbGeom(
                 itemMap.getPathJsonPolygon(), itemMap.getPathCountryBoundaryGeoJson());
 
-        if (! geom.isValid() || geom.isEmpty() || geom.getArea() == 0){
+        if (!geom.isValid()){
+            geom = GeomUtils.fixInvalidGeom(geom);
+        }
+
+
+        if ( !geom.isValid() || geom.isEmpty() || geom.getArea() == 0){
             Logger.i(TAG, GeomUtils.geomToGeoJson(geom));
             throw new IllegalArgumentException("Country map geom is not valid, map : " + itemMap.getName());
         }

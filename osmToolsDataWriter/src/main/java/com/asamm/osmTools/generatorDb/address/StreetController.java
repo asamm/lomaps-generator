@@ -17,6 +17,7 @@ import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
+import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
 import gnu.trove.set.hash.THashSet;
@@ -24,10 +25,9 @@ import gnu.trove.set.hash.TLongHashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 import sun.rmi.runtime.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
+import static com.asamm.osmTools.generatorDb.address.City.CityType.*;
 
 /**
  * Created by voldapet on 2015-08-21 .
@@ -348,8 +348,17 @@ public class StreetController extends AaddressController {
             street.setHouses(streetToSplit.getHouses());
             street.setPath(streetToSplit.isPath());
 
-            //Logger.i(TAG, "Line for cut: " + Utils.geomToGeoJson(streetToSplit.getGeometry()));
-            Geometry geomIntersection = streetToSplit.getGeometry().intersection(city.getGeom());
+            Geometry geomIntersection = null;
+
+            //Logger.i(TAG, "Line for cut: " + GeomUtils.geomToGeoJson(streetToSplit.getGeometry()));
+            //Logger.i(TAG, "City for cut: " + GeomUtils.geomToGeoJson(city.getGeom()));
+            try {
+                geomIntersection = streetToSplit.getGeometry().intersection(city.getGeom());
+            }
+            catch (TopologyException e){
+                // in some rare situation can intersection throw topology exception because no-node intersection
+                continue;
+            }
             // the result can be GeomCollection try to convert it into Lines
             MultiLineString mls = GeomUtils.geometryToMultilineString(geomIntersection);
 
@@ -590,6 +599,8 @@ public class StreetController extends AaddressController {
         //Logger.i(TAG, " findCitiesForPlace() - looking for cities for geom: " + GeomUtils.geomToGeoJson(geometry));
 
         List<City> foundCities = new ArrayList<>(); // cities where object is in it
+        // if all founded cities are suburbs search by more detailed parameters to get at least town, city or village
+        boolean areFoundedCitiesSuburbs = true;
 
         if (geometry.isEmpty()){
             return foundCities;
@@ -613,6 +624,9 @@ public class StreetController extends AaddressController {
                 if (isInNames.contains(city.getName())){
                     foundCities.add(city);
                     citiesAround.remove(i);
+                    if (city.getType() != SUBURB && city.getType() != DISTRICT){
+                        areFoundedCitiesSuburbs = false;
+                    }
                 }
             }
         }
@@ -638,6 +652,9 @@ public class StreetController extends AaddressController {
                 double distance = Utils.getDistance(centroid, city.getCenter());
                 if (distance / city.getType().getRadius() < Const.MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
                     foundCities.add(city);
+                    if (city.getType() != SUBURB && city.getType() != DISTRICT){
+                        areFoundedCitiesSuburbs = false;
+                    }
                 }
             }
         }
@@ -647,17 +664,22 @@ public class StreetController extends AaddressController {
 
         // RECOGNIZE BY DISTANCE ONLY CITIES WITHOUT BOUNDARIES
 
+
+
         // for rest of cities that does not have defined the bounds check distance
-        if (foundCities.size() == 0){
+        if (areFoundedCitiesSuburbs){
+            // sort cities without bounds by relative distance to place
+            sortByRelativeDistance(centroid, citiesWithoutBound);
+
             start = System.currentTimeMillis();
             for (City city : citiesWithoutBound){
-                // boundary is not defined for this city
+                // test if city is inside radius of city type
                 double distance = Utils.getDistance(centroid, city.getCenter());
-                if (distance < city.getType().getRadius() / 2 ){
-//                if (wayId == 7980116) {
-//                    Logger.i(TAG, "Add city because is close, city:  " + city.getId() + ", name: " + city.getName());
-//                }
+                if (distance < city.getType().getRadius() && !isCityTypeInList(city.getType(), foundCities)){
+                    // place is inside of readius this city and city type is not in list of founded cities
+                    areFoundedCitiesSuburbs = false;
                     foundCities.add(city);
+
                 }
             }
             timeFindCityTestByDistance += System.currentTimeMillis() - start;
@@ -689,6 +711,8 @@ public class StreetController extends AaddressController {
         return foundCities;
     }
 
+
+
     /**
      * Select the closest city from the list
      * @param point Center for search
@@ -714,6 +738,56 @@ public class StreetController extends AaddressController {
             }
         }
         return closestC;
+    }
+
+    /**
+     * Test if list of cities contain any city of defined city type
+     *
+     * @param cType type city to test if is in list
+     * @param cities cities to test if contain defined type
+     * @return true if list contain defined cityType
+     */
+    private static boolean isCityTypeInList (City.CityType cType, List<City> cities){
+
+        for (City city : cities){
+            if (city.getType() == cType){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Compute relative distance between center point of geometry and center point of city
+     * Relative because computed distance depends on type of city
+     *
+     * @param geom geomtry from its centroid will be computed relative distance
+     * @param city city to compute relatice distance
+     * @return distance between city and geom / frac city radius
+     */
+    private static double relativeDistance(Geometry geom,  City city) {
+        Coordinate coordinate = geom.getEnvelope().getCentroid().getCoordinate();
+        return Utils.getDistance(coordinate, city.getCenter().getCoordinate()) / city.getType().getRadius();
+    }
+
+    /**
+     * Sort cities in list by relative distance from the nearest (relative) to center
+     * point of geometry
+     *
+     * @param geom location to sort from it
+     * @param cities cities to sort
+     */
+    private static void sortByRelativeDistance (final Geometry geom, List<City> cities){
+
+        Collections.sort(cities, new Comparator<City>() {
+            @Override
+            public int compare(City c1, City c2) {
+                double rd1 = relativeDistance(geom, c1);
+                double rd2 = relativeDistance(geom, c2);
+                return Double.compare(rd1, rd2);
+            }
+        });
+
     }
 
 

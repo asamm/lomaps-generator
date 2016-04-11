@@ -39,6 +39,7 @@ public class HouseController extends AaddressController {
 
     private static final String TAG = HouseController.class.getSimpleName();
 
+
     // number of houses where we was not able to find proper street
     public int removedHousesWithDefinedPlace = 0;
     public int removedHousesWithDefinedStreetName = 0;
@@ -61,12 +62,18 @@ public class HouseController extends AaddressController {
      * */
     private TLongHashSet houseIdsFromRelations;
 
+    /**
+     * First nodes of interpolation ways have defined address data avoid to create them again from nodes.
+     */
+    private TLongHashSet houseIdsFromInterpolations;
+
 
     public HouseController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad) {
 
         super(dc, databaseAddress, wad);
 
         this.houseIdsFromRelations = new TLongHashSet();
+        this.houseIdsFromInterpolations = new TLongHashSet();
     }
 
     /**
@@ -179,8 +186,8 @@ public class HouseController extends AaddressController {
             long nodeId = nodeIds.get(i);
             Node node = dc.getNode(nodeId);
 
-            if (houseIdsFromRelations.contains(nodeId)){
-                //Logger.i(TAG, "createHousesFromNodes(): skip node " + nodeId+ " house already created from relations");
+            if (houseIdsFromRelations.contains(nodeId) || houseIdsFromInterpolations.contains(nodeId)){
+                //Logger.i(TAG, "createHousesFromNodes(): skip node " + nodeId+ " house already created from relations or interp");
                 continue;
             }
 
@@ -855,88 +862,94 @@ public class HouseController extends AaddressController {
         List<House> houses = new ArrayList<>();
         EntityType entityType = entity.getType();
 
-        if (addrInterpolationValue.length() <= 0 ){
+        if (addrInterpolationValue.length() <= 0  || entityType != EntityType.Way){
             return houses;
         }
 
         AddrInterpolationType ait = AddrInterpolationType.fromValue(addrInterpolationValue);
-        if (entityType == EntityType.Way){
-            Way way = (Way) entity;
 
-            if (way.isClosed()){
-                // probably building don't interpolate
-                House house = parseHouseData(way);
-                //Logger.i(TAG, "parseInterpolation(): way is closed, building? wayId: " + way.getId());
-                if (house !=  null){
-                    houses.add(house);
-                }
+        Way way = (Way) entity;
+        if (way.isClosed()){
+            // probably building don't interpolate
+            House house = parseHouseData(way);
+            //Logger.i(TAG, "parseInterpolation(): way is closed, building? wayId: " + way.getId());
+            if (house !=  null){
+                houses.add(house);
+            }
+            return houses;
+        }
 
-                return houses;
+        // Prepare for interpolation
+        WayEx wayEx = dc.getWay(way);
+        List<Node> nodes = wayEx.getNodes();
+        if (nodes == null){
+            return  houses;
+        }
+        // apriori is street name defined in house nodes but in some cases is defined in interpolation street
+        String streetNameFallback = OsmUtils.getStreetName(way);
+
+        // PARSE EVERY SEGMENT  (segment is part on between nodes that has defined the house number)
+
+        House startHouse = null;
+        House endHouse = null;
+        List<Coordinate> segmentCoordinates = new ArrayList<>();
+
+        for (int i=0, nodesSize = nodes.size(); i < nodesSize; i++ ){
+            Node node = nodes.get(i);
+            boolean isLastNode = (i == nodesSize - 1);
+            segmentCoordinates.add(new Coordinate(node.getLongitude(), node.getLatitude()));
+//                if (way.getId() == 75170233){
+//                    Logger.i(TAG, "parseInterpolation(): Parse nodes for : " + way.getId() + ", node: " + node.getId());
+//                }
+
+            House house = parseHouseData(node);
+            if (house == null){
+                continue; // probably simple way node without house number
+            }
+            else {
+                //avoid to create again same house from node.
+                houseIdsFromInterpolations.add(node.getId());
             }
 
-            // Prepare for interpolation
-            WayEx wayEx = dc.getWay(way);
-            List<Node> nodes = wayEx.getNodes();
-            if (nodes == null){
-                return  houses;
+            if (house.getStreetName() == null || house.getStreetName().length() == 0){
+                house.setStreetName(streetNameFallback);
             }
-            // apriori is street name defined in house nodes but in some cases is defined in interpolation street
-            String streetNameFallback = OsmUtils.getStreetName(way);
 
-            // PARSE EVERY SEGMENT  (segment is part on between nodes that has defined the house number)
+            if (canBeUsedForInterpolation(house.getNumber(), ait)){
+                // house number is letter or end with letter or is number
 
-            House startHouse = null;
-            House endHouse = null;
-            List<Coordinate> segmentCoordinates = new ArrayList<>();
-
-            for (int i=0, nodesSize = nodes.size(); i < nodesSize; i++ ){
-                Node node = nodes.get(i);
-                boolean isLastNode = (i == nodesSize - 1);
-                segmentCoordinates.add(new Coordinate(node.getLongitude(), node.getLatitude()));
-
-                //Logger.i(TAG, "parseInterpolation(): Parse nodes for : " + way.getId() + ", node: " + node.getId());
-                House house = parseHouseData(node);
-                if (house == null){
-                    continue; // probably simple way node without house number
+                if (startHouse == null){
+                    // in first loop create start house (if possible)
+                    startHouse = house;
                 }
+                else if (endHouse == null) {
+                    // in second run of loop create end house from node (if possible) and then interpolate houses
+                    endHouse = house;
+                    List<House> housesInterpolated =
+                            interpolateHousesOnLineSegment(startHouse, endHouse, segmentCoordinates, ait, addrInterpolationValue, isLastNode);
 
-                if (house.getStreetName() == null || house.getStreetName().length() == 0){
-                    house.setStreetName(streetNameFallback);
-                }
+                    houses.addAll(housesInterpolated);
 
-                if (canBeUsedForInterpolation(house.getNumber(), ait)){
-                    // house number is letter or end with letter or is number
-
-                    if (startHouse == null){
-                        startHouse = house;
+                    // prepare for next segment
+                    if (!isLastNode) {
+                        startHouse = endHouse;
+                        endHouse = null;
+                        segmentCoordinates = new ArrayList<>();
+                        segmentCoordinates.add(new Coordinate(node.getLongitude(), node.getLatitude()));
                     }
-                    else if (endHouse == null) {
-                        endHouse = house;
-                        List<House> housesInterpolated =
-                                interpolateHousesOnLineSegment(startHouse, endHouse, segmentCoordinates, ait, addrInterpolationValue, isLastNode);
-
-                        houses.addAll(housesInterpolated);
-
-                        // prepare for next segment
-                        if (!isLastNode) {
-                            startHouse = endHouse;
-                            endHouse = null;
-                            segmentCoordinates = new ArrayList<>();
-                            segmentCoordinates.add(new Coordinate(node.getLongitude(), node.getLatitude()));
-                        }
-                    }
-                }
-                else {
-                    // it's valid house but it's number can no be used for interpolation
-                    houses.add(house);
                 }
             }
-
-            if (startHouse != null && endHouse == null ){
-                // the end house is not defined at all > save at least the first one
-                houses.add(startHouse);
+            else {
+                // it's valid house but its number can no be used for interpolation
+                houses.add(house);
             }
         }
+
+        if (startHouse != null && endHouse == null ){
+            // the end house is not defined at all > save at least the first one
+            houses.add(startHouse);
+        }
+
         return houses;
     }
 
@@ -999,8 +1012,10 @@ public class HouseController extends AaddressController {
 
         if (diff == 0){
             // there is no difference between house number > nothing to do
-            if (isLastNode){
-                houses.add(endHouse);
+            if (startValue == -1){
+                //special situation in CANADA where is lot's of interpolation that starts and ends -1
+                // do not create houses at all for such interpolation https://www.openstreetmap.org/way/75160860
+                return new ArrayList<>();
             }
             return houses;
         }
@@ -1008,6 +1023,20 @@ public class HouseController extends AaddressController {
         if (diff < 0){
             // negative interpolation > reverse step to be negative
             step = step * (-1);
+        }
+
+        // CANADA WORKAROUND
+        if ( !isInterpolationDiffValidHouseSize(diff, segmentCoordinates)){
+            //houses on interpolation lien are to small > create only on fake house in the middle of interpolation line
+            startHouse.setNumber(startHouse.getNumber() + " - " + endHouse.getNumber());
+            // create center point of interpolation line
+            Coordinate[] coordinates = new Coordinate[segmentCoordinates.size()];
+            coordinates = segmentCoordinates.toArray(coordinates);
+            Point centerInterpLine = geometryFactory.createLineString(coordinates).getCentroid();
+            startHouse.setCenter(centerInterpLine);
+
+
+            return houses;
         }
 
         // PREPARE INDEXED LINE FOR INTERPOLATION ALONG THE LINE
@@ -1052,6 +1081,39 @@ public class HouseController extends AaddressController {
             houses.add(endHouse);
         }
         return houses;
+    }
+
+    /**
+     * Method id used when are created fake interpolated houses. In some situation (Edmonton Canada) interpolation
+     * does not reflect real situation. there can be for example 100 house on 20 meters. Idetify sucj situation
+     * based on minimal width of one house
+     *
+     * @param diff difference between first and last possible house number
+     * @param segmentCoordinates segment on line to test its length
+     * @return true if num of houses on line is possible to interpolate
+     */
+    private boolean isInterpolationDiffValidHouseSize(int diff, List<Coordinate> segmentCoordinates) {
+
+        double lineLength = 0;
+        int nodeSize = segmentCoordinates.size();
+//        if (nodeSize < 2){
+//            if (diff <= 2){
+//                // interpolation line has single node and interpolation is small
+//                return true;
+//            }
+//            else {
+//                return false;
+//            }
+//        }
+
+        for (int i = 0; i < nodeSize - 1; i++ ){
+            lineLength += Utils.getDistance(segmentCoordinates.get(i), segmentCoordinates.get(i+1));
+        }
+
+        // width of one house in interpolation in meters
+        double houseWidth = lineLength / diff;
+
+        return (houseWidth > Const.MIN_HOUSE_WIDTH_FOR_INTERPOLATION);
     }
 
     /**

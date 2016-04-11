@@ -94,13 +94,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
         }
 
         else if (genType ==  GenerateType.COUNTRY_BOUNDARY){
-
-
             ConfigurationCountry confCountryBoundary = new ConfigurationCountry();
-
-            if (doesArgumentExist(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL)){
-                confCountryBoundary.setAdminLevel(getStringArgument(taskConfig, PARAM_DATA_COUNTRY_ADMIN_LEVEL).trim());
-            }
 
             String cmdCountriesAtr = getStringArgument(taskConfig, PARAM_DATA_COUNTRIES, "").trim();
             List<ConfigurationCountry.CountryConf> countriesConf = parseCountryDefinition(cmdCountriesAtr);

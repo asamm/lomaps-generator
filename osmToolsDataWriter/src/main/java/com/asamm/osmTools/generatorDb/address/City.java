@@ -15,7 +15,7 @@ public class City {
 
     public enum CityType {
         // types and radius
-        CITY(10000, 1), TOWN(5000, 2), VILLAGE(2000, 3), HAMLET(1000, 4), SUBURB(400, 5), DISTRICT(400, 6);
+        CITY(10000, 1), TOWN(5000, 2), VILLAGE(2000, 3), HAMLET(1000, 4), SUBURB(750, 5), DISTRICT(400, 6);
 
         /** predefined radius in meters for city type*/
         private double radius;

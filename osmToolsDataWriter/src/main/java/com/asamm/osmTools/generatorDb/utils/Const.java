@@ -52,6 +52,12 @@ public final class Const {
     public static final int MAX_DISTANCE_PLACENAME_STREET = 500;
 
 
+    /**
+     * Minimal size of house in meters
+     */
+    public static final int MIN_HOUSE_WIDTH_FOR_INTERPOLATION = 4;
+
+
     // ADDRESS DATABASE PARAMETERS
 
     /**
