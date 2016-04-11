@@ -12,13 +12,6 @@ import java.util.List;
 public class ConfigurationCountry extends AConfiguration {
 
 
-
-    /**
-     * Define which admin level will be used for generation of country boundary
-     * */
-    private int adminLevel = 2;
-
-
     /**
      * Definition of coutries and it files with geometry to be created
      */
@@ -46,23 +39,6 @@ public class ConfigurationCountry extends AConfiguration {
     /*             GETTERS & SETTERS
     /**************************************************/
 
-
-    public int getAdminLevel() {
-        return adminLevel;
-    }
-
-    public void setAdminLevel(String strAdminLevel) {
-        if (!Utils.isNumeric(strAdminLevel)){
-            throw new IllegalArgumentException(
-                    "admin level parameter: '" + strAdminLevel + "' incorrect. Please define numeric value for country " +
-                            "admin level");
-        }
-
-        adminLevel = Integer.valueOf(strAdminLevel);
-    }
-
-
-
     public List<CountryConf> getCountriesConf() {
         return countriesConf;
     }
@@ -70,7 +46,6 @@ public class ConfigurationCountry extends AConfiguration {
     public void setCountriesConf(List<CountryConf> countriesConf) {
         this.countriesConf = countriesConf;
     }
-
 
 
     /**************************************************/

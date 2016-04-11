@@ -88,32 +88,36 @@ public class GeneratorCountryBoundary extends AGenerator{
             Boundary boundary = boundaryController.create(relation, true);
 
             if (boundary == null || boundary.getAdminLevel() <= 0 || !boundary.isValid()){
+                if (boundary != null) {
+                    Logger.i(TAG, "Boundary is not valid: " + boundary.getName());
+                }
                 continue;
+
             }
 
-            if (boundary.getAdminLevel() == wcbDefinition.getConfigurationCountry().getAdminLevel()){
-                // use only boundaries that are same or smaller level then needed level for region boundaries
-                Logger.i(TAG, "Process country boundary for: " + boundary.getName());
+            //if (boundary.getAdminLevel() == wcbDefinition.getConfigurationCountry().getAdminLevel()){
+            // use only boundaries that are same or smaller level then needed level for region boundaries
+            Logger.i(TAG, "Process country boundary for: " + boundary.getName());
 
-                // test if any country configuration has such name
-                for (CountryConf countryConf : countriesConf){
+            // test if any country configuration has such name
+            for (CountryConf countryConf : countriesConf){
 
-                    if (hasBoundaryNameForCountry(boundary, countryConf.getCountryName())){
-                        // this boundary has name as requested country; test if exist any boundary of same name from previous
-                        Boundary boundaryOld = countryBoundaryMap.get(countryConf);
+                if (hasBoundaryNameForCountry(boundary, countryConf.getCountryName())){
+                    // this boundary has name as requested country; test if exist any boundary of same name from previous
+                    Boundary boundaryOld = countryBoundaryMap.get(countryConf);
 
-                        if (boundaryOld == null){
-                            // no boundary was found yet > use this one
-                            countryBoundaryMap.put(countryConf, boundary);
-                        }
-                        else {
-                            // join geom of previous boundary with new one
-                            MultiPolygon unionMp = GeomUtils.unionMultiPolygon(boundaryOld.getGeom(), boundary.getGeom());
-                            boundaryOld.setGeom(unionMp);
-                        }
+                    if (boundaryOld == null){
+                        // no boundary was found yet > use this one
+                        countryBoundaryMap.put(countryConf, boundary);
+                    }
+                    else {
+                        // join geom of previous boundary with new one
+                        MultiPolygon unionMp = GeomUtils.unionMultiPolygon(boundaryOld.getGeom(), boundary.getGeom());
+                        boundaryOld.setGeom(unionMp);
                     }
                 }
             }
+
         }
     }
 

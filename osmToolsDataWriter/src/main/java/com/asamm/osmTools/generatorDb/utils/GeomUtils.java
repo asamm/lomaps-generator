@@ -194,6 +194,9 @@ public class GeomUtils {
     public static MultiLineString geometryToMultilineString (Geometry geometry) {
 
         MultiLineString mls = null;
+        if (geometry == null){
+            return mls;
+        }
         if (geometry instanceof Point){
             // create empty multipoly
             mls = geometryFactory.createMultiLineString(new LineString[]{});

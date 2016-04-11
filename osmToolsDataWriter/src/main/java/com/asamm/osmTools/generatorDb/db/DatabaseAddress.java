@@ -106,11 +106,11 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = false;
+    private static boolean hasHousesTableWithGeom = true;
 
-    private static boolean hasTableOfRemovedHouses = true;
+    private static boolean hasTableOfRemovedHouses = false;
 
-    private static boolean hasCitiesCenterGeomColumn = true;
+    private static boolean hasCitiesCenterGeomColumn = false;
 
 
     public DatabaseAddress(File file) throws Exception {
@@ -871,7 +871,7 @@ public class DatabaseAddress extends ADatabaseHandler {
      * @return id of inserted house
      */
     public long insertHouse (Street street, House house){
-
+//
 //        if (house.getOsmId() == 2822221392L){
 //            Logger.i(TAG, "Insert house into db: " +
 //                    "\n Street: " + street.toString() +
@@ -895,6 +895,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             // LOG number of created point in exponencial
             if (housesIdSequence % 10000 == 0){
+                commit(false);
                 int pow = (int) Math.log10(housesIdSequence);
                 if (housesIdSequence % (int) Math.pow(10 , pow) == 0){
                     Logger.i(TAG, "Inserted houses: " + housesIdSequence);

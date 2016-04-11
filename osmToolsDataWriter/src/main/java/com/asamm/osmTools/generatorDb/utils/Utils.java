@@ -53,6 +53,7 @@ public class Utils {
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
 
         return textNorm.replaceAll("[~!@#$%^&*()\\-_+=`\\|\\\\:;'<>,.\\/?]", " ").replaceAll("[ ]{2,}", " ").trim();
+
     }
 
     /**************************************************/

@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class CmdCountryBorders extends  Cmd{
 
-    private static final int COUNTRY_BOUND_ADMIN_LEVEL = 2;
+    private static final int COUNTRY_BOUND_ADMIN_LEVELS[] = new int[] {2,3,4};
 
     /**
      * File to filter source item
@@ -46,7 +46,18 @@ public class CmdCountryBorders extends  Cmd{
         addCommand("reject-relations");
         addCommand("--tf");
         addCommand("accept-ways");
-        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
+
+        String cmdAdminLevel = "";
+        for (int i=0; i < COUNTRY_BOUND_ADMIN_LEVELS.length; i++ ){
+            if (i == 0){
+                cmdAdminLevel = "admin_level=" + COUNTRY_BOUND_ADMIN_LEVELS[i];
+            }
+            else {
+                cmdAdminLevel += "," + COUNTRY_BOUND_ADMIN_LEVELS[i];
+            }
+        }
+        addCommand(cmdAdminLevel);
+
         addCommand("--used-node");
         addCommand("outPipe.0=Ways");
 
@@ -54,7 +65,17 @@ public class CmdCountryBorders extends  Cmd{
         addReadSource();
         addCommand("--tf");
         addCommand("accept-relations");
-        addCommand("admin_level=" + COUNTRY_BOUND_ADMIN_LEVEL);
+        cmdAdminLevel = "";
+        for (int i=0; i < COUNTRY_BOUND_ADMIN_LEVELS.length; i++ ){
+            if (i == 0){
+                cmdAdminLevel = "admin_level=" + COUNTRY_BOUND_ADMIN_LEVELS[i];
+            }
+            else {
+                cmdAdminLevel += "," + COUNTRY_BOUND_ADMIN_LEVELS[i];
+            }
+        }
+        addCommand(cmdAdminLevel);
+
         addCommand("--used-way");
         addCommand("--used-node");
         addCommand("outPipe.0=Relations");
@@ -70,7 +91,7 @@ public class CmdCountryBorders extends  Cmd{
 
 
     /**
-     * Prepare commnad line for generation precise country boundary
+     * Prepare command line for generation precise country boundary
      */
     public void addGeneratorCountryBoundary() {
 
@@ -79,8 +100,6 @@ public class CmdCountryBorders extends  Cmd{
 
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=country");
-        // TODO it's needed to defined admin level? Probably all countries are in level=2
-        addCommand("-countryAdminLevel=" + COUNTRY_BOUND_ADMIN_LEVEL);
     }
 
     /**
@@ -105,6 +124,5 @@ public class CmdCountryBorders extends  Cmd{
 
         addCommand(sb.toString());
     }
-    
 }
 
