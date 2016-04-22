@@ -296,6 +296,10 @@ public class HouseController extends AaddressController {
         house.addIsIn(cityName);
         house.addIsIn(placeName);
 
+        if (!house.isValid()){
+            return null;
+        }
+
         return house;
     }
 
@@ -840,7 +844,11 @@ public class HouseController extends AaddressController {
         int size = housesToBuffer.size();
         Polygon[] polygons = new Polygon[size];
         for (int i=0; i < size ; i++){
-            polygons[i] = GeomUtils.createRectangle(housesToBuffer.get(i).getCenter().getCoordinate(), buffer);
+            Point center  = housesToBuffer.get(i).getCenter();
+            if (!center.isValid()){
+                continue;
+            }
+            polygons[i] = GeomUtils.createRectangle(center.getCoordinate(), buffer);
         }
         return geometryFactory.createMultiPolygon(polygons);
     }
@@ -1074,6 +1082,10 @@ public class HouseController extends AaddressController {
             house.setStreetName(startHouse.getStreetName());
             house.setCityName(startHouse.getCityName());
 
+            if (!house.isValid()){
+                continue;
+            }
+
             houses.add(house);
         }
 
@@ -1193,7 +1205,9 @@ public class HouseController extends AaddressController {
                 house2.setStreetName(streetName2);
 
                 houses.add(house1);
-                houses.add(house2);
+                if (house2.isValid()){
+                    houses.add(house2);
+                }
             }
         }
         else {

@@ -303,7 +303,17 @@ public class GeomUtils {
         gsf.setHeight(dLat * 2 );
         gsf.setNumPoints(numPoints);
 
-        return gsf.createRectangle();
+
+        Polygon poly = null;
+        try {
+            poly = gsf.createRectangle();
+        }
+        catch (Exception e) {
+            Logger.i("GeomUtils", "Can not create circle from center point: "  + center.toString());
+            throw new IllegalArgumentException("Can not create circle");
+        }
+
+        return poly;
     }
 
     public static Polygon createRectangle (Coordinate center, double distance){

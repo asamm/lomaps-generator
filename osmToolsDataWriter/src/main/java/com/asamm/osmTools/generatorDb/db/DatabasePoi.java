@@ -4,6 +4,7 @@ import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.utils.Logger;
+import locus.api.utils.Utils;
 
 import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 

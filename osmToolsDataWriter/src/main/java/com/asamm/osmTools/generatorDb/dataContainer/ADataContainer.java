@@ -230,7 +230,7 @@ public abstract class ADataContainer {
     public WayEx getWay (Way way){
 
         if (way == null){
-            //Logger.e(TAG, "getWays(), cannot load way from cache. Id:" + wayId);
+            //Logger.e(TAG, "getWays(), cannot load way from cache. Id:" + way.getId());
             return null;
         }
 
@@ -244,6 +244,7 @@ public abstract class ADataContainer {
 
 	public List<WayEx> getWays() {
         List<WayEx> validWays = new ArrayList<WayEx>();
+
         for (int i=0, size = wayIds.size(); i < size; i++) {
         	WayEx we = getWay(wayIds.get(i));
             if (we != null){

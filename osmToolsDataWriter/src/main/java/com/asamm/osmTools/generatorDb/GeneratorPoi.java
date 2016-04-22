@@ -20,11 +20,11 @@ public class GeneratorPoi extends AGenerator {
 	private File outputDb;
 	
 	// handler for tags
-	private WriterPoiDefinition nodeHandler;
+	private WriterPoiDefinition writerPoiDefinition;
 	
 	public GeneratorPoi(File outputDbFile, WriterPoiDefinition nodeHandler) throws Exception {
 		this.outputDb = outputDbFile;
-		this.nodeHandler = nodeHandler; 
+		this.writerPoiDefinition = nodeHandler;
 		
 		// initialize generator
 		initialize();
@@ -32,15 +32,18 @@ public class GeneratorPoi extends AGenerator {
 
 	@Override
 	protected ADatabaseHandler prepareDatabase() throws Exception {
-		return new DatabasePoi(outputDb, nodeHandler);
+		return new DatabasePoi(outputDb, writerPoiDefinition);
 	}
 
     @Override
     public void proceedData(ADataContainer dc) {
         // handle nodes
         List<Node> nodes = dc.getNodes();
-        for (int i = 0, m = nodes.size(); i < m; i++) {
-            addNodeImpl(nodes.get(i), db);
+        for (Node node : nodes) {
+            // nodes was not tested during loading test it now
+            if (writerPoiDefinition.isValidNode(node)){
+                addNodeImpl(node, db);
+            }
         }
 
         // handle ways
@@ -60,7 +63,7 @@ public class GeneratorPoi extends AGenerator {
 	
 	private AOsmObject addObject(Entity entity, ADatabaseHandler db) {
  		// generate OSM POI object
-		OsmPoi poi = OsmPoi.create(entity, nodeHandler);
+		OsmPoi poi = OsmPoi.create(entity, writerPoiDefinition);
 		if (poi == null) {
 			return null;
 		}

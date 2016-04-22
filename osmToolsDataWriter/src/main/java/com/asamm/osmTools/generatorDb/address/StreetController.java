@@ -664,8 +664,6 @@ public class StreetController extends AaddressController {
 
         // RECOGNIZE BY DISTANCE ONLY CITIES WITHOUT BOUNDARIES
 
-
-
         // for rest of cities that does not have defined the bounds check distance
         if (areFoundedCitiesSuburbs){
             // sort cities without bounds by relative distance to place
@@ -676,13 +674,30 @@ public class StreetController extends AaddressController {
                 // test if city is inside radius of city type
                 double distance = Utils.getDistance(centroid, city.getCenter());
                 if (distance < city.getType().getRadius() && !isCityTypeInList(city.getType(), foundCities)){
-                    // place is inside of readius this city and city type is not in list of founded cities
+                    // place is inside of radius this city and city type is not in list of founded cities
                     areFoundedCitiesSuburbs = false;
                     foundCities.add(city);
-
                 }
             }
-            timeFindCityTestByDistance += System.currentTimeMillis() - start;
+        }
+
+
+
+        if (areFoundedCitiesSuburbs){
+            // it seems that list of cities without bounds does not contain any useful city so try to check all cities around
+
+            sortByRelativeDistance(centroid, citiesAround);
+
+            start = System.currentTimeMillis();
+            for (City city : citiesAround){
+                // test if city is inside radius of city type
+                double distance = Utils.getDistance(centroid, city.getCenter());
+                if (distance < city.getType().getRadius() && !isCityTypeInList(city.getType(), foundCities)){
+                    // place is inside of radius this city and city type is not in list of founded cities
+                    areFoundedCitiesSuburbs = false;
+                    foundCities.add(city);
+                }
+            }
         }
 
         // GET CLOSEST FROM LOADED
