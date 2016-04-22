@@ -106,11 +106,11 @@ public class DatabaseAddress extends ADatabaseHandler {
     private static boolean deleteOldDb = false;
 
     /** Only for testing when table houses contains all house values and table is not deleted*/
-    private static boolean hasHousesTableWithGeom = true;
+    private static boolean hasHousesTableWithGeom = false;
 
     private static boolean hasTableOfRemovedHouses = false;
 
-    private static boolean hasCitiesCenterGeomColumn = false;
+    private static boolean hasCitiesCenterGeomColumn = true;
 
 
     public DatabaseAddress(File file) throws Exception {

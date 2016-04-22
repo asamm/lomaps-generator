@@ -15,7 +15,7 @@ import java.util.Collection;
 public class OsmUtils {
     /**
      * Get value of tag for entity
-     * @param entity enrity to get tag
+     * @param entity entity to get tag
      * @param key name of tag
      * @return value of tag or null if tag is not defined
      */

@@ -67,6 +67,16 @@ public class House extends Storable{
         this.center = center;
     }
 
+    public boolean isValid() {
+        if (number.length() == 0 || name.length() == 0){
+            return false;
+        }
+        if (center == null || !center.isValid()){
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Test if street name for house is defined
      * @return true if house has street name
@@ -260,4 +270,6 @@ public class House extends Storable{
         //hash = hash * 37 + place.hashCode();
         return hash;
     }
+
+
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
+import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.CommonEntityData;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -32,6 +33,7 @@ public class WayEx extends Way {
 	public boolean fillNodes(ADataContainer dc) {
 		nodes.clear();
         int wayNodesSize = getWayNodes().size();
+
         long[] ids = new long[wayNodesSize];
 		for (int i = 0; i < wayNodesSize; i++) {
 			WayNode wn = getWayNodes().get(i);

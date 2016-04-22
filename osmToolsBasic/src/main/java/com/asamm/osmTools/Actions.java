@@ -506,21 +506,21 @@ class Actions {
         cmdPoiFilter.execute();
 
         // now execute db poi generating
-        CmdDataPlugin cmdGen = new CmdDataPlugin(map);
-        cmdGen.addGeneratorPoiDb();
-        Logger.i(TAG, "Generate POI DB, command: " + cmdGen.getCmdLine() );
-        //cmdGen.execute();
+        CmdDataPlugin cmdPoi = new CmdDataPlugin(map);
+        cmdPoi.addGeneratorPoiDb();
+        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
+        cmdPoi.execute();
 
         //Address generation
         CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
         cmdAddressFilter.addTaskSimplifyForAddress();
         Logger.i(TAG, "Filter data for Address DB, command: " + cmdAddressFilter.getCmdLine());
-        cmdAddressFilter.execute();
+        //cmdAddressFilter.execute();
 
         CmdDataPlugin cmdAddres = new CmdDataPlugin(map);
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
-        cmdAddres.execute();
+        //cmdAddres.execute();
 
         // delete tmp file
         cmdAddres.deleteTmpFile();

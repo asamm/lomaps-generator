@@ -2,6 +2,8 @@ package com.asamm.osmTools.generatorDb.data;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
+import com.asamm.osmTools.utils.Logger;
+import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
@@ -22,6 +24,11 @@ public class OsmPoi extends AOsmObject {
 	}
 	
 	public static OsmPoi create(Entity entity, WriterPoiDefinition nodeHandler) {
+
+        if (entity.getId() == 248801135){
+            Logger.i("Create", "Start POI from entity: " + Utils.toString(entity));
+        }
+
 		// check type
 		if (!(entity instanceof Node || entity instanceof WayEx)) {
 			return null;
@@ -70,6 +77,7 @@ public class OsmPoi extends AOsmObject {
 	}
 	
 	private void handleWay(WayEx way) {
+
         int size = way.getNodes().size();
         if (size <= 0){
             return;
@@ -121,6 +129,7 @@ public class OsmPoi extends AOsmObject {
 
     @Override
 	protected boolean isValidPrivate() {
+
 		// check type
 		if (rootSubContainer == null || rootSubContainer.size() == 0) {
 			return false;

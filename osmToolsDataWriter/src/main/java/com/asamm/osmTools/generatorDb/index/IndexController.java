@@ -90,6 +90,9 @@ public class IndexController {
         double distance = 5000;
 
         List cityFromIndex = new ArrayList();
+        if ( !centerPoint.isValid()){
+            return cityFromIndex;
+        }
 
         int numOfResize = 0;
         while (cityFromIndex.size() < minNumber) {
@@ -127,6 +130,10 @@ public class IndexController {
         double distance = 200;
 
         List<Street> streetsFromIndex = new ArrayList();
+        if ( !centerPoint.isValid()){
+            // center point is not valid not able to find street
+            return streetsFromIndex;
+        }
 
         int numOfResize = 0;
         Polygon searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
