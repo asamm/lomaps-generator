@@ -99,7 +99,7 @@ public abstract class ADatabaseHandler {
     }
 
 	protected void executeStatement(String sql) throws SQLException {
-		Logger.i(TAG, "executeStatement(" + sql + ")");
+		//Logger.i(TAG, "executeStatement(" + sql + ")");
 		stmt.execute(sql);
 	}
 	

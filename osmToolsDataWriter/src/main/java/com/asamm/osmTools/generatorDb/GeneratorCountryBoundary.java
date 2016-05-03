@@ -13,7 +13,6 @@ import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

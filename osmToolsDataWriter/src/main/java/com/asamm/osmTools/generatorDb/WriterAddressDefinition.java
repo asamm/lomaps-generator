@@ -4,12 +4,14 @@ import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import gnu.trove.map.TLongLongMap;
 import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -34,6 +36,9 @@ public class WriterAddressDefinition extends AWriterDefinition{
     // id of "default" map > it's definition for map that are not defined in xml
     private static final String DEFAULT_MAP_ID = "default_definition";
 
+    /** Individual boundary phrases are separated by pipe*/
+    private static final String BOUNDARY_PHRASES_SEPARATOR = "|";
+
 
     /**
      *  Configuration parameters from plugin command lines
@@ -54,10 +59,13 @@ public class WriterAddressDefinition extends AWriterDefinition{
      * Custom settings that map specific city to specific boundary
      * Map is created like <osmBoundaryId | osmCityId>
      */
-    //private Map<Long, Long> bundaryCityMapper;
+     private TLongLongMap bundaryCityMapper;
 
 
-    private TLongLongMap bundaryCityMapper;
+    /**
+     * List of boundary general names that can be removed from boundary name to find city for boundary
+     */
+    private THashSet<String> boundaryPhrases;
 
     /**
      * Intersection of country border with map data area. For this intersection will be map generated
@@ -92,6 +100,7 @@ public class WriterAddressDefinition extends AWriterDefinition{
         regionAdminLevel = 0;
         cityAdminLevels = new int[0];
         bundaryCityMapper = new TLongLongHashMap();
+        boundaryPhrases = new THashSet<>();
     }
 
     public boolean isValidEntity(Entity entity) {
@@ -272,40 +281,40 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         XmlParser parser = new XmlParser(confAddress.getFileConfigXml()) {
 
-            boolean isInMaps = false;
+            boolean isMapId = false;
 
             @Override
             public boolean tagStart(XmlPullParser parser, String tagName) throws Exception {
 
-                if (tagName.equals("maps")) {
-                    isInMaps = true;
-                }
-                else if (isInMaps) {
-                    if (tagName.equals("map")) {
+                if (tagName.equals("map")) {
 
-                        String id = parser.getAttributeValue(null, "id");
+                    String id = parser.getAttributeValue(null, "id");
+                    isMapId = id.equals(mapId);
 
-                        if (id.equals(DEFAULT_MAP_ID) || id.equals(mapId) ){
-                            // save definition for default or needed map by mapId
-                            String strCityLevels = parser.getAttributeValue(null, "cityLevels");
-                            String strRegionLevel = parser.getAttributeValue(null, "regionLevel");
-                            cityAdminLevels = parseCityRange(strCityLevels, parser);
-                            regionAdminLevel = parseRegionLevel(strRegionLevel, parser);
-                        }
-                    }
-                    if (tagName.equals("boundaryMapper")){
-                        parseCityBoundaryMapper (parser);
+                    if (id.equals(DEFAULT_MAP_ID) || isMapId){
+                        // save definition for default or needed map by mapId
+                        String strCityLevels = parser.getAttributeValue(null, "cityLevels");
+                        String strRegionLevel = parser.getAttributeValue(null, "regionLevel");
+                        cityAdminLevels = parseCityRange(strCityLevels, parser);
+                        regionAdminLevel = parseRegionLevel(strRegionLevel, parser);
+
 
                     }
                 }
+
+                if (isMapId && tagName.equals("boundaryMapper")){
+                    parseCityBoundaryMapper (parser);
+                }
+                if (isMapId && tagName.equals("boundaryPhrases")){
+                    parseBoundaryPhrases(parser);
+                }
+
                 return true;
             }
 
             @Override
             public boolean tagEnd(XmlPullParser parser, String tagName) throws Exception {
-                if (tagName.equals("maps")) {
-                    isInMaps = false;
-                }
+
                 return true;
             }
 
@@ -315,6 +324,7 @@ public class WriterAddressDefinition extends AWriterDefinition{
 
         parser.parse();
     }
+
 
     /**
      * Parse definition which city id has some boundary id
@@ -334,6 +344,31 @@ public class WriterAddressDefinition extends AWriterDefinition{
         }
 
         bundaryCityMapper.put(Long.valueOf(boundaryid), Long.valueOf(cityid));
+    }
+
+    /**
+     * Parse individual words / phrases for string of boundary phrases
+     * @param parser
+     */
+    private void parseBoundaryPhrases(XmlPullParser parser) {
+        String value = parser.getAttributeValue(null, "phrases");
+
+        if (value == null || value.length() == 0){
+            return;
+        }
+        if (value.contains(BOUNDARY_PHRASES_SEPARATOR)){
+            String [] phrases = value.split(BOUNDARY_PHRASES_SEPARATOR);
+            for (String word : phrases){
+                boundaryPhrases.add(word.trim());
+            }
+        }
+        else {
+            boundaryPhrases.add(value.trim());
+        }
+
+        for (String word : boundaryPhrases) {
+            Logger.i(TAG, " boudary phrases: " + word);
+        }
     }
 
 
@@ -420,6 +455,10 @@ public class WriterAddressDefinition extends AWriterDefinition{
         return preparedDbGeom.intersects(centroid);
     }
 
+
+    public THashSet<String> getBoundaryPhrases() {
+        return boundaryPhrases;
+    }
 
     /**
      * Define area for which will be created addresses

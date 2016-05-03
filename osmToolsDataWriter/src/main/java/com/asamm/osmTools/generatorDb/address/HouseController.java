@@ -23,6 +23,7 @@ import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
+import sun.rmi.runtime.Log;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -66,6 +67,7 @@ public class HouseController extends AaddressController {
      * First nodes of interpolation ways have defined address data avoid to create them again from nodes.
      */
     private TLongHashSet houseIdsFromInterpolations;
+    public int housecounter = 0;
 
 
     public HouseController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad) {
@@ -297,9 +299,11 @@ public class HouseController extends AaddressController {
         house.addIsIn(placeName);
 
         if (!house.isValid()){
+            Logger.w(TAG, "parseHouseData() House is not valid: " + house.toString());
             return null;
         }
 
+        housecounter ++;
         return house;
     }
 
@@ -481,7 +485,7 @@ public class HouseController extends AaddressController {
      * @return city where house is in or null if there is no city around
      */
     private City findNearestCityIsIn(House house){
-        List<City> cities = StreetController.findCitiesForPlace(house.getCenter(),house.getIsIn() );
+        List<City> cities = StreetController.findCitiesForPlace(house.getCenter(),house.getIsIn(), house.getOsmId());
         return StreetController.getNearestCity(house.getCenter(), cities);
     }
 
@@ -519,11 +523,12 @@ public class HouseController extends AaddressController {
                 }
                 continue;
             }
-            // GROUP HOUSES BY BOUNDARY
-            THashMap<City, List<House>> groupedHousesMap = groupHousesByCitiesNew(houses);
+            // GROUP HOUSES BY CITY
+            THashMap<List<City>, List<House>> groupedHousesMap = groupHousesByCitiesNew(houses);
 
-            for (Map.Entry<City, List<House>> entryG : groupedHousesMap.entrySet()){
-                City city = entryG.getKey();
+            for (Map.Entry<List<City>, List<House>> entryG : groupedHousesMap.entrySet()){
+
+                List<City> cities = entryG.getKey();
 
                 List<House> housesGrouped = entryG.getValue();
 
@@ -531,7 +536,7 @@ public class HouseController extends AaddressController {
                 if (sizeGroupedHouses < 2){
                     // at least two houses with the same placename in every boundary are required
                     if (sizeGroupedHouses == 1){
-                        databaseAddress.insertRemovedHouse(houses.get(0), "Only one house in city: " + city.getName());
+                        databaseAddress.insertRemovedHouse(houses.get(0), "Only one house in city: " + citiesNames(cities));
                     }
                     continue;
                 }
@@ -550,7 +555,7 @@ public class HouseController extends AaddressController {
                     for (House houseToRemove : housesGrouped){
                         databaseAddress.insertRemovedHouse(houseToRemove, "" +
                                 "Not found street for grouped houses with placeName: " +
-                                streetPlaceName + ", and city: " + city.getName());
+                                streetPlaceName + ", and city: " + citiesNames(cities));
                     }
                     continue;
                 }
@@ -563,7 +568,7 @@ public class HouseController extends AaddressController {
                 // cut the geometry only around the houses
 
                 long start3 = System.currentTimeMillis();
-                MultiLineString mlsCutted = createGeomUnnamedWayStreets(city, mpBuffer, unNamedWayStreets);
+                MultiLineString mlsCutted = createGeomUnnamedWayStreets(cities, mpBuffer, unNamedWayStreets);
 
                 if (mlsCutted == null || mlsCutted.isEmpty()){
                     Logger.w(TAG, "processHouseWithoutStreet(): Not able create geometry for street of grouped houses: " +
@@ -571,17 +576,20 @@ public class HouseController extends AaddressController {
                     for (House houseToRemove : housesGrouped){
                         databaseAddress.insertRemovedHouse(houseToRemove, "" +
                                 "Not able to create cut multilinestring : " +
-                                streetPlaceName + ", and city: " + city.getName());
+                                streetPlaceName + ", and city: " + citiesNames(cities));
                     }
                     continue;
                 }
                 wayStreet.setGeometry(mlsCutted);
                 timeCreateUnamedStreetGeom += System.currentTimeMillis() - start3;
 
-                // find cities for way
-                List<City> cities = sc.findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn());
+                // How to find the cities for created way
+                // Solution A - find cities where created wayStreet is in but it can cause that some cities are wrong
+//                List<City> cities = sc.findCitiesForPlace(wayStreet.getGeometry(), wayStreet.getIsIn(), wayStreet.getOsmId());
+//                wayStreet.addCities(cities);
+
+                // Solution B - add only city of group of houses but it causes duplication of streets
                 wayStreet.addCities(cities);
-                //wayStreet.addCityId(city.getOsmId());
 
 
                 dc.addWayStreetHashName(wayStreet);
@@ -611,65 +619,78 @@ public class HouseController extends AaddressController {
 //                    }
 //                }
 
-                    THashSet<House> houses = joinedStreet.getHouses();
-                    // insert street into DB
-                    databaseAddress.insertStreet(joinedStreet);
-                    // insert houses into DB
-                    for (House house : houses) {
-                        databaseAddress.insertHouse(joinedStreet, house);
-                    }
+                THashSet<House> houses = joinedStreet.getHouses();
+                // insert street into DB
+                databaseAddress.insertStreet(joinedStreet);
+                // insert houses into DB
+                for (House house : houses) {
+                    databaseAddress.insertHouse(joinedStreet, house);
+                }
 
             }
         });
     }
 
     /**
-     * Takes all houses that has defined same name street or the same place name.
-     * Split list on part of houses that belong to the one city
-     *
-     * @param housesToGroup list of houses that has defined the same street name or place name
-     * @return list of houses grouped by boundary area
+     * Only for logging create names String of cities from list of city
+     * @param cities to get it's names
+     * @return names of cities in one string
      */
-    private THashMap<City, List<House>> groupHousesByCities(List<House> housesToGroup) {
-
-        long start = System.currentTimeMillis();
-
-        THashMap<City, List<House>> groupedHousesMap = new THashMap<>();
-
-        // prepare temporary index for houses of the same name
-        STRtree index = new STRtree();
-        //Logger.i(TAG, "groupHousesByCities() Index num of houses: " + housesToGroup.size());
-        for (House house : housesToGroup){
-
-            index.insert(house.getCenter().getEnvelopeInternal(), house);
-        }
-
-        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
-        Collection<City> cities = dc.getCities();
-
+    private String citiesNames (List<City> cities){
+        String names = "";
         for (City city : cities){
-            Boundary boundary = centerCityBoundaryMap.getValue(city);
-
-            if (boundary == null){
-                continue;
-            }
-
-            PreparedGeometry pgBoundary = PreparedGeometryFactory.prepare(boundary.getGeom());
-            List<House> housesFromIndex = index.query(boundary.getGeom().getEnvelopeInternal());
-            for (int i = housesFromIndex.size() - 1; i >= 0; i-- ){
-                // remove houses that are in envelope but not are inside real boundary geom
-                House houseToCheck = housesFromIndex.get(i);
-                if ( !pgBoundary.intersects(houseToCheck.getCenter())){
-                    housesFromIndex.remove(i);
-                }
-            }
-            if (housesFromIndex.size() > 0){
-                groupedHousesMap.put(city, housesFromIndex);
-            }
+            names += city.getName() + ", ";
         }
-        timeGroupByCity += System.currentTimeMillis() - start;
-        return groupedHousesMap;
+        return names;
     }
+//
+//    /**
+//     * Takes all houses that has defined same name street or the same place name.
+//     * Split list on part of houses that belong to the one city
+//     *
+//     * @param housesToGroup list of houses that has defined the same street name or place name
+//     * @return list of houses grouped by boundary area
+//     */
+//    private THashMap<City, List<House>> groupHousesByCities(List<House> housesToGroup) {
+//
+//        long start = System.currentTimeMillis();
+//
+//        THashMap<City, List<House>> groupedHousesMap = new THashMap<>();
+//
+//        // prepare temporary index for houses of the same name
+//        STRtree index = new STRtree();
+//        //Logger.i(TAG, "groupHousesByCities() Index num of houses: " + housesToGroup.size());
+//        for (House house : housesToGroup){
+//
+//            index.insert(house.getCenter().getEnvelopeInternal(), house);
+//        }
+//
+//        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
+//        Collection<City> cities = dc.getCities();
+//
+//        for (City city : cities){
+//            Boundary boundary = centerCityBoundaryMap.getValue(city);
+//
+//            if (boundary == null){
+//                continue;
+//            }
+//
+//            PreparedGeometry pgBoundary = PreparedGeometryFactory.prepare(boundary.getGeom());
+//            List<House> housesFromIndex = index.query(boundary.getGeom().getEnvelopeInternal());
+//            for (int i = housesFromIndex.size() - 1; i >= 0; i-- ){
+//                // remove houses that are in envelope but not are inside real boundary geom
+//                House houseToCheck = housesFromIndex.get(i);
+//                if ( !pgBoundary.intersects(houseToCheck.getCenter())){
+//                    housesFromIndex.remove(i);
+//                }
+//            }
+//            if (housesFromIndex.size() > 0){
+//                groupedHousesMap.put(city, housesFromIndex);
+//            }
+//        }
+//        timeGroupByCity += System.currentTimeMillis() - start;
+//        return groupedHousesMap;
+//    }
 
     /**
      * Takes all houses that has defined same name street or the same place name.
@@ -678,29 +699,45 @@ public class HouseController extends AaddressController {
      * @param housesToGroup list of houses that has defined the same street name or place name
      * @return list of houses grouped by boundary area
      */
-    private THashMap<City, List<House>> groupHousesByCitiesNew(List<House> housesToGroup) {
+    private THashMap<List<City>, List<House>> groupHousesByCitiesNew(List<House> housesToGroup) {
 
         long start = System.currentTimeMillis();
 
-        THashMap<City, List<House>> groupedHousesMap = new THashMap<>();
+        THashMap<List<City>, List<House>> groupedHousesMap = new THashMap<>();
 
         for (House house : housesToGroup){
 
             // for every house find cities is in
-            List<City> cities = StreetController.findCitiesForPlace(house.getCenter(), house.getIsIn());
+            List<City> cities = StreetController.findCitiesForPlace(house.getCenter(), house.getIsIn(), house.getOsmId());
+
             if (cities.size() == 0){
                 databaseAddress.insertRemovedHouse(house, "Can not find any city around fo house");
                 continue;
             }
-            for (City city : cities){
 
-                List<House> housesInCity = groupedHousesMap.get(city);
-                if (housesInCity == null){
-                    housesInCity = new ArrayList<>();
-                    groupedHousesMap.put(city, housesInCity);
+            // sort because comparing of list in map of houses
+            Collections.sort(cities, new Comparator<City>() {
+                @Override
+                public int compare(City city1, City city2) {
+                    return city1.getOsmId() < city2.getOsmId() ? -1 : city1.getOsmId() == city2.getOsmId() ? 0 : 1;
                 }
-                housesInCity.add(house);
+            });
+//            for (City city : cities){
+//                List<House> housesInCity = groupedHousesMap.get(city);
+//                if (housesInCity == null){
+//                    housesInCity = new ArrayList<>();
+//                    groupedHousesMap.put(city, housesInCity);
+//                }
+//                housesInCity.add(house);
+//            }
+
+            List<House> housesInCity = groupedHousesMap.get(cities);
+            if (housesInCity == null){
+                housesInCity = new ArrayList<>();
+                groupedHousesMap.put(cities, housesInCity);
             }
+            housesInCity.add(house);
+
         }
 
         timeGroupByCity += System.currentTimeMillis() - start;
@@ -756,13 +793,13 @@ public class HouseController extends AaddressController {
     /**
      * Prepare geometry for waystreets that are around grouped hauses. Join way's geoms into one multiline
      * and this multiline is cut by the multipolygon of buffered houses
-     * @param city city for whih are houses grouped
+     * @param cities city for whih are houses grouped
      * @param bufferedHouses multipolygon define geoms that cut the multiline of ways
      * @param unNamedWayStreets wayStreets from this ways will be create the final geom
      * @return joined geometry that is cut by houses buffer
      */
     public MultiLineString createGeomUnnamedWayStreets (
-            City city, MultiPolygon bufferedHouses, List<Street> unNamedWayStreets){
+            List<City> cities, MultiPolygon bufferedHouses, List<Street> unNamedWayStreets){
 
         // join the ways into one line
         LineMerger lineMerger = new LineMerger();
@@ -784,9 +821,20 @@ public class HouseController extends AaddressController {
 
         // cut the line by the joined geometry > the result is multiline around the houses
         mls = cutMlsByBoundary(mls, joinedBuffers);
+
+        // cut the lines by cities
+        List<Geometry> cityGeoms = new ArrayList<>();
+        for (City city : cities){
+            if (city.getGeom() != null){
+                cityGeoms.add(city.getGeom());
+            }
+        }
+        unaryUnionOp = new UnaryUnionOp(cityGeoms);
+        Geometry geomBorders = unaryUnionOp.union();
+
         // cut it again to cut part of streets that are outside of city boundary
-        if (city.getGeom() != null && city.getGeom().isValid()) {
-            mls = cutMlsByBoundary(mls, city.getGeom());
+        if (geomBorders != null && geomBorders.isValid()) {
+            mls = cutMlsByBoundary(mls, geomBorders);
         }
 
         return mls;

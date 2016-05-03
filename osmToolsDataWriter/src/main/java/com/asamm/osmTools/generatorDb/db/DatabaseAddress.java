@@ -708,9 +708,8 @@ public class DatabaseAddress extends ADatabaseHandler {
     /**
      * Insert city object into address database
      * @param city city to insert
-     * @param boundary boundary for city (can be null if no boundary is created for city)
      */
-    public void insertCity(City city, Boundary boundary) {
+    public void insertCity(City city) {
 
         //Logger.i(TAG, "Insert city:  " + city.toString());
 
@@ -739,14 +738,14 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             if (hasCitiesCenterGeomColumn){
                 psInsertCity.setBytes(7, wkbWriter.write(city.getCenter()));
-                if (boundary != null ){
-                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                if (city.getGeom() != null ){
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
                     psInsertCity.setBytes(8, wkbWriter.write(geomSimplified));
                 }
             }
             else {
-                if (boundary != null ){
-                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                if (city.getGeom() != null ){
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
                     psInsertCity.setBytes(7, wkbWriter.write(geomSimplified));
                 }
             }

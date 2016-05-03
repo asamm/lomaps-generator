@@ -17,6 +17,7 @@ import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.set.hash.THashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
@@ -90,13 +91,21 @@ public class CityController extends AaddressController {
             city.setCenter(center);
             city.setIsIn(OsmUtils.getTagValue(node, OsmConst.OSMTagKey.IS_IN));
 
+            city.setCapital(OsmUtils.getTagValue(node, OSMTagKey.CAPITAL));
+            city.setWebsite(OsmUtils.getTagValue(node, OSMTagKey.WEBSITE));
+            city.setWikipedia(OsmUtils.getTagValue(node, OSMTagKey.WIKIPEDIA));
+            String populStr = OsmUtils.getTagValue(node, OSMTagKey.POPULATION);
+            if (populStr != null && Utils.isInteger(populStr)){
+                city.setPopulation(Integer.valueOf(populStr));
+            }
+
             if (!city.isValid()){
                 Logger.d(TAG, "City is not valid. Do not add into city cache. City: " + city.toString());
                 continue;
             }
-            // add crated city into list and also into index
+            // add crated city into list and also into index Center index is used for finding boundaries
             dc.addCity(city);
-            IndexController.getInstance().insertCity(city.getCenter().getEnvelopeInternal(), city);
+            IndexController.getInstance().insertCityCenter(city.getCenter().getEnvelopeInternal(), city);
         }
 
         Logger.i(TAG, "loadCityPlaces: " + dc.getCitiesMap().size() + " cities were created and loaded into cache");
@@ -112,7 +121,7 @@ public class CityController extends AaddressController {
      *                    boundaries also the boundaries from neighbour country will be add into data
      * @return boundary or null is is not possible to crate boundary from entity
      */
-    public  Boundary create (Entity entity, boolean isCloseRing) {
+    public  Boundary create(Entity entity, boolean isCloseRing) {
 
         if (entity == null || entity.getType() == EntityType.Node){
             return null;
@@ -226,13 +235,12 @@ public class CityController extends AaddressController {
         boundary.setNamesInternational(OsmUtils.getNamesLangMutation(entity, "name", bName));
         boundary.setOfficialNamesInternational(OsmUtils.getNamesLangMutation(entity, "official_name", bName));
 
-//        if (hasChildRelation){
-//            Logger.i(TAG, "Administrative/place entity id: " + entity.getId() +" has other relation as member. " +
-//                    "Check created geometry: " + boundary.toGeoJsonString());
-//        }
-//        if (boundary.getName().equals("Delmenhorst")){
-//            Logger.i(TAG, "Administrative/place entity: " + boundary.toString());
-//        }
+        boundary.setWebsite(OsmUtils.getTagValue(entity, OSMTagKey.WEBSITE));
+        boundary.setWikipedia(OsmUtils.getTagValue(entity, OSMTagKey.WIKIPEDIA));
+        String populStr = OsmUtils.getTagValue(entity, OSMTagKey.POPULATION);
+        if (populStr != null && Utils.isInteger(populStr)){
+            boundary.setPopulation(Integer.valueOf(populStr));
+        }
 
         //Logger.i(TAG, "Administrative/place entity: " + boundary.toString());
 
@@ -383,6 +391,17 @@ public class CityController extends AaddressController {
             return true;
         }
 
+        // try to remove general boundary names like, obec, gemainde, land..
+        THashSet<String> boundaryPhrases = wad.getBoundaryPhrases();
+        for (String word : boundaryPhrases){
+            if (bName.contains(word)){
+                bName.replace(word,"");
+                if (bName.startsWith(cName+" ") || bName.endsWith(" "+ cName) || bName.contains( " " + cName + " ")){
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -494,6 +513,50 @@ public class CityController extends AaddressController {
         }
 
         return parentRegion;
+    }
+
+
+    // PRIORITY
+
+    /**
+     * Compute the how the city is important based on num of population, number of international names or wiki links
+     * @param city city to compute importance
+     * @return value from 1 - 9 where higher is higher priority
+     */
+    public static double computeCityPriority (City city){
+
+        double priority = 1;
+
+        // population
+        int population = city.getPopulation();
+        // number of languages
+        int langNames = city.getNamesInternational().size();
+
+        if (population > 500000){
+            if (population < 1000000){
+                priority += 1;
+            }
+            else if (population >= 1000000){
+                priority += 1.75;
+            }
+        }
+        else if (langNames > 5){
+            if (langNames < 12){
+                priority += 0.75;
+            }
+            else if (langNames <20){
+                priority += 1;
+            }
+            else if (langNames >=30){
+                priority += 1.5;
+            }
+        }
+
+        // website or wiki
+//        if (city.getWebsite().length() > 0 || city.getWikipedia().length() > 0){
+//            priority += 1;
+//        }
+        return priority;
     }
 
 }

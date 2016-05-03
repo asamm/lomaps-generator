@@ -1,7 +1,5 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import gnu.trove.map.hash.THashMap;
@@ -34,6 +32,16 @@ public class Boundary {
 
     /** All possible official names, <langCode|name> This is used for country borders*/
     private THashMap<String, String> officialNamesInternational;
+
+
+    /** The number of citizens in a given city   (used for city importance)  */
+    private int population;
+
+    /** URL of city   (used for city importance)*/
+    private String website;
+
+    /** part of URL for wiki page about place   (used for city importance)*/
+    private String wikipedia;
 
     private MultiPolygon geom;
 
@@ -82,6 +90,8 @@ public class Boundary {
 
         name = "";
         shortName = "";
+        website = "";
+        wikipedia = "";
     }
 
     /**
@@ -170,6 +180,35 @@ public class Boundary {
 
     public MultiPolygon getGeom() {
         return geom;
+    }
+
+
+    public int getPopulation() {
+        return population;
+    }
+
+    public void setPopulation(int population) {
+        this.population = population;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        if (website != null){
+            this.website = website;
+        }
+    }
+
+    public String getWikipedia() {
+        return wikipedia;
+    }
+
+    public void setWikipedia(String wikipedia) {
+        if (wikipedia != null){
+            this.wikipedia = wikipedia;
+        }
     }
 
     public void setGeom(MultiPolygon geom) {

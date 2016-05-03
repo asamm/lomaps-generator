@@ -25,7 +25,7 @@ public class UtilsHttp {
         Logger.i(TAG, "downloadFile(" + pathLocal + ", " + pathUrl + ")");
 
         try {
-            // create connection 
+            // create connection
             URL url = new URL(pathUrl);
 
             // if URL start with HTTP use HttpUrlConnection
@@ -56,7 +56,7 @@ public class UtilsHttp {
             TimeWatch time = new TimeWatch();
             Main.mySimpleLog.print("\nDownloading: "+conn.getURL()+" ...");
 
-            // create output file 
+            // create output file
             File file = new File(pathLocal + "T");
             if (file.exists()) {
                 file.delete();
