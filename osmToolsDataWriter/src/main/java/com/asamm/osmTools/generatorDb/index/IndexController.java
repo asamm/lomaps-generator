@@ -28,6 +28,9 @@ public class IndexController {
     /** JTS in memory index of center geometries for cities*/
     private STRtree cityCenterIndex;
 
+    /** JTS in memory index of boundaries or cities center if city has not boundary*/
+    private STRtree cityGeomIndex;
+
     /** JTS index of boundary geometries (their) envelopes*/
     private STRtree boundaryGeomIndex;
 
@@ -44,6 +47,7 @@ public class IndexController {
     private IndexController() {
         regionGeomIndex = new STRtree();
         cityCenterIndex = new STRtree();
+        cityGeomIndex = new STRtree();
         boundaryGeomIndex = new STRtree();
         wayStreetNamedGeomIndex = new STRtree();
         wayStreetUnnamedGeomIndex = new STRtree();
@@ -81,9 +85,34 @@ public class IndexController {
 
     // CITY CENTER GEOM INDEX
 
-    public void insertCity(Envelope envelope, City city) {
+    /**
+     * Add city center into geom index. This index works only with center of city. This index is vital for finding
+     * boundaries when geometry for city is not know
+     * @param envelope
+     * @param city
+     */
+    public void insertCityCenter(Envelope envelope, City city) {
         cityCenterIndex.insert(envelope, city);
     }
+
+    /**
+     * Add city into index that works with city boundary. If boundary is not defined then city center is used for index
+     * @param city city to add into index
+     */
+    public void insertCityGeom(City city) {
+
+        Envelope envelope = null;
+
+        if (city.getGeom() != null && city.getGeom().isValid()){
+            envelope = city.getGeom().getEnvelopeInternal();
+        }
+        else {
+            envelope = city.getCenter().getEnvelopeInternal();
+        }
+
+        cityGeomIndex.insert(envelope, city);
+    }
+
 
     public List<City> getClosestCities (Point centerPoint, int minNumber){
 
@@ -98,7 +127,7 @@ public class IndexController {
         while (cityFromIndex.size() < minNumber) {
             //Logger.i(TAG,"Extends bounding box");
             Polygon searchBound = GeomUtils.createRectangle(centerPoint.getCoordinate(), distance);
-            cityFromIndex = cityCenterIndex.query(searchBound.getEnvelopeInternal());
+            cityFromIndex = cityGeomIndex.query(searchBound.getEnvelopeInternal());
             distance = distance * 2;
             numOfResize++;
             if (numOfResize == 4){
