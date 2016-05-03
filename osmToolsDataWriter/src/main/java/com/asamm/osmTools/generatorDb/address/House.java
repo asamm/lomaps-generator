@@ -68,7 +68,7 @@ public class House extends Storable{
     }
 
     public boolean isValid() {
-        if (number.length() == 0 || name.length() == 0){
+        if (number.length() == 0 && name.length() == 0){
             return false;
         }
         if (center == null || !center.isValid()){
