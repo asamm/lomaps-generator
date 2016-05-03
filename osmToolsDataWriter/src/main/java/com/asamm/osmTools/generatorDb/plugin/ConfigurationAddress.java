@@ -5,7 +5,7 @@ import java.io.File;
 /**
  * Created by voldapet on 2016-02-22 .
  */
-public class ConfigurationAddress extends AConfiguration {
+public class    ConfigurationAddress extends AConfiguration {
 
     /**
      * File to store database address

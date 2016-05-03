@@ -16,7 +16,6 @@ import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.THashMap;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
@@ -320,13 +319,13 @@ public class GeneratorAddress extends AGenerator {
                 if (cityFound.isValid()){
                     boundary.setAdminCenterId(cityFound.getOsmId());
                     dc.addCity(cityFound);
-                    IndexController.getInstance().insertCity(cityFound.getCenter().getEnvelopeInternal(), cityFound);
+                    IndexController.getInstance().insertCityCenter(cityFound.getCenter().getEnvelopeInternal(), cityFound);
                 }
             }
 
             if (cityFound != null){
                 // OK we have center city for boundary > put them into cache and compare priority
-                registerBoundaryForCity (dc, boundary, cityFound);
+                checkPriorityBoundaryForCity(dc, boundary, cityFound);
             }
             else {
                //Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
@@ -340,7 +339,7 @@ public class GeneratorAddress extends AGenerator {
      * @param boundary new boundary that should registered for center city
      * @param city center city
      */
-    private void registerBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
+    private void checkPriorityBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
 
         // try to obtain previous registered boundary for city
         BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
@@ -440,9 +439,16 @@ public class GeneratorAddress extends AGenerator {
         for (City city : cities){
             Boundary boundary = centerCityBoundaryMap.getValue(city);
             if (boundary != null){
-                city.setGeom(boundary.getGeom());
+
+                // Combine boundary values (geom, population, etc.) with the city
+                city.combineWithBoundary(boundary);
             }
-            ((DatabaseAddress) db).insertCity(city, boundary);
+
+            // write city geometry or city center into memory index
+            IndexController.getInstance().insertCityGeom(city);
+
+            // insert city into database
+            ((DatabaseAddress) db).insertCity(city);
         }
 
 

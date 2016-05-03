@@ -60,7 +60,7 @@ public class MailHandler {
                  new InternetAddress(emailTo));
             
 
-            // create the message part 
+            // create the message part
             MimeBodyPart messageBodyPart = new MimeBodyPart();
 
             //fill message

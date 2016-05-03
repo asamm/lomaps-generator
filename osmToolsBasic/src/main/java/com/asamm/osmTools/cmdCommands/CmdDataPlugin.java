@@ -6,6 +6,7 @@ import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
+import com.asamm.osmTools.utils.Logger;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -13,11 +14,14 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by menion on 28.7.14.
  */
 public class CmdDataPlugin extends Cmd {
+
+    private static final String TAG = CmdDataPlugin.class.getSimpleName();
 
     private File mFileTempMap;
 
@@ -26,6 +30,12 @@ public class CmdDataPlugin extends Cmd {
      */
     private File mFilePoiDb;
 
+
+    /**
+     * Used for repeated run of the command when is needed to delete file create in previous run
+     */
+    private File mFileToCreate;
+
     public CmdDataPlugin(ItemMap map) {
         super(map, ExternalApp.OSMOSIS);
 
@@ -33,6 +43,31 @@ public class CmdDataPlugin extends Cmd {
         mFileTempMap = new File(Consts.DIR_TMP, "temp_map_simple.osm.pbf");
         //mFileTempDb = new File(Consts.DIR_TMP, map.getName() + ".osm.db");
         mFilePoiDb = new File(map.getPathAddressPoiDb());
+
+        mFileToCreate = mFilePoiDb;
+    }
+
+
+    public String execute(int numRepeat, boolean deleteFile) throws IOException, InterruptedException {
+
+        try {
+            return super.execute();
+        } catch (Exception e) {
+            if (numRepeat > 0){
+                numRepeat--;
+
+                if (deleteFile){
+                    Logger.w(TAG, "Delete file from previous not success execution: " + mFileToCreate.getAbsolutePath());
+                    mFileToCreate.delete();
+                }
+                Logger.w(TAG, "Re-execute data plugin run: " + getCmdLine());
+                execute(numRepeat, deleteFile);
+            }
+            else {
+                throw e;
+            }
+        }
+        return null;
     }
 
     public File getFileTempDb() {
@@ -178,8 +213,8 @@ public class CmdDataPlugin extends Cmd {
      */
     public void addGeneratorAddress () {
 
-        //addReadPbf(getMap().getPathSource());
-        addReadPbf(mFileTempMap.getAbsolutePath());
+        addReadPbf(getMap().getPathSource());
+        //addReadPbf(mFileTempMap.getAbsolutePath());
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=address");
 

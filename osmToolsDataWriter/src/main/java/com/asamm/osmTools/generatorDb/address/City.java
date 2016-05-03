@@ -13,9 +13,10 @@ import java.util.Map;
 public class City {
 
 
+
     public enum CityType {
         // types and radius
-        CITY(10000, 1), TOWN(5000, 2), VILLAGE(2000, 3), HAMLET(1000, 4), SUBURB(750, 5), DISTRICT(400, 6);
+        CITY(10000, 1), TOWN(4000, 2), VILLAGE(1750, 3), HAMLET(750, 4), SUBURB(750, 5), DISTRICT(400, 6);
 
         /** predefined radius in meters for city type*/
         private double radius;
@@ -97,6 +98,19 @@ public class City {
     /** Admin region where city is in*/
     private Region region;
 
+    /** is capital city */
+    private String capital;
+
+    /** The number of citizens in a given city   (used for city importance)  */
+    private int population;
+
+    /** URL of city   (used for city importance)*/
+    private String website;
+
+    /** part of URL for wiki page about place   (used for city importance)*/
+    private String wikipedia;
+
+
     /** Boundary of city - can be null*/
     private MultiPolygon geom;
 
@@ -113,6 +127,9 @@ public class City {
     private void reset () {
         name = "";
         isIn = "";
+        capital = "";
+        website = "";
+        wikipedia = "";
         this.namesInternational = new THashMap<>();
     }
 
@@ -127,6 +144,28 @@ public class City {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Add values as geometry, population from boundary to city object.
+     * @param boundary boundary to assign to city
+     */
+    public void combineWithBoundary(Boundary boundary){
+        // set city geometry from boundary
+        this.setGeom(boundary.getGeom());
+
+        if (population == 0){
+            population = boundary.getPopulation();
+        }
+        if (wikipedia.length() == 0){
+            setWikipedia(boundary.getWikipedia());
+        }
+        if (website.length() == 0){
+            setWebsite(boundary.getWebsite());
+        }
+        if (boundary.getNamesInternational().size() > 0){
+            this.namesInternational.putAll(boundary.getNamesInternational());
+        }
     }
 
 
@@ -216,6 +255,43 @@ public class City {
         this.region = region;
     }
 
+    public String getCapital() {
+        return capital;
+    }
+
+    public void setCapital(String capital) {
+        if (capital != null){
+            this.capital = capital;
+        }
+    }
+
+    public int getPopulation() {
+        return population;
+    }
+
+    public void setPopulation(int population) {
+        this.population = population;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        if (website != null){
+            this.website = website;
+        }
+    }
+
+    public String getWikipedia() {
+        return wikipedia;
+    }
+
+    public void setWikipedia(String wikipedia) {
+        if (wikipedia != null){
+            this.wikipedia = wikipedia;
+        }
+    }
 
     public MultiPolygon getGeom() {
         return geom;
@@ -240,6 +316,8 @@ public class City {
                 ", coordinate=" + center +
                 ", type=" + type +
                 ", isIn='" + isIn + '\'' +
+                ", population=" + population +
+                ", namesInternational size=" + namesInternational.size()  +
                 ", geom=" + GeomUtils.geomToGeoJson(geom) +
                 '}';
     }

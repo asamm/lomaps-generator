@@ -35,13 +35,18 @@ public class OsmConst {
         IS_IN("is_in"),
         LOCALITY("locality"),
 
+
         INTERNET_ACCESS("internet_access"),
         CONTACT_WEBSITE("contact:website"),
         CONTACT_PHONE("contact:phone"),
         OPENING_HOURS("opening_hours"),
         PHONE("phone"),
+
+        CAPITAL("capital"),
         DESCRIPTION("description"),
+        POPULATION("population"),
         WEBSITE("website"),
+        WIKIPEDIA("wikipedia"),
         URL("url"),
 
         HIGHWAY("highway"),

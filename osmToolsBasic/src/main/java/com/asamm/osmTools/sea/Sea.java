@@ -28,7 +28,7 @@ public class Sea {
     ItemMap map;
     String tmpCoastPath;
     String tmpBorderPath;
-    double seaBorderMargin = 0.00006;  // create sea area little bit smaller 
+    double seaBorderMargin = 0.00006;  // create sea area little bit smaller
                                        //then borders becasue thin blue border
     
     public Sea(ItemMap map) throws IOException, InterruptedException {
