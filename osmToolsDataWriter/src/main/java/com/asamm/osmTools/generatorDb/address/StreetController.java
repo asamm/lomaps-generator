@@ -314,6 +314,28 @@ public class StreetController extends AaddressController {
         timeJoinWaysToStreets += System.currentTimeMillis() - start;
     }
 
+
+    /** ************************************************
+     *                  SPLIT STREET
+     ************************************************* */
+
+    /**
+     * Try to split street into several segment.
+     * @param streetToSplit street that has long geom and should be splitted into several parts
+     * @return
+     */
+    public List<Street> splitLongStreet(Street streetToSplit) {
+        // in first step try to split to street using cities is in
+        List<Street> streets = splitGeomByParentCities (streetToSplit);
+
+        if (streets.size() <= 1){
+            // was not possible to split street by cities, simply cut it in half
+            streets = splitStreetIntoTwoHalf(streetToSplit);
+        }
+        return streets;
+    }
+
+
     /**
      * Try to find cities where street is in it. And then split street into stand alone streets based on cities geom
      * IMPORTANT - method does not handle the houses. So use it only when crate streets
@@ -340,14 +362,12 @@ public class StreetController extends AaddressController {
         // Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
 
         for (City city : topCities){
+            // create copy from street to split
+            Street street = new Street(streetToSplit);
 
-            Street street = new Street();
-            street.setName(streetToSplit.getName());
-            street.setHouses(streetToSplit.getHouses());
-            street.setPath(streetToSplit.isPath());
+            // PREPARE NEW GEOMETRY
 
             Geometry geomIntersection = null;
-
             //Logger.i(TAG, "Line for cut: " + GeomUtils.geomToGeoJson(streetToSplit.getGeometry()));
             //Logger.i(TAG, "City for cut: " + GeomUtils.geomToGeoJson(city.getGeom()));
             try {
@@ -365,16 +385,29 @@ public class StreetController extends AaddressController {
                 continue;
             }
 
+            //compute diagonal length
             Coordinate[] coordinates = mls.getCoordinates();
             double lengthM = Utils.getDistance(coordinates[0], coordinates[coordinates.length-1]);
+            if (lengthM < 10){
+                continue;
+            }
 
             //Logger.i(TAG, "Intersection line: " + Utils.geomToGeoJson(mls));
-            if (lengthM > 10 ) {
-                // set geometry from intersection to new street
-                street.setGeometry(mls);
-                street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn(), street.getOsmId()));
-                streets.add(street);
+
+            // set geometry from intersection to new street
+            street.setGeometry(mls);
+            street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn(), street.getOsmId()));
+
+            // SPLIT HOUSES
+            for (House house : streetToSplit.getHouses()){
+                if (city.getGeom().intersects(house.getCenter())){
+                    street.addHouse(house);
+                    streetToSplit.getHouses().remove(house);
+                }
             }
+
+            // new street is created
+            streets.add(street);
 
             // remove intersection part from source street
             Geometry geomDifference = streetToSplit.getGeometry().difference(city.getGeom());
@@ -399,8 +432,56 @@ public class StreetController extends AaddressController {
         return streets;
     }
 
+    private List<Street> splitStreetIntoTwoHalf (Street streetToSplit){
+        // split geometry of street envelope into two polygons
+        Envelope envelope = streetToSplit.getGeometry().getEnvelopeInternal();
+        double height = envelope.getHeight();
+        double width =  envelope.getWidth();
+
+        Envelope env1 = new Envelope();
+        Envelope env2 = new Envelope();
+        if (height > width){
+            env1.init(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMinY() + height / 2);
+            env2.init(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY() + height / 2, envelope.getMaxY() );
+        }
+        else {
+            env1.init(envelope.getMinX(), envelope.getMinX() + width / 2, envelope.getMinY(), envelope.getMaxY());
+            env2.init(envelope.getMinX() + width / 2, envelope.getMaxX() , envelope.getMinY(), envelope.getMaxY());
+        }
+        Geometry poly1 = geometryFactory.toGeometry(env1);
+        Geometry poly2 = geometryFactory.toGeometry(env2);
+
+        // create copy from street that should be splitted
+        Street street1 = new Street(streetToSplit);
+        Street street2 = new Street(streetToSplit);
+
+        // prepare new cutted geometries for new street
+        street1.setGeometry(GeomUtils.geometryToMultilineString(poly1.intersection(streetToSplit.getGeometry())));
+        street2.setGeometry(GeomUtils.geometryToMultilineString(poly2.intersection(streetToSplit.getGeometry())));
+
+        // split houses into half
+        THashSet<House> houses1 = new THashSet<>();
+        THashSet<House> houses2 = new THashSet<>();
+
+        for (House house : streetToSplit.getHouses()){
+            if (poly1.intersects(house.getCenter())){
+                houses1.add(house);
+            }
+            else {
+                houses2.add(house);
+            }
+        }
+        street1.setHouses(houses1);
+        street2.setHouses(houses2);
+
+        List<Street> streets = new ArrayList<>();
+        streets.add(street1);
+        streets.add(street2);
+        return streets;
+    }
+
     /**
-     * Compare cities and get the most top level cities
+     * Compare cities where street is in and get the most top level cities
      * @param street street to get the cities
      * @param typeLevel only cities on the same or higher level will loaded
      * @return list of the most parent top level cities.

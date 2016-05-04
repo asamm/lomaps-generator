@@ -483,7 +483,7 @@ public class GeneratorAddress extends AGenerator {
 
                 if (diagonalLength > Const.MAX_DIAGONAL_STREET_LENGTH){
                     // street is too long try to separate it based on villages, town or cities geom
-                    streetsToInsert = sc.splitGeomByParentCities(streetToInsert);
+                    streetsToInsert = sc.splitLongStreet(streetToInsert);
                 }
                 else if (streetToInsert.getGeometry().getNumGeometries() > 1){
                     // street geom has more parts. Maybe it is two different streets > try to separate them

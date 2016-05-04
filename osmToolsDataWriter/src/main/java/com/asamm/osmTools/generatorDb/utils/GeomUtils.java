@@ -287,6 +287,16 @@ public class GeomUtils {
         return mls;
     }
 
+    /**
+     * Convert simple line into Multiline
+     * @param lineString
+     * @return
+     */
+    public static MultiLineString LineToMultiLine(LineString lineString) {
+
+        return  geometryFactory.createMultiLineString(new LineString[]{lineString});
+    }
+
     public static Polygon createCircle (Coordinate center, double distance, int numPoints){
 
         //Coordinate offsets (from center) in radians
@@ -377,6 +387,15 @@ public class GeomUtils {
         }
 
         return mp;
+    }
+
+    /**
+     * Convert simple polygon into multipolygon object
+     * @param polygon
+     * @return
+     */
+    public static MultiPolygon polygonToMultiPolygon (Polygon polygon){
+        return geometryFactory.createMultiPolygon(new Polygon[]{polygon});
     }
 
     // GEOJSON UTILS

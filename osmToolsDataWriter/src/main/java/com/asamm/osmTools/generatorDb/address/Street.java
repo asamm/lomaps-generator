@@ -75,10 +75,12 @@ public class Street extends Storable {
         reset();
 
         this.id = street.id;
+        this.osmId = street.osmId;
         this.name = street.name;
         this.cityId = street.cityId;
         this.cityIds = street.cityIds;
         this.isIn = street.isIn;
+        this.isPath = street.isPath();
         this.geometry = street.geometry;
     }
 
