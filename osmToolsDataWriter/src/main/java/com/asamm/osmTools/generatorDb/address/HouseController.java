@@ -547,9 +547,9 @@ public class HouseController extends AaddressController {
                 timeBufferHousesGeoms += System.currentTimeMillis() - start2;
 
                 // for every house in boundary grouped houses find the nearest unnamed way street
-                List<Street> unNamedWayStreets = findNearestWayStreetsForGroupedHouses(mpBuffer, Const.MAX_DISTANCE_UNNAMED_STREET);
+                List<Street> streetsAround = findNearestWayStreetsForGroupedHouses(mpBuffer, Const.MAX_DISTANCE_UNNAMED_STREET);
 
-                if (unNamedWayStreets.size() == 0){
+                if (streetsAround.size() == 0){
 //                    Logger.i(TAG, " processHouseWithoutStreet(): Can not find any unnamed street for grouped houses: " +
 //                                    streetPlaceName + ", and boundary: " + city.toString());
                     for (House houseToRemove : housesGrouped){
@@ -568,7 +568,7 @@ public class HouseController extends AaddressController {
                 // cut the geometry only around the houses
 
                 long start3 = System.currentTimeMillis();
-                MultiLineString mlsCutted = createGeomUnnamedWayStreets(cities, mpBuffer, unNamedWayStreets);
+                MultiLineString mlsCutted = createGeomUnnamedWayStreets(cities, mpBuffer, streetsAround);
 
                 if (mlsCutted == null || mlsCutted.isEmpty()){
                     Logger.w(TAG, "processHouseWithoutStreet(): Not able create geometry for street of grouped houses: " +
@@ -603,30 +603,34 @@ public class HouseController extends AaddressController {
             @Override
             public void onJoin(Street joinedStreet) {
 
-// for belorusian was needed to split street maybe is not needed
-//                // split streets from different places (due to belorusia)
-//                List<Street> streetsToInsert = sc.splitToCityParts(joinedStreet);
-//
-//                // write to DB
-//                for (Street street : streetsToInsert){
-//
-//                    THashSet<House> houses = street.getHouses();
-//                    // insert street into DB
-//                    databaseAddress.insertStreet(street);
-//                    // insert houses into DB
-//                    for (House house : houses) {
-//                        databaseAddress.insertHouse(street, house);
-//                    }
-//                }
+                List<Street> streetsToInsert = new ArrayList<Street>();
+            Envelope envelope = joinedStreet.getGeometry().getEnvelopeInternal();
+                double diagonalLength = Utils.getDistance(
+                        envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
-                THashSet<House> houses = joinedStreet.getHouses();
-                // insert street into DB
-                databaseAddress.insertStreet(joinedStreet);
-                // insert houses into DB
-                for (House house : houses) {
-                    databaseAddress.insertHouse(joinedStreet, house);
+                if (diagonalLength > Const.MAX_DIAGONAL_STREET_LENGTH){
+                    // street is too long try to split it
+                    streetsToInsert = sc.splitLongStreet(joinedStreet);
+                }
+                else {
+                    streetsToInsert.add(joinedStreet);
                 }
 
+                // write to DB
+                for (Street street : streetsToInsert){
+                    THashSet<House> houses = street.getHouses();
+                    if (houses.size() == 0){
+                        // in some cases can splitting cause that street does not have any house after split
+                        // because there are streets only from houses we don't care about streets without house
+                        continue;
+                    }
+                    // insert street around houses into DB
+                    databaseAddress.insertStreet(street);
+                    // insert houses into DB
+                    for (House house : houses) {
+                        databaseAddress.insertHouse(street, house);
+                    }
+                }
             }
         });
     }
