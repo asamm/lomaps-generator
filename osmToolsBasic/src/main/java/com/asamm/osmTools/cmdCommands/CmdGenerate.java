@@ -7,6 +7,7 @@ package com.asamm.osmTools.cmdCommands;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.sea.Boundaries;
+import com.asamm.osmTools.utils.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +17,8 @@ import java.io.IOException;
  * @author volda
  */
 public class CmdGenerate extends Cmd {
+
+    private static final String TAG = CmdGenerate.class.getSimpleName();
 
     private boolean isRam = true;
 
@@ -54,6 +57,34 @@ public class CmdGenerate extends Cmd {
             throw new IllegalArgumentException("Extracted map for generation = "+ getMap().getPathSource() + " does not exist." );
             
         }
+    }
+
+
+    public String execute(int numRepeat, boolean deleteFile) throws IOException, InterruptedException {
+
+        try {
+            return super.execute();
+        } catch (Exception e) {
+
+            if (numRepeat > 0){
+
+                numRepeat--;
+                File generatedFile = new File(getMap().getPathGenerate());
+
+                if (deleteFile){
+                    Logger.w(TAG, "Delete file from previous not success execution: " + generatedFile.getAbsolutePath());
+                    if (generatedFile.exists()){
+                        generatedFile.delete();
+                    }
+                }
+                Logger.w(TAG, "Re-execute generation: " + getCmdLine());
+                execute(numRepeat, deleteFile);
+            }
+            else {
+                throw e;
+            }
+        }
+        return null;
     }
 
     public void createCmdContour() throws IOException {

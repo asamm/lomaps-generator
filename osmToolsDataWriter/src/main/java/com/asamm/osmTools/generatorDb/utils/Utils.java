@@ -151,7 +151,7 @@ public class Utils {
      */
     public static double getDistanceNearest (Geometry geom1, Geometry geom2){
         Coordinate[] coordinates = DistanceOp.nearestPoints(geom1, geom2);
-        return getDistance(coordinates[0].x , coordinates[0].y, coordinates[1].x , coordinates[1].y);
+        return getDistance(coordinates[0].y , coordinates[0].x, coordinates[1].y , coordinates[1].x);
     }
 
 

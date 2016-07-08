@@ -6,6 +6,7 @@ import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
+import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
@@ -19,6 +20,8 @@ import java.util.List;
  * Container for all JTS in memory geom indexes.
  */
 public class IndexController {
+
+    private static final String TAG = IndexController.class.getSimpleName();
 
     private static IndexController instance = null;
 
@@ -217,10 +220,8 @@ public class IndexController {
      */
     public List<Street> getUnnamedWayStreets(ADataContainer dc, MultiPolygon multiPolygon) {
 
-        PreparedGeometry pg = PreparedGeometryFactory.prepare(multiPolygon);
         List<Long> streetIds = wayStreetUnnamedGeomIndex.query(multiPolygon.getEnvelopeInternal());
         List<Street> wayStreets = dc.getWayStreetsByOsmIdFromCache(streetIds);
-
 
 //        // TODO is it really needed to filter queried ways if intersect with multipolygon??
 //

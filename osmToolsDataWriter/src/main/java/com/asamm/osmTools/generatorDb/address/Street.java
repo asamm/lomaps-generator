@@ -288,7 +288,9 @@ public class Street extends Storable {
     }
 
     public void setHouses(THashSet<House> houses) {
-        this.houses = houses;
+        if (houses != null){
+            this.houses = houses;
+        }
     }
 
     public MultiLineString getGeometry() {

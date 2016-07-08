@@ -31,6 +31,9 @@ public class AItemMap {
     private String mDirGen;
     // address DB boundary admin level for address region boundaries
     private String mCountryName;
+    // when extract map from planet some big areas can be outside the border and are removed. Set true to close
+    private boolean mClipIncompleteEntities;
+
 
     // URL source for map file
     private String mUrl;
@@ -73,6 +76,7 @@ public class AItemMap {
         mDir = "";
         mDirGen = "";
         mCountryName = "";
+        mClipIncompleteEntities = false;
         mUrl = "";
         mCycleNode = "";
         mContourSep = "";
@@ -203,6 +207,21 @@ public class AItemMap {
             mCountryName = attrValue;
         }
 
+        //clipIncompleteEntities
+        attrValue = parser.getAttributeValue(null, "clipEntities");
+        if (attrValue != null){
+            if (attrValue.equals("0")){
+                mClipIncompleteEntities = false;
+            }
+            else if (attrValue.equals("1")){
+                mClipIncompleteEntities = true;
+            }
+            else {
+                throw new IllegalArgumentException("Invalid value 'clipEntities' value:" + attrValue  +
+                        " Set '0' for not clipping or '1' for clip the incomplete elements");
+            }
+        }
+
         // other basis parameters
         if (parser.getAttributeValue(null, "url") != null) {
             mUrl = parser.getAttributeValue(null, "url");
@@ -269,6 +288,14 @@ public class AItemMap {
      */
     public String getCountryName() {
         return mCountryName;
+    }
+
+    /**
+     * Define if during extraction should osmosis clip the areas that can be partialy outside the border poly
+     * @return
+     */
+    public boolean getClipIncompleteEntities () {
+        return mClipIncompleteEntities;
     }
 
     public void setAddressRegionLevel(String countryName) {

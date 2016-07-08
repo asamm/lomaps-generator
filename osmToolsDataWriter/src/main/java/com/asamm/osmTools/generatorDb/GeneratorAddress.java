@@ -274,7 +274,7 @@ public class GeneratorAddress extends AGenerator {
 
                 if (cityFound != null){
                     Logger.i(TAG, "Founded city by custom mapper ; city " + cityFound.toString() +
-                            "\n boundary:  " + boundary.toString());
+                            "\n boundary:  " + boundary.getId());
                 }
             }
 
@@ -478,6 +478,7 @@ public class GeneratorAddress extends AGenerator {
 
                 // SPLIT BASED ON TOP LEVEL CITIES GEOMS
                 Envelope envelope = streetToInsert.getGeometry().getEnvelopeInternal();
+
                 double diagonalLength = Utils.getDistance(
                         envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
