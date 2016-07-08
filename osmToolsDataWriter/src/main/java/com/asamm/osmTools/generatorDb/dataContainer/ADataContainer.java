@@ -186,6 +186,10 @@ public abstract class ADataContainer {
             houses = new ArrayList<>();
         }
         houses.add(house);
+
+        if (house.getOsmId() == 1297105299){
+            Logger.i(TAG, "addHouseWithoutStreet() : key: " + key + " , house: " + house.toString());
+        }
         housesWithoutStreet.put(key, houses);
 
     }

@@ -19,6 +19,7 @@ import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
+import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
@@ -204,6 +205,10 @@ public class StreetController extends AaddressController {
                 dc.addWayStreetHashName(wayStreet);
                 dc.addWayStreetByOsmId(wayStreet);
                 IndexController.getInstance().insertWayStreetNamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
+            }
+
+            if (wayId == 24346977){
+                Logger.i(TAG, "createWayStreetFromWays(): Creates wayStreet: " + wayStreet.toString() );
             }
         }
     }
@@ -399,12 +404,15 @@ public class StreetController extends AaddressController {
             street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn(), street.getOsmId()));
 
             // SPLIT HOUSES
+            THashSet housesToRemove = new THashSet();
             for (House house : streetToSplit.getHouses()){
                 if (city.getGeom().intersects(house.getCenter())){
                     street.addHouse(house);
-                    streetToSplit.getHouses().remove(house);
+                    housesToRemove.add(house);
                 }
             }
+            // remove the houses that were assigned to new street
+            streetToSplit.getHouses().removeAll(housesToRemove);
 
             // new street is created
             streets.add(street);
@@ -432,8 +440,13 @@ public class StreetController extends AaddressController {
         return streets;
     }
 
-    private List<Street> splitStreetIntoTwoHalf (Street streetToSplit){
+    public List<Street> splitStreetIntoTwoHalf (Street streetToSplit){
         // split geometry of street envelope into two polygons
+        if (streetToSplit.getGeometry() == null){
+            List<Street> streets = new ArrayList<>();
+            return streets;
+        }
+
         Envelope envelope = streetToSplit.getGeometry().getEnvelopeInternal();
         double height = envelope.getHeight();
         double width =  envelope.getWidth();
@@ -467,7 +480,7 @@ public class StreetController extends AaddressController {
             if (poly1.intersects(house.getCenter())){
                 houses1.add(house);
             }
-            else {
+            else if (poly2.intersects(house.getCenter())) {
                 houses2.add(house);
             }
         }
@@ -478,6 +491,88 @@ public class StreetController extends AaddressController {
         streets.add(street1);
         streets.add(street2);
         return streets;
+    }
+
+    public List<Street> splitStreetIntoGrid(Street streetToSplit) {
+        // split geometry of street envelope into two polygons
+        List<Street> streetsSplitted = new ArrayList<>();
+        if (streetToSplit.getGeometry() == null) {
+            return streetsSplitted;
+        }
+
+        double maxHeight = 0.15;
+        double maxWidth = 0.15;
+
+//        if (streetToSplit.getName().equals("Drykkjeåvegen")){
+//            Logger.i(TAG, "Joined street to split: "  + streetToSplit.toString());
+//        }
+
+        Envelope envelope = streetToSplit.getGeometry().getEnvelopeInternal();
+        double height = envelope.getHeight();
+        double width = envelope.getWidth();
+
+        if (maxHeight > height && maxWidth > width){
+            streetsSplitted.add(streetToSplit);
+            return streetsSplitted;
+        }
+
+        // size of grid
+        int countH = (int) Math.ceil((height / maxHeight));
+        int countW = (int) Math.ceil((width / maxWidth));
+
+        // create grid as polygons
+        List<Geometry> gridPolygons = new ArrayList<>();
+        for (int i = 0; i < countH ; i++){
+            for (int j = 0; j < countW ; j++){
+                double polyMinX = envelope.getMinX() + j * maxWidth;
+                double polyMaxX = envelope.getMinX() + (j+1) * maxWidth;
+                double polyMinY = envelope.getMinY() + i * maxHeight;
+                double polyMaxY = envelope.getMinY() + (i+1) * maxHeight;
+
+                Envelope polyE = new Envelope();
+                polyE.init(polyMinX, polyMaxX, polyMinY, polyMaxY);
+                Geometry poly = geometryFactory.toGeometry(polyE);
+                gridPolygons.add(poly);
+            }
+        }
+
+        THashMap<Geometry, Street> gridStreetMap = new THashMap<>();
+        THashMap<Geometry,THashSet<House>> gridHouseMap = new THashMap<>();
+
+        // for every grid create new street, create street only with valid geom
+        for (Geometry gridPoly : gridPolygons){
+            Street street = new Street(streetToSplit);
+            MultiLineString mls = (GeomUtils.geometryToMultilineString(gridPoly.intersection(streetToSplit.getGeometry())));
+            if (mls != null && !mls.isEmpty() && mls.isValid()){
+                street.setGeometry(mls);
+                gridStreetMap.put(gridPoly, street);
+            }
+        }
+
+        // find grid where house is in it
+        for (House house :  streetToSplit.getHouses()){
+            for (Geometry geometry : gridStreetMap.keySet()){
+                if (geometry.intersects(house.getCenter())){
+                    THashSet<House> houses = gridHouseMap.get(geometry);
+                    if (houses == null){
+                        houses = new THashSet<>();
+                        gridHouseMap.put(geometry, houses);
+                    }
+                    houses.add(house);
+                }
+            }
+        }
+
+        // combine streets with houses
+        for (Map.Entry<Geometry, Street> entry : gridStreetMap.entrySet()){
+            Street street = entry.getValue();
+            //check if exist any houses for this part of street
+            THashSet<House> housesForStreet = gridHouseMap.get(entry.getValue());
+            street.setHouses(housesForStreet);
+            streetsSplitted.add(street);
+        }
+
+        return streetsSplitted;
     }
 
     /**
@@ -532,7 +627,9 @@ public class StreetController extends AaddressController {
         MultiLineString mls = streetToSplit.getGeometry();
         int numGeomElements = mls.getNumGeometries();
 
-        //Logger.i(TAG, "splitToCityParts(): Num of multilinestreet: " + numGeomElements + " street: " + street.toString());
+        if (streetToSplit.getName().equalsIgnoreCase("Schwarzer Weg")){
+            Logger.i(TAG, "splitToCityParts(): Num of multilinestreet: " + numGeomElements + " street: " + streetToSplit.toString());
+        }
 
         // from parent street get list of linestring from which is created
         List<LineString> elements = new ArrayList<>();
@@ -573,6 +670,12 @@ public class StreetController extends AaddressController {
                 if (nearestStreet != null){
                     nearestStreet.addHouse(house);
                 }
+            }
+        }
+
+        if (streetToSplit.getName().equalsIgnoreCase("Schwarzer Weg")){
+            for (Street street : separatedStreets){
+                Logger.i(TAG, "splitToCityParts(): separated street: " + street.toString());
             }
         }
 
@@ -929,6 +1032,11 @@ public class StreetController extends AaddressController {
                 nearestStreet = street;
             }
         }
+
+        if (Utils.getDistanceNearest(center, nearestStreet.getGeometry()) > Const.MAX_DISTANCE_NAMED_STREET){
+            return null;
+        }
+
         return nearestStreet;
     }
 

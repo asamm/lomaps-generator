@@ -162,6 +162,10 @@ abstract class Cmd {
         addCommand("--bp");
         addCommand("file="+map.getPathPolygon());
         //addCommand("completeWays=yes"); workaround for russia where are long highways
+
+        if (map.getClipIncompleteEntities()){
+            addCommand("clipIncompleteEntities=true");
+        }
     }
 
     protected void addCommand(String cmd) {

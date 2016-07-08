@@ -31,7 +31,7 @@ public final class Const {
     /**
      * Maximal diagonal length of the envelope of the street
      */
-    public static final int MAX_DIAGONAL_STREET_LENGTH = 30000;
+    public static final int MAX_DIAGONAL_STREET_LENGTH = 20000;
 
 
     // HOUSE CONTROLLER PARAMETERS

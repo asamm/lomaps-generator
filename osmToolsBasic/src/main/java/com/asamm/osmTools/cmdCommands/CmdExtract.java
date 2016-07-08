@@ -4,6 +4,7 @@
  */
 package com.asamm.osmTools.cmdCommands;
 
+    import com.asamm.osmTools.mapConfig.ItemMap;
     import com.asamm.osmTools.mapConfig.MapSource;
 
 /**
@@ -15,4 +16,5 @@ public class CmdExtract extends Cmd {
     public CmdExtract(MapSource ms, String sourceId) {
         super(ms.getMapById(sourceId), ExternalApp.OSMOSIS);
     }
+
 }

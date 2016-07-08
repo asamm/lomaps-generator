@@ -310,6 +310,7 @@ class Actions {
             // write to log and start stop watch
             TimeWatch time = new TimeWatch();
             Logger.i(TAG, "Extracting maps from source: " + sourceId);
+            Logger.i(TAG, ce.getCmdLine());
             Main.mySimpleLog.print("\nExtract Maps from: " + sourceId + " ...");
 
             // now create simple array
@@ -746,7 +747,7 @@ class Actions {
                 Logger.i(TAG, "Generating map: "+map.getPathGenerate());
 
                 Main.mySimpleLog.print("\nGenerate: "+map.getName()+" ...");
-                cg.execute();
+                cg.execute(2, true);
 
                 // clean tmp
                 Logger.i(TAG, "Deleting files in tmp dir: "+Consts.DIR_TMP);
@@ -850,15 +851,43 @@ class Actions {
         }
 
         if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+
             File poiDbFile = new File(map.getPathAddressPoiDb());
             if (!poiDbFile.exists()) {
                 throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb()+" does not exist.");
             }
-            filesToCompress.add(map.getPathAddressPoiDb());
+
+            if (map.getPrefLang() != null) {
+                String langName = poiDbFile.getAbsolutePath().replace(".osm.db", "_" + map.getPrefLang() + ".osm.db");
+                File fileToRename = new File(langName);
+                poiDbFile.renameTo(fileToRename);
+                Logger.i(TAG, "Rename OSM db file to name " + fileToRename.getAbsolutePath());
+                filesToCompress.add(fileToRename.getAbsolutePath());
+            }
+            else {
+                filesToCompress.add(poiDbFile.getAbsolutePath());
+            }
         }
 
         // compress file
         Utils.compressFiles(filesToCompress, map.getPathResult());
+
+        // revert rename of poi DB
+        if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+
+            File poiDbFile = new File(map.getPathAddressPoiDb());
+            if (map.getPrefLang() != null) {
+
+
+                String langName = poiDbFile.getAbsolutePath().replace(".osm.db", "_" + map.getPrefLang() + ".osm.db");
+                File renamedFile = new File(langName);
+
+                renamedFile.renameTo(poiDbFile);
+                Logger.i(TAG, "Rename OSM db file back to name " + renamedFile.getAbsolutePath());
+            }
+
+            filesToCompress.add(map.getPathAddressPoiDb());
+        }
         Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
 
@@ -872,7 +901,7 @@ class Actions {
 
         CmdUpload cmdUpload = new CmdUpload(CmdUpload.UploadAction.UPDATE_ITEM);
         cmdUpload.createCmd();
-        cmdUpload.execute();
+        cmdUpload.execute(3);
 
         Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
