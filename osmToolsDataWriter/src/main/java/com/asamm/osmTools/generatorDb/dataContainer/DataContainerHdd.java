@@ -10,6 +10,8 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class DataContainerHdd extends ADataContainer {
@@ -23,12 +25,25 @@ public class DataContainerHdd extends ADataContainer {
 
 
 	
-	public DataContainerHdd(AWriterDefinition writerDefinition, File tmpDbFile) throws Exception {
+	public DataContainerHdd(AWriterDefinition writerDefinition) throws Exception {
 		super(writerDefinition);
-        this.tmpDbFile = tmpDbFile;
+        //this.tmpDbFile = tmpDbFile;
+        this.tmpDbFile = getTmpDbFile();
         dbData = new DatabaseDataTmp(tmpDbFile,true);
 
         Logger.i(TAG, "HDD container created");
+    }
+
+    /**
+     * Prepare file of temporary container database
+     * @return File of sqlitedb database used as hdd data container
+     */
+    private File getTmpDbFile (){
+
+        // obtain tmp folder from system
+        String tmpPath = System.getProperty("java.io.tmpdir");
+        Path path = Paths.get("tmpPath", "osmDataContainer.db");
+        return path.toFile();
     }
 
 	@Override

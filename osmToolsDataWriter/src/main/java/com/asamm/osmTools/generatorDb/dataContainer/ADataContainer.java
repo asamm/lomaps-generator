@@ -1,10 +1,7 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
 import com.asamm.osmTools.generatorDb.AWriterDefinition;
-import com.asamm.osmTools.generatorDb.address.Boundary;
-import com.asamm.osmTools.generatorDb.address.City;
-import com.asamm.osmTools.generatorDb.address.House;
-import com.asamm.osmTools.generatorDb.address.Street;
+import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.data.RelationEx;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
@@ -39,14 +36,14 @@ public abstract class ADataContainer {
     /** hash for serialized streetways in cache */
     protected Set<Integer> streetHashSet;
 
+
+
     /** Storage for city, key is city id */
     private THashMap<Long, City> citiesMap;
 
-    /**
-     * Map for houses that have defined the street name or place name but was not possible to find street for them
-     * Key for map is the streetName or placeName
-     * */
-    private THashMap<String, List<House>> housesWithoutStreet;
+    /** Storage for created city or region boundaries */
+    private List<Boundary> boundaries;
+
 
     /** Center city and the best boundary for it*/
     private BiDiHashMap<City, Boundary> centerCityBoundaryMap;
@@ -54,8 +51,20 @@ public abstract class ADataContainer {
     /** List of cities that are in the boundary*/
     private THashMap<Boundary, List<City>> citiesInBoundaryMap;
 
+
+    /** Storage for created regions */
+    private List<Region> regions;
+
+
     /** Ids of relation that contains information about street and houses*/
     private TLongList streetRelations;
+
+
+    /**
+     * Map for houses that have defined the street name or place name but was not possible to find street for them
+     * Key for map is the streetName or placeName
+     * */
+    private THashMap<String, List<House>> housesWithoutStreet;
 
 
     // counters
@@ -77,10 +86,14 @@ public abstract class ADataContainer {
         this.streetHashSet = new HashSet<>();
 
         this.citiesMap = new THashMap<>();
-        this.housesWithoutStreet = new THashMap<>();
+        this.boundaries = new ArrayList<>();
+        this.regions = new ArrayList<>();
         this.centerCityBoundaryMap = new BiDiHashMap<>();
         this.citiesInBoundaryMap = new THashMap<>();
+
         this.streetRelations = new TLongArrayList();
+
+        this.housesWithoutStreet = new THashMap<>();
 	}
 
 
@@ -307,33 +320,12 @@ public abstract class ADataContainer {
         this.relationIds = relationIds;
     }
 
+
     public Set<Integer> getStreetHashSet() {
         return streetHashSet;
     }
 
-    public THashMap<String, List<House>> getHousesWithoutStreet() {
-        return housesWithoutStreet;
-    }
-
-    public BiDiHashMap<City, Boundary> getCenterCityBoundaryMap() {
-        return centerCityBoundaryMap;
-    }
-
-    public THashMap<Boundary, List<City>> getCitiesInBoundaryMap() {
-        return citiesInBoundaryMap;
-    }
-
-    public TLongList getStreetRelations() {
-        return streetRelations;
-    }
-
-    public THashMap<Long, City> getCitiesMap() {
-        return citiesMap;
-    }
-
-    public void setCitiesMap(THashMap<Long, City> citiesMap) {
-        this.citiesMap = citiesMap;
-    }
+    // CITIES
 
     public City getCity (long cityId){
         return citiesMap.get(cityId);
@@ -346,4 +338,50 @@ public abstract class ADataContainer {
     public void addCity (City city){
         citiesMap.put(city.getOsmId(), city);
     }
+
+    public List<Boundary> getBoundaries (){
+        return boundaries;
+    }
+
+    public void addBoundary (Boundary boundary){
+        boundaries.add(boundary);
+    }
+
+    public void addRegion (Region region){
+        regions.add(region);
+    }
+
+    public List<Region> getRegions() {
+        return regions;
+    }
+
+    public BiDiHashMap<City, Boundary> getCenterCityBoundaryMap() {
+        return centerCityBoundaryMap;
+    }
+
+    public THashMap<Boundary, List<City>> getCitiesInBoundaryMap() {
+        return citiesInBoundaryMap;
+    }
+
+    public THashMap<Long, City> getCitiesMap() {
+        return citiesMap;
+    }
+
+    public void setCitiesMap(THashMap<Long, City> citiesMap) {
+        this.citiesMap = citiesMap;
+    }
+
+    // STREETS
+
+    public TLongList getStreetRelations() {
+        return streetRelations;
+    }
+
+    // HOUSES
+
+    public THashMap<String, List<House>> getHousesWithoutStreet() {
+        return housesWithoutStreet;
+    }
+
+
 }

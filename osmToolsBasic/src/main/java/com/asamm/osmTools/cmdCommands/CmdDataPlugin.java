@@ -220,7 +220,7 @@ public class CmdDataPlugin extends Cmd {
 
         File file = new File(getMap().getPathSource());
         int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 350) {
+        if (size <= 600) {
             addCommand("-dataContainerType=ram");
         }
         else {

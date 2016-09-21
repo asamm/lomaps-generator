@@ -2,17 +2,22 @@ package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.generatorDb.address.CityController;
+import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
+import com.asamm.osmTools.generatorDb.db.DatabaseStoreMysql;
+import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import gnu.trove.list.TLongList;
 import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,12 +64,23 @@ public class GeneratorCountryBoundary extends AGenerator{
 
         Logger.i(TAG, "=== Start country boundary process data ===");
         createBoundaries(dc);
-        Logger.i(TAG, "= Write data to geojson files=");
-        writeBoundaries();
+
+        
+        if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.GEOJSON){
+            Logger.i(TAG, "= Write data to geojson files=");
+            writeBoundariesToGeoJson();
+        }
+        else if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.GEO_DATABASE){
+            Logger.i(TAG, "= Write data to Locus store database=");
+            insertBoundariesToGeoDatabase ();
+
+        }
+
+
         testNotCreatedBoundaries ();
     }
 
-    
+
 
     /**
      * Create boundaries that has name as required countries
@@ -72,7 +88,7 @@ public class GeneratorCountryBoundary extends AGenerator{
     private void createBoundaries (ADataContainer dc){
 
         List<CountryConf> countriesConf = wcbDefinition.getConfigurationCountry().getCountriesConf();
-        CityController boundaryController = CityController.createForCountryBound(dc);
+        CityController cityController = CityController.createForCountryBound(dc);
         TLongList relationIds = dc.getRelationIds();
         Boundary foundedBoundary = null;
 
@@ -84,7 +100,7 @@ public class GeneratorCountryBoundary extends AGenerator{
                 continue;
             }
 
-            Boundary boundary = boundaryController.create(relation, true);
+            Boundary boundary = cityController.createBoundary(relation, true);
 
             if (boundary == null || boundary.getAdminLevel() <= 0 || !boundary.isValid()){
                 if (boundary != null) {
@@ -123,7 +139,7 @@ public class GeneratorCountryBoundary extends AGenerator{
     /**
      * Store created boundaries into GeoJson file
      */
-    private void writeBoundaries () {
+    private void writeBoundariesToGeoJson() {
 
         for (Map.Entry<CountryConf, Boundary> entry : countryBoundaryMap.entrySet()){
             // simplify boundary to write
@@ -141,6 +157,51 @@ public class GeneratorCountryBoundary extends AGenerator{
             Logger.i(TAG, "Write geometry geojson file into boundary file: " + geoJsonFile.getAbsolutePath());
         }
     }
+
+    /**
+     * Store created boundaries into Locus Store geo database
+     */
+    private void insertBoundariesToGeoDatabase() {
+
+        DatabaseStoreMysql db = null;
+        try {
+            db = new DatabaseStoreMysql();
+
+            //db.cleanTables();
+
+
+            for (Map.Entry<CountryConf, Boundary> entry : countryBoundaryMap.entrySet()){
+
+                Boundary boundary = entry.getValue();
+
+                // simplify boundary to write
+                MultiPolygon mpSimpl = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), 200);
+
+                //buffer simplified geom because after simplification exits passage between orig country border and simplified boundary
+                MultiPolygon mpBuf = GeomUtils.bufferGeom(mpSimpl, 100);
+                mpSimpl = GeomUtils.simplifyMultiPolygon(mpBuf, 100);
+
+                Region region = new Region(
+                        boundary.getId(),
+                        boundary.getEntityType(),
+                        boundary.getName(),
+                        boundary.getNamesInternational(),
+                        mpSimpl);
+
+                region.setAdminLevel(boundary.getAdminLevel());
+
+                db.insertRegion(region, entry.getKey());
+
+            }
+        }
+
+        catch (SQLException e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("insertBoundariesToGeoDatabase can not init mysql database connection");
+        }
+
+    }
+
 
     /**
      * Check if all requested boundaries were created

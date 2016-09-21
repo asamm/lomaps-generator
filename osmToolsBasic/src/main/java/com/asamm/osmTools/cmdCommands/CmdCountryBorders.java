@@ -1,5 +1,6 @@
 package com.asamm.osmTools.cmdCommands;
 
+import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
@@ -13,6 +14,8 @@ import java.util.List;
  */
 public class CmdCountryBorders extends  Cmd{
 
+
+
     private static final int COUNTRY_BOUND_ADMIN_LEVELS[] = new int[] {2,3,4};
 
     /**
@@ -20,9 +23,14 @@ public class CmdCountryBorders extends  Cmd{
      */
     private File mFileTempMap;
 
-    public CmdCountryBorders (ItemMap sourceItem){
+    ConfigurationCountry.StorageType storageType;
+
+    public CmdCountryBorders (ItemMap sourceItem, ConfigurationCountry.StorageType storageType){
 
         super(sourceItem, ExternalApp.OSMOSIS);
+
+        this.storageType = storageType;
+
 
         mFileTempMap = new File(Consts.DIR_TMP, "temp_map_country.osm.pbf");
     }
@@ -100,10 +108,17 @@ public class CmdCountryBorders extends  Cmd{
 
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=country");
+
+        if (storageType == ConfigurationCountry.StorageType.GEOJSON){
+            addCommand("-storageType=geojson");
+        }
+        else if (storageType == ConfigurationCountry.StorageType.GEO_DATABASE){
+            addCommand("-storageType=geodatabase");
+        }
     }
 
     /**
-     * Add map for which will be generated boundaries from source
+     * Add all maps for which will be generated boundaries from source item
      *
      * @param maps
      */
@@ -115,11 +130,20 @@ public class CmdCountryBorders extends  Cmd{
 
             if (i == 0){
                 sb.append(map.getCountryName()).append(",");
+
             }
             else {
-                sb.append(",").append(map.getCountryName()).append(",");
+                sb.append(",");
+                sb.append(map.getCountryName()).append(",");
             }
-            sb.append(map.getPathCountryBoundaryGeoJson());
+
+            sb.append(map.getRegionId());
+
+            // for geo database is not needed to define path to geojson file
+            if (storageType == ConfigurationCountry.StorageType.GEOJSON){
+                sb.append(",");
+                sb.append(map.getPathCountryBoundaryGeoJson());
+            }
         }
 
         addCommand(sb.toString());

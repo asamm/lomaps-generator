@@ -331,6 +331,9 @@ public class ItemMap extends AItemMap {
         }
         if (parser.getAttributeValue(null, "name") != null) {
             mNameReadable = Utils.changeSlash(parser.getAttributeValue(null, "name"));
+            if (mNameReadable == null || mNameReadable.length() == 0){
+                Logger.w(TAG, "Config.xml not valid: Missing attribute name on line : " +parser.getLineNumber());
+            }
         }
         if (parser.getAttributeValue(null, "fileGen") != null) {
             mNameGen = Utils.changeSlash(parser.getAttributeValue(null, "fileGen"));

@@ -10,13 +10,10 @@ import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.*;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.union.UnaryUnionOp;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.THashMap;
-import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.File;
@@ -44,7 +41,6 @@ public class GeneratorAddress extends AGenerator {
 	
 	public GeneratorAddress(WriterAddressDefinition addressDefinition) throws Exception {
 
-        Logger.d(TAG, "Prepared GeneratorAddress");
         this.outputDb = addressDefinition.getConfAddress().getFileDatabase();
         this.addressDefinition = addressDefinition;
 
@@ -71,31 +67,28 @@ public class GeneratorAddress extends AGenerator {
 
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
-        loadCityPlaces(dc);
-        Utils.printUsedMemory();
+        cc.createCities();
 
         // ---- step 2 create boundaries -----
         Logger.i(TAG, "=== Step 2 - create boundaries ===");
-        loadBoundariesRegions(dc);
-        Utils.printUsedMemory();
+        cc.createBoundariesRegions();
 
         // ---- step 3 find center city for boundary -----
         Logger.i(TAG, "=== Step 3 - find center city for boundary ===");
-        findCenterCityForBoundary(dc);
-        Utils.printUsedMemory();
+        cc.findCenterCityForBoundary();
 
         // ---- step 4 create list of cities that are in boundary ----
         Logger.i(TAG, "=== Step 4 - find all cities inside boundaries ===");
-        findAllCitiesForBoundary(dc);
-        Utils.printUsedMemory();
+        cc.findAllCitiesForBoundary();
 
         Logger.i(TAG, "=== Step 4B - find parent cities ===");
-        findParentCitiesAndRegions(dc);
-        Utils.printUsedMemory();
+        cc.findParentCitiesAndRegions();
 
         // ---- step 5 write cities to DB ----
         Logger.i(TAG, "=== Step 5 - write cities to db ===");
+        insertRegionsToDB(dc);
         insertCitiesToDB(dc);
+
         Utils.printUsedMemory();
 
         // ----- Step 6 - 7 create streets from relations streets -----
@@ -171,266 +164,18 @@ public class GeneratorAddress extends AGenerator {
 
 
 
-    /**************************************************/
-    /*  STEP 1 - Create cities
-    /**************************************************/
-
-    void loadCityPlaces(ADataContainer dc) {
-        cc.createCities();
-    }
-
-    /**************************************************/
-    /*  STEP 2 - Create boundaries and regions
-    /**************************************************/
-
-    void loadBoundariesRegions(ADataContainer dc) {
-
-        // create boundaries from relation
-        TLongList relationIds = dc.getRelationIds();
-
-        for (int i=0, size = relationIds.size(); i < size; i++) {
-            long relationId = relationIds.get(i);
-
-//            if (relationId == 56106 || relationId == 2135916){
-//                Logger.i(TAG, "Start process relation id: " + relationId);
-//            }
-            Relation relation = dc.getRelationFromCache(relationId);
-            Boundary boundary = cc.create(relation, false);
-            checkRegisterBoundary(boundary);
-        }
-
-        TLongList wayIds = dc.getWayIds();
-        for (int i=0, size = wayIds.size(); i < size; i++) {
-            Way way = dc.getWayFromCache(wayIds.get(i));
-            Boundary boundary = cc.create(way, false);
-            checkRegisterBoundary(boundary);
-        }
-
-        Logger.i(TAG, "loadBoundariesRegions: " + boundaries.size() + " boundaries were created and loaded into cache");
-    }
-
-    /**
-     * Check if boundary can be used as city area of region area. If yeas then save it for next process
-     *
-     * @param boundary boundary to test and store in datacontainer
-     */
-    private void checkRegisterBoundary (Boundary boundary) {
-        if (boundary == null || !boundary.isValid()){
-            //Logger.i(TAG, "Relation was not proceeds. Creation boundary failed. Relation id: " + relation.getId());
-            return;
-        }
-
-        if (boundary.getAdminLevel() == addressDefinition.getRegionAdminLevel()) {
-            // boundary has corect admin level for regions
-            createRegion(boundary);
-        }
-
-        if (addressDefinition.isCityAdminLevel(boundary.getAdminLevel())
-                || addressDefinition.isMappedBoundaryId(boundary.getId())){
-            // from this boundary can be created the city area
-            boundaries.add(boundary);
-        }
-        else {
-            //Logger.i(TAG, "checkRegisterBoundary: boundary does not have admin level for city: " + boundary.toString());
-        }
-    }
-
-    /**
-     * Test if boundary can be region (by admin level). If yes that region is written into database address and
-     * also into index for later when  look for region for cities
-     * @param boundary to test and create region
-     */
-    private void createRegion(Boundary boundary){
-        Region region = new Region(boundary.getId(), boundary.getName(), boundary.getNamesInternational(), boundary.getGeom());
-
-        IndexController.getInstance().insertRegion(region);
-        ((DatabaseAddress)db).insertRegion(region);
-
-    }
-
-
-
-    /**************************************************/
-    /*  STEP 3 - find center place for boundary
-    /**************************************************/
-
-    /**
-     * Try to find center city for every boundary.
-     * @param dc base osm data container
-     */
-    private void findCenterCityForBoundary(ADataContainer dc) {
-
-        for (Boundary boundary :  boundaries){
-
-            String boundaryName = boundary.getName().toLowerCase();
-            String altBoundaryName = boundary.getShortName().toLowerCase();
-            Collection<City> cities = dc.getCities();
-
-            City cityFound = null;
-            // Test city by custom mapper definition
-            if (addressDefinition.isMappedBoundaryId(boundary.getId())){
-                long mappedCityId = addressDefinition.getMappedCityIdForBoundary(boundary.getId());
-                cityFound = dc.getCity(mappedCityId); // can be null
-
-                if (cityFound != null){
-                    Logger.i(TAG, "Founded city by custom mapper ; city " + cityFound.toString() +
-                            "\n boundary:  " + boundary.getId());
-                }
-            }
-
-            // try to load city based on admin center id (if defined)
-            if(cityFound == null && boundary.hasAdminCenterId()) {
-                cityFound = dc.getCity(boundary.getAdminCenterId()); // can be null
-            }
-
-            if(cityFound == null) {
-                for (City city : cities) {
-                    if (boundaryName.equalsIgnoreCase(city.getName()) || altBoundaryName.equalsIgnoreCase(city.getName())){
-                        if (boundary.getGeom().contains(city.getCenter())) {
-                            //Logger.i(TAG, "City were founded by name and contains for boundary: "+boundary.getId()+ " city: " + city.toString());
-                            if (cc.canBeSetAsCenterCity (boundary, city)){
-                                cityFound = city;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Try to find city that has similar name as boundary
-            if (cityFound == null) {
-                for (City city : cities) {
-                    if (cc.hasSimilarName(boundary, city)) {
-                        if (boundary.getGeom().contains(city.getCenter())) {
-                            // test if city is some small village > in this case do not use it
-                            if (cc.canBeSetAsCenterCity (boundary, city)){
-                                cityFound = city;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // there is no city for this boundary > try to guess and create new one from boundary informations
-            if (cityFound == null && boundary.hasCityType()){
-
-                cityFound = createMissingCity(boundary);
-                if (cityFound.isValid()){
-                    boundary.setAdminCenterId(cityFound.getOsmId());
-                    dc.addCity(cityFound);
-                    IndexController.getInstance().insertCityCenter(cityFound.getCenter().getEnvelopeInternal(), cityFound);
-                }
-            }
-
-            if (cityFound != null){
-                // OK we have center city for boundary > put them into cache and compare priority
-                checkPriorityBoundaryForCity(dc, boundary, cityFound);
-            }
-            else {
-               //Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
-            }
-        }
-    }
-
-    /**
-     * City can be center for more boundaries. createRegion the best boundary for city
-     * Method compare priority of previous boundary (if exist).
-     * @param boundary new boundary that should registered for center city
-     * @param city center city
-     */
-    private void checkPriorityBoundaryForCity(ADataContainer dc, Boundary boundary, City city) {
-
-        // try to obtain previous registered boundary for city
-        BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
-        Boundary oldBoundary = centerCityBoundaryMap.getValue(city);
-        if (oldBoundary == null){
-            //there is no registered boundary for this city > simple register it
-//            if (city.getOsmId() == 60806241){
-//                Logger.i(TAG, "Put A boundary " + boundary.toString());
-//            }
-            centerCityBoundaryMap.put(city, boundary);
-        }
-        else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
-                && oldBoundary != boundary
-                && oldBoundary.getName().equalsIgnoreCase(boundary.getName())){
-            // this condition is inspiration from OSMand probably can happen that there
-            // are to boundaries for the same city
-            MultiPolygon newBounds = GeomUtils.fixInvalidGeom(oldBoundary.getGeom().union(boundary.getGeom()));
-            oldBoundary.setGeom(newBounds);
-        }
-
-        else {
-            int oldBoundaryPriority = cc.getCityBoundaryPriority(oldBoundary, city);
-            int newBoundaryPriority = cc.getCityBoundaryPriority(boundary, city);
-
-            if (newBoundaryPriority < oldBoundaryPriority){
-                centerCityBoundaryMap.put(city, boundary);
-            }
-        }
-    }
-
-    private City createMissingCity (Boundary boundary){
-
-        //Logger.i(TAG, "Create missing city for boundary: "  + boundary.getName());
-
-        City city = new City(boundary.getCityType());
-        city.setOsmId(boundary.getId());
-        city.setName(boundary.getName());
-        city.setNamesInternational(boundary.getNamesInternational());
-        city.setCenter(boundary.getCenterPoint());
-
-        return city;
-    }
-
-    /**************************************************/
-    /*  STEP 4 - create list of cities inside boundary
-    /**************************************************/
-
-    /**
-     * For every boundary make list of cities that are in the boundary poly
-     */
-    private void findAllCitiesForBoundary(ADataContainer dc) {
-
-        THashMap<Boundary, List<City>> citiesInBoundaryMap = dc.getCitiesInBoundaryMap();
-        Boundary boundary = null;
-        STRtree cityCenterIndex = IndexController.getInstance().getCityCenterIndex();
-        for (int i=0, size = boundaries.size(); i < size; i++){
-
-            boundary = boundaries.get(i);
-            List<City> citiesInBoundary = new ArrayList<>();
-            List<City> cityFromIndex = cityCenterIndex.query(boundary.getGeom().getEnvelopeInternal());
-
-            for (City city : cityFromIndex){
-                if (boundary.getGeom().contains(city.getCenter())){
-                    citiesInBoundary.add(city);
-                }
-            }
-            citiesInBoundaryMap.put(boundary, citiesInBoundary);
-        }
-    }
-
-    /**
-     * For all cities find parent city (if any) and region is in
-     */
-    private void findParentCitiesAndRegions(ADataContainer dc) {
-        Collection<City> cities = dc.getCities();
-        for (City city : cities){
-            City parentCity = cc.findParentCity(dc, city);
-            city.setParentCity(parentCity); // can return null
-
-            Region parentRegion = cc.findParentRegion(city);
-            if (parentRegion != null){
-                city.setRegion(parentRegion);
-            }
-        }
-    }
-
-
 
     /**************************************************/
     /*  STEP 5 - write cities into DB
     /**************************************************/
+
+    private void insertRegionsToDB(ADataContainer dc) {
+
+        List<Region> regions = dc.getRegions();
+        for (Region region : regions){
+            ((DatabaseAddress)db).insertRegion(region);
+        }
+    }
 
     private void insertCitiesToDB(ADataContainer dc) {
         BiDiHashMap<City, Boundary> centerCityBoundaryMap = dc.getCenterCityBoundaryMap();
@@ -482,7 +227,7 @@ public class GeneratorAddress extends AGenerator {
                 double diagonalLength = Utils.getDistance(
                         envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
-                if (diagonalLength > Const.MAX_DIAGONAL_STREET_LENGTH){
+                if (diagonalLength > Const.ADR_MAX_DIAGONAL_STREET_LENGTH){
                     // street is too long try to separate it based on villages, town or cities geom
                     streetsToInsert = sc.splitLongStreet(streetToInsert);
                 }
@@ -500,7 +245,7 @@ public class GeneratorAddress extends AGenerator {
                     envelope = street.getGeometry().getEnvelopeInternal();
                     diagonalLength = Utils.getDistance(
                             envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
-                    if (diagonalLength <= Const.MAX_DIAGONAL_STREET_LENGTH) {
+                    if (diagonalLength <= Const.ADR_MAX_DIAGONAL_STREET_LENGTH) {
                         ((DatabaseAddress) db).insertStreet(street);
                     }
                 }

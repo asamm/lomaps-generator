@@ -674,7 +674,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertRegion.clearParameters();
 
             psInsertRegion.setLong(1, region.getOsmId());
-            Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(region.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+            Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(region.getGeom(), Const.ADR_CITY_POLYGON_SIMPLIFICATION_DISTANCE);
             psInsertRegion.setBytes(2, wkbWriter.write(geomSimplified));
             psInsertRegion.execute();
 
@@ -739,13 +739,13 @@ public class DatabaseAddress extends ADatabaseHandler {
             if (hasCitiesCenterGeomColumn){
                 psInsertCity.setBytes(7, wkbWriter.write(city.getCenter()));
                 if (city.getGeom() != null ){
-                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.ADR_CITY_POLYGON_SIMPLIFICATION_DISTANCE);
                     psInsertCity.setBytes(8, wkbWriter.write(geomSimplified));
                 }
             }
             else {
                 if (city.getGeom() != null ){
-                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.CITY_POLYGON_SIMPLIFICATION_DISTANCE);
+                    Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(city.getGeom(), Const.ADR_CITY_POLYGON_SIMPLIFICATION_DISTANCE);
                     psInsertCity.setBytes(7, wkbWriter.write(geomSimplified));
                 }
             }

@@ -7,6 +7,8 @@ package com.asamm.osmTools;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
+import com.asamm.osmTools.generator.GenLoMaps;
+import com.asamm.osmTools.generator.GenStoreGeoCoding;
 import com.asamm.osmTools.utils.*;
 
 /**
@@ -38,8 +40,14 @@ public class Main {
             Parameters.initialize();
 
             // handle all possible actions
-            Actions actions = new Actions();
-            actions.doActions(Parameters.getActions());
+            if (Parameters.getGenType() == Parameters.GenType.LOMAPS){
+                GenLoMaps genLoMaps = new GenLoMaps();
+                genLoMaps.process();
+            }
+            else if (Parameters.getGenType() == Parameters.GenType.STORE_GEOCODING){
+                GenStoreGeoCoding genStoreGeo = new GenStoreGeoCoding();
+                genStoreGeo.process();
+            }
 
             // do some logging
             LOG.info("\nDONE! Elepsed time: " + timer.getElapsedTimeSec() +

@@ -5,35 +5,21 @@ import java.io.File;
 /**
  * Created by voldapet on 2016-02-22 .
  */
-public class    ConfigurationAddress extends AConfiguration {
+public class ConfigurationAddress extends ConfigurationGeoCoding {
 
-    /**
+    /*
      * File to store database address
      */
     private File fileDb;
 
-    /**
-     * XML file with configuration of admin levels
-     */
-    private File fileConfigXml;
 
-    /**
-     * File with geometry of country border
-     */
-    private File fileCountryGeom;
-
-    /**
+    /*
      * File with geometry of data boundary (area of map)
      */
     private File fileDataGeom;
 
-    /**
-     * Id of map for which is created address db
-     */
-    private String mapId;
-
-    /**
-     * Name of coutry in which is address db
+       /*
+     * Name of country in which is address db
      */
     private String countryName = "";
 
@@ -82,44 +68,6 @@ public class    ConfigurationAddress extends AConfiguration {
      */
     public void setFileDatabase(String file) {
         this.fileDb = checkFile(file);
-    }
-
-    /**
-     * @return the id of map that address is created for
-     */
-    public String getMapId() {
-        return mapId;
-    }
-
-    /**
-     *
-     * @param mapId id of generated map
-     */
-    public void setMapId(String mapId) {
-        this.mapId = mapId;
-    }
-
-    /**
-     * @return File object of XML with definition of admin levels for cities and regions
-     */
-    public File getFileConfigXml() {
-        return this.fileConfigXml;
-    }
-
-    public void setFileConfigXml(String pathToXmlfile) {
-        this.fileConfigXml = checkFile(pathToXmlfile);
-    }
-
-    /**
-     * Get file with GeoJson that define border of country for which database is generated
-     * @return
-     */
-    public File getFileCountryGeom() {
-        return fileCountryGeom;
-    }
-
-    public void setFileCountryGeom(String fileCountryGeom) {
-        this.fileCountryGeom = checkFile(fileCountryGeom);
     }
 
     /**

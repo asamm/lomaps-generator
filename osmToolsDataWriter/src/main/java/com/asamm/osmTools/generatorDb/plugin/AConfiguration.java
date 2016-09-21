@@ -7,7 +7,24 @@ import java.io.File;
 public abstract class AConfiguration {
 
     public enum GenerateType {
-		ADDRESS, COUNTRY_BOUNDARY, POI;
+
+        /**
+         * Generate Offline address database for LoMaps
+         */
+        ADDRESS,
+
+        /**
+         * Generate country boundary GeoJson file
+         */
+        COUNTRY_BOUNDARY,
+        /**
+         * Generate offline POIs database for LoMaps
+         */
+        POI,
+        /**
+         * Generate Regions, cities for Locus store geocoding tables
+         */
+        STORE_GEOCODE;
 
         public static GenerateType createFromValue(String type) {
             if (type == null) {
@@ -22,11 +39,15 @@ public abstract class AConfiguration {
             // set type
             if (type.equals("address")) {
                 return  GenerateType.ADDRESS;
-            } else if (type.equals("poi")) {
+            }
+            else if (type.equals("poi")) {
                 return GenerateType.POI;
             }
             else if (type.equals("country")){
                 return GenerateType.COUNTRY_BOUNDARY;
+            }
+            else if (type.equals("store_geocode")){
+                return GenerateType.STORE_GEOCODE;
             }
             else {
                 throw new IllegalArgumentException(
@@ -36,6 +57,7 @@ public abstract class AConfiguration {
 	}
 
     public enum DataContainerType {
+
         HDD, RAM
     }
 	
@@ -62,6 +84,7 @@ public abstract class AConfiguration {
 	
 	/**
 	 * Set data type, that will be generated
+     * @deprecated
 	 * @param type
 	 */
 	public void setGenerateType(String type) {
@@ -74,7 +97,8 @@ public abstract class AConfiguration {
 		// set type
 		if (type.equals("address")) {
 			this.genType = GenerateType.ADDRESS;
-		} else if (type.equals("poi")) {
+		}
+        else if (type.equals("poi")) {
 			this.genType = GenerateType.POI;
 		} else {
 			throw new IllegalArgumentException(
