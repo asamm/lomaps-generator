@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.asamm.osmTools.server;
+package com.asamm.store;
 
 import java.util.HashMap;
 
@@ -29,37 +29,6 @@ public class LocusServerConst {
 //    public static final String ACTION_DATA_UPDATE_ITEM = "updateItem";
 
     public static final String LOCATIONS = "location";
-
-
-    // ==================  VECTOR ITEM DEFINITION FOR JSON UPLOAD  ==================
-
-    //public static final int VECTOR_ITEM_TYPE_UNIT = 1;  //define that it is item with file
-
-    //public static final int VECTOR_VERSION_CODE = 125; //
-    //public static final boolean VECTOR_CAN_BE_WELCOME_PRESENT = true;
-
-   // public static final long[] VECTOR_IMAGE_IDS = new long[] {5120937556967424L, 5683887510388736L, 5737979670691840L, 6218248282439680L, 6246837463810048L, 6298375192313856L};
-   // public static final long VECTOR_IC0N_ID = 5414151014842368L;
-
-    //public static final String[] VECTOR_USAGE_IDS = new String[] {"maps.universal.locus_vector"};
-   // public static final String VECTOR_PROVIDER_ID = "asammsw";
-
-    //public static final int VECTOR_AVAILABLE_FOR = 7; // STORE_ITEM_TIME_PERIOD_YEAR
-    //  -----------------------------------------------
-
-
-    //public static final String VECTOR_DESCRIPTION = "Locus maps work fully offline and are available for the whole world. " +
-//            "These maps are placed directly in your device and for this reason you can change their appearance using built-in themes. " +
-//            "Long tap on name of downloaded map (Menu > Maps > Vector) will populate dialog " +
-//            "where it is possible to change the theme of the map..\n"+
-//            "\n<ul></ul>"+
-//            "\nAfter purchase of vector maps, follow please these instructions:"+
-//            "\n<ol>"+
-//            "\n<li>open Menu  - Maps - Offline tab </li>"+
-//            "\n<li>select vector map in a list</li> "+
-//            "\n</ol>"+
-//            "\n<h4>Locus Guarantee</h4>"+
-//            "\nLocus Map guarantees one year period when you can repeatedly download one version of your purchased vector map for free. The guarantee does not refer to map updates.";
 
 
     // ================== JSON STRINGS ==================
@@ -154,6 +123,37 @@ public class LocusServerConst {
         supportedVersions.put(LocusServerConst.PACKAGE_GIS, 6);
 
     }
+
+
+    /*****************************************************************
+     *      LOCUS STORE GEOCODING DATABASE CONST
+     * *************************************************************/
+
+    public static final String TN_GEO_REGION = "geo_region";
+    public static final String TN_GEO_REGION_NAME = "geo_region_name";
+
+
+    // NAMES OF COLUMNS
+
+    public static final String COL_ID = "id";
+    public static final String COL_OSM_ID = "osmid";
+    public static final String COL_OSM_DATA_TYPE = "osmtype";
+    public static final String COL_DATA = "data";
+    public static final String COL_TYPE = "type";
+    public static final String COL_GEOM = "geom";
+    public static final String COL_CENTER_GEOM = "center";
+    public static final String COL_VALUE = "value";
+    public static final String COL_LANG_CODE = "langcode";
+    public static final String COL_NAME = "name";
+    public static final String COL_NAME_NORM = "namenorm";
+    public static final String COL_PLACE_NAME = "placename";
+    public static final String COL_PARENT_CITY_ID = "parentcityid";
+    public static final String COL_LON = "lon";
+    public static final String COL_LAT = "lat";
+    public static final String COL_TIMESTAMP = "timestamp";
+
+    public static final String COL_REGION_ID = "region_id";
+    public static final String COL_STORE_REGION_ID = "store_region_id";
 
 
 

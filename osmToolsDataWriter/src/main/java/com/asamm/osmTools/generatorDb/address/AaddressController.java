@@ -15,15 +15,12 @@ public abstract class AaddressController {
 
     protected DatabaseAddress databaseAddress;
 
-    protected WriterAddressDefinition wad;
-
     protected GeometryFactory geometryFactory;
 
-    public AaddressController (ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad ) {
+    public AaddressController (ADataContainer dc, DatabaseAddress databaseAddress) {
 
         this.dc = dc;
         this.databaseAddress = databaseAddress;
-        this.wad = wad;
 
         this.geometryFactory = new GeometryFactory();
     }

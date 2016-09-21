@@ -4,6 +4,7 @@ import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
+import com.asamm.store.LocusServerConst;
 import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

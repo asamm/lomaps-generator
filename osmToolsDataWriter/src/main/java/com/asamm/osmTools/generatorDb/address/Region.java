@@ -3,6 +3,7 @@ package com.asamm.osmTools.generatorDb.address;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import gnu.trove.map.hash.THashMap;
+import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 
 /**
  * Created by voldapet on 2015-08-14 .
@@ -10,24 +11,43 @@ import gnu.trove.map.hash.THashMap;
 public class Region {
 
 
-    /** Same as OSM Node or id of relation/way */
+    /*
+     * Same as OSM Node or id of relation/way
+     */
     private long osmId;
 
-    /** Name of the region in local lang*/
+    /**
+     * If region boundary is created only from WAY or from RELATION
+     */
+    private EntityType entityType;
+
+    /*
+     * Name of the region in local lang
+     */
     private String name;
 
-    /** All possible international languages of cities, <langCode|name> */
+    /*
+     * The OSM admin level value
+     */
+    private int adminLevel;
+
+    /*
+     * All possible international languages of cities, <langCode|name>
+     */
     private THashMap<String, String> namesInternational;
 
-    /** Boundary of city - can be null*/
+    /*
+     * Boundary of city - can be null
+     */
     private MultiPolygon geom;
 
     public Region() {
 
     }
 
-    public Region(long osmId, String name, THashMap<String, String> namesInternational, MultiPolygon geom) {
+    public Region(long osmId, EntityType entityType, String name, THashMap<String, String> namesInternational, MultiPolygon geom) {
         this.osmId = osmId;
+        this.entityType = entityType;
         this.name = name;
         this.namesInternational = namesInternational;
         this.geom = geom;
@@ -61,6 +81,14 @@ public class Region {
         this.osmId = osmId;
     }
 
+    public EntityType getEntityType() {
+        return entityType;
+    }
+
+    public void setEntityType(EntityType entityType) {
+        this.entityType = entityType;
+    }
+
     public String getName() {
         return name;
     }
@@ -69,6 +97,14 @@ public class Region {
         if (name != null){
             this.name = name;
         }
+    }
+
+    public int getAdminLevel() {
+        return adminLevel;
+    }
+
+    public void setAdminLevel(int adminLevel) {
+        this.adminLevel = adminLevel;
     }
 
     /**
@@ -105,4 +141,7 @@ public class Region {
                 ", geom=" + GeomUtils.geomToGeoJson(geom) +
                 '}';
     }
+
+
+
 }

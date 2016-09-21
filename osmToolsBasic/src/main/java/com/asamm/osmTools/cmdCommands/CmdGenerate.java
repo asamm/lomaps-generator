@@ -168,12 +168,12 @@ public class CmdGenerate extends Cmd {
         }
         
         //set FileSizeLimit determined when use HD and when RAM
-        int fileSizeLimit = 190;
+        int fileSizeLimit = 360;
         // get map size
         long mapSizeMb = new File(getMap().getPathSource()).length();
         if (getMap().isMerged){
             mapSizeMb = new File(getMap().getPathMerge()).length();
-            fileSizeLimit = 190;
+            fileSizeLimit = 360;
         } 
         mapSizeMb = mapSizeMb /1024/1024;
         //System.out.println("Velikost souboru "+getMap().file+" je:  "+ mapSizeMb);

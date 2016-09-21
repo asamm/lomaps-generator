@@ -16,8 +16,6 @@ import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.geom.prep.PreparedGeometry;
-import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.linearref.LengthIndexedLine;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
@@ -30,8 +28,6 @@ import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
-import org.wololo.geojson.*;
-import sun.rmi.runtime.Log;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -66,6 +62,8 @@ public class HouseController extends AaddressController {
     public long timeFindNearestForGroup = 0;
     public long timeFindNearestForGroupedHouse = 0;
 
+    protected WriterAddressDefinition wad;
+
     /**
      * The list of osm ids of houses that were created from relation and should not be created again from nodes
      * */
@@ -80,8 +78,9 @@ public class HouseController extends AaddressController {
 
     public HouseController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad) {
 
-        super(dc, databaseAddress, wad);
+        super(dc, databaseAddress);
 
+        this.wad = wad;
         this.houseIdsFromRelations = new TLongHashSet();
         this.houseIdsFromInterpolations = new TLongHashSet();
     }
@@ -353,7 +352,7 @@ public class HouseController extends AaddressController {
         // FIND BY STREET NAME TAG
         if (addrStreetName.length() > 0){
 
-            streetFound = findNamedStreet(addrStreetName, Const.MAX_DISTANCE_NAMED_STREET, house);
+            streetFound = findNamedStreet(addrStreetName, Const.ADR_MAX_DISTANCE_NAMED_STREET, house);
             if (streetFound == null){
                 //databaseAddress.insertRemovedHouse(house);
                 dc.addHouseWithoutStreet (house);
@@ -366,7 +365,7 @@ public class HouseController extends AaddressController {
         else  if ( addrPlaceName.length() > 0 ){
             // street name is not defined but we have place name. This is common for villages > check if there is street with
             // same or similar name
-            streetFound = findNamedStreet(addrPlaceName, Const.MAX_DISTANCE_PLACENAME_STREET, house);
+            streetFound = findNamedStreet(addrPlaceName, Const.ADR_MAX_DISTANCE_PLACENAME_STREET, house);
             if (streetFound == null){
                 if (house.getOsmId() == 1297105299){
                     Logger.i(TAG, "findStreetForHouse() : 2 add house into housdes without streetname" + house.toString());
@@ -651,7 +650,7 @@ public class HouseController extends AaddressController {
                     House house = housesGrouped.get(i);
 
                     double distance = Utils.getDistanceNearest(mlsCutted, house.getCenter());
-                    if (distance > Const.MAX_DISTANCE_UNNAMED_STREET){
+                    if (distance > Const.ADR_MAX_DISTANCE_UNNAMED_STREET){
                         databaseAddress.insertRemovedHouse(house, "" +
                                 "House is too far for (un)named street or was not possible to find nearest street");
                         housesGrouped.remove(i);
@@ -691,7 +690,7 @@ public class HouseController extends AaddressController {
                         envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
 
-                if (diagonalLength > Const.MAX_DIAGONAL_STREET_LENGTH){
+                if (diagonalLength > Const.ADR_MAX_DIAGONAL_STREET_LENGTH){
                     // street is too long try to split it
                     streetsToInsert = sc.splitStreetIntoGrid(joinedStreet);
                 }
@@ -1266,7 +1265,7 @@ public class HouseController extends AaddressController {
         // width of one house in interpolation in meters
         double houseWidth = lineLength / diff;
 
-        return (houseWidth > Const.MIN_HOUSE_WIDTH_FOR_INTERPOLATION);
+        return (houseWidth > Const.ADR_MIN_HOUSE_WIDTH_FOR_INTERPOLATION);
     }
 
     /**

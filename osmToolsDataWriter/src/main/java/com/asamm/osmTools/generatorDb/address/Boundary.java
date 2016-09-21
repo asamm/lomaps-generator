@@ -3,6 +3,7 @@ package com.asamm.osmTools.generatorDb.address;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import gnu.trove.map.hash.THashMap;
+import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
@@ -13,6 +14,9 @@ public class Boundary {
 
     /** Can OSM relation ID or OSM simple way id*/
     private long id;
+
+    /** If boudnary is created only from WAY or from RELATION*/
+    private EntityType entityType;
 
     private String name;
 
@@ -49,10 +53,11 @@ public class Boundary {
      *
      * @param id entity id
      */
-    public Boundary (long id){
+    public Boundary (long id, EntityType entityType){
         reset();
 
         this.id = id;
+        this.entityType = entityType;
     }
 
     public boolean isValid() {
@@ -114,6 +119,10 @@ public class Boundary {
 
     public long getId() {
         return id;
+    }
+
+    public EntityType getEntityType() {
+        return entityType;
     }
 
     public String getName() {
@@ -228,4 +237,6 @@ public class Boundary {
                 ", bounds=" + toGeoJsonString() +
                 '}';
     }
+
+
 }

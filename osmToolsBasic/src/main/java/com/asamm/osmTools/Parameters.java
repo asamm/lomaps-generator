@@ -30,6 +30,33 @@ public class Parameters {
 
     private static final char NO_SHORTCUT = Character.MIN_VALUE;
 
+
+
+    public enum GenType {
+        LOMAPS,
+
+        STORE_GEOCODING;
+
+        public static GenType createFromValue(String type) {
+
+            if (type == null || type.length() == 0) {
+                throw new IllegalArgumentException("Type parameter is empty");
+            }
+
+            // set type
+            if (type.equals("lomaps")) {
+                return  LOMAPS;
+            }
+            else if (type.equals("storegeo")) {
+                return STORE_GEOCODING;
+            }
+            else {
+                throw new IllegalArgumentException(
+                        "type parameter '" + type + "' incorrect. Supported types are 'lomaps' or 'storegeo'");
+            }
+        }
+    }
+
     public enum Action {
 
         DOWNLOAD("download", 'd'),
@@ -54,7 +81,9 @@ public class Parameters {
 
         UPLOAD("upload", 'u'),
 
-        CREATE_JSON("create_json", NO_SHORTCUT);
+        CREATE_JSON("create_json", NO_SHORTCUT),
+
+        STORE_GEO_DB("storeGeoDb", NO_SHORTCUT);
 
         // label of action defined in XML file
         private String mLabel;
@@ -79,6 +108,8 @@ public class Parameters {
 
     // path to base config file
     private static final String mConfigPath = Consts.DIR_BASE + "config.xml";
+
+    private static final String mConfigStoreGeoPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_store_geodb.xml";
     // path to base config file for address/poi database
     private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
 
@@ -90,6 +121,9 @@ public class Parameters {
 
     // name of version itself (like "2014.06.10") it also set the date to the file
     private static String mVersionName;
+
+    // flag if is generated loMaps or storegeocoding database
+    private static GenType genType;
     // list of defined actions
     private static List<Action> mActionList;
 
@@ -199,6 +233,10 @@ public class Parameters {
         return mConfigPath;
     }
 
+    public static String getConfigStoreGeoPath() {
+        return mConfigStoreGeoPath;
+    }
+
     public static String getCoastlineShpFile() {
 
         // set path to water polygon shape file
@@ -238,9 +276,14 @@ public class Parameters {
         return mActionList.contains(action);
     }
 
-    protected static List<Action> getActions() {
+    public static List<Action> getActions() {
         return mActionList;
     }
+
+    public static GenType getGenType() {
+        return genType;
+    }
+
 
     /**
      * Return defined path to the firectory with static data. If dir is not defined then
@@ -354,7 +397,11 @@ public class Parameters {
                     Logger.w(TAG, "Wrong data format. Use yyyy.MM.dd");
                     System.exit(1);
                 }
-            } 
+            }
+
+            if (args[i].equals("--type") && !args[++i].startsWith("--") ){
+                setGeneratorType(args[i]);
+            }
 
             // set defined actions
             if (args[i].equals("--actions") && !args[++i].startsWith("--") ){
@@ -408,6 +455,14 @@ public class Parameters {
             System.exit(1);
         }
     }
+
+    /**
+     * Parse cmd type parameter value to recognize if LoMaps are generated or if Store GeoCoding database is generated
+     */
+    private static void setGeneratorType(String s) {
+        genType = GenType.createFromValue(s);
+    }
+
 
     private static void setActions(String cmdActions) {
         // firstly check parameter

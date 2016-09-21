@@ -12,7 +12,6 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.openstreetmap.osmosis.core.task.v0_6.Sink;
 
-import java.io.File;
 import java.util.Map;
 
 import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.DataContainerType;
@@ -54,8 +53,7 @@ public class DataGeneratorTask implements Sink {
 					dc = new DataContainerRam(nodeHandler);
 				} else {
                     Logger.d(TAG, "creating data container: HDD");
-					dc = new DataContainerHdd(nodeHandler,
-							new File(confPoi.getFileDatabase().getAbsolutePath()+ ".temp"));
+					dc = new DataContainerHdd(nodeHandler);
 				}
 				generator = new GeneratorPoi(confPoi.getFileDatabase(), nodeHandler);
 			}
@@ -74,8 +72,7 @@ public class DataGeneratorTask implements Sink {
                     dc = new DataContainerRam(addressDefinition);
                 } else {
                     Logger.i(TAG, "creating data container: HDD");
-                    dc = new DataContainerHdd(addressDefinition,
-                            new File(confAddress.getFileDatabase().getAbsolutePath()+ ".temp"));
+                    dc = new DataContainerHdd(addressDefinition);
                 }
 
                 generator = new GeneratorAddress(addressDefinition);
@@ -94,6 +91,26 @@ public class DataGeneratorTask implements Sink {
                 dc = new DataContainerRam(wcbDefinition);
 
                 generator = new GeneratorCountryBoundary(wcbDefinition);
+            }
+
+            // STORE GEOCODING GENERATOR
+
+            else if (config.getGenerateType() == GenerateType.STORE_GEOCODE){
+                Logger.i(TAG, "Start Store geocoding DB generator");
+
+                ConfigurationGeoCoding confStoreGeo = (ConfigurationGeoCoding) config;
+                WriterGeocodingDefinition geocodingDefinition = new WriterGeocodingDefinition(confStoreGeo);
+
+                // crate RAM or HDD storage for all entities
+                if (confStoreGeo.getDataContainerType() == DataContainerType.RAM) {
+                    Logger.i(TAG, "creating data container: RAM");
+                    dc = new DataContainerRam(geocodingDefinition);
+                } else {
+                    Logger.i(TAG, "creating data container: HDD");
+                    dc = new DataContainerHdd(geocodingDefinition);
+                }
+
+                generator = new GeneratorStoreGeocoding(geocodingDefinition);
             }
 
 		} catch (Exception e) {

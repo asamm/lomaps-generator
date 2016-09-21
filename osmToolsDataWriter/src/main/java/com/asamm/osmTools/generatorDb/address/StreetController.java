@@ -49,8 +49,12 @@ public class StreetController extends AaddressController {
 
     public long timeJoinWaysToStreets = 0;
 
+    private WriterAddressDefinition wad;
+
     public StreetController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wad){
-        super(dc, databaseAddress, wad);
+        super(dc, databaseAddress);
+
+        this.wad = wad;
     }
 
     /**
@@ -693,7 +697,7 @@ public class StreetController extends AaddressController {
     private List<MultiLineString> splitGeomDifferentStreets(List<LineString> elements){
 
         // max distance between elements where we expect that are in the same street
-        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), Const.MAX_DISTANCE_BETWEEN_STREET_SEGMENTS);
+        double[] distanceDeg = Utils.metersToDlatDlong(elements.get(0).getCoordinate(), Const.ADR_MAX_DISTANCE_BETWEEN_STREET_SEGMENTS);
 
         // list geoms for separated streets
         List<MultiLineString> splittedMls = new ArrayList<>();
@@ -832,7 +836,7 @@ public class StreetController extends AaddressController {
             }
             if (streetGeomPrepared.intersects(city.getGeom())){
                 double distance = Utils.getDistance(centroid, city.getCenter());
-                if (distance / city.getType().getRadius() < Const.MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
+                if (distance / city.getType().getRadius() < Const.ADR_MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
                     foundCities.add(city);
                     if (city.getType() == SUBURB || city.getType() == DISTRICT){
                         areFoundedCitiesSuburbs = true;
@@ -906,7 +910,7 @@ public class StreetController extends AaddressController {
             if (city != null){
                 // test how fare is the nearest city
                 double distance = Utils.getDistance(centroid, city.getCenter());
-                if (distance / city.getType().getRadius() < Const.MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
+                if (distance / city.getType().getRadius() < Const.ADR_MAX_FOUNDED_CITY_DISTANCE_RADIUS_RATIO){
                     //add only cities that are far as their 3xradius
                     foundCities.add(city);
                 }
@@ -1033,7 +1037,7 @@ public class StreetController extends AaddressController {
             }
         }
 
-        if (Utils.getDistanceNearest(center, nearestStreet.getGeometry()) > Const.MAX_DISTANCE_NAMED_STREET){
+        if (Utils.getDistanceNearest(center, nearestStreet.getGeometry()) > Const.ADR_MAX_DISTANCE_NAMED_STREET){
             return null;
         }
 
