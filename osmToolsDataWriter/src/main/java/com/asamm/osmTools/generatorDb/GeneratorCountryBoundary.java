@@ -193,6 +193,9 @@ public class GeneratorCountryBoundary extends AGenerator{
                 db.insertRegion(region, entry.getKey());
 
             }
+
+            // close db connection
+            db.destroy();
         }
 
         catch (SQLException e) {
