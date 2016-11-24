@@ -3,6 +3,7 @@ package com.asamm.osmTools.generatorDb;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
+import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -13,6 +14,8 @@ import java.util.Collection;
  * Created by voldapet on 2016-02-22 .
  */
 public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
+
+    private static final String TAG = WriterCountryBoundaryDefinition.class.getSimpleName();
 
     private ConfigurationCountry configurationCountry;
 
@@ -53,6 +56,7 @@ public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
      */
     public boolean isValidRelation (Entity entity){
 
+        Logger.i(TAG, "Check validity for relation: " + entity.getId());
 
         Collection<Tag> tags = entity.getTags();
         for (Tag tag : tags) {

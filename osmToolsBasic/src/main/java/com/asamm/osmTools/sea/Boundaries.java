@@ -54,4 +54,14 @@ public class Boundaries {
     public double getMaxLat() {
         return maxLat;
     }
+
+    @Override
+    public String toString() {
+        return "Boundaries{" +
+                "minLon=" + minLon +
+                ", maxLon=" + maxLon +
+                ", minLat=" + minLat +
+                ", maxLat=" + maxLat +
+                '}';
+    }
 }

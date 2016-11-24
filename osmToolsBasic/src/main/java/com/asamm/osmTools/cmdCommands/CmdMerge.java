@@ -4,12 +4,9 @@
  */
 package com.asamm.osmTools.cmdCommands;
 
-import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
-import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.TimeWatch;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,15 +39,14 @@ public class CmdMerge extends Cmd {
                 getMap().hasAction(Parameters.Action.CONTOUR) && getMap().getContourSep().equals("no")); // map has set the contour will be separeted
         boolean isTourist = Parameters.isActionRequired(Parameters.Action.TOURIST) &&
                 getMap().hasAction(Parameters.Action.TOURIST);
-        boolean isCoastline = getMap().requireCoastline();
+        boolean isCoastline = getMap().hasSea();
 
         // prepare cmd line and string for log
 
         addReadPbf(getMap().getPathSource());
-        if (isCoastline){
-            addReadPbf(getMap().getPathCoastline());
-            addMerge();
-        }
+
+        addReadPbf(getMap().getPathCoastline());
+        addMerge();
 
         if (isTourist){
             addReadXml(getMap().getPathTourist());
@@ -61,17 +57,17 @@ public class CmdMerge extends Cmd {
         // try to add custom data
         addCustomData();
 
+
         if (isContour){
             addReadPbf(getMap().getPathContour());
             addMerge();
         }
 
+
         addBuffer();
         addWritePbf(getMap().getPathMerge(), true);
 
     }
-
-
 
 
     public void createSeaCmd(String tmpCoastPath, String tmpBorderPath) throws IOException {
@@ -82,6 +78,13 @@ public class CmdMerge extends Cmd {
         addBuffer();
         addMerge();
         addWritePbf(getMap().getPathCoastline(), true);
+    }
+
+    public void xml2pbf (String inputPath, String outputPath) throws IOException {
+        addReadXml(inputPath);
+        addSort();
+        addWritePbf(outputPath, true);
+
     }
     
     public void addMerge (){

@@ -351,6 +351,7 @@ public class ItemMap extends AItemMap {
     /**************************************************/
 
     public void setBoundsFromPolygon() throws IOException {
+
         if (mPathPolygon == null ){
             mBounds = null;
             return;
@@ -394,6 +395,7 @@ public class ItemMap extends AItemMap {
             mBounds.setMinLat(minLatitude);
             mBounds.setMaxLon(maxLongitude);
             mBounds.setMaxLat(maxLatitude);
+
         } finally {
             if (br != null){
                 br.close();

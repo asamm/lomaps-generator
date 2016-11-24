@@ -131,7 +131,7 @@ public class CityController extends AaddressController {
             long relationId = relationIds.get(i);
 
 //            if (relationId == 56106 || relationId == 2135916){
-//                Logger.i(TAG, "Start process relation id: " + relationId);
+//               Logger.i(TAG, "Start process relation id: " + relationId);
 //            }
             Relation relation = dc.getRelationFromCache(relationId);
             Boundary boundary = createBoundary(relation, false);
@@ -171,7 +171,7 @@ public class CityController extends AaddressController {
 
         String place = OsmUtils.getTagValue(entity, OSMTagKey.PLACE);
         String boundaryTag = OsmUtils.getTagValue(entity, OSMTagKey.BOUNDARY);
-        if ( !Utils.objectEquals("administrative", boundaryTag) && place == null ){
+        if ( !Utils.objectEquals("administrative", boundaryTag) && !Utils.objectEquals("territorial", boundaryTag) && place == null ){
             // is not administrative nor the place
             return null;
         }
@@ -186,7 +186,7 @@ public class CityController extends AaddressController {
         boundary.setName(bName);
 
 
-        //Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
+        Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
 
         if (entity.getType() == EntityType.Way){
 

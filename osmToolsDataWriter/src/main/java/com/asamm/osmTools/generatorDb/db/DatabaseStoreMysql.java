@@ -254,7 +254,7 @@ public class DatabaseStoreMysql {
                 psInsertRegionNames.addBatch();
             }
             psInsertRegionNames.executeBatch();
-            commit(true);
+            commit(false);
         }
 
         catch (MySQLIntegrityConstraintViolationException e){
@@ -281,8 +281,8 @@ public class DatabaseStoreMysql {
 
         try {
 
-            Logger.i(TAG, "unionExistedEntryWithNew Union geometry for OSM element:  " + region.getOsmId()
-                    + ", type: " + region.getEntityType());
+            //Logger.i(TAG, "unionExistedEntryWithNew Union geometry for OSM element:  " + region.getOsmId()
+            //        + ", type: " + region.getEntityType());
 
             // LOAD EXISTED GEOM
             psSelectRegionByOSM.setLong(1,region.getOsmId());
@@ -295,7 +295,7 @@ public class DatabaseStoreMysql {
 
             // union geom with new one
             geom = geom.union(geomSimplified);
-            Logger.i(TAG, "unionExistedEntryWithNew: Union geometry " + GeomUtils.geomToGeoJson(geom));
+            //Logger.i(TAG, "unionExistedEntryWithNew: Union geometry " + GeomUtils.geomToGeoJson(geom));
 
             // update geometry in database
             psUpdateRegionGeomByOSM.setBytes(1, wkbWriter.write(geom));

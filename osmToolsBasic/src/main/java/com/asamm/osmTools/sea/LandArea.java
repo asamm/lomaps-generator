@@ -14,7 +14,6 @@ import com.asamm.osmTools.tourist.Node;
 import com.asamm.osmTools.tourist.Tags;
 import com.asamm.osmTools.tourist.Way;
 import com.asamm.osmTools.utils.Consts;
-import com.asamm.osmTools.utils.Utils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -24,28 +23,28 @@ import java.io.IOException;
  *
  * @author volda
  */
-public class Sea {
+public class LandArea {
     ItemMap map;
-    String tmpCoastPath;
+    String tmpLandPath;
     String tmpBorderPath;
     double seaBorderMargin = 0.00006;  // create sea area little bit smaller
-                                       //then borders becasue thin blue border
+                                       //then borders because thin blue border
     
-    public Sea(ItemMap map) throws IOException, InterruptedException {
+    public LandArea(ItemMap map) throws IOException, InterruptedException {
         this.map = map;
         this.tmpBorderPath = Consts.DIR_TMP + "seaBorder_"
                 + map.getName() + ".osm.xml";
-        this.tmpCoastPath = Consts.DIR_TMP + "seaCoastline_"
+        this.tmpLandPath = Consts.DIR_TMP + "seaCoastline_"
                 + map.getName() + ".osm.xml";
     }
     
     public void create() throws IOException, InterruptedException{
         // test if shp file with land polygons exist.
         if (!new File(map.getPathShp()).exists()){
-            Main.LOG.info("Starting create shape file with coastlines: "+map.getPathShp());
+            Main.LOG.info("Starting create shape file with land area: "+map.getPathShp());
             createCoastShp();
         } else {
-            Main.LOG.info("Shape File with coastlines for map: " +
+            Main.LOG.info("Shape File with land area for map: " +
                     map.getName() + " already exist.");
         }
 
@@ -53,21 +52,40 @@ public class Sea {
         if (!new File(map.getPathCoastline()).exists()) {
             Main.LOG.info("Starting convert shape file with coastlines to OSM file: " + map.getPathCoastline());
 
-            // create OSM boundary
-            createCoastOsm();
 
-            // create sea border
-            createBoundSeaXml();
 
-            // merge tmp convert shp file with border
-            mergeBoundsToCoast();
+            // check if map has sea and it's needed to create blue sea rectangle
+            if (map.hasSea()){
+                // create OSM boundary
+                createLandOsm(tmpLandPath);
+                // create sea border
+                createBoundSeaXml();
+                // merge tmp convert shp file with border
+                mergeBoundsToCoast();
+
+            }
+            else {
+
+                createLandOsm(tmpLandPath);
+
+                // convert land osm xml to pbf
+                CmdMerge cm = new CmdMerge(map);
+                cm.xml2pbf(tmpLandPath, map.getPathCoastline());
+                cm.execute();
+            }
 
             //clean tmp directory
             cleanTmp();
         } else {
-            Main.LOG.info("OSM File with coastlines for map: " + map.getName() + " already exist.");
+            Main.LOG.info("OSM File with land area for map: " + map.getName() + " already exist.");
         }
     }
+
+    /**
+     * Cut SHP Land to country SHP file
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private void createCoastShp() throws IOException, InterruptedException{
         // prepare directories
         FileUtils.forceMkdir(new File(map.getPathShp()).getParentFile());
@@ -77,9 +95,14 @@ public class Sea {
         co.createCmd();
         co.execute();
     }
-    
-    private void createCoastOsm() throws IOException, InterruptedException{
-        CmdShp2osm cs = new CmdShp2osm(map, map.getPathShp(), tmpCoastPath);
+
+    /**
+     * Convert SHP land area to OSM xml
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private void createLandOsm(String outputFile) throws IOException, InterruptedException{
+        CmdShp2osm cs = new CmdShp2osm(map, map.getPathShp(), outputFile);
         cs.createCmd();
         cs.execute();
     }
@@ -149,8 +172,8 @@ public class Sea {
 
     private void mergeBoundsToCoast() throws IOException, InterruptedException {
         // firstly test if files for merging exists
-        if (!new File(tmpCoastPath).exists()) {
-            throw new IllegalArgumentException("Temporary coastline file " + tmpCoastPath + "does not exist!");
+        if (!new File(tmpLandPath).exists()) {
+            throw new IllegalArgumentException("Temporary coastline file " + tmpLandPath + "does not exist!");
         }
         if (!new File (tmpBorderPath).exists()){
             throw new IllegalArgumentException("Temporary sea border file " + tmpBorderPath + "does not exist!");
@@ -162,12 +185,12 @@ public class Sea {
         // execute merge
         Main.LOG.info("Merge map border and coastlines into file: "+ map.getPathCoastline());
         CmdMerge cm = new CmdMerge(map);
-        cm.createSeaCmd(tmpCoastPath, tmpBorderPath);
+        cm.createSeaCmd(tmpLandPath, tmpBorderPath);
         cm.execute();
     }
 
     private void cleanTmp() {
-        File tcp =  new File(tmpCoastPath);
+        File tcp =  new File(tmpLandPath);
         File tbp = new File (tmpBorderPath);
         if (tcp.exists()) {
             tcp.delete();
