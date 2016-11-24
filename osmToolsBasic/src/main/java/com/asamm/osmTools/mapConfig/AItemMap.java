@@ -43,7 +43,7 @@ public class AItemMap {
     // define internal for map file used during generating
     private String mForceInterval;
     // parameter if we need coastline
-    private boolean mRequireCoastline;
+    private boolean mHasSea;
 
     public AItemMap(ItemMapPack parent) {
         setDefaults();
@@ -63,7 +63,7 @@ public class AItemMap {
             mContourSep = parent.getContourSep();
             mForceType = parent.getForceType();
             mForceInterval = parent.getForceInterval();
-            mRequireCoastline = parent.requireCoastline();
+            mHasSea = parent.hasSea();
         }
     }
 
@@ -82,7 +82,7 @@ public class AItemMap {
         mContourSep = "";
         mForceType = "";
         mForceInterval = "";
-        mRequireCoastline = false;
+        mHasSea = false;
     }
 
     public void validate() {
@@ -231,7 +231,7 @@ public class AItemMap {
         }
         if (parser.getAttributeValue(null, "coastline") != null) {
             String coastline = parser.getAttributeValue(null, "coastline");
-            mRequireCoastline = coastline.equalsIgnoreCase("yes");
+            mHasSea = coastline.equalsIgnoreCase("yes");
         }
         if (parser.getAttributeValue(null, "contourSep") != null) {
             mContourSep = parser.getAttributeValue(null, "contourSep");
@@ -322,8 +322,8 @@ public class AItemMap {
         return mForceInterval;
     }
 
-    public boolean requireCoastline() {
-        return mRequireCoastline;
+    public boolean hasSea() {
+        return mHasSea;
     }
 
 }

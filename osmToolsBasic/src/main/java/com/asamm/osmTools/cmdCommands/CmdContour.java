@@ -51,7 +51,7 @@ public class CmdContour extends Cmd{
         addCommand("--write-timestamp");
         addCommand("--max-nodes-per-tile=0");
         addCommand("--hgtdir=" + Parameters.getHgtDir());
-        addCommand("-j 3"); //number of paralel jobs (POSIX only)
+        addCommand("-j 7"); //number of paralel jobs (POSIX only)
         if (Parameters.mapOutputFormat.endsWith("pbf")){
             //
             addCommand("--pbf");

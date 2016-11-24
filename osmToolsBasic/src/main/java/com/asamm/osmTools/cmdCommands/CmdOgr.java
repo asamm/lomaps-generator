@@ -5,7 +5,9 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.mapConfig.ItemMap;
+import com.asamm.osmTools.sea.Boundaries;
 
 import java.io.File;
 
@@ -14,13 +16,12 @@ import java.io.File;
  * @author volda
  */
 public class CmdOgr extends Cmd{
-    ItemMap map;
 
     public CmdOgr(ItemMap map) {
         super(map, ExternalApp.NO_EXTERNAL_APP);
 
         // test if shpfile for extracting exist
-        this.map  =  map;
+        //this.map  =  map;
         if (!new File(Parameters.getCoastlineShpFile()).exists()){
             throw  new IllegalArgumentException("Shapefile with world polygons "
                     + Parameters.getCoastlineShpFile() +" does not exist");
@@ -33,11 +34,12 @@ public class CmdOgr extends Cmd{
     public void createCmd(){
         //ogr2ogr -clipsrc 14.0 35.7 14.66 36.2   malta.shp water_polygons.shp
         addCommand("-clipsrc");
-        addCommand(Double.toString(map.getBoundary().getMinLon()));
-        addCommand(Double.toString(map.getBoundary().getMinLat()));
-        addCommand(Double.toString(map.getBoundary().getMaxLon()));
-        addCommand(Double.toString(map.getBoundary().getMaxLat()));
-        addCommand(map.getPathShp());
+
+        addCommand(Double.toString(getMap().getBoundary().getMinLon()));
+        addCommand(Double.toString(getMap().getBoundary().getMinLat()));
+        addCommand(Double.toString(getMap().getBoundary().getMaxLon()));
+        addCommand(Double.toString(getMap().getBoundary().getMaxLat()));
+        addCommand(getMap().getPathShp());
         addCommand(Parameters.getCoastlineShpFile());
         addCommand("-skipfailures");
     }

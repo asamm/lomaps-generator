@@ -11,7 +11,8 @@ import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
-import com.asamm.osmTools.sea.Sea;
+import com.asamm.osmTools.sea.Boundaries;
+import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.tourist.Tourist;
 import com.asamm.osmTools.utils.*;
@@ -127,6 +128,7 @@ public class GenLoMaps extends  AGenerator{
                     actionInsertMetaData(map);
                     break;
                 case COASTLINE:
+
                     actionCoastline(map);
                     break;
                 case TOURIST:
@@ -280,20 +282,20 @@ public class GenLoMaps extends  AGenerator{
 
     private void actionCoastline(ItemMap map)
             throws IOException, InterruptedException {
-        // check if we want to do this action
-        if (!map.requireCoastline()){
+
+        if (!map.hasAction(Parameters.Action.GENERATE)) {
             return;
         }
 
         // check if file exits and we should overwrite it
         if (!Parameters.isRewriteFiles()  && new File(map.getPathCoastline()).exists()){
-            Logger.i(TAG, "File with coastlines " + map.getPathCoastline()
+            Logger.i(TAG, "File with land area " + map.getPathCoastline()
                     + " already exist - skipped." );
             return;
         }
 
-        // start Creation sea contourlines
-        new Sea(map).create();
+        // start Creation sea and nosea lands
+        new LandArea(map).create();
     }
 
     // ACTION TOURIST
@@ -395,7 +397,7 @@ public class GenLoMaps extends  AGenerator{
                 map.hasAction(Parameters.Action.CONTOUR) && map.getContourSep().equals("no")); // map has set the contour will be separeted
         boolean isTourist = Parameters.isActionRequired(Parameters.Action.TOURIST) &&
                 map.hasAction(Parameters.Action.TOURIST);
-        boolean isCoastline = map.requireCoastline();
+        boolean isCoastline = map.hasSea();
         Logger.i(TAG, "merge:" + isContour + ", " + isTourist + ", " + isCoastline);
         if (!map.hasAction(Parameters.Action.CONTOUR) &&
                 !map.hasAction(Parameters.Action.TOURIST) &&

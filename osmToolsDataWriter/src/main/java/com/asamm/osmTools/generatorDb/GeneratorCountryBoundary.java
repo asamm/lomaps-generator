@@ -126,9 +126,16 @@ public class GeneratorCountryBoundary extends AGenerator{
                         countryBoundaryMap.put(countryConf, boundary);
                     }
                     else {
-                        // join geom of previous boundary with new one
-                        MultiPolygon unionMp = GeomUtils.unionMultiPolygon(boundaryOld.getGeom(), boundary.getGeom());
-                        boundaryOld.setGeom(unionMp);
+
+                        if (boundaryOld.getAdminLevel() > boundary.getAdminLevel()){
+                            // previous boundary is lower admin level (replace with new one)
+                            countryBoundaryMap.put(countryConf, boundary);
+                        }
+                        else if (boundaryOld.getAdminLevel() == boundary.getAdminLevel()){
+                            // join geom of previous boundary with new one
+                            MultiPolygon unionMp = GeomUtils.unionMultiPolygon(boundaryOld.getGeom(), boundary.getGeom());
+                            boundaryOld.setGeom(unionMp);
+                        }
                     }
                 }
             }

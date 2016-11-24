@@ -107,7 +107,7 @@ public class Parameters {
     // DEFINED PARAMETERS FROM ARGUMENTS
 
     // path to base config file
-    private static final String mConfigPath = Consts.DIR_BASE + "config.xml";
+    private static final String mConfigPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config.xml";
 
     private static final String mConfigStoreGeoPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_store_geodb.xml";
     // path to base config file for address/poi database
@@ -239,9 +239,9 @@ public class Parameters {
 
     public static String getCoastlineShpFile() {
 
-        // set path to water polygon shape file
+        // set path to land polygon shape file
         return getDataDir() + "coastlines" +
-                Consts.FILE_SEP + "land_polygons.shp";
+                Consts.FILE_SEP + "land-polygons" + Consts.FILE_SEP + "land_polygons.shp";
     }
 
     public static String getConfigApDbPath() {
@@ -574,8 +574,8 @@ public class Parameters {
     static void initialize() {
 
         // path to the mapsforge definition file for generation
-        mTouristTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
-        mContourTagMapping = Consts.DIR_BASE + "osmosis" + Consts.FILE_SEP + "tag-mapping-contour.xml";
+        mTouristTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
+        mContourTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-contour.xml";
 
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;

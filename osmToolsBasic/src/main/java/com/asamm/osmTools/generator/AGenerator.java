@@ -74,7 +74,11 @@ public abstract class AGenerator {
                         // set variables with path to files
                         map.setPaths();
                         // set boundaries from polygons
+
                         map.setBoundsFromPolygon();
+
+
+
                         // finally add map to container
                         mapPack.addMap(map);
 
