@@ -42,6 +42,7 @@ public class DatabasePoi extends ADatabaseHandler {
 	public DatabasePoi(File file, WriterPoiDefinition poiDefinition) throws Exception {
 		super(file, true);
 
+
         this.writerPoiDefinition = poiDefinition;
 
         setTables();

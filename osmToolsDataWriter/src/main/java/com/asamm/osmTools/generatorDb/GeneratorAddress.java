@@ -1,8 +1,6 @@
 package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.address.*;
-import com.asamm.osmTools.generatorDb.data.OsmConst;
-import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
@@ -10,11 +8,7 @@ import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.utils.*;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.operation.union.UnaryUnionOp;
-import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
-import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TIntArrayList;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -62,8 +56,14 @@ public class GeneratorAddress extends AGenerator {
         this.hc = new HouseController(dc, this.getDatabaseAddress(), addressDefinition);
 
         Logger.i(TAG, "=== Step 0 - testing residential ===");
-        //createResidentialAreas(dc);
+        ResidentialAreaCreator residentialC = new ResidentialAreaCreator(dc);
+        residentialC.generate();
 
+
+        // TODO REMOVE
+        if (1 == 1){
+            return;
+        }
 
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
@@ -365,97 +365,6 @@ public class GeneratorAddress extends AGenerator {
     /*  TEMPORARY
     /**************************************************/
 
-
-    private void createResidentialAreas(ADataContainer dc) {
-
-        List<Geometry> polygons = new ArrayList<>();
-
-        List<Geometry> polytmp = new ArrayList<>();
-
-        TLongList wayIds = dc.getWayIds();
-        for (int i=0, size = wayIds.size(); i < size; i++) {
-            Way way = dc.getWayFromCache(wayIds.get(i));
-            Polygon poly = parseForResidential(dc, way);
-            if (poly == null || !poly.isValid()){
-                continue;
-            }
-
-            polytmp.add(poly);
-
-            if (polytmp.size() > 10000){
-                //UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polytmp);
-                //Geometry geomUnion = unaryUnionOp.union();
-                //polygons.add(DouglasPeuckerSimplifier.simplify(geomUnion, 0.0001));
-                //polytmp.clear();
-            }
-        }
-
-        // add rest of building into joined polygons
-        polygons.addAll(polytmp);
-        long start = System.currentTimeMillis();
-        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polygons);
-        Geometry finalGeom = unaryUnionOp.union();
-        Logger.i(TAG, "Union takes: " + (System.currentTimeMillis() - start) / 1000.0);
-
-        int size = finalGeom.getNumGeometries();
-
-
-
-        double minArea =  Utils.metersToDeg(300) *  Utils.metersToDeg(300);
-        List<Polygon> residentialPolygons = new ArrayList<>();
-
-        for (int i=0; i < size; i++){
-            Polygon polygon = (Polygon) finalGeom.getGeometryN(i);
-
-            if (polygon.getArea() > minArea ){
-                residentialPolygons.add(polygon);
-            }
-        }
-
-        GeometryFactory geometryFactory = new GeometryFactory();
-        MultiPolygon multiPoly = geometryFactory.createMultiPolygon(residentialPolygons.toArray(new Polygon[0]));
-
-        Geometry geom = DouglasPeuckerSimplifier.simplify(multiPoly, 0.0001);
-
-        com.asamm.osmTools.utils.Utils.writeStringToFile(new File("residential.geojson"), GeomUtils.geomToGeoJson(geom) ,false);
-
-    }
-
-
-    private Polygon parseForResidential (ADataContainer dc, Way way){
-
-        float bufferM = 100;
-        Polygon polygon = null;
-
-        String landuse = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.LANDUSE);
-        String building = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.BUILDING);
-        if (Utils.objectEquals(landuse, "residential")){
-            WayEx wayEx = dc.getWay(way.getId());
-            if (wayEx == null || !wayEx.isValid()){
-                return null;
-            }
-            if (wayEx.isClosed()){
-                polygon =  GeomUtils.createPolyFromOuterWay(wayEx, true);
-            }
-        }
-
-        if (building != null) {
-            WayEx wayEx = dc.getWay(way.getId());
-            if (wayEx == null || !wayEx.isValid()) {
-                return null;
-            }
-            if (wayEx.isClosed()){
-                polygon =  GeomUtils.createPolyFromOuterWay(wayEx,true);
-            }
-            double bufferD = Utils.metersToDeg(bufferM);
-
-            polygon =  GeomUtils.createPolyFromOuterWay(wayEx, true);
-            if (polygon != null){
-                polygon = (Polygon) polygon.buffer(bufferD);
-            }
-        }
-        return polygon;
-    }
 
 
     /**************************************************/

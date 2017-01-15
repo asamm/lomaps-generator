@@ -241,9 +241,11 @@ public abstract class AGenerator {
 
             // filter only boundary values from source
             CmdCountryBorders cmdCBfilter = new CmdCountryBorders(sourceMap, storageType);
-            cmdCBfilter.addTaskFilter();
-            Logger.i(TAG, "Filter for generation country bound, command: " + cmdCBfilter.getCmdLine());
-            cmdCBfilter.execute();
+            if (!cmdCBfilter.getFilteredTempMap().exists()){
+                cmdCBfilter.addTaskFilter();
+                Logger.i(TAG, "Filter for generation country bound, command: " + cmdCBfilter.getCmdLine());
+                cmdCBfilter.execute();
+            }
 
             CmdCountryBorders cmdBorders = new CmdCountryBorders(sourceMap, storageType);
             cmdBorders.addGeneratorCountryBoundary();
@@ -252,7 +254,7 @@ public abstract class AGenerator {
             cmdBorders.execute();
 
             // delete tmp file
-            cmdBorders.deleteTmpFile();
+            //cmdBorders.deleteTmpFile();
         }
     }
 
@@ -265,7 +267,7 @@ public abstract class AGenerator {
             ItemMapPack mp, ConfigurationCountry.StorageType storageType) {
 
         // map where key is mappack id and value is list of map to generate boundaries from source
-        Map<String, List<ItemMap>> mapTableBySourceId = new HashMap<>();
+        Map<String, List<ItemMap>> mapTableBySourceId = new LinkedHashMap<>();
 
         // fill hash table with values in first step proccess map in mappack
         for (ItemMap map : mp.getMaps()) {
@@ -275,6 +277,7 @@ public abstract class AGenerator {
             if (!map.hasAction(Parameters.Action.GENERATE)
                     && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)
                     && !map.hasAction(Parameters.Action.STORE_GEO_DB)) {
+                //Logger.i(TAG, "prepareCountriesForSource, skip map: " + map.getNameReadable());
                 continue;
             }
 

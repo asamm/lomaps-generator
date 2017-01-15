@@ -3,7 +3,6 @@ package com.asamm.osmTools.cmdCommands;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
 import com.asamm.osmTools.mapConfig.ItemMap;
-import com.asamm.osmTools.utils.Consts;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,10 +17,12 @@ public class CmdCountryBorders extends  Cmd{
 
     private static final int COUNTRY_BOUND_ADMIN_LEVELS[] = new int[] {2,3,4};
 
+
+
     /**
      * File to filter source item
      */
-    private File mFileTempMap;
+    private File mFilteredTempMap;
 
     ConfigurationCountry.StorageType storageType;
 
@@ -32,14 +33,14 @@ public class CmdCountryBorders extends  Cmd{
         this.storageType = storageType;
 
 
-        mFileTempMap = new File(Consts.DIR_TMP, "temp_map_country.osm.pbf");
+        mFilteredTempMap = new File(sourceItem.getPathSource() + "_tmp_border");
     }
 
     /**
      * Delete tmop file where are store result of filtering of admin boundaries
      */
     public void deleteTmpFile() {
-        mFileTempMap.delete();
+        mFilteredTempMap.delete();
     }
 
     /**
@@ -49,6 +50,19 @@ public class CmdCountryBorders extends  Cmd{
      */
     public void addTaskFilter() throws IOException {
 
+        addReadSource();
+
+        addCommand("--tf");
+        addCommand("reject-relations");
+        addCommand("--tf");
+        addCommand("reject-ways");
+        addCommand("--tf");
+        addCommand("accept-nodes");
+        addCommand("place=continent");
+
+        addCommand("outPipe.0=Nodes");
+
+        // add second task
         addReadSource();
         addCommand("--tf");
         addCommand("reject-relations");
@@ -69,7 +83,7 @@ public class CmdCountryBorders extends  Cmd{
         addCommand("--used-node");
         addCommand("outPipe.0=Ways");
 
-        // add second task
+        // add third task
         addReadSource();
         addCommand("--tf");
         addCommand("accept-relations");
@@ -89,12 +103,17 @@ public class CmdCountryBorders extends  Cmd{
         addCommand("outPipe.0=Relations");
 
         // add merge task
+        // add merge task
         addCommand("--merge");
-        addCommand("inPipe.0=Ways");
-        addCommand("inPipe.1=Relations");
+        addCommand("inPipe.0=Nodes");
+        addCommand("inPipe.1=Ways");
+        addCommand("outPipe.0=NodesWays");
+        addCommand("--merge");
+        addCommand("inPipe.0=Relations");
+        addCommand("inPipe.1=NodesWays");
 
         // add export path
-        addWritePbf(mFileTempMap.getAbsolutePath(), true);
+        addWritePbf(mFilteredTempMap.getAbsolutePath(), true);
     }
 
 
@@ -104,7 +123,7 @@ public class CmdCountryBorders extends  Cmd{
     public void addGeneratorCountryBoundary() {
 
         //addReadPbf(mFileTempMap.getAbsolutePath());
-        addReadPbf(mFileTempMap.getAbsolutePath());
+        addReadPbf(mFilteredTempMap.getAbsolutePath());
 
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
         addCommand("-type=country");
@@ -137,6 +156,7 @@ public class CmdCountryBorders extends  Cmd{
                 sb.append(map.getCountryName()).append(",");
             }
 
+            sb.append(map.getParentRegionId()).append(",");
             sb.append(map.getRegionId());
 
             // for geo database is not needed to define path to geojson file
@@ -147,6 +167,10 @@ public class CmdCountryBorders extends  Cmd{
         }
 
         addCommand(sb.toString());
+    }
+
+    public File getFilteredTempMap() {
+        return mFilteredTempMap;
     }
 }
 

@@ -7,6 +7,9 @@ import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONWriter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by voldapet on 2015-8-14 .
  */
@@ -32,10 +35,15 @@ public class Boundary {
     private long adminCenterId;
 
     /** All possible international languages  <langCode|name> */
-    private THashMap<String, String> namesInternational;
+    private THashMap<String, String> nameLangs;
 
     /** All possible official names, <langCode|name> This is used for country borders*/
     private THashMap<String, String> officialNamesInternational;
+
+    /*
+     * Other possible name mutation for boudnary, like int_name, loc_name,..
+     */
+    private List<String> namesAlternative;
 
 
     /** The number of citizens in a given city   (used for city importance)  */
@@ -171,12 +179,12 @@ public class Boundary {
     }
 
 
-    public THashMap<String, String> getNamesInternational() {
-        return namesInternational;
+    public THashMap<String, String> getNameLangs() {
+        return nameLangs;
     }
 
-    public void setNamesInternational(THashMap<String, String> namesInternational) {
-        this.namesInternational = namesInternational;
+    public void setNameLangs(THashMap<String, String> nameLangs) {
+        this.nameLangs = nameLangs;
     }
 
     public THashMap<String, String> getOfficialNamesInternational() {
@@ -185,6 +193,24 @@ public class Boundary {
 
     public void setOfficialNamesInternational(THashMap<String, String> officialNamesInternational) {
         this.officialNamesInternational = officialNamesInternational;
+    }
+
+    public List<String> getNamesAlternative() {
+        return namesAlternative;
+    }
+
+    public void setNamesAlternative(List<String> namesAlternative) {
+        this.namesAlternative = namesAlternative;
+    }
+
+    public void addNameAlternative (String nameOther){
+        if (nameOther == null){
+            return;
+        }
+        if (this.namesAlternative == null){
+            this.namesAlternative =  new ArrayList<>();
+        }
+        this.namesAlternative.add(nameOther);
     }
 
     public MultiPolygon getGeom() {

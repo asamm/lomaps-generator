@@ -2,7 +2,6 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Eclipse" />
-    <resourceExtensions />
     <wildcardResourcePatterns>
       <entry name="!?*.java" />
       <entry name="!?*.form" />
@@ -13,11 +12,19 @@
       <entry name="!?*.kt" />
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
-    <annotationProcessing>
-      <profile default="true" name="Default" enabled="false">
-        <processorPath useClasspath="true" />
-      </profile>
-    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="locusApi_main" target="1.7" />
+      <module name="locusApi_test" target="1.7" />
+      <module name="mapsforge-core_main" target="1.7" />
+      <module name="mapsforge-core_test" target="1.7" />
+      <module name="mapsforge-map-writer_main" target="1.7" />
+      <module name="mapsforge-map-writer_test" target="1.7" />
+      <module name="osmToolsBasic_main" target="1.7" />
+      <module name="osmToolsBasic_test" target="1.7" />
+      <module name="osmToolsCore_main" target="1.7" />
+      <module name="osmToolsCore_test" target="1.7" />
+      <module name="osmToolsDataWriter_main" target="1.7" />
+      <module name="osmToolsDataWriter_test" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
-

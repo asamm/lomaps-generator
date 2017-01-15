@@ -1205,13 +1205,16 @@ public class StreetController extends AaddressController {
      */
     private MultiLineString createStreetGeom (Entity entity){
 
+
+
         if (entity == null){
             return null;
         }
-
+        //Logger.i(TAG, "Create streetm geom grom entity: " + entity.getId() + " adn type: " + entity.getType().toString());
         if (entity.getType() == EntityType.Node){
             return null;
         }
+
         else if (entity.getType() == EntityType.Way){
             Way way = (Way) entity;
             return createStreetGeomFromWay(way);
@@ -1224,6 +1227,14 @@ public class StreetController extends AaddressController {
             MultiLineString mlsNext = null;
 
             for (RelationMember rm : relation.getMembers()){
+
+                // TODO REMOVE temporary solution because wrong relation in ukraine
+                if (entity.getId() == 2275254 || entity.getId() == 2213799){
+                    Logger.i(TAG, "Skip UKRAINE entity: " + entity.getId());
+                    continue;
+                }
+
+
                 if (rm.getMemberType() == EntityType.Node){
                     continue;
                 }

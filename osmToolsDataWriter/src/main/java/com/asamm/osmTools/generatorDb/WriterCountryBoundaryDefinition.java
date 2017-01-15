@@ -56,7 +56,7 @@ public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
      */
     public boolean isValidRelation (Entity entity){
 
-        Logger.i(TAG, "Check validity for relation: " + entity.getId());
+        //Logger.i(TAG, "Check validity for relation: " + entity.getId());
 
         Collection<Tag> tags = entity.getTags();
         for (Tag tag : tags) {

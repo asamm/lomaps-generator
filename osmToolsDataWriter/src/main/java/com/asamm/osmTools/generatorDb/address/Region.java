@@ -99,6 +99,15 @@ public class Region {
         }
     }
 
+    /**
+     * Try to get English name for region if not defined fallback and get native name
+     * @return name of region
+     */
+    public String getEnName () {
+        String nameEn = namesInternational.get("en");
+        return (nameEn == null) ? this.name : nameEn;
+    }
+
     public int getAdminLevel() {
         return adminLevel;
     }
@@ -114,7 +123,6 @@ public class Region {
      */
     public void addNameInternational (String langCode, String name){
         this.namesInternational.put(langCode, name);
-
     }
 
     public THashMap<String, String> getNamesInternational() {

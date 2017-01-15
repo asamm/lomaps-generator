@@ -3,24 +3,26 @@ package com.asamm.osmTools.generatorDb;
 import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.generatorDb.address.CityController;
 import com.asamm.osmTools.generatorDb.address.Region;
+import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseStoreMysql;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
+import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
-import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import gnu.trove.map.hash.THashMap;
-import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
+import org.openstreetmap.osmosis.core.domain.v0_6.*;
 
 import java.io.File;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.*;
 
 import static com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry.CountryConf;
 
@@ -36,7 +38,9 @@ public class GeneratorCountryBoundary extends AGenerator{
      */
    // private File outputGeomFile;
 
-    Map<CountryConf, Boundary> countryBoundaryMap;
+    private Map<CountryConf, Boundary> countryBoundaryMap;
+
+    private Map<CountryConf, Region> continentsMap;
 
 
     /**
@@ -61,22 +65,32 @@ public class GeneratorCountryBoundary extends AGenerator{
 
     @Override
     public void proceedData(ADataContainer dc) {
-
         Logger.i(TAG, "=== Start country boundary process data ===");
+
+        // ccreate continents
+        createContinents(dc);
+
         createBoundaries(dc);
 
-        
+        // SAVE TO GEOJSON
+
         if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.GEOJSON){
             Logger.i(TAG, "= Write data to geojson files=");
             writeBoundariesToGeoJson();
         }
+
+        // SAVE TO DATABASE
         else if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.GEO_DATABASE){
             Logger.i(TAG, "= Write data to Locus store database=");
-            insertBoundariesToGeoDatabase ();
+            DatabaseStoreMysql db = new DatabaseStoreMysql();
+            //db.cleanTables();
 
+            insertContinentsToGeoDatabase(db);
+
+            insertBoundariesToGeoDatabase (db);
+
+            db.destroy();
         }
-
-
         testNotCreatedBoundaries ();
     }
 
@@ -112,7 +126,7 @@ public class GeneratorCountryBoundary extends AGenerator{
 
             //if (boundary.getAdminLevel() == wcbDefinition.getConfigurationCountry().getAdminLevel()){
             // use only boundaries that are same or smaller level then needed level for region boundaries
-            Logger.i(TAG, "Process country boundary for: " + boundary.getName());
+           // Logger.i(TAG, "Process country boundary for: " + boundary.getName());
 
             // test if any country configuration has such name
             for (CountryConf countryConf : countriesConf){
@@ -166,50 +180,172 @@ public class GeneratorCountryBoundary extends AGenerator{
     }
 
     /**
+     * Insert create continent regions into mysql database
+     */
+    private void insertContinentsToGeoDatabase(DatabaseStoreMysql db) {
+
+        db = new DatabaseStoreMysql();
+
+        if (continentsMap == null) {
+            return;
+        }
+
+        for (Map.Entry<CountryConf, Region> entry : continentsMap.entrySet()) {
+
+            db.insertRegion(entry.getValue(), entry.getKey());
+        }
+
+        // close db connection
+        db.destroy();
+    }
+
+    /**
      * Store created boundaries into Locus Store geo database
      */
-    private void insertBoundariesToGeoDatabase() {
+    private void insertBoundariesToGeoDatabase(DatabaseStoreMysql db)  {
 
-        DatabaseStoreMysql db = null;
-        try {
-            db = new DatabaseStoreMysql();
+        db = new DatabaseStoreMysql();
 
-            //db.cleanTables();
+        for (Map.Entry<CountryConf, Boundary> entry : countryBoundaryMap.entrySet()) {
 
+            Boundary boundary = entry.getValue();
 
-            for (Map.Entry<CountryConf, Boundary> entry : countryBoundaryMap.entrySet()){
+            // simplify boundary to write
+            MultiPolygon mpSimpl = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), 200);
 
-                Boundary boundary = entry.getValue();
+            //buffer simplified geom because after simplification exits passage between orig country border and simplified boundary
+            MultiPolygon mpBuf = GeomUtils.bufferGeom(mpSimpl, 100);
+            mpSimpl = GeomUtils.simplifyMultiPolygon(mpBuf, 100);
 
-                // simplify boundary to write
-                MultiPolygon mpSimpl = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), 200);
+            Region region = new Region(
+                    boundary.getId(),
+                    boundary.getEntityType(),
+                    boundary.getName(),
+                    boundary.getNameLangs(),
+                    mpSimpl);
 
-                //buffer simplified geom because after simplification exits passage between orig country border and simplified boundary
-                MultiPolygon mpBuf = GeomUtils.bufferGeom(mpSimpl, 100);
-                mpSimpl = GeomUtils.simplifyMultiPolygon(mpBuf, 100);
+            region.setAdminLevel(boundary.getAdminLevel());
 
-                Region region = new Region(
-                        boundary.getId(),
-                        boundary.getEntityType(),
-                        boundary.getName(),
-                        boundary.getNamesInternational(),
-                        mpSimpl);
+            db.insertRegion(region, entry.getKey());
 
-                region.setAdminLevel(boundary.getAdminLevel());
+        }
+    }
 
-                db.insertRegion(region, entry.getKey());
+    private void createContinents (ADataContainer dc) {
 
+        continentsMap = new LinkedHashMap<>();
+
+        // create world wide "continent"
+        createWorldRegion();
+
+        // Definition for possible continents
+        String[][] continentDefinitions = new String[][] {
+                {"Africa", "36966057", "wo.af", "africa.json"},
+                {"Asia", "36966065", "wo.as", "asia.json"},
+                {"Europe", "25871341", "wo.eu", "europe.json"},
+                {"South America", "36966069", "wo.am", "america_south.json"},
+                {"North America", "36966063", "wo.an", "america_north.json"},
+                {"Oceania", "249399679", "wo.oc", "oceania.json"}
+        };
+
+        // iterate over the nodes and try to find continent polygon
+        TLongList nodeIds = dc.getNodeIds();
+        for (int i=0, size = nodeIds.size(); i < size; i++) {
+            Node node = dc.getNodeFromCache(nodeIds.get(i));
+            if (node == null || !isValidContinentNode(node)) {
+                continue;
             }
 
-            // close db connection
-            db.destroy();
-        }
+            WKTReader wkt = new WKTReader();
 
-        catch (SQLException e) {
+            Logger.i(TAG, "createContinents: Process node as continent, node id: " + node.getId());
+            // find continent definition for node
+            CountryConf countryConf = null;
+            String path = "";
+            for (String[] staticDefinition : continentDefinitions) {
+                if (node.getId() == Long.valueOf(staticDefinition[1])) {
+
+                    countryConf = new ConfigurationCountry.CountryConf(staticDefinition[0], "wo", staticDefinition[2]);
+                    path = "../polygons/_world/" + staticDefinition[3];
+                }
+            }
+            if (countryConf == null) {
+                throw new RuntimeException("Definition for continent does not exist, Continent OSM node: " + node.getId());
+            }
+
+            File wktFile = new File(path);
+            Logger.i(TAG, wktFile.getAbsolutePath());
+
+            MultiPolygon multiPolygon = null;
+            Geometry geom = GeomUtils.geoJsonToGeom(com.asamm.osmTools.utils.Utils.readFileToString(path, Charset.forName("utf-8")));
+            if (geom.getGeometryType().equalsIgnoreCase("MultiPolygon")){
+                multiPolygon = (MultiPolygon) geom;
+            }
+            else {
+                multiPolygon = GeomUtils.polygonToMultiPolygon((Polygon) geom);
+            }
+
+            THashMap<String, String> names = OsmUtils.getNamesLangMutation(node, "name", countryConf.getCountryName());
+            Region regionContinents = new Region(
+                    node.getId(), EntityType.Node, countryConf.getCountryName(), names, multiPolygon);
+            regionContinents.setAdminLevel(0);
+
+            Logger.i(TAG, "createContinents: created continent: " + regionContinents.toString());
+            continentsMap.put(countryConf, regionContinents);
+        }
+    }
+
+    /** ******************************************************************
+     *                          HELPERS
+     * ******************************************************************/
+
+    /**
+     * Create definition for special worldwide continent
+     */
+    private void createWorldRegion (){
+
+        CountryConf countryConf = new ConfigurationCountry.CountryConf(
+                "Worldwide","wo", "wo");
+
+        THashMap<String, String> names = new THashMap<>();
+        names.put("en", countryConf.getCountryName());
+
+        WKTReader wkt = new WKTReader();
+        Region regionContinent = null;
+        try {
+            regionContinent = new Region(
+                    9999999999L, EntityType.Node,countryConf.getCountryName(), names,
+                    (MultiPolygon) wkt.read("MULTIPOLYGON (((-179.9 85, 179.9 85,179.9 -85,-179.9 -85,-179.9 85)))"));
+        } catch (ParseException e) {
             e.printStackTrace();
-            throw new IllegalArgumentException("insertBoundariesToGeoDatabase can not init mysql database connection");
+        }
+        regionContinent.setAdminLevel(0);
+        continentsMap.put(countryConf,regionContinent);
+    }
+
+        /**
+         * Test of OSM entity is continent definition
+         */
+    private boolean isValidContinentNode (Entity entity){
+
+        if (entity == null || entity.getTags() == null) {
+            return false;
         }
 
+        if (entity.getType() != EntityType.Node){
+            return false;
+        }
+
+        Collection<Tag> tags = entity.getTags();
+
+        for (Tag tag : tags) {
+            if (tag.getKey().equals(OsmConst.OSMTagKey.PLACE.getValue())) {
+                if (tag.getValue().equalsIgnoreCase("continent")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 
@@ -256,7 +392,7 @@ public class GeneratorCountryBoundary extends AGenerator{
         }
 
         // test en name of boundary
-        THashMap<String, String> nameInternational = boundary.getNamesInternational();
+        THashMap<String, String> nameInternational = boundary.getNameLangs();
         String enName = nameInternational.get("en");
         if (enName != null && Utils.normalizeNames(enName).equalsIgnoreCase(cNameNorm)){
             return true;
@@ -281,7 +417,42 @@ public class GeneratorCountryBoundary extends AGenerator{
             }
         }
 
+        // test other alternative names
+        if (boundary.getNamesAlternative() != null){
+            for (String nameAlt : boundary.getNamesAlternative()){
+                if (Utils.normalizeNames(nameAlt).equalsIgnoreCase(cNameNorm)){
+                    return true;
+                }
+            }
+        }
+
+
         return false;
     }
 
+
+    /**
+     * Temporary menthod that writes created sub region into geoJson not into the database
+     */
+    @Deprecated
+    private void writeRegionToGeoJson() {
+
+        for (Map.Entry<CountryConf, Boundary> entry : countryBoundaryMap.entrySet()) {
+
+            Boundary boundary = entry.getValue();
+
+            // simplify boundary to write
+            Geometry mpBuffer = GeomUtils.bufferGeom(boundary.getGeom(), 12000);
+
+            // simplify boundary to write
+            double distanceDeg = Utils.distanceToDeg(mpBuffer.getCoordinate(), 12000);
+            Geometry geometry = DouglasPeuckerSimplifier.simplify(mpBuffer, distanceDeg);
+
+            // write founded boundary to file
+            String fileName = entry.getKey().getCountryName().toLowerCase().replace(" ", "_");
+            fileName = "../polygons/" +fileName + ".geojson";
+            String geoJsonStr = GeomUtils.geomToGeoJson(geometry);
+            com.asamm.osmTools.utils.Utils.writeStringToFile(new File(fileName), geoJsonStr, false);
+        }
+    }
 }

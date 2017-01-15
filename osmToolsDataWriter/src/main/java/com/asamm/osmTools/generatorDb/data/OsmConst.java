@@ -9,6 +9,9 @@ public class OsmConst {
 
         NAME("name"),
         SHORT_NAME("short_name"),
+        INT_NAME("int_name"),
+        NAT_NAME("nat_name"),
+        LOC_NAME("loc_name"),
 
         ADMIN_LEVEL("admin_level"),
         BOUNDARY("boundary"),

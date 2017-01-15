@@ -2,13 +2,25 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/OsmTools.iml" filepath="$PROJECT_DIR$/OsmTools.iml" />
-      <module fileurl="file://$PROJECT_DIR$/locusApi/locusApi.iml" filepath="$PROJECT_DIR$/locusApi/locusApi.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" filepath="$PROJECT_DIR$/mapsforge-core/mapsforge-core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" filepath="$PROJECT_DIR$/mapsforge-map-writer/mapsforge-map-writer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" filepath="$PROJECT_DIR$/osmToolsBasic/osmToolsBasic.iml" />
-      <module fileurl="file://$PROJECT_DIR$/osmToolsCore/osmToolsCore.iml" filepath="$PROJECT_DIR$/osmToolsCore/osmToolsCore.iml" />
-      <module fileurl="file://$PROJECT_DIR$/osmToolsDataWriter/osmToolsDataWriter.iml" filepath="$PROJECT_DIR$/osmToolsDataWriter/osmToolsDataWriter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/OsmTools.iml" filepath="$PROJECT_DIR$/.idea/modules/OsmTools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/locusApi/locusApi.iml" filepath="$PROJECT_DIR$/.idea/modules/locusApi/locusApi.iml" group="locusApi" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/locusApi/locusApi_main.iml" filepath="$PROJECT_DIR$/.idea/modules/locusApi/locusApi_main.iml" group="locusApi" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/locusApi/locusApi_test.iml" filepath="$PROJECT_DIR$/.idea/modules/locusApi/locusApi_test.iml" group="locusApi" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core.iml" group="mapsforge-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core_main.iml" group="mapsforge-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/mapsforge-core_test.iml" group="mapsforge-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer.iml" group="mapsforge-map-writer" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer_main.iml" group="mapsforge-map-writer" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/mapsforge-map-writer_test.iml" group="mapsforge-map-writer" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic.iml" group="osmToolsBasic" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic_main.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic_main.iml" group="osmToolsBasic" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic_test.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsBasic/osmToolsBasic_test.iml" group="osmToolsBasic" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore.iml" group="osmToolsCore" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore_main.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore_main.iml" group="osmToolsCore" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore_test.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsCore/osmToolsCore_test.iml" group="osmToolsCore" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter.iml" group="osmToolsDataWriter" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter_main.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter_main.iml" group="osmToolsDataWriter" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter_test.iml" filepath="$PROJECT_DIR$/.idea/modules/osmToolsDataWriter/osmToolsDataWriter_test.iml" group="osmToolsDataWriter" />
     </modules>
   </component>
 </project>

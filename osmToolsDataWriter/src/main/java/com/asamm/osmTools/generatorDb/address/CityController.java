@@ -1,6 +1,5 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.WriterGeocodingDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
@@ -186,7 +185,7 @@ public class CityController extends AaddressController {
         boundary.setName(bName);
 
 
-        Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
+        //Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
 
         if (entity.getType() == EntityType.Way){
 
@@ -260,7 +259,8 @@ public class CityController extends AaddressController {
             }
 
             // for relation create multipolygon
-            boundary.setGeom(GeomUtils.createMultiPolygon(entity.getId(), outerMerger, innerMerger, isCloseRing));
+            MultiPolygon boundaryGeom = GeomUtils.createMultiPolygon(entity.getId(), outerMerger, innerMerger, isCloseRing);
+            boundary.setGeom(boundaryGeom);
         }
 
         // test if center node is in area of database
@@ -274,8 +274,9 @@ public class CityController extends AaddressController {
         boundary.setAdminLevel(parseBoundaryAdminLevel(entity));
         boundary.setShortName(OsmUtils.getTagValue(entity, OSMTagKey.SHORT_NAME));
         boundary.setCityType(cityType);
-        boundary.setNamesInternational(OsmUtils.getNamesLangMutation(entity, "name", bName));
+        boundary.setNameLangs(OsmUtils.getNamesLangMutation(entity, "name", bName));
         boundary.setOfficialNamesInternational(OsmUtils.getNamesLangMutation(entity, "official_name", bName));
+        boundary.addNameAlternative(OsmUtils.getTagValue(entity, OSMTagKey.INT_NAME));
 
         boundary.setWebsite(OsmUtils.getTagValue(entity, OSMTagKey.WEBSITE));
         boundary.setWikipedia(OsmUtils.getTagValue(entity, OSMTagKey.WIKIPEDIA));
@@ -308,7 +309,7 @@ public class CityController extends AaddressController {
                     boundary.getId(),
                     boundary.getEntityType(),
                     boundary.getName(),
-                    boundary.getNamesInternational(),
+                    boundary.getNameLangs(),
                     boundary.getGeom());
 
             IndexController.getInstance().insertRegion(region);
@@ -332,7 +333,7 @@ public class CityController extends AaddressController {
      * @param boundary to test and create region
      */
     private void createRegion(Boundary boundary){
-        Region region = new Region(boundary.getId(), boundary.getEntityType(), boundary.getName(), boundary.getNamesInternational(), boundary.getGeom());
+        Region region = new Region(boundary.getId(), boundary.getEntityType(), boundary.getName(), boundary.getNameLangs(), boundary.getGeom());
 
         IndexController.getInstance().insertRegion(region);
         //((DatabaseAddress)db).insertRegion(region);
@@ -471,7 +472,7 @@ public class CityController extends AaddressController {
         City city = new City(boundary.getCityType());
         city.setOsmId(boundary.getId());
         city.setName(boundary.getName());
-        city.setNamesInternational(boundary.getNamesInternational());
+        city.setNamesInternational(boundary.getNameLangs());
         city.setCenter(boundary.getCenterPoint());
 
         return city;

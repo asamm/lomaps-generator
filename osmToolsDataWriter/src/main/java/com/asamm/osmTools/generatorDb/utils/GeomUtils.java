@@ -112,6 +112,7 @@ public class GeomUtils {
         if (!multiPolygon.isValid()) {
             multiPolygon = fixInvalidGeom(multiPolygon);
         }
+
         return multiPolygon;
     }
 
@@ -334,9 +335,10 @@ public class GeomUtils {
     // BUFFER
 
     /**
-     * Create buffer around given geometry. Distance is approximatly converted into deg
+     * Create buffer around given geometry. Please note that Distance is very approximately converted into deg. It's not
+     * precise at all.
      * @param geometry geometry to buffer
-     * @param distance width of buffer
+     * @param distance width of buffer in meters
      * @return geometry represents the buffered geom
      */
     public static MultiPolygon bufferGeom (MultiPolygon geometry, double distance){

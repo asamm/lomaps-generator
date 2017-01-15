@@ -12,6 +12,9 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.openstreetmap.osmosis.core.domain.v0_6.WayNode;
 
+/**
+ * Custom definition of OSM way entity object
+ */
 public class WayEx extends Way {
 
 	private List<Node> nodes;

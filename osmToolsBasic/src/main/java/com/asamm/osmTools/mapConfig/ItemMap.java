@@ -67,8 +67,7 @@ public class ItemMap extends AItemMap {
     private String mNameReadable;
     // name of item for generating (useful for separating languages)
     private String mNameGen;
-    // prefered language for generating
-    private String mPrefLang;
+
 
     // PATH PARAMETERS
 
@@ -146,7 +145,7 @@ public class ItemMap extends AItemMap {
 
         // check country name
         if (hasAction(Parameters.Action.ADDRESS_POI_DB) || hasAction(Parameters.Action.GENERATE)) {
-            if (getCountryName().length() == 0 ) {
+            if (getCountryName() == null || getCountryName().length() == 0 ) {
                 throw new IllegalArgumentException("Input XML is not valid. " +
                         "Nor readable name nor country name is not defined for map or it's parent - name:" + mName);
             }
@@ -236,10 +235,6 @@ public class ItemMap extends AItemMap {
         else{
             return countryName;
         }
-    }
-
-    public String getPrefLang() {
-        return mPrefLang;
     }
 
     // PATH PARAMETERS
@@ -337,9 +332,6 @@ public class ItemMap extends AItemMap {
         }
         if (parser.getAttributeValue(null, "fileGen") != null) {
             mNameGen = Utils.changeSlash(parser.getAttributeValue(null, "fileGen"));
-        }
-        if (parser.getAttributeValue(null, "prefLang") != null) {
-            mPrefLang = parser.getAttributeValue(null, "prefLang");
         }
 
         // test if MAP are valid
@@ -441,7 +433,6 @@ public class ItemMap extends AItemMap {
                 "mId='" + mId + '\'' +
                 ", mName='" + mName + '\'' +
                 ", mNameGen='" + mNameGen + '\'' +
-                ", mPrefLang='" + mPrefLang + '\'' +
                 ", mPathSource='" + mPathSource + '\'' +
                 ", mPathGenerate='" + mPathGenerate + '\'' +
                 ", mPathGenerateContour='" + mPathGenerateContour + '\'' +

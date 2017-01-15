@@ -17,6 +17,8 @@ public abstract class AConfiguration {
          * Generate country boundary GeoJson file
          */
         COUNTRY_BOUNDARY,
+
+
         /**
          * Generate offline POIs database for LoMaps
          */

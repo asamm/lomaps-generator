@@ -27,7 +27,9 @@ import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.lang3.StringUtils;
+import org.omg.SendingContext.RunTime;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
+import sun.util.resources.CalendarData_th;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -883,9 +885,9 @@ public class HouseController extends AaddressController {
     }
 
     /**
-     * Prepare geometry for waystreets that are around grouped hauses. Join way's geoms into one multiline
+     * Prepare geometry for waystreets that are around grouped houses. Join way's geoms into one multiline
      * and this multiline is cut by the multipolygon of buffered houses
-     * @param cities city for whih are houses grouped
+     * @param cities city for that are houses grouped
      * @param bufferedHouses multipolygon define geoms that cut the multiline of ways
      * @param unNamedWayStreets wayStreets from this ways will be create the final geom
      * @return joined geometry that is cut by houses buffer
@@ -914,15 +916,35 @@ public class HouseController extends AaddressController {
         // cut the line by the joined geometry > the result is multiline around the houses
         mls = cutMlsByBoundary(mls, joinedBuffers);
 
-        // cut the lines by cities
+        // join city geoms into one geometry
         List<Geometry> cityGeoms = new ArrayList<>();
         for (City city : cities){
             if (city.getGeom() != null){
                 cityGeoms.add(city.getGeom());
             }
         }
-        unaryUnionOp = new UnaryUnionOp(cityGeoms);
-        Geometry geomBorders = unaryUnionOp.union();
+        Geometry geomBorders = null;
+        try {
+            unaryUnionOp = new UnaryUnionOp(cityGeoms);
+            geomBorders = unaryUnionOp.union();
+
+        }
+        catch (TopologyException e) {
+            geomBorders = null;
+            for (City city : cities){
+                // Hack how to fix city geom if there is any issue
+                city.setGeom(GeomUtils.bufferGeom(city.getGeom(),0));
+                Logger.i(TAG, "City fixed: " + city.toString());
+
+                if (geomBorders == null){
+                    geomBorders = city.getGeom();
+                }
+                else{
+                    geomBorders = geomBorders.union(city.getGeom());
+                }
+            }
+
+        }
 
         // cut it again to cut part of streets that are outside of city boundary
         if (geomBorders != null && geomBorders.isValid() && cityGeoms.size() == cities.size()) {

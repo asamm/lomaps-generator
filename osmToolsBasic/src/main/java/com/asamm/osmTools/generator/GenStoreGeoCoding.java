@@ -45,14 +45,16 @@ public class GenStoreGeoCoding extends  AGenerator{
 
             actionExtract(mp, mMapSource);
 
-
+            Logger.i(TAG, "Map pack: " + mp.getName());
             actionCountryBorder (mp, mMapSource, ConfigurationCountry.StorageType.GEO_DATABASE);
 
 
             // iterate over all maps and perform actions
             for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
                 ItemMap map = mp.getMap(i);
-                actionStoreGeoCodingDB(map);
+
+                // TODO UNCOMMENT TO BE ABLE CREATE FULL GOECODING DB
+                //actionStoreGeoCodingDB(map);
             }
 
 
@@ -65,6 +67,7 @@ public class GenStoreGeoCoding extends  AGenerator{
 
     /**
      *  Create regions, cities from current map
+     *  NOT IMPLEMENTED YET!
      */
     private void actionStoreGeoCodingDB (ItemMap map) throws IOException, InterruptedException {
 
@@ -87,8 +90,5 @@ public class GenStoreGeoCoding extends  AGenerator{
 
         // delete tmp file
         cmdStoreGeo.deleteTmpFile();
-
     }
-
-
 }
