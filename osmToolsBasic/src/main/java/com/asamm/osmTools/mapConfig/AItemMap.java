@@ -33,6 +33,8 @@ public class AItemMap {
     private String mCountryName;
     // when extract map from planet some big areas can be outside the border and are removed. Set true to close
     private boolean mClipIncompleteEntities;
+    // prefered language for generating
+    private String mPrefLang;
 
 
     // URL source for map file
@@ -58,6 +60,7 @@ public class AItemMap {
             mDir = parent.getDir();
             mDirGen = parent.getDirGen();
             mCountryName = parent.getCountryName();
+            mPrefLang = parent.getPrefLang();
             mUrl = parent.getUrl();
             mCycleNode = parent.getCycleNode();
             mContourSep = parent.getContourSep();
@@ -77,6 +80,7 @@ public class AItemMap {
         mDirGen = "";
         mCountryName = "";
         mClipIncompleteEntities = false;
+        mPrefLang = "";
         mUrl = "";
         mCycleNode = "";
         mContourSep = "";
@@ -222,6 +226,10 @@ public class AItemMap {
             }
         }
 
+        if (parser.getAttributeValue(null, "prefLang") != null) {
+            mPrefLang = parser.getAttributeValue(null, "prefLang");
+        }
+
         // other basis parameters
         if (parser.getAttributeValue(null, "url") != null) {
             mUrl = parser.getAttributeValue(null, "url");
@@ -272,6 +280,15 @@ public class AItemMap {
         return mRegionId;
     }
 
+    public String getParentRegionId () {
+        int index = mRegionId.lastIndexOf(".");
+        if (index == -1){
+            return mRegionId;
+        }
+
+        return mRegionId.substring(0, index);
+    }
+
     public String getDir() {
         return mDir;
     }
@@ -302,6 +319,8 @@ public class AItemMap {
         this.mCountryName = countryName;
     }
 
+    public String getPrefLang() { return mPrefLang;   }
+
     public String getUrl() {
         return mUrl;
     }
@@ -325,5 +344,7 @@ public class AItemMap {
     public boolean hasSea() {
         return mHasSea;
     }
+
+
 
 }

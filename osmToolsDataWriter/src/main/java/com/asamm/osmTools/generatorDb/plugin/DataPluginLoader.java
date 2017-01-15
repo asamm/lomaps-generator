@@ -19,8 +19,12 @@ public class DataPluginLoader implements PluginLoader {
     	// create factory that will handle requests
 		DataGeneratorFactory factory = new DataGeneratorFactory();
 		HashMap<String, TaskManagerFactory> map = new HashMap<String, TaskManagerFactory>();
-		map.put(PLUGIN_COMMAND, factory);
-		map.put("gDb", factory);
+		//map.put(PLUGIN_COMMAND, factory);
+		//map.put("gDb", factory);
+
+		DataExportTaskFactory factoryExport = new DataExportTaskFactory();
+		map.put("generatorDb",factoryExport);
+
 
         // return filled container
 		return map;

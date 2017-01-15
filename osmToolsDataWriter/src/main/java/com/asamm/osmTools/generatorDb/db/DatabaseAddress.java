@@ -689,11 +689,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertRegionNames.setLong(1, region.getOsmId());
                 psInsertRegionNames.setString(2, entry.getKey());
                 String name = entry.getValue();
-                String nameNormalized = Utils.normalizeNames(name);
-                if ( !nameNormalized.equals(name)){
-                    //store full name only if normalized name is different
-                    psInsertRegionNames.setString(3, name);
-                }
+                String nameNormalized = Utils.normalizeNames(name).toLowerCase();
+                psInsertRegionNames.setString(3, name);
                 psInsertRegionNames.setString(4, nameNormalized);
                 psInsertRegionNames.execute();
             }
@@ -763,11 +760,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                 psInsertCityNames.setLong(1, city.getOsmId());
                 psInsertCityNames.setString(2, entry.getKey());
                 String name = entry.getValue();
-                String nameNormalized = Utils.normalizeNames(name);
-                if ( !nameNormalized.equals(name)){
-                    //store full name only if normalized name is different
-                    psInsertCityNames.setString(3, name);
-                }
+                String nameNormalized = Utils.normalizeNames(name).toLowerCase();
+                psInsertCityNames.setString(3, name);
                 psInsertCityNames.setString(4, nameNormalized);
                 psInsertCityNames.execute();
             }
@@ -824,11 +818,14 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertStreet.setLong(1, street.getId());
 
             String name = street.getName();
-            String nameNormalized = Utils.normalizeNames(name);
-            if ( !nameNormalized.equals(name)){
-                //store full name only if normalized name is different
-                psInsertStreet.setString(2, name);
-            }
+
+//            String nameNormalized = Utils.normalizeNames(name);
+//            if ( !nameNormalized.equals(name)){
+//                //store full name only if normalized name is different
+//                psInsertStreet.setString(2, name);
+//            }
+            String nameNormalized = Utils.normalizeNames(name).toLowerCase();
+            psInsertStreet.setString(2, name);
             psInsertStreet.setString(3, nameNormalized);
             psInsertStreet.setBytes(4, wkbWriter.write(street.getGeometry()));
             psInsertStreet.execute();

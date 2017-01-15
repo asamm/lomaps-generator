@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by menion on 28.7.14.
@@ -129,6 +128,7 @@ public class CmdDataPlugin extends Cmd {
         addCommand("addr:street=*");
         addCommand("addr:street2=*");
         addCommand("address:house=*");
+        addCommand("building=*");
 
         addCommand("outPipe.0=Nodes");
 
@@ -150,6 +150,10 @@ public class CmdDataPlugin extends Cmd {
         addCommand("address:house=*");
         addCommand("addr:interpolation=*");
         addCommand("address:type=*");
+
+        // residential areas
+        addCommand("building=*");
+        addCommand("landuse=residential,industrial,railway");
 
 //        addCommand("landuse=residential");
 //        addCommand("building=*");
@@ -215,31 +219,38 @@ public class CmdDataPlugin extends Cmd {
 
         //addReadPbf(getMap().getPathSource());
         addReadPbf(mFileTempMap.getAbsolutePath());
+
         addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
-        addCommand("-type=address");
+//        addCommand("-type=address");
+//
+//        File file = new File(getMap().getPathSource());
+//        int size = (int) (file.length() / 1024L / 1024L);
+//        if (size <= 650) {
+//            addCommand("-dataContainerType=ram");
+//        }
+//        else {
+//            addCommand("-dataContainerType=hdd");
+//        }
+//
+//        // add map id if is not defined then use map name as id
+//        if (getMap().getCountryName() != null){
+//            String mapId = getMap().getId();
+//            if (mapId == null || mapId.length() == 0){
+//                mapId = getMap().getName();
+//            }
+//            addCommand("-mapId=" + mapId);
+//        }
+//        //addCommand("-countryName=" + getMap().getCountryName());
+//        addCommand("-fileDb=" + mFilePoiDb);
+//        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
+//        addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
+//        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
 
-        File file = new File(getMap().getPathSource());
-        int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 600) {
-            addCommand("-dataContainerType=ram");
+        try {
+            addWriteXml("./exportplugin.osm", true);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        else {
-            addCommand("-dataContainerType=hdd");
-        }
-
-        // add map id if is not defined then use map name as id
-        if (getMap().getCountryName() != null){
-            String mapId = getMap().getId();
-            if (mapId == null || mapId.length() == 0){
-                mapId = getMap().getName();
-            }
-            addCommand("-mapId=" + mapId);
-        }
-        //addCommand("-countryName=" + getMap().getCountryName());
-        addCommand("-fileDb=" + mFilePoiDb);
-        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
-        addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
-        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {

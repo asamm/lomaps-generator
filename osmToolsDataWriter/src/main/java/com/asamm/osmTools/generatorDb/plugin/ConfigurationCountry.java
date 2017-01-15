@@ -1,7 +1,5 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,7 @@ import java.util.List;
 public class ConfigurationCountry extends AConfiguration {
 
 
-    /** Where will be created country boundaries stored*/
+    /** Define location for created country boundary geometry*/
     public enum StorageType {
         /**
          * Boundary is store as GeoJson file
@@ -20,7 +18,7 @@ public class ConfigurationCountry extends AConfiguration {
         GEOJSON,
 
         /**
-         * Boundary is send into Locuc store geo databse
+         * Boundary is send into Locus store geo databse
          */
         GEO_DATABASE
     };
@@ -42,7 +40,7 @@ public class ConfigurationCountry extends AConfiguration {
     public void validate() {
 
         for (CountryConf countryConf : countriesConf){
-            if (countryConf.storeRegionCode == null) {
+            if (countryConf.dataStoreRegionId == null) {
                 throw new IllegalArgumentException(
                         "invalid parameters, missing definition of mapregionId: " + countryConf.countryName);
             }
@@ -90,21 +88,35 @@ public class ConfigurationCountry extends AConfiguration {
          */
         File fileGeom;
 
+        /*
+         * Read able name of country to generate borders
+         */
         String countryName = "";
 
-        String storeRegionCode = "";
+        /*
+         * Datastore id of parent region
+         */
+        String dataStoreParentRegionId = "";
 
-        public CountryConf (String countryName, String storeRegionCode){
+        /*
+         * Datastore id of region to get it's boundary
+         */
+        String dataStoreRegionId = "";
+
+
+        public CountryConf (String countryName, String dataStoreParentRegionId, String dataStoreRegionId){
 
             setCountryName(countryName);
-            setStoreRegionCode(storeRegionCode);
+            setDataStoreRegionId(dataStoreRegionId);
+            setDataStoreParentRegionId(dataStoreParentRegionId);
         }
 
 
-        public CountryConf (String countryName, String storeRegionCode, String fileGeomPath){
+        public CountryConf (String countryName, String dataStoreParentRegionId, String storeRegionCode, String fileGeomPath){
 
             setCountryName(countryName);
-            setStoreRegionCode(storeRegionCode);
+            setDataStoreRegionId(dataStoreRegionId);
+            setDataStoreRegionId(storeRegionCode);
             this.fileGeom = checkFile(fileGeomPath);
         }
 
@@ -122,20 +134,31 @@ public class ConfigurationCountry extends AConfiguration {
             }
         }
 
-        public String getStoreRegionCode() {
-            return storeRegionCode;
+        public String getDataStoreRegionId() {
+            return dataStoreRegionId;
         }
 
-        public void setStoreRegionCode(String storeRegionCode) {
-            if (storeRegionCode != null){
-                this.storeRegionCode = storeRegionCode;
+        public void setDataStoreRegionId(String dataStoreRegionId) {
+            if (dataStoreRegionId != null){
+                this.dataStoreRegionId = dataStoreRegionId;
+            }
+        }
+
+        public String getDataStoreParentRegionId() {
+            return dataStoreParentRegionId;
+        }
+
+        public void setDataStoreParentRegionId(String dataStoreParentRegionId) {
+            if (dataStoreParentRegionId != null){
+                this.dataStoreParentRegionId = dataStoreParentRegionId;
             }
         }
 
         @Override
         public int hashCode (){
             int hash = 1;
-            hash = hash * 31 + storeRegionCode.hashCode();
+            hash = hash * 31 + dataStoreRegionId.hashCode();
+            hash = hash * 31 + dataStoreParentRegionId.hashCode();
             hash = hash * 31 + countryName.hashCode();
             return hash;
         }

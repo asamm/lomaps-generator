@@ -44,7 +44,7 @@ public class CmdContour extends Cmd{
         addCommand("--output-prefix=" + getMap().getPathContour());
         //addCommand("--source=view1,srtm1,view3,srtm3");
         //addCommand("--source=view1,view3,srtm1,srtm3");
-        addCommand("--source=view3,view1,srtm1,srtm3");
+        addCommand("--source=view3,view1");
         addCommand("--line-cat=200,100");
         addCommand("--start-node-id=" + Parameters.contourNodeId);
         addCommand("--start-way-id=" + Parameters.contourWayId);

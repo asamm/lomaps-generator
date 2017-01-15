@@ -42,7 +42,7 @@ public class DataContainerHdd extends ADataContainer {
 
         // obtain tmp folder from system
         String tmpPath = System.getProperty("java.io.tmpdir");
-        Path path = Paths.get("tmpPath", "osmDataContainer.db");
+        Path path = Paths.get(tmpPath, "osmDataContainer.db");
         return path.toFile();
     }
 

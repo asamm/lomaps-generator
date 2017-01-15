@@ -40,6 +40,9 @@ public class WriterPoiDefinition extends  AWriterDefinition{
         // filter matches entities if entity does not have a tag with the specified key.
         private static final String FILTER_TILDA = "~";
 
+        // filter matched any value for the key
+        private static final String FILTER_ASTERISK = "*";
+
 		public String folRoot;
 		public String folSub;
 		
@@ -122,7 +125,7 @@ public class WriterPoiDefinition extends  AWriterDefinition{
                 }
                 if (tagForFilter != null){
                     //entity contains tags that are defined in filter > check if tag value is the same as any filter value
-                    if (fValues.contains(tagForFilter.getValue())){
+                    if (fValues.contains(tagForFilter.getValue()) || fValues.contains(FILTER_ASTERISK)){
                         return true;
                     }
                 }

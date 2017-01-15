@@ -111,7 +111,7 @@ public class Parameters {
 
     private static final String mConfigStoreGeoPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_store_geodb.xml";
     // path to base config file for address/poi database
-    private static final String mConfigApDbPath = Consts.DIR_BASE + "config_apDb.xml";
+    private static final String mConfigApDbPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_apDb.xml";
 
     private static final String mConfigAddressPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_address.xml";
 
@@ -209,7 +209,7 @@ public class Parameters {
     // META DATA TABLE
 
     private static final int mDbDataPoiVersion = 1;
-    private static final int mDbDataAddressVersion = 1;
+    private static final int mDbDataAddressVersion = 2;
 
 
 

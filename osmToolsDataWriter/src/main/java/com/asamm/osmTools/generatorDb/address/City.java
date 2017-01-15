@@ -163,8 +163,8 @@ public class City {
         if (website.length() == 0){
             setWebsite(boundary.getWebsite());
         }
-        if (boundary.getNamesInternational().size() > 0){
-            this.namesInternational.putAll(boundary.getNamesInternational());
+        if (boundary.getNameLangs().size() > 0){
+            this.namesInternational.putAll(boundary.getNameLangs());
         }
     }
 

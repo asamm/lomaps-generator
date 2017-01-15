@@ -250,28 +250,28 @@ public class GenLoMaps extends  AGenerator{
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 //
-        // firstly simplify source file
-        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
-        cmdPoiFilter.addTaskSimplifyForPoi(definition);
-        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
-        cmdPoiFilter.execute(2, true);
-
-        // now execute db poi generating
-        CmdDataPlugin cmdPoi = new CmdDataPlugin(map);
-        cmdPoi.addGeneratorPoiDb();
-        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
-        cmdPoi.execute(2, true);
+//        // firstly simplify source file
+//        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
+//        cmdPoiFilter.addTaskSimplifyForPoi(definition);
+//        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
+//        cmdPoiFilter.execute(0, true);
+//
+//        // now execute db poi generating
+//        CmdDataPlugin cmdPoi = new CmdDataPlugin(map);
+//        cmdPoi.addGeneratorPoiDb();
+//        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
+//        cmdPoi.execute(0, true);
 
         //Address generation
         CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
         cmdAddressFilter.addTaskSimplifyForAddress();
         Logger.i(TAG, "Filter data for Address DB, command: " + cmdAddressFilter.getCmdLine());
-        cmdAddressFilter.execute(2, false);
+        cmdAddressFilter.execute(0, false);
 
         CmdDataPlugin cmdAddres = new CmdDataPlugin(map);
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
-        cmdAddres.execute(2, false);
+        cmdAddres.execute(0, false);
 
         // delete tmp file
         cmdAddres.deleteTmpFile();
@@ -358,6 +358,8 @@ public class GenLoMaps extends  AGenerator{
         cc.createCmd();
         String cmdRunLastLine = cc.execute();
 
+
+
         // test if exist noSRTM file, delete it before try to create new, because rename new contour
         File contourNoSrtm = new File (map.getPathContour()+"."+Parameters.contourNoSRTM);
         if (contourNoSrtm.exists()){
@@ -393,6 +395,11 @@ public class GenLoMaps extends  AGenerator{
     // ACTION MERGE
 
     private void actionMerge(ItemMap map) throws IOException, InterruptedException{
+
+        if (!map.hasAction(Parameters.Action.GENERATE)) {
+            return;
+        }
+
         boolean isContour = (Parameters.isActionRequired(Parameters.Action.CONTOUR) &&
                 map.hasAction(Parameters.Action.CONTOUR) && map.getContourSep().equals("no")); // map has set the contour will be separeted
         boolean isTourist = Parameters.isActionRequired(Parameters.Action.TOURIST) &&
@@ -554,6 +561,7 @@ public class GenLoMaps extends  AGenerator{
         dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
         dbData.insertData(LoMapsDbConst.VAL_COUNTRY, itemMap.getCountryName());
         dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
+        dbData.insertData(LoMapsDbConst.VAL_LANGUAGES, itemMap.getPrefLang());
         dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
         dbData.insertData(LoMapsDbConst.VAL_REGION_ID, itemMap.getRegionId());
         dbData.insertData(LoMapsDbConst.VAL_VERSION, Parameters.getVersionName());

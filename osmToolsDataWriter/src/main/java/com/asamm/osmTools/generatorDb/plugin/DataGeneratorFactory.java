@@ -164,7 +164,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
             }
 
             for (int i=0; i < cmdAtrSplit.length; i++){
-                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
+                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i], cmdAtrSplit[++i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
             }
         }
         else if (atrStorageType.equals(PARAM_STORAGE_TYPE_GEO_DATABASE)){
@@ -173,12 +173,12 @@ class DataGeneratorFactory extends TaskManagerFactory {
 
             String[] cmdAtrSplit = atrCountries.split(",");
 
-            if (cmdAtrSplit.length % 2 != 0) {
+            if (cmdAtrSplit.length % 3 != 0) {
                 throw  new IllegalArgumentException("Wrong number of countries elements cmd attribute : " + atrCountries);
             }
 
             for (int i=0; i < cmdAtrSplit.length; i++){
-                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i], cmdAtrSplit[++i]));
+                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i],cmdAtrSplit[++i], cmdAtrSplit[++i]));
             }
         }
         else {
