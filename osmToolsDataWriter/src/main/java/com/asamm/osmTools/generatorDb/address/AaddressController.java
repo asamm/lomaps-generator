@@ -1,9 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 /**

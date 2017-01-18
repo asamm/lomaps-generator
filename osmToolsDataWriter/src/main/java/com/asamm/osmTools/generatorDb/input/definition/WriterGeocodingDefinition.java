@@ -1,4 +1,4 @@
-package com.asamm.osmTools.generatorDb;
+package com.asamm.osmTools.generatorDb.input.definition;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationGeoCoding;

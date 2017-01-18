@@ -1,31 +1,18 @@
-package com.asamm.osmTools.generatorDb;
+package com.asamm.osmTools.generatorDb.input.definition;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
-import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.asamm.osmTools.generatorDb.utils.Utils;
-import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.XmlParser;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.prep.PreparedGeometry;
-import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
-import gnu.trove.map.TLongLongMap;
-import gnu.trove.map.hash.TLongLongHashMap;
-import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
-import org.xmlpull.v1.XmlPullParser;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Definition which Nodes, Ways, Relation are vital for storing in data container
  */
-public class WriterAddressDefinition extends WriterGeocodingDefinition{
+public class WriterAddressDefinition extends WriterGeocodingDefinition {
 
 
     private static final String TAG = WriterAddressDefinition.class.getSimpleName();

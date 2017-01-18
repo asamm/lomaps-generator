@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.WriterGeocodingDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterGeocodingDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;

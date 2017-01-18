@@ -67,6 +67,8 @@ public class Parameters {
 
         TOURIST("tourist", 't'),
 
+        TRANFORM("transform", NO_SHORTCUT),
+
         CONTOUR("contour", 'c'),
 
         MERGE("merge", NO_SHORTCUT),
@@ -463,7 +465,10 @@ public class Parameters {
         genType = GenType.createFromValue(s);
     }
 
-
+    /**
+     * Define that actions will be performed based on command line definition
+     * @param cmdActions cmd argument defined the actions to performed
+     */
     private static void setActions(String cmdActions) {
         // firstly check parameter
         validateActionArg(cmdActions);
@@ -502,6 +507,7 @@ public class Parameters {
         if (hasArgAction(cmdActions, Action.GENERATE)){
             // add merge and coastlines
             addAction(Action.COASTLINE);
+            addAction(Action.TRANFORM);
             addAction(Action.MERGE);
 
             // finally add generate

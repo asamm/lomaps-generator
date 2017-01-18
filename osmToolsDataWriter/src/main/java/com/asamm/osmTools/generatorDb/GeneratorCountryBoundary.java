@@ -7,6 +7,7 @@ import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseStoreMysql;
+import com.asamm.osmTools.generatorDb.input.definition.WriterCountryBoundaryDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;

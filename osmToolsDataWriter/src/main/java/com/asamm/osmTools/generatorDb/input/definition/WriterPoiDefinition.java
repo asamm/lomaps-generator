@@ -1,10 +1,9 @@
-package com.asamm.osmTools.generatorDb;
+package com.asamm.osmTools.generatorDb.input.definition;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.XmlParser;
 import gnu.trove.map.hash.THashMap;
-import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -13,7 +12,7 @@ import org.xmlpull.v1.XmlPullParser;
 import java.io.File;
 import java.util.*;
 
-public class WriterPoiDefinition extends  AWriterDefinition{
+public class WriterPoiDefinition extends AWriterDefinition {
 
     private static final String TAG = WriterPoiDefinition.class.getSimpleName();
 
@@ -199,6 +198,7 @@ public class WriterPoiDefinition extends  AWriterDefinition{
         }
 
 		LoMapsDbConst.EntityType type = getTypeFromEntity(entity);
+
 		if (type == LoMapsDbConst.EntityType.UNKNOWN) {
 			return false;
 		}

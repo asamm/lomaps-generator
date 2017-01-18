@@ -13,18 +13,19 @@ import java.util.Map;
  */
 public class DataPluginLoader implements PluginLoader {
 
-    public static final String PLUGIN_COMMAND = "generatorDb";
+    public static final String PLUGIN_LOMAPS_DB = "loMapsDb";
+
+	public static final String PLUGIN_DATA_TRANSFORM = "dataTransform";
 
 	public Map<String, TaskManagerFactory> loadTaskFactories() {
-    	// create factory that will handle requests
+    	// create factory that will handle request for generation LoMaps db
 		DataGeneratorFactory factory = new DataGeneratorFactory();
 		HashMap<String, TaskManagerFactory> map = new HashMap<String, TaskManagerFactory>();
-		//map.put(PLUGIN_COMMAND, factory);
-		//map.put("gDb", factory);
+		map.put(PLUGIN_LOMAPS_DB, factory);
+		map.put("gDb", factory);
 
-		DataExportTaskFactory factoryExport = new DataExportTaskFactory();
-		map.put("generatorDb",factoryExport);
-
+		DataTransformTaskFactory dataTransformTaskFactory = new DataTransformTaskFactory();
+		map.put(PLUGIN_DATA_TRANSFORM,dataTransformTaskFactory);
 
         // return filled container
 		return map;

@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generator;
 
 import com.asamm.osmTools.Parameters;
-import com.asamm.osmTools.cmdCommands.CmdDataPlugin;
 import com.asamm.osmTools.cmdCommands.CmdStoreGeo;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;

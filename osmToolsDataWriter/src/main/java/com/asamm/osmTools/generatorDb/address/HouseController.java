@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
@@ -27,9 +27,7 @@ import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.SendingContext.RunTime;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
-import sun.util.resources.CalendarData_th;
 
 import java.util.*;
 import java.util.regex.Matcher;

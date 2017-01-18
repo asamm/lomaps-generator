@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import com.asamm.osmTools.generatorDb.AWriterDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.db.DatabaseDataTmp;
 import com.asamm.osmTools.utils.Logger;

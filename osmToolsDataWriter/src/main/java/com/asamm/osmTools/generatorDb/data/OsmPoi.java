@@ -1,7 +1,7 @@
 package com.asamm.osmTools.generatorDb.data;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
-import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.utils.Logger;
 import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
