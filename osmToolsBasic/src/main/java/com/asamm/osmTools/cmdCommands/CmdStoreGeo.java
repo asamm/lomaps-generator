@@ -89,7 +89,7 @@ public class CmdStoreGeo extends Cmd {
 
         //addReadPbf(getMap().getPathSource());
         addReadPbf(mFileTempMap.getAbsolutePath());
-        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
+        addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB);
         addCommand("-type=store_geocode");
 
         File file = new File(getMap().getPathSource());

@@ -2,7 +2,7 @@ package com.asamm.osmTools.generatorDb.dataContainer;
 
 import java.util.*;
 
-import com.asamm.osmTools.generatorDb.AWriterDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;

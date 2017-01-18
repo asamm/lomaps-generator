@@ -4,8 +4,8 @@ import com.asamm.osmTools.generatorDb.address.CityController;
 import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
-import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.db.DatabaseStoreMysql;
+import com.asamm.osmTools.generatorDb.input.definition.WriterGeocodingDefinition;
 import com.asamm.osmTools.utils.Logger;
 
 import java.sql.SQLException;

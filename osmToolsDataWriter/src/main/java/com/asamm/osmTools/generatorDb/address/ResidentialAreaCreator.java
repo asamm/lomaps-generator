@@ -65,7 +65,7 @@ public class ResidentialAreaCreator {
     /**
      * Generate residential areas
      */
-    public void generate() {
+    public List<Polygon> generate() {
 
         Logger.i(TAG, "Create polygons from default OSM ways");
         createPolygonsFromDefaultAreas();
@@ -84,13 +84,14 @@ public class ResidentialAreaCreator {
 
         if (unionGeom == null){
             Logger.w(TAG, "No residental region or building detect");
-            return;
+            return new ArrayList<>();
         }
 
-        Geometry residentialGeom = simplifyResidentialGeom(unionGeom);
+        List<Polygon> polygons = simplifyResidentialGeom(unionGeom);
+        return polygons;
 
-        com.asamm.osmTools.utils.Utils.writeStringToFile(
-                new File("residential.geojson"), GeomUtils.geomToGeoJson(residentialGeom) ,false);
+        //com.asamm.osmTools.utils.Utils.writeStringToFile(
+        //        new File("residential.geojson"), GeomUtils.geomToGeoJson(residentialGeom) ,false);
     }
 
     /*
@@ -205,9 +206,6 @@ public class ResidentialAreaCreator {
             }
             //Logger.i(TAG, GeomUtils.geomToGeoJson(polygon));
         }
-
-        // TODO query test only bbox it would be more precise to exactly test the result from index if really intersect
-        // but for our need is bbox enough
         return false;
     }
 
@@ -216,7 +214,7 @@ public class ResidentialAreaCreator {
      * @param geom geometry to simplify
      * @return
      */
-    private Geometry simplifyResidentialGeom (Geometry geom){
+    private List<Polygon> simplifyResidentialGeom (Geometry geom){
 
         // simplify joined geometry
         double distanceDeg = Utils.distanceToDeg(geom.getCoordinate(), 25);
@@ -252,9 +250,7 @@ public class ResidentialAreaCreator {
             }
         }
 
-        unaryUnionOp = new UnaryUnionOp(polygons);
-        residentialGeom = unaryUnionOp.union();
-        return residentialGeom;
+        return polygons;
     }
 
     /**
@@ -294,7 +290,6 @@ public class ResidentialAreaCreator {
             }
             // create new polygon only with big holes
             polygon = polygon.getFactory().createPolygon(lrExterior,(LinearRing[]) bigHoles.toArray(new LinearRing[0]));
-            Logger.i(TAG, "Polygon after hole cleaning " + GeomUtils.geomToGeoJson(polygon));
 
             reCreatedPolygons.add(polygon);
         }
@@ -304,8 +299,5 @@ public class ResidentialAreaCreator {
 
         return unaryUnionOp.union();
     }
-
-
-
 
 }

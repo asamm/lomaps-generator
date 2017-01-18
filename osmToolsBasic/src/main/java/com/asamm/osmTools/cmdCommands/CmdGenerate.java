@@ -144,7 +144,7 @@ public class CmdGenerate extends Cmd {
     }
     
     private void addPrefLang() {
-        if (getMap().getPrefLang() != null){
+        if (getMap().getPrefLang() != null && getMap().getPrefLang().length() > 0){
             addCommand("preferred-languages="+getMap().getPrefLang());
         }
     }

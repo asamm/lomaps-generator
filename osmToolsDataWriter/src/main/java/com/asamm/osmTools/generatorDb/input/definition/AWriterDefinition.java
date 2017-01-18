@@ -1,4 +1,4 @@
-package com.asamm.osmTools.generatorDb;
+package com.asamm.osmTools.generatorDb.input.definition;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;

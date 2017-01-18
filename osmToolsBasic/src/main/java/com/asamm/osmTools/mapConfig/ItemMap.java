@@ -56,6 +56,8 @@ public class ItemMap extends AItemMap {
             Consts.fixDirectoryPath("_result");
     private static final String DIR_TOURIST =
             Consts.fixDirectoryPath("_tourist");
+    /* folder where to store customized or transformed original OSM data (e.q. city residential areas */
+    private static final String DIR_TRANSFORM = Consts.fixDirectoryPath("_transform");
 
     // BASIC PARAMETERS
 
@@ -89,12 +91,14 @@ public class ItemMap extends AItemMap {
     private String mPathContour;
     // path where should be placed generated result (zipped)
     private String mPathResult;
-    // path for tourist data
-    private String mPathTourist;
     // path to shp files
     private String mPathShp;
     // path to file with coastlines
     private String mPathCoastline;
+    // path for tourist data
+    private String mPathTourist;
+    // path for transformed or customized data file
+    private String mPathTranform;
 
 
     private String mResultMD5hash;
@@ -181,6 +185,8 @@ public class ItemMap extends AItemMap {
                 getDir() + mName + ".osm.pbf";
         mPathMerge =  Parameters.getDataDir() + DIR_MERGE +
                 subPath + "." + Parameters.mapOutputFormat;
+        mPathTranform =  Parameters.getDataDir() + DIR_TRANSFORM + Consts.FILE_SEP +
+                getDir() + mName + ".osm.pbf";
 
         // parameters for generating
         if (hasAction(Parameters.Action.GENERATE)) {
@@ -297,6 +303,13 @@ public class ItemMap extends AItemMap {
         return mPathCoastline;
     }
 
+    public String getPathTranform () {
+        return mPathTranform;
+    }
+
+
+
+    // OTHER GETTERS
     public Boundaries getBoundary() {
         return mBounds;
     }

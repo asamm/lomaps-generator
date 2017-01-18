@@ -41,7 +41,8 @@ public class CmdMerge extends Cmd {
                 getMap().hasAction(Parameters.Action.TOURIST);
         boolean isCoastline = getMap().hasSea();
 
-        // prepare cmd line and string for log
+        boolean isTransformedData = true;
+
 
         addReadPbf(getMap().getPathSource());
 
@@ -57,16 +58,18 @@ public class CmdMerge extends Cmd {
         // try to add custom data
         addCustomData();
 
-
         if (isContour){
             addReadPbf(getMap().getPathContour());
             addMerge();
         }
 
+        if (isTransformedData){
+            addReadPbf(getMap().getPathTranform());
+            addMerge();
+        }
 
         addBuffer();
         addWritePbf(getMap().getPathMerge(), true);
-
     }
 
 

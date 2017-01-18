@@ -125,7 +125,7 @@ public class CmdCountryBorders extends  Cmd{
         //addReadPbf(mFileTempMap.getAbsolutePath());
         addReadPbf(mFilteredTempMap.getAbsolutePath());
 
-        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
+        addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB);
         addCommand("-type=country");
 
         if (storageType == ConfigurationCountry.StorageType.GEOJSON){

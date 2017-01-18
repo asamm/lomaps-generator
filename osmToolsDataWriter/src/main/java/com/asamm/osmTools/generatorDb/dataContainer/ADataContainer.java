@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import com.asamm.osmTools.generatorDb.AWriterDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.data.RelationEx;
 import com.asamm.osmTools.generatorDb.data.WayEx;

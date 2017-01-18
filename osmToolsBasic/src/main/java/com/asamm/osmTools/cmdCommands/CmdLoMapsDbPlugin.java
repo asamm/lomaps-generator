@@ -2,7 +2,7 @@ package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Parameters;
-import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
@@ -18,9 +18,9 @@ import java.util.List;
 /**
  * Created by menion on 28.7.14.
  */
-public class CmdDataPlugin extends Cmd {
+public class CmdLoMapsDbPlugin extends Cmd {
 
-    private static final String TAG = CmdDataPlugin.class.getSimpleName();
+    private static final String TAG = CmdLoMapsDbPlugin.class.getSimpleName();
 
     private File mFileTempMap;
 
@@ -35,7 +35,7 @@ public class CmdDataPlugin extends Cmd {
      */
     private File mFileToCreate;
 
-    public CmdDataPlugin(ItemMap map) {
+    public CmdLoMapsDbPlugin(ItemMap map) {
         super(map, ExternalApp.OSMOSIS);
 
         // set parameters
@@ -128,7 +128,6 @@ public class CmdDataPlugin extends Cmd {
         addCommand("addr:street=*");
         addCommand("addr:street2=*");
         addCommand("address:house=*");
-        addCommand("building=*");
 
         addCommand("outPipe.0=Nodes");
 
@@ -151,9 +150,6 @@ public class CmdDataPlugin extends Cmd {
         addCommand("addr:interpolation=*");
         addCommand("address:type=*");
 
-        // residential areas
-        addCommand("building=*");
-        addCommand("landuse=residential,industrial,railway");
 
 //        addCommand("landuse=residential");
 //        addCommand("building=*");
@@ -205,7 +201,7 @@ public class CmdDataPlugin extends Cmd {
         FileUtils.deleteQuietly(mFilePoiDb);
 
         addReadPbf(mFileTempMap.getAbsolutePath());
-        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
+        addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB);
         addCommand("-type=poi");
         addCommand("-fileDb=" + mFilePoiDb);
         addCommand("-fileConfig=" + Parameters.getConfigApDbPath());
@@ -220,37 +216,37 @@ public class CmdDataPlugin extends Cmd {
         //addReadPbf(getMap().getPathSource());
         addReadPbf(mFileTempMap.getAbsolutePath());
 
-        addCommand("--" + DataPluginLoader.PLUGIN_COMMAND);
-//        addCommand("-type=address");
-//
-//        File file = new File(getMap().getPathSource());
-//        int size = (int) (file.length() / 1024L / 1024L);
-//        if (size <= 650) {
-//            addCommand("-dataContainerType=ram");
-//        }
-//        else {
-//            addCommand("-dataContainerType=hdd");
-//        }
-//
-//        // add map id if is not defined then use map name as id
-//        if (getMap().getCountryName() != null){
-//            String mapId = getMap().getId();
-//            if (mapId == null || mapId.length() == 0){
-//                mapId = getMap().getName();
-//            }
-//            addCommand("-mapId=" + mapId);
-//        }
-//        //addCommand("-countryName=" + getMap().getCountryName());
-//        addCommand("-fileDb=" + mFilePoiDb);
-//        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
-//        addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
-//        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
+        addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB);
+        addCommand("-type=address");
 
-        try {
-            addWriteXml("./exportplugin.osm", true);
-        } catch (IOException e) {
-            e.printStackTrace();
+        File file = new File(getMap().getPathSource());
+        int size = (int) (file.length() / 1024L / 1024L);
+        if (size <= 650) {
+            addCommand("-dataContainerType=ram");
         }
+        else {
+            addCommand("-dataContainerType=hdd");
+        }
+
+        // add map id if is not defined then use map name as id
+        if (getMap().getCountryName() != null){
+            String mapId = getMap().getId();
+            if (mapId == null || mapId.length() == 0){
+                mapId = getMap().getName();
+            }
+            addCommand("-mapId=" + mapId);
+        }
+        //addCommand("-countryName=" + getMap().getCountryName());
+        addCommand("-fileDb=" + mFilePoiDb);
+        addCommand("-fileConfig=" + Parameters.getConfigAddressPath());
+        addCommand("-fileDataGeom=" + getMap().getPathJsonPolygon());
+        addCommand("-fileCountryGeom=" + getMap().getPathCountryBoundaryGeoJson());
+
+//        try {
+//            addWriteXml("./exportplugin.osm", true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void addListOfTags(WriterPoiDefinition definition, LoMapsDbConst.EntityType type) {

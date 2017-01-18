@@ -1,9 +1,7 @@
-package com.asamm.osmTools.generatorDb;
+package com.asamm.osmTools.generatorDb.input.definition;
 
 import com.asamm.osmTools.generatorDb.data.OsmConst;
-import com.asamm.osmTools.generatorDb.plugin.ConfigurationAddress;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
-import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
@@ -13,7 +11,7 @@ import java.util.Collection;
 /**
  * Created by voldapet on 2016-02-22 .
  */
-public class WriterCountryBoundaryDefinition extends  AWriterDefinition {
+public class WriterCountryBoundaryDefinition extends AWriterDefinition {
 
     private static final String TAG = WriterCountryBoundaryDefinition.class.getSimpleName();
 

@@ -4,14 +4,13 @@ import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.*;
-import com.asamm.osmTools.generatorDb.WriterAddressDefinition;
-import com.asamm.osmTools.generatorDb.WriterPoiDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
-import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.tourist.Tourist;
@@ -134,6 +133,8 @@ public class GenLoMaps extends  AGenerator{
                 case TOURIST:
                     actionTourist(map);
                     break;
+                case TRANFORM:
+                    actionTransformData (map);
                 case CONTOUR:
                     actionContour(map);
                     break;
@@ -249,26 +250,26 @@ public class GenLoMaps extends  AGenerator{
 
         File defFile = new File(Parameters.getConfigApDbPath());
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
-//
-//        // firstly simplify source file
-//        CmdDataPlugin cmdPoiFilter = new CmdDataPlugin(map);
-//        cmdPoiFilter.addTaskSimplifyForPoi(definition);
-//        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
-//        cmdPoiFilter.execute(0, true);
-//
-//        // now execute db poi generating
-//        CmdDataPlugin cmdPoi = new CmdDataPlugin(map);
-//        cmdPoi.addGeneratorPoiDb();
-//        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
-//        cmdPoi.execute(0, true);
+
+        // firstly simplify source file
+        CmdLoMapsDbPlugin cmdPoiFilter = new CmdLoMapsDbPlugin(map);
+        cmdPoiFilter.addTaskSimplifyForPoi(definition);
+        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
+        cmdPoiFilter.execute(0, true);
+
+        // now execute db poi generating
+        CmdLoMapsDbPlugin cmdPoi = new CmdLoMapsDbPlugin(map);
+        cmdPoi.addGeneratorPoiDb();
+        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
+        cmdPoi.execute(0, true);
 
         //Address generation
-        CmdDataPlugin cmdAddressFilter = new CmdDataPlugin(map);
+        CmdLoMapsDbPlugin cmdAddressFilter = new CmdLoMapsDbPlugin(map);
         cmdAddressFilter.addTaskSimplifyForAddress();
         Logger.i(TAG, "Filter data for Address DB, command: " + cmdAddressFilter.getCmdLine());
         cmdAddressFilter.execute(0, false);
 
-        CmdDataPlugin cmdAddres = new CmdDataPlugin(map);
+        CmdLoMapsDbPlugin cmdAddres = new CmdLoMapsDbPlugin(map);
         cmdAddres.addGeneratorAddress();
         Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
         cmdAddres.execute(0, false);
@@ -333,6 +334,29 @@ public class GenLoMaps extends  AGenerator{
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
         time.stopCount();
     }
+
+    // ACTION TRANSFORM DATA
+
+    private void actionTransformData(ItemMap map) throws IOException, InterruptedException {
+
+        // transform data only maps that are used for generation
+        if (!map.hasAction(Parameters.Action.GENERATE)) {
+            return;
+        }
+
+        // check if output file with transformed data already exist
+        if (!Parameters.isRewriteFiles()  && new File(map.getPathTranform()).exists()){
+            Logger.i(TAG, "File with transformed data, already exist. Skip data transform action; path: "
+                    + map.getPathTranform());
+            return;
+        }
+
+        CmdTransformData cdt = new CmdTransformData(map);
+        cdt.addDataTransform();
+        Logger.i(TAG, "Transform custom OSM data, command: " + cdt.getCmdLine() );
+        cdt.execute();
+    }
+
 
     // ACTION CONTOUR
 

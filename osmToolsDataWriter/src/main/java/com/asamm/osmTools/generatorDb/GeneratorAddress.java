@@ -5,6 +5,7 @@ import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
+import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.utils.*;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
@@ -54,16 +55,6 @@ public class GeneratorAddress extends AGenerator {
         this.cc = new CityController(dc, this.getDatabaseAddress(), addressDefinition);
         this.sc = new StreetController(dc, this.getDatabaseAddress(), addressDefinition);
         this.hc = new HouseController(dc, this.getDatabaseAddress(), addressDefinition);
-
-        Logger.i(TAG, "=== Step 0 - testing residential ===");
-        ResidentialAreaCreator residentialC = new ResidentialAreaCreator(dc);
-        residentialC.generate();
-
-
-        // TODO REMOVE
-        if (1 == 1){
-            return;
-        }
 
         // ---- step 1 find all city places -----
         Logger.i(TAG, "=== Step 1 - load city places ===");
