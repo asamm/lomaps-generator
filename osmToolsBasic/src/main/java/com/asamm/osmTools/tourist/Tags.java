@@ -31,6 +31,7 @@ public class Tags {
     // for cyclo nodetrack
     public String rcn;
     public String rcn_ref;
+    public String rwn_ref;
     public String note;
     
     //for hiking
@@ -48,13 +49,50 @@ public class Tags {
     public long parentRelId;
     
     // list of possibles tags for cycloroute
-    // http://wiki.openstreetmap.org/wiki/Cycle_routes
-    
+
+    /**
+     * Create copy of tags object
+     * @param tags
+     */
+    public Tags (Tags tags){
+        this.type = tags.type;
+        this.route = tags.route;
+        this.network = tags.network;
+        this.ref = tags.ref;
+        this.name = tags.name;
+        this.state = tags.state;
+        this.natural = tags.natural;
+        this.layer = tags.layer;
+        this.whitesea = tags.whitesea;
+        this.highway = tags.highway;
+        this.tracktype = tags.tracktype;
+        this.rcn = tags.rcn;
+        this.rcn_ref = tags.rcn_ref;
+        this.rwn_ref = tags.rwn_ref;
+        this.note = tags.note;
+        this.osmcsymbol = tags.osmcsymbol;
+        this.osmc = tags.osmc;
+        this.osmc_color = tags.osmc_color;
+        this.osmc_background = tags.osmc_background;
+        this.osmc_foreground = tags.osmc_foreground;
+        this.kct_barva = tags.kct_barva;
+        this.kct_green  = tags.kct_green;
+        this.colour = tags.colour;
+        this.parentRelId = tags.parentRelId;
+    }
+
+    public Tags (){
+
+    }
     
     public void setValue(Tag tag){
         if (tag.key != null && tag.val != null){
             if (tag.key.equals("rcn_ref")){
                 rcn_ref = tag.val;
+                return;
+            }
+            if (tag.key.equals("rwn_ref")){
+                rwn_ref = tag.val;
                 return;
             }
             if (tag.key.equals("type")){
@@ -83,7 +121,6 @@ public class Tags {
             }
 
             if (tag.key.equals("highway")){
-                System.out.println ("Parsw highway: " + tag.toString());
                 highway = tag.val;
                 return;
             }
@@ -341,6 +378,9 @@ public class Tags {
         }
         if (rcn_ref != null){
             str += "\n   <tag k=\"name\" v=\""+StringEscapeUtils.escapeXml(rcn_ref)+"\"/>";
+        }
+        if (rwn_ref != null){
+            str += "\n   <tag k=\"name\" v=\""+StringEscapeUtils.escapeXml(rwn_ref)+"\"/>";
         }
         if (state != null){
             str += "\n   <tag k=\"state\" v=\""+state+"\"/>";

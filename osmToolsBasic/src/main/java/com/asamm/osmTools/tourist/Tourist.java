@@ -8,7 +8,6 @@ import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdTourist;
 import com.asamm.osmTools.mapConfig.ItemMap;
-import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.SparseArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -41,7 +40,7 @@ public class Tourist {
     public File xmlOutputFile;
     
     String strBound;
-    ArrayList<Node> cycloJunctions;
+    ArrayList<Node> nlbeJunctions;
     private boolean isNLBE;
     
     ItemMap map;
@@ -62,7 +61,7 @@ public class Tourist {
         
         //is need to diverse normal cyclo and BENL cyclo
         isNLBE = (map.getCycleNode() != null && map.getCycleNode().equals("NLBE"));
-        cycloJunctions = new ArrayList<Node>();
+        nlbeJunctions = new ArrayList<Node>();
     }
     
     public void create () throws IOException, XmlPullParserException {
@@ -159,10 +158,27 @@ public class Tourist {
                         rel = null;
                     }
                     if (isNLBE && tagName.equals("node")){
-                        if (node.isCycloJunction()){
-                            node.setId(Parameters.touristNodeId);
-                            Parameters.touristNodeId++;
-                            cycloJunctions.add(node);
+                        if (node.isCycloNLBEJunction() && node.isHikingNLBEJunction()){
+                            // this node contains ref for cycle and also for hiking > it's needed to create two separate nodes
+                            Node nodeCyc = new Node(node);
+                            Node nodeHik = new Node(node);
+
+                            nodeCyc.getTags().rwn_ref = null;
+                            nodeHik.getTags().rcn_ref = null;
+
+                            nodeCyc.setId(Parameters.touristNodeId++);
+                            nlbeJunctions.add(nodeCyc);
+                            nodeHik.setId(Parameters.touristNodeId++);
+                            nlbeJunctions.add(nodeHik);
+                        }
+
+                        else if (node.isCycloNLBEJunction()){
+                            node.setId(Parameters.touristNodeId++);
+                            nlbeJunctions.add(node);
+                        }
+                        else if (node.isHikingNLBEJunction()){
+                            node.setId(Parameters.touristNodeId++);
+                            nlbeJunctions.add(node);
                         }
                         node = null;
                     }
@@ -212,7 +228,7 @@ public class Tourist {
             
             //print cycloJunction nodes only for NLBE
             if (isNLBE){
-                for (Node node : cycloJunctions){
+                for (Node node : nlbeJunctions){
                     str += node.toXmlString();
                     bw.write(str);
                     str="";
