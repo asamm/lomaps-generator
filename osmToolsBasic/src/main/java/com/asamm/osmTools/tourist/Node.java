@@ -24,7 +24,22 @@ public class Node {
     double lat;
     double lon;
     Tags tags;
-    
+
+    /**
+     * Create copy of node
+     * @param node
+     */
+    public Node (Node node){
+        this.id = node.id;
+        this.ref = node.ref;
+        this.version = node.version;
+        this.visible = node.visible;
+        this.lat = node.lat;
+        this.lon = node.lon;
+        this.tags = new Tags(node.tags);
+
+    }
+
     public Node () {
         // dafault action set visible to true
         visible = "true";
@@ -113,8 +128,12 @@ public class Node {
         
         
     }
-    
-    boolean isCycloJunction(){
+
+    /**
+     * Test if node is cycle junction in NL, BE
+     * @return <code>true</code> if node has cyclo junction
+     */
+    boolean isCycloNLBEJunction(){
         if (tags == null) {
             return false;
         }
@@ -123,7 +142,21 @@ public class Node {
         }
         return true;
     }
-    
+
+    /**
+     * Test if node is hiking junction in NL, BE
+     * @return <code>true</code> if node is hiking junction in NL, BE
+     */
+    boolean isHikingNLBEJunction () {
+        if (tags == null) {
+            return false;
+        }
+        if (tags.rwn_ref == null){
+            return false;
+        }
+        return true;
+    }
+
     public String toXmlString(){
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Date date =  new Date();
@@ -143,8 +176,11 @@ public class Node {
                 + "lat=\""+decimf.format(this.lat)+"\" "
                 + "lon=\""+decimf.format(this.lon)+"\">"  ;
         // print tags
-        if (isCycloJunction()){
+        if (isCycloNLBEJunction()){
             str += printCycloJunctionTag();
+        }
+        else if (isHikingNLBEJunction()){
+            str += printHikingJunctionTag();
         }
         // print tags string
         str += tags.toXml(0);
@@ -154,12 +190,22 @@ public class Node {
         
         return str;
     }
-    
+
+    /**
+     * Print custom tag for NLBE cycle junction
+     * @return
+     */
     private String printCycloJunctionTag() {
-        //delam to stejne jako christian
-        String strJun = "\n   <tag k=\"cycle_node\" v=\"NLBE\"/>";
-        return strJun;
+        //use the same tags as OAM
+        return "\n   <tag k=\"cycle_node\" v=\"NLBE\"/>";
     }
 
+    /**
+     * Print custom tag for NLBE hiking junction
+     * @return osm xml tag element for NLBE hiking junction
+     */
+    private String printHikingJunctionTag() {
+        return "\n   <tag k=\"hiking_node\" v=\"NLBE\"/>";
+    }
     
 }
