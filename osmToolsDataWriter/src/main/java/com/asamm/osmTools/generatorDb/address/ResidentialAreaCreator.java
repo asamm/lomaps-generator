@@ -95,13 +95,16 @@ public class ResidentialAreaCreator {
         Logger.i(TAG, "Create polygons from buildings");
         createPolygonsFromBuilding();
 
-        // add OSM landuse areas into one list for union with created building areas
-        residentPolygons.addAll(landusePolygons);
+        // union osm landuse areas
+        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(landusePolygons);
+        Geometry landuseGeom = unaryUnionOp.union().buffer(0.0);
+
+        residentPolygons.add(landuseGeom);
 
         // Union all possible residential polygons into one geom
         Logger.i(TAG, "generate: Start final union of all geometries");
         long start = System.currentTimeMillis();
-        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(residentPolygons);
+        unaryUnionOp = new UnaryUnionOp(residentPolygons);
         Geometry unionGeom = unaryUnionOp.union();
         Logger.i(TAG, "generate: Union takes: " + (System.currentTimeMillis() - start) / 1000.0);
 
@@ -136,8 +139,12 @@ public class ResidentialAreaCreator {
             WayEx wayEx = dc.getWay(way.getId());
 
             // create polygon of residential area from this way and add it into index and list of residential poly
-            Polygon landusePoly = GeomUtils.createPolyFromOuterWay(wayEx, true);
+            Geometry landusePoly = GeomUtils.createPolyFromOuterWay(wayEx, true);
+
             if (landusePoly != null && landusePoly.isValid()){
+                // due to non noded intersection use workaadround with empty buffer
+                landusePoly = landusePoly.buffer(0.0);
+
                 landusePolygons.add(landusePoly);
                 residentialAreasIndex.insert(landusePoly.getEnvelopeInternal(), landusePoly);
             }
@@ -236,6 +243,7 @@ public class ResidentialAreaCreator {
         // simplify merged geom
         double distanceDeg = Utils.distanceToDeg(unionGeom.getEnvelope().getCoordinate(), 20);
         unionGeom = DouglasPeuckerSimplifier.simplify(unionGeom, distanceDeg);
+        unionGeom = unionGeom.buffer(0.0);
 
         // add union geom into storage of joined rectangles
         residentPolygons.add(unionGeom);
