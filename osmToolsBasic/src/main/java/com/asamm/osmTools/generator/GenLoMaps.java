@@ -526,6 +526,7 @@ public class GenLoMaps extends  AGenerator{
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
                 Logger.i(TAG, "Generating map: "+map.getPathGenerate());
+                Logger.i(TAG, "Generating map cmd: "+cg.getCmdLine());
 
                 Main.mySimpleLog.print("\nGenerate: "+map.getName()+" ...");
                 cg.execute(2, true);
@@ -639,37 +640,12 @@ public class GenLoMaps extends  AGenerator{
                 throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb()+" does not exist.");
             }
 
-            if (map.getPrefLang() != null) {
-                String langName = poiDbFile.getAbsolutePath().replace(".osm.db", "_" + map.getPrefLang() + ".osm.db");
-                File fileToRename = new File(langName);
-                poiDbFile.renameTo(fileToRename);
-                Logger.i(TAG, "Rename OSM db file to name " + fileToRename.getAbsolutePath());
-                filesToCompress.add(fileToRename.getAbsolutePath());
-            }
-            else {
-                filesToCompress.add(poiDbFile.getAbsolutePath());
-            }
+            filesToCompress.add(poiDbFile.getAbsolutePath());
         }
 
         // compress file
         Utils.compressFiles(filesToCompress, map.getPathResult());
 
-        // revert rename of poi DB
-        if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
-
-            File poiDbFile = new File(map.getPathAddressPoiDb());
-            if (map.getPrefLang() != null) {
-
-
-                String langName = poiDbFile.getAbsolutePath().replace(".osm.db", "_" + map.getPrefLang() + ".osm.db");
-                File renamedFile = new File(langName);
-
-                renamedFile.renameTo(poiDbFile);
-                Logger.i(TAG, "Rename OSM db file back to name " + renamedFile.getAbsolutePath());
-            }
-
-            filesToCompress.add(map.getPathAddressPoiDb());
-        }
         Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
     }
 

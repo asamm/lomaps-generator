@@ -24,6 +24,8 @@ import java.util.List;
  */
 public class GeomUtils {
 
+
+
     private static final GeometryFactory geometryFactory = new GeometryFactory();
 
     // for conversion double lat lon to integer
