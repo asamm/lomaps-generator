@@ -601,7 +601,7 @@ public class Parameters {
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             phyghtDir = "/usr/local/bin/phyghtmap";
-            mOgr2ogr = "/usr/bin/ogr2ogr";
+            mOgr2ogr = "/usr/local/bin/ogr2ogr";
             mPythonDir = "/usr/bin/python3";
             mPython2Dir = "/usr/bin/python2";
             mPreShellCommand = "";

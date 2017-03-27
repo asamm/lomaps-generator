@@ -11,6 +11,7 @@ import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.union.UnaryUnionOp;
+import com.vividsolutions.jts.precision.GeometryPrecisionReducer;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
@@ -25,10 +26,10 @@ import java.util.List;
  */
 public class ResidentialAreaCreator {
 
-    private static final String TAG = IndexController.class.getSimpleName();
+    private static final String TAG = ResidentialAreaCreator.class.getSimpleName();
 
-    private static final String[] VALID_LANDUSE_TAGS = new String[] {
-            "residential", "industrial", "railway", "commercial", "hospital", "brownfield", "cemetery"  };
+    private static final String[] VALID_LANDUSE_TAGS = new String[]{
+            "residential", "industrial", "railway", "commercial", "hospital", "brownfield", "cemetery"};
 
     private static final int BUILDING_RESIDENTIAL_BUFFER_SIZE = 50; // meters
 
@@ -95,20 +96,14 @@ public class ResidentialAreaCreator {
         Logger.i(TAG, "Create polygons from buildings");
         createPolygonsFromBuilding();
 
-        // union osm landuse areas
-        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(landusePolygons);
-        Geometry landuseGeom = unaryUnionOp.union().buffer(0.0);
-
-        residentPolygons.add(landuseGeom);
-
         // Union all possible residential polygons into one geom
         Logger.i(TAG, "generate: Start final union of all geometries");
         long start = System.currentTimeMillis();
-        unaryUnionOp = new UnaryUnionOp(residentPolygons);
+        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(residentPolygons);
         Geometry unionGeom = unaryUnionOp.union();
         Logger.i(TAG, "generate: Union takes: " + (System.currentTimeMillis() - start) / 1000.0);
 
-        if (unionGeom == null){
+        if (unionGeom == null) {
             Logger.w(TAG, "generate: No residential region or building detect");
             return new ArrayList<>();
         }
@@ -125,13 +120,15 @@ public class ResidentialAreaCreator {
     /*
      *  Read only ways that are landuse = residential and create polygons from it
      */
-    private void createPolygonsFromLanduseAreas(){
+    private void createPolygonsFromLanduseAreas() {
+
+
 
         TLongList wayIds = dc.getWayIds();
-        for (int i=0, size = wayIds.size(); i < size; i++) {
+        for (int i = 0, size = wayIds.size(); i < size; i++) {
             Way way = dc.getWayFromCache(wayIds.get(i));
 
-            if (way == null || !isValidLanduse(way)){
+            if (way == null || !isValidLanduse(way)) {
                 continue;
             }
 
@@ -141,30 +138,46 @@ public class ResidentialAreaCreator {
             // create polygon of residential area from this way and add it into index and list of residential poly
             Geometry landusePoly = GeomUtils.createPolyFromOuterWay(wayEx, true);
 
-            if (landusePoly != null && landusePoly.isValid()){
-                // due to non noded intersection use workaadround with empty buffer
-                landusePoly = landusePoly.buffer(0.0);
+            if (landusePoly != null && landusePoly.isValid()) {
+                // due to non noded intersection use workaround with small buffer
+                landusePoly = landusePoly.buffer(Utils.distanceToDeg(landusePoly.getCoordinate(), 1));
 
                 landusePolygons.add(landusePoly);
                 residentialAreasIndex.insert(landusePoly.getEnvelopeInternal(), landusePoly);
             }
         }
+
+        // union osm landuse areas
+        Logger.i(TAG, "createPolygonsFromLanduseAreas: Union landuse areas. Num of poly: " + landusePolygons.size());
+        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(landusePolygons);
+        Geometry landuseGeom = unaryUnionOp.union();
+        if (landuseGeom == null){
+            // no land use geom was created from data
+            return;
+        }
+
+        Logger.i(TAG, "createPolygonsFromLanduseAreas: simplify languse geoms" );
+        // use ugly hack because some residentia areas in UK are close very close to aech other and cause topology exception
+        double distanceDeg = Utils.distanceToDeg(landuseGeom.getEnvelope().getCoordinate(), 20);
+        landuseGeom = DouglasPeuckerSimplifier.simplify(landuseGeom, distanceDeg).buffer(0.0);
+
+        residentPolygons.add(landuseGeom);
     }
 
     /**
      * Find building, test if are outside any residential area. If yes then create simple rectangle around building
      * These buffered building polygon will be later used for union
      */
-    private void createPolygonsFromBuilding(){
+    private void createPolygonsFromBuilding() {
 
         double bufferD = Utils.metersToDeg(BUILDING_RESIDENTIAL_BUFFER_SIZE);
 
         //FROM WAYS
         TLongList wayIds = dc.getWayIds();
-        for (int i=0, size = wayIds.size(); i < size; i++) {
+        for (int i = 0, size = wayIds.size(); i < size; i++) {
             Way way = dc.getWayFromCache(wayIds.get(i));
 
-            if (way == null){
+            if (way == null) {
                 continue;
             }
             String buildingValue = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.BUILDING);
@@ -187,7 +200,7 @@ public class ResidentialAreaCreator {
             tmpBuildingCounter++;
             tmpBuildingPolygons.add(polygon);
 
-            if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION){
+            if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION) {
                 unionTempResidentPoly();
                 Logger.i(TAG, "Num processed building poly: " + residentalBuildingCounter);
             }
@@ -196,9 +209,9 @@ public class ResidentialAreaCreator {
         // FROM NODES
 
         TLongList nodeIds = dc.getNodeIds();
-        for (int i=0, size = wayIds.size(); i < size; i++) {
+        for (int i = 0, size = wayIds.size(); i < size; i++) {
             Node node = dc.getNodeFromCache(nodeIds.get(i));
-            if (node == null){
+            if (node == null) {
                 continue;
             }
             String buildingKey = OsmUtils.getTagValue(node, OsmConst.OSMTagKey.BUILDING);
@@ -208,7 +221,7 @@ public class ResidentialAreaCreator {
                 continue;
             }
 
-            if ( intersectWithResidentialAreas(node.getLongitude(), node.getLatitude())) {
+            if (intersectWithResidentialAreas(node.getLongitude(), node.getLatitude())) {
                 // this building intersect with any default OSM residential area > do not create poly around building
                 continue;
             }
@@ -219,7 +232,7 @@ public class ResidentialAreaCreator {
             tmpBuildingCounter++;
             tmpBuildingPolygons.add(polygon);
 
-            if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION){
+            if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION) {
                 unionTempResidentPoly();
                 Logger.i(TAG, "Num processed building poly: " + residentalBuildingCounter);
             }
@@ -232,20 +245,26 @@ public class ResidentialAreaCreator {
 
 
     // UNION TEMPORARY BUILDING POLY
-    private void unionTempResidentPoly(){
+    private void unionTempResidentPoly() {
 
         int size = tmpBuildingPolygons.size();
+        if (size == 0){
+            // no building was created
+            return;
+        }
+
         long start = System.currentTimeMillis();
         UnaryUnionOp unaryUnionOp = new UnaryUnionOp(tmpBuildingPolygons);
         Geometry unionGeom = unaryUnionOp.union();
-        Logger.i(TAG, "Union " +size+ " polygons takes: " + (System.currentTimeMillis() - start) / 1000.0);
+        Logger.i(TAG, "Union " + size + " polygons takes: " + (System.currentTimeMillis() - start) / 1000.0);
+
+
 
         // simplify merged geom
         double distanceDeg = Utils.distanceToDeg(unionGeom.getEnvelope().getCoordinate(), 20);
         unionGeom = DouglasPeuckerSimplifier.simplify(unionGeom, distanceDeg);
         unionGeom = unionGeom.buffer(0.0);
 
-        // add union geom into storage of joined rectangles
         residentPolygons.add(unionGeom);
 
         // clear temporary cachee
@@ -254,26 +273,26 @@ public class ResidentialAreaCreator {
     }
 
 
-
     /**
      * Test if given coordinates intersect with any default OSM residential areas
+     *
      * @param lon
      * @param lat
      * @return <code>true</code> when coordinates lies in OSM default residential area
      */
-    private boolean intersectWithResidentialAreas (double lon, double lat){
+    private boolean intersectWithResidentialAreas(double lon, double lat) {
 
         // use index to get possible residential areas that could intersecty with specified coordinates
         Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
-        List<Polygon>  intersectPoly = residentialAreasIndex.query(point.getEnvelopeInternal());
+        List<Polygon> intersectPoly = residentialAreasIndex.query(point.getEnvelopeInternal());
 
-        if (intersectPoly.size() == 0){
+        if (intersectPoly.size() == 0) {
             return false;
         }
 
-        for (Polygon polygon : intersectPoly){
+        for (Polygon polygon : intersectPoly) {
 
-            if (polygon.intersects(point)){
+            if (polygon.intersects(point)) {
                 return true;
             }
             //Logger.i(TAG, GeomUtils.geomToGeoJson(polygon));
@@ -285,23 +304,29 @@ public class ResidentialAreaCreator {
 
     /**
      * Do some logic to simplify geometry, remove holes, create areas more smooth
+     *
      * @param geom geometry to simplify
      * @return
      */
-    private List<Polygon> simplifyResidentialGeom (Geometry geom){
+    private List<Polygon> simplifyResidentialGeom(Geometry geom) {
 
         // simplify joined geometry
         double distanceDeg = Utils.distanceToDeg(geom.getCoordinate(), 20);
         geom = DouglasPeuckerSimplifier.simplify(geom, distanceDeg);
 
         // remove too small geometries
-        double minArea =  Utils.metersToDeg(200) *  Utils.metersToDeg(200);
+        double minArea = Utils.metersToDeg(200) * Utils.metersToDeg(200);
         List<Polygon> polygons = new ArrayList<>();
-        for (int i=0, size = geom.getNumGeometries(); i < size; i++){
+        for (int i = 0, size = geom.getNumGeometries(); i < size; i++) {
             Polygon polygon = (Polygon) geom.getGeometryN(i);
-            if (polygon.getArea() > minArea && polygon.getNumPoints() > 4 ){
+            if (polygon.getArea() > minArea && polygon.getNumPoints() > 4) {
                 polygons.add(polygon);
             }
+        }
+
+        if (polygons.size() == 0){
+            // some residential polygons existed but was too small and removed > mas has no residential data
+            return new ArrayList<>();
         }
 
         // union rest of polygons again
@@ -317,9 +342,9 @@ public class ResidentialAreaCreator {
 
         // remove triangles
         polygons = new ArrayList<>();
-        for (int i = 0, size = residentialGeom.getNumGeometries(); i < size; i++){
+        for (int i = 0, size = residentialGeom.getNumGeometries(); i < size; i++) {
             Polygon polygon = (Polygon) residentialGeom.getGeometryN(i);
-            if (polygon.getNumPoints() > 4 ){
+            if (polygon.getNumPoints() > 4) {
                 polygons.add(polygon);
             }
         }
@@ -329,33 +354,34 @@ public class ResidentialAreaCreator {
 
     /**
      * Test if geometry contains any holes. If are of hole is bigger than limit > hole is removed
+     *
      * @param geom geometry to remove small holes
      * @return geometry without small holes
      */
-    private Geometry removeHoles (Geometry geom){
+    private Geometry removeHoles(Geometry geom) {
 
         // holes smaller than this area will be removed
-        double minHoleArea =  Utils.metersToDeg(500) *  Utils.metersToDeg(500);
+        double minHoleArea = Utils.metersToDeg(500) * Utils.metersToDeg(500);
 
         int numGeometries = geom.getNumGeometries();
 
         List<Polygon> reCreatedPolygons = new ArrayList<>();
-        for (int i=0; i < numGeometries; i++){
+        for (int i = 0; i < numGeometries; i++) {
             Polygon polygon = (Polygon) geom.getGeometryN(i);
-            LinearRing lrExterior =  (LinearRing) polygon.getExteriorRing();
+            LinearRing lrExterior = (LinearRing) polygon.getExteriorRing();
 
             int numHoles = polygon.getNumInteriorRing();
-            if (numHoles == 0){
+            if (numHoles == 0) {
                 reCreatedPolygons.add(polygon);
                 continue;
             }
 
             // get geometry for all holes
             ArrayList bigHoles = new ArrayList();
-            for (int t = 0; t < numHoles;t++) {
-                LinearRing lr_hole =  (LinearRing) polygon.getInteriorRingN(t);
+            for (int t = 0; t < numHoles; t++) {
+                LinearRing lr_hole = (LinearRing) polygon.getInteriorRingN(t);
                 // create temporary polygon and test area
-                Polygon p = lr_hole.getFactory().createPolygon(lr_hole,null);
+                Polygon p = lr_hole.getFactory().createPolygon(lr_hole, null);
 
                 if (p.getArea() > minHoleArea) {
                     // do not remove this hole
@@ -363,7 +389,7 @@ public class ResidentialAreaCreator {
                 }
             }
             // create new polygon only with big holes
-            polygon = polygon.getFactory().createPolygon(lrExterior,(LinearRing[]) bigHoles.toArray(new LinearRing[0]));
+            polygon = polygon.getFactory().createPolygon(lrExterior, (LinearRing[]) bigHoles.toArray(new LinearRing[0]));
 
             reCreatedPolygons.add(polygon);
         }
@@ -378,19 +404,20 @@ public class ResidentialAreaCreator {
 
     /**
      * Test if way is landuse and if is accpeted landuse for residential ares
+     *
      * @param way way to test
      * @return <code>true</code> id way can be used for creation residential polygon
      */
-    private boolean isValidLanduse (Way way){
+    private boolean isValidLanduse(Way way) {
 
         String landuse = OsmUtils.getTagValue(way, OsmConst.OSMTagKey.LANDUSE);
 
-        if (landuse == null){
+        if (landuse == null) {
             return false;
         }
 
-        for (String validLanduse : VALID_LANDUSE_TAGS){
-            if (validLanduse.equalsIgnoreCase(landuse)){
+        for (String validLanduse : VALID_LANDUSE_TAGS) {
+            if (validLanduse.equalsIgnoreCase(landuse)) {
                 return true;
             }
         }
@@ -400,6 +427,7 @@ public class ResidentialAreaCreator {
 
     /**
      * Write list of polygons as one geometry into geojson file. Only for testing purposes on local
+     *
      * @param polygons created residential areas
      */
     private void writeResultToGeoJson(List<Polygon> polygons) {
@@ -407,6 +435,6 @@ public class ResidentialAreaCreator {
         Geometry unionGeom = unaryUnionOp.union();
 
         com.asamm.osmTools.utils.Utils.writeStringToFile(
-                new File("residential.geojson"), GeomUtils.geomToGeoJson(unionGeom) ,false);
+                new File("residential.geojson"), GeomUtils.geomToGeoJson(unionGeom), false);
     }
 }
