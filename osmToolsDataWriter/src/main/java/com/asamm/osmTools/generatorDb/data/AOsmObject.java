@@ -69,6 +69,7 @@ public abstract class AOsmObject {
             return;
         }
 
+        String nameEn = null; // only for fallback purposes when name in locale lng is not defined
 		for (Tag tag : entity.getTags()) {
 			String key = tag.getKey().toLowerCase(Locale.ENGLISH);
 			String value = tag.getValue();
@@ -81,9 +82,13 @@ public abstract class AOsmObject {
 
             // handle specific tags
 			if (key.startsWith("name")) {
-				// check alternative languages
+
 				if ("name".equals(key)) {
 					setName(value);	
+				}
+				else if("name:en".equals(key))  {
+					// temporary remember alternative name:en
+					nameEn = value;
 				}
 			} else if (handleTag(key, value)) {
 				// tag consumed
@@ -92,6 +97,11 @@ public abstract class AOsmObject {
 				continue;
 			}
 			OsmTagUsage.getPoiTagUsage().recordTag(tag, true);
+		}
+
+		// fallback when name is not defined > try name in EN langugage
+		if (mName == null || mName.trim().length() == 0){
+			setName(nameEn); // set method check null or empty string
 		}
 	}
 	
