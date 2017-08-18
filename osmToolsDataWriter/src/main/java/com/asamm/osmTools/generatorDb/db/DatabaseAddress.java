@@ -149,7 +149,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             psInsertCity = createPreparedStatement(
                     "INSERT INTO "+ TN_CITIES +" ("+COL_ID+", "+COL_TYPE+", "+ COL_PARENT_CITY_ID +", "+ COL_REGION_ID + ", "+
                             COL_LON+", " + COL_LAT+ ", " + COL_CENTER_GEOM+ ", " + COL_GEOM+
-                            ") VALUES (?, ?, ?, ?, ?, ?,  , GeomFromWKB(?, 4326))");
+                            ") VALUES (?, ?, ?, ?, ?, ?, GeomFromWKB(?, 4326), GeomFromWKB(?, 4326))");
 
         }else {
             psInsertCity = createPreparedStatement(
