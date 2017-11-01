@@ -134,8 +134,8 @@ public class DatabaseStoreMysql {
             sql = "CREATE TABLE IF NOT EXISTS " + TN_GEO_REGION + " (";
             sql += COL_ID + " INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, ";
             sql += COL_PARENT_ID + " INT UNSIGNED, ";
-            sql += COL_OSM_ID + " BIGINT NOT NULL, ";
-            sql += COL_OSM_DATA_TYPE + " CHAR(1) NOT NULL, ";
+            sql += COL_OSM_ID + " BIGINT NOT NULL DEFAULT 0, ";
+            sql += COL_OSM_DATA_TYPE + " CHAR(1) NOT NULL DEFAULT 'u', ";
             sql += COL_STORE_REGION_ID + " VARCHAR(100), ";
             sql += COL_TYPE + " TINYINT UNSIGNED NOT NULL, ";
             sql += COL_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, ";

@@ -19,6 +19,7 @@ import com.vividsolutions.jts.index.quadtree.Quadtree;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;
@@ -131,7 +132,7 @@ public class StreetController extends AaddressController {
 
             // create street geom
             //Logger.i(TAG, "Create street geom from relation id: " + relationId);
-            MultiLineString mls = createStreetGeom(relation);
+            MultiLineString mls = createStreetGeom(relation, null);
             if ( !isValidGeometry(mls)) {
                 // probably associtate Address relation that does not contain any street member > try to create geom
                 // from unnamed streets if relation has some houses
@@ -184,7 +185,7 @@ public class StreetController extends AaddressController {
             List<String> isInList = getIsInList(way);
 
             // create street geom
-            MultiLineString mls = createStreetGeom(way);
+            MultiLineString mls = createStreetGeom(way, null);
             if ( !isValidGeometry(mls)) {
                 // probably associate Address relation that does not contain any street member > skip it
                 continue;
@@ -1200,10 +1201,13 @@ public class StreetController extends AaddressController {
     /**
      * Create Multiline string that represent geometry of street
      * @param entity relation or way of the street
+     * @param processedRelationIds used only when parse relations and call recursively creation geometry from other relations
+     *                             It keeps ids of relations that were already processed. This prevents the cyclic issues
+     *                             when any relations has one another reference
      * @return street geometry or null if entity does not contain street data (for example associatedStreet relations
-     * can contain only building but not street geometry)
+     *     * can contain only building but not street geometry)
      */
-    private MultiLineString createStreetGeom (Entity entity){
+    private MultiLineString createStreetGeom (Entity entity, TLongArrayList processedRelationIds){
 
 
 
@@ -1226,14 +1230,13 @@ public class StreetController extends AaddressController {
             LineMerger lineMerger = new LineMerger();
             MultiLineString mlsNext = null;
 
+            if (processedRelationIds == null){
+                processedRelationIds = new TLongArrayList();
+            }
+            // add current relation into list of processed relations because the member can have reference on this id
+            processedRelationIds.add(entity.getId());
+
             for (RelationMember rm : relation.getMembers()){
-
-                // TODO REMOVE temporary solution because wrong relation in ukraine
-                if (entity.getId() == 2275254 || entity.getId() == 2213799){
-                    Logger.i(TAG, "Skip UKRAINE entity: " + entity.getId());
-                    continue;
-                }
-
 
                 if (rm.getMemberType() == EntityType.Node){
                     continue;
@@ -1248,17 +1251,19 @@ public class StreetController extends AaddressController {
                     if (rm.getMemberRole() == null || !rm.getMemberRole().equals("street")) {
                         //some relation does not have defined the member > try to guess if it is street
                         if ( isStreetWay(way)){
-                            mlsNext = createStreetGeom(way);
+                            mlsNext = createStreetGeom(way, null);
                         }
                     }
                 }
                 else if (rm.getMemberType() == EntityType.Relation){
-                    if (rm.getMemberId() == entity.getId()){
+
+
+                    if (processedRelationIds.contains(rm.getMemberId())){
                         Logger.w(TAG, "The child member is the same relation as parent. Parent id: " + entity.getId());
                         continue;
                     }
                     Relation re = dc.getRelationFromCache(rm.getMemberId());
-                    mlsNext = createStreetGeom(re);
+                    mlsNext = createStreetGeom(re, processedRelationIds);
                 }
 
                 if (mlsNext != null){
