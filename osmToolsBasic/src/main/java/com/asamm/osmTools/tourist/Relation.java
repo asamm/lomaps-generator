@@ -45,17 +45,16 @@ public class Relation {
         }
     }
     
-//    public boolean isCycloRoute (){
-//        if (tags.route != null){
-//            return (tags.route.equals("bicycle") || tags.route.equals("mtb"));
-//        }
-//        return false;
-//    }
-    
-    public void membersToList (SparseArray<Relation> relations, WayList wl, long parentId){
+    /**
+     * Obtains ways from relations members. If way remember new tourist tags that ways should obtain from relation
+     * @param relations list of parsed relation
+     * @param wl list of way ids that should obtain new tags from tourist relations
+     * @param parentId
+     */
+    public void membersToWayList(SparseArray<Relation> relations, WayList wl, long parentId){
        //counter ++;  
         if (!members.isEmpty()) {
-            //  System.out.println("Pocet spusteni membersToList: " + counter);
+            //  System.out.println("Pocet spusteni membersToWayList: " + counter);
             //  System.out.println("relation id: " + this.id);
 
             for (Member mbr : members ){
@@ -86,7 +85,7 @@ public class Relation {
                     //copy parentTag from parent to children relation
                     rel.parentTags = this.parentTags;
                   
-                    rel.membersToList(relations, wl,this.id);
+                    rel.membersToWayList(relations, wl,this.id);
                 }
             }
             //System.out.println(wl.wayList.size());

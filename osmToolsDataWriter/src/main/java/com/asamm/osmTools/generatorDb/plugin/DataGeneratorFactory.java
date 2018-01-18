@@ -112,29 +112,11 @@ class DataGeneratorFactory extends TaskManagerFactory {
                 confCountryBoundary.setStorageType(ConfigurationCountry.StorageType.GEOJSON);
             }
             else if (atrStorageType.equals(PARAM_STORAGE_TYPE_GEO_DATABASE)){
-                confCountryBoundary.setStorageType(ConfigurationCountry.StorageType.GEO_DATABASE);
+                confCountryBoundary.setStorageType(ConfigurationCountry.StorageType.STORE_REGION_DB);
             }
 
             return confCountryBoundary;
         }
-
-        else if (genType == GenerateType.STORE_GEOCODE){
-            ConfigurationGeoCoding confGeoCoding = new ConfigurationGeoCoding();
-
-            // if will be used RAM or HDD CONTAINER
-            confGeoCoding.setDataContainerType(getStringArgument(taskConfig, PARAM_DATA_CONTAINER_TYPE, "").trim());
-
-            // mapId to link with admin level definition from address configuration XML file
-            confGeoCoding.setMapId(getStringArgument(taskConfig, PARAM_DATA_MAP_ID).trim());
-            // mapId to link with admin level definition from address configuration XML file
-            confGeoCoding.setFileConfigXml(getStringArgument(taskConfig, PARAM_FILE_CONFIG, "").trim());
-
-            //path to file with geojson with country border
-            confGeoCoding.setFileCountryGeom(getStringArgument(taskConfig, PARAM_FILE_COUNTRY_GEOM, "").trim());
-
-            return  confGeoCoding;
-        }
-
         else {
             throw new IllegalArgumentException("invalid generator type, ");
         }
@@ -159,12 +141,13 @@ class DataGeneratorFactory extends TaskManagerFactory {
         if (atrStorageType.equals(PARAM_STORAGE_TYPE_GEOJSON)){
             String[] cmdAtrSplit = atrCountries.split(",");
 
-            if (cmdAtrSplit.length % 3 != 0) {
+            if (cmdAtrSplit.length % 4 != 0) {
                 throw  new IllegalArgumentException("Wrong number of countries elements cmd attribute : " + atrCountries);
             }
 
             for (int i=0; i < cmdAtrSplit.length; i++){
-                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i], cmdAtrSplit[++i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
+                countriesConf.add(ConfigurationCountry.CountryConf.createGeoJsonConf(
+                        cmdAtrSplit[i], cmdAtrSplit[++i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
             }
         }
         else if (atrStorageType.equals(PARAM_STORAGE_TYPE_GEO_DATABASE)){
@@ -173,12 +156,13 @@ class DataGeneratorFactory extends TaskManagerFactory {
 
             String[] cmdAtrSplit = atrCountries.split(",");
 
-            if (cmdAtrSplit.length % 3 != 0) {
+            if (cmdAtrSplit.length % 4 != 0) {
                 throw  new IllegalArgumentException("Wrong number of countries elements cmd attribute : " + atrCountries);
             }
 
             for (int i=0; i < cmdAtrSplit.length; i++){
-                countriesConf.add(new ConfigurationCountry.CountryConf(cmdAtrSplit[i],cmdAtrSplit[++i], cmdAtrSplit[++i]));
+                countriesConf.add(ConfigurationCountry.CountryConf.createStoreRegionDbConf(
+                        cmdAtrSplit[i],cmdAtrSplit[++i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
             }
         }
         else {

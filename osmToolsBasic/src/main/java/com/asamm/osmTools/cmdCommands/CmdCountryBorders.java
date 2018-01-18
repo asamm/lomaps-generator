@@ -79,6 +79,7 @@ public class CmdCountryBorders extends  Cmd{
             }
         }
         addCommand(cmdAdminLevel);
+        addCommand("border_type=territorial");
 
         addCommand("--used-node");
         addCommand("outPipe.0=Ways");
@@ -97,6 +98,7 @@ public class CmdCountryBorders extends  Cmd{
             }
         }
         addCommand(cmdAdminLevel);
+        addCommand("border_type=territorial");
 
         addCommand("--used-way");
         addCommand("--used-node");
@@ -131,7 +133,7 @@ public class CmdCountryBorders extends  Cmd{
         if (storageType == ConfigurationCountry.StorageType.GEOJSON){
             addCommand("-storageType=geojson");
         }
-        else if (storageType == ConfigurationCountry.StorageType.GEO_DATABASE){
+        else if (storageType == ConfigurationCountry.StorageType.STORE_REGION_DB){
             addCommand("-storageType=geodatabase");
         }
     }
@@ -163,6 +165,14 @@ public class CmdCountryBorders extends  Cmd{
             if (storageType == ConfigurationCountry.StorageType.GEOJSON){
                 sb.append(",");
                 sb.append(map.getPathCountryBoundaryGeoJson());
+            }
+            else if (storageType == ConfigurationCountry.StorageType.STORE_REGION_DB){
+                sb.append(",");
+
+                String regionCode = (map.getRegionCode().length() == 0) ?
+                            ConfigurationCountry.COUNTRY_CODE_NOT_DEFINED : map.getRegionCode();
+
+                sb.append(regionCode);
             }
         }
 

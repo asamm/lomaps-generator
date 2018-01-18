@@ -129,9 +129,7 @@ public class LocusServerConst {
      *      LOCUS STORE GEOCODING DATABASE CONST
      * *************************************************************/
 
-    public static final String TN_GEO_REGION = "geo_region";
-    public static final String TN_GEO_REGION_NAME = "geo_region_name";
-
+    public static final String TN_SLS_REGION = "sls_region";
 
     // NAMES OF COLUMNS
 
@@ -148,13 +146,15 @@ public class LocusServerConst {
     public static final String COL_NAME_NORM = "namenorm";
     public static final String COL_PLACE_NAME = "placename";
     public static final String COL_PARENT_CITY_ID = "parentcityid";
-    public static final String COL_PARENT_ID = "parentid";
+    public static final String COL_PARENT_ID = "parent_id";
     public static final String COL_LON = "lon";
     public static final String COL_LAT = "lat";
     public static final String COL_TIMESTAMP = "timestamp";
 
     public static final String COL_REGION_ID = "region_id";
     public static final String COL_STORE_REGION_ID = "store_region_id";
+    public static final String COL_REGION_CODE = "region_code";
+    public static final String COL_REGION_LEVEL = "region_level";
 
 
 

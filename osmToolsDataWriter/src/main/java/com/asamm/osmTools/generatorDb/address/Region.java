@@ -32,6 +32,11 @@ public class Region {
     private int adminLevel;
 
     /*
+         * ISO Alpha country code
+         */
+    private String regionCode;
+
+    /*
      * All possible international languages of cities, <langCode|name>
      */
     private THashMap<String, String> namesInternational;
@@ -42,12 +47,17 @@ public class Region {
     private MultiPolygon geom;
 
     public Region() {
-
+        reset();
     }
 
-    public Region(long osmId, EntityType entityType, String name, THashMap<String, String> namesInternational, MultiPolygon geom) {
+    public Region(long osmId, EntityType entityType, String regionCode, String name,
+                  THashMap<String, String> namesInternational, MultiPolygon geom) {
+
+        reset();
+
         this.osmId = osmId;
         this.entityType = entityType;
+        this.regionCode = regionCode;
         this.name = name;
         this.namesInternational = namesInternational;
         this.geom = geom;
@@ -55,6 +65,7 @@ public class Region {
 
     private void reset () {
         name = "";
+        regionCode = "";
         this.namesInternational = new THashMap<>();
     }
 
@@ -87,6 +98,17 @@ public class Region {
 
     public void setEntityType(EntityType entityType) {
         this.entityType = entityType;
+    }
+
+
+    public String getRegionCode() {
+        return regionCode;
+    }
+
+    public void setRegionCode(String regionCode) {
+        if (regionCode != null){
+            this.regionCode = regionCode;
+        }
     }
 
     public String getName() {

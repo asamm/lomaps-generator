@@ -6,7 +6,6 @@ import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;
 import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterCountryBoundaryDefinition;
-import com.asamm.osmTools.generatorDb.input.definition.WriterGeocodingDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.utils.Logger;
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
@@ -95,26 +94,6 @@ public class DataGeneratorTask implements Sink {
                 dc = new DataContainerRam(wcbDefinition);
 
                 generator = new GeneratorCountryBoundary(wcbDefinition);
-            }
-
-            // STORE GEOCODING GENERATOR
-
-            else if (config.getGenerateType() == GenerateType.STORE_GEOCODE){
-                Logger.i(TAG, "Start Store geocoding DB generator");
-
-                ConfigurationGeoCoding confStoreGeo = (ConfigurationGeoCoding) config;
-                WriterGeocodingDefinition geocodingDefinition = new WriterGeocodingDefinition(confStoreGeo);
-
-                // crate RAM or HDD storage for all entities
-                if (confStoreGeo.getDataContainerType() == DataContainerType.RAM) {
-                    Logger.i(TAG, "creating data container: RAM");
-                    dc = new DataContainerRam(geocodingDefinition);
-                } else {
-                    Logger.i(TAG, "creating data container: HDD");
-                    dc = new DataContainerHdd(geocodingDefinition);
-                }
-
-                generator = new GeneratorStoreGeocoding(geocodingDefinition);
             }
 
 		} catch (Exception e) {

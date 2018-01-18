@@ -8,7 +8,7 @@ import java.util.logging.Handler;
 import java.util.logging.Logger;
 
 import com.asamm.osmTools.generator.GenLoMaps;
-import com.asamm.osmTools.generator.GenStoreGeoCoding;
+import com.asamm.osmTools.generator.GenStoreRegionDB;
 import com.asamm.osmTools.utils.*;
 
 /**
@@ -45,7 +45,7 @@ public class Main {
                 genLoMaps.process();
             }
             else if (Parameters.getGenType() == Parameters.GenType.STORE_GEOCODING){
-                GenStoreGeoCoding genStoreGeo = new GenStoreGeoCoding();
+                GenStoreRegionDB genStoreGeo = new GenStoreRegionDB();
                 genStoreGeo.process();
             }
 
