@@ -32,7 +32,7 @@ public class Way {
     
     
     public void inicializeTourist  (KXmlParser parser, WayList wl) {
-            // resize
+        // resize
         //Main.cycloId++;
         fillAttributes(parser);
 
@@ -44,11 +44,11 @@ public class Way {
         isInWayList = (wl.isWayInList(id));
 
         // get Tags for this way from wayList
-        if (isInWayList){
-            
+        if (isInWayList) {
+
             this.tagsArray = wl.wayList.get(id);
-            if (this.tagsArray == null){
-                throw new IllegalArgumentException("Cyclo way ID= "+this.id+" has no tags" );
+            if (this.tagsArray == null) {
+                throw new IllegalArgumentException("Cyclo way ID= " + this.id + " has no tags");
             }
         }
     }

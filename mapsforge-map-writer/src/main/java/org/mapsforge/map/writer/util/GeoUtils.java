@@ -302,6 +302,7 @@ public final class GeoUtils {
 	 * @return a list of WayBlocks which you can use to save the way.
 	 */
 	public static List<WayDataBlock> toWayDataBlockList(Geometry geometry) {
+
 		List<WayDataBlock> res = new ArrayList<>();
 		if (geometry instanceof MultiPolygon) {
 			MultiPolygon mp = (MultiPolygon) geometry;
@@ -322,6 +323,7 @@ public final class GeoUtils {
 		} else if (geometry instanceof Polygon) {
 			Polygon p = (Polygon) geometry;
 			List<Integer> outer = toCoordinateList(p.getExteriorRing());
+
 			if (outer.size() / 2 > 0) {
 				List<List<Integer>> inner = new ArrayList<>();
 				for (int i = 0; i < p.getNumInteriorRing(); i++) {

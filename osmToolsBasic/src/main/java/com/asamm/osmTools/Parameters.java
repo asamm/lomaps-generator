@@ -199,13 +199,13 @@ public class Parameters {
     public static  ArrayList<String> hikingColourType;
 
     // description in header of map file
-    public static String MAP_COMMENT =
-            "<div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
-            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
-            + "<br />"
-            + " Data source OpenStreetMap community"
-            + "<br /><br/>"
-            + "</div>";
+    public static String MAP_COMMENT = "XXX";
+//            "<div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
+//            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
+//            + "<br />"
+//            + " Data source OpenStreetMap community"
+//            + "<br /><br/>"
+//            + "</div>";
 
 
     // META DATA TABLE
@@ -647,20 +647,20 @@ public class Parameters {
         hikingNetworkType.put("iwn", 4);
         
         // Map COMMENT
-        MAP_COMMENT = 
-            " <div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
-            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
-            + "<br />"
-            + " Map data source OpenStreetMap community";
-        if (mActionList.contains(Action.CONTOUR)){
-            MAP_COMMENT += 
-                 "<br /> "
-                + " Contour lines source <a href=\"http://srtm.usgs.gov\">SRTM</a> and "
-                    + "<a href=\"http://www.viewfinderpanoramas.org\">Viewfinder Panoramas</a>";    
-        }
-        MAP_COMMENT += 
-             "<br /><br />"
-            + "</div>";
+//        MAP_COMMENT =
+//            " <div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
+//            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
+//            + "<br />"
+//            + " Map data source OpenStreetMap community";
+//        if (mActionList.contains(Action.CONTOUR)){
+//            MAP_COMMENT +=
+//                 "<br /> "
+//                + " Contour lines source <a href=\"http://srtm.usgs.gov\">SRTM</a> and "
+//                    + "<a href=\"http://www.viewfinderpanoramas.org\">Viewfinder Panoramas</a>";
+//        }
+//        MAP_COMMENT +=
+//             "<br /><br />"
+//            + "</div>";
 
 
         // check validity of directories on the end

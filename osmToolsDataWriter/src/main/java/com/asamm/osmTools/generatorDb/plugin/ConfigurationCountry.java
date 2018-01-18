@@ -20,10 +20,12 @@ public class ConfigurationCountry extends AConfiguration {
         /**
          * Boundary is send into Locus store geo databse
          */
-        GEO_DATABASE
+        STORE_REGION_DB
     };
 
 
+
+    public static final String COUNTRY_CODE_NOT_DEFINED = "NOTDEFINED";
 
     /**
      * Definition of coutries and it files with geometry to be created
@@ -83,8 +85,10 @@ public class ConfigurationCountry extends AConfiguration {
 
     public static class CountryConf {
 
+
+
         /**
-         * File where to store geom for country
+         * File where to store geom for country (only for geojson mode)
          */
         File fileGeom;
 
@@ -103,26 +107,56 @@ public class ConfigurationCountry extends AConfiguration {
          */
         String dataStoreRegionId = "";
 
+        /*
+         * ISO Alpha code
+         */
+        String regionCode = null;
 
-        public CountryConf (String countryName, String dataStoreParentRegionId, String dataStoreRegionId){
+        public static CountryConf createStoreRegionDbConf (
+                String countryName, String dataStoreParentRegionId, String dataStoreRegionId, String regionCode){
 
-            setCountryName(countryName);
-            setDataStoreRegionId(dataStoreRegionId);
-            setDataStoreParentRegionId(dataStoreParentRegionId);
+            CountryConf countryConf = new CountryConf();
+
+            countryConf.setCountryName(countryName);
+            countryConf.setDataStoreRegionId(dataStoreRegionId);
+            countryConf.setDataStoreParentRegionId(dataStoreParentRegionId);
+            countryConf.setRegionCode(regionCode);
+
+            return countryConf;
         }
 
 
-        public CountryConf (String countryName, String dataStoreParentRegionId, String storeRegionCode, String fileGeomPath){
+        public static CountryConf createGeoJsonConf (
+                String countryName, String dataStoreParentRegionId, String dataStoreRegionId, String fileGeomPath){
 
-            setCountryName(countryName);
-            setDataStoreRegionId(dataStoreRegionId);
-            setDataStoreRegionId(storeRegionCode);
-            this.fileGeom = checkFile(fileGeomPath);
+            CountryConf countryConf = new CountryConf();
+
+            countryConf.setCountryName(countryName);
+            countryConf.setDataStoreRegionId(dataStoreRegionId);
+            countryConf.setDataStoreParentRegionId(dataStoreParentRegionId);
+            countryConf.setFileGeom(fileGeomPath);
+
+            return countryConf;
         }
+
+        /**************************************************/
+        /*             GETTERS & SETTERS
+        /**************************************************/
+
+
+
+
+        // GEOJSON FILE
 
         public File getFileGeom() {
             return fileGeom;
         }
+
+        public void setFileGeom(String fileGeomPath) {
+            this.fileGeom = checkFile(fileGeomPath);
+        }
+
+        // EN COUNTRY NAME
 
         public String getCountryName() {
             return countryName;
@@ -134,6 +168,8 @@ public class ConfigurationCountry extends AConfiguration {
             }
         }
 
+        // DATASTORE REGION ID
+
         public String getDataStoreRegionId() {
             return dataStoreRegionId;
         }
@@ -144,6 +180,8 @@ public class ConfigurationCountry extends AConfiguration {
             }
         }
 
+        // PARENT DATASTORE REGION ID
+
         public String getDataStoreParentRegionId() {
             return dataStoreParentRegionId;
         }
@@ -153,6 +191,18 @@ public class ConfigurationCountry extends AConfiguration {
                 this.dataStoreParentRegionId = dataStoreParentRegionId;
             }
         }
+
+        // REGION CODE
+        public String getRegionCode() {
+            return regionCode;
+        }
+
+        public void setRegionCode(String regionCode) {
+            if (regionCode != null && !regionCode.equals(COUNTRY_CODE_NOT_DEFINED)){
+                this.regionCode = regionCode;
+            }
+        }
+
 
         @Override
         public int hashCode (){

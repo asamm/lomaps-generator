@@ -10,6 +10,7 @@ import com.asamm.osmTools.generatorDb.db.DatabaseStoreMysql;
 import com.asamm.osmTools.generatorDb.input.definition.WriterCountryBoundaryDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
+import com.asamm.osmTools.generatorDb.utils.Language;
 import com.asamm.osmTools.generatorDb.utils.OsmUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
@@ -81,7 +82,7 @@ public class GeneratorCountryBoundary extends AGenerator{
         }
 
         // SAVE TO DATABASE
-        else if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.GEO_DATABASE){
+        else if (wcbDefinition.getConfigurationCountry().getStorageType() == ConfigurationCountry.StorageType.STORE_REGION_DB){
             Logger.i(TAG, "= Write data to Locus store database=");
             DatabaseStoreMysql db = new DatabaseStoreMysql();
             //db.cleanTables();
@@ -211,6 +212,8 @@ public class GeneratorCountryBoundary extends AGenerator{
 
             Boundary boundary = entry.getValue();
 
+            CountryConf countryConf = entry.getKey();
+
             // simplify boundary to write
             MultiPolygon mpSimpl = GeomUtils.simplifyMultiPolygon(boundary.getGeom(), 200);
 
@@ -218,9 +221,16 @@ public class GeneratorCountryBoundary extends AGenerator{
             MultiPolygon mpBuf = GeomUtils.bufferGeom(mpSimpl, 100);
             mpSimpl = GeomUtils.simplifyMultiPolygon(mpBuf, 100);
 
+            // hack to have english name in multilangual names names
+            if (boundary.getNameLangs().get(Language.ENGLISH.getCode()) == null){
+                boundary.getNameLangs().put(Language.ENGLISH.getCode(), countryConf.getCountryName());
+            }
+
+
             Region region = new Region(
                     boundary.getId(),
                     boundary.getEntityType(),
+                    countryConf.getRegionCode(),
                     boundary.getName(),
                     boundary.getNameLangs(),
                     mpSimpl);
@@ -228,7 +238,6 @@ public class GeneratorCountryBoundary extends AGenerator{
             region.setAdminLevel(boundary.getAdminLevel());
 
             db.insertRegion(region, entry.getKey());
-
         }
     }
 
@@ -241,12 +250,12 @@ public class GeneratorCountryBoundary extends AGenerator{
 
         // Definition for possible continents
         String[][] continentDefinitions = new String[][] {
-                {"Africa", "36966057", "wo.af", "africa.json"},
-                {"Asia", "36966065", "wo.as", "asia.json"},
-                {"Europe", "25871341", "wo.eu", "europe.json"},
-                {"South America", "36966069", "wo.am", "america_south.json"},
-                {"North America", "36966063", "wo.an", "america_north.json"},
-                {"Oceania", "249399679", "wo.oc", "oceania.json"}
+                {"Africa", "36966057", "wo.af", "WO-AF", "africa.json"},
+                {"Asia", "36966065", "wo.as", "WO-AS","asia.json"},
+                {"Europe", "25871341", "wo.eu", "WO-EU","europe.json"},
+                {"South America", "36966069", "wo.am", "WO-AM","america_south.json"},
+                {"North America", "36966063", "wo.an", "WO-AN","america_north.json"},
+                {"Oceania", "249399679", "wo.oc", "WO-OC","oceania.json"}
         };
 
         // iterate over the nodes and try to find continent polygon
@@ -266,8 +275,9 @@ public class GeneratorCountryBoundary extends AGenerator{
             for (String[] staticDefinition : continentDefinitions) {
                 if (node.getId() == Long.valueOf(staticDefinition[1])) {
 
-                    countryConf = new ConfigurationCountry.CountryConf(staticDefinition[0], "wo", staticDefinition[2]);
-                    path = "../polygons/_world/" + staticDefinition[3];
+                    countryConf = ConfigurationCountry.CountryConf.createStoreRegionDbConf(
+                            staticDefinition[0], "wo", staticDefinition[2], staticDefinition[3]);
+                    path = "../polygons/_world/" + staticDefinition[4];
                 }
             }
             if (countryConf == null) {
@@ -286,10 +296,22 @@ public class GeneratorCountryBoundary extends AGenerator{
                 multiPolygon = GeomUtils.polygonToMultiPolygon((Polygon) geom);
             }
 
+
             THashMap<String, String> names = OsmUtils.getNamesLangMutation(node, "name", countryConf.getCountryName());
+
+            // hack to have english name in multilangual names names
+            if (names.get(Language.ENGLISH.getCode()) == null){
+                names.put(Language.ENGLISH.getCode(), countryConf.getCountryName());
+            }
+
             Region regionContinents = new Region(
-                    node.getId(), EntityType.Node, countryConf.getCountryName(), names, multiPolygon);
-            regionContinents.setAdminLevel(0);
+                    node.getId(),
+                    EntityType.Node,
+                    countryConf.getRegionCode(),
+                    countryConf.getCountryName(),
+                    names,
+                    multiPolygon);
+            regionContinents.setAdminLevel(1);
 
             Logger.i(TAG, "createContinents: created continent: " + regionContinents.toString());
             continentsMap.put(countryConf, regionContinents);
@@ -305,8 +327,8 @@ public class GeneratorCountryBoundary extends AGenerator{
      */
     private void createWorldRegion (){
 
-        CountryConf countryConf = new ConfigurationCountry.CountryConf(
-                "Worldwide","wo", "wo");
+        CountryConf countryConf = ConfigurationCountry.CountryConf.createStoreRegionDbConf(
+                "Worldwide","wo", "wo", "WO" );
 
         THashMap<String, String> names = new THashMap<>();
         names.put("en", countryConf.getCountryName());
@@ -315,7 +337,11 @@ public class GeneratorCountryBoundary extends AGenerator{
         Region regionContinent = null;
         try {
             regionContinent = new Region(
-                    9999999999L, EntityType.Node,countryConf.getCountryName(), names,
+                    9999999999L,
+                    EntityType.Node,
+                    countryConf.getRegionCode(),
+                    countryConf.getCountryName(),
+                    names,
                     (MultiPolygon) wkt.read("MULTIPOLYGON (((-179.9 85, 179.9 85,179.9 -85,-179.9 -85,-179.9 85)))"));
         } catch (ParseException e) {
             e.printStackTrace();
@@ -368,10 +394,11 @@ public class GeneratorCountryBoundary extends AGenerator{
         }
         if (missingCountry){
 
-            throw new IllegalArgumentException("Some boundaries for countries was not founded - see the log above. " +
+            Logger.w(TAG, "Some boundaries for countries was not founded - see the log above. " +
                     "Probably wrong country name");
-        }
 
+            System.exit(1);
+        }
     }
 
     /**

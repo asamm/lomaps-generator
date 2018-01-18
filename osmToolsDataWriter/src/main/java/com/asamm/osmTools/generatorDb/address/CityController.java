@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.address;
 
-import com.asamm.osmTools.generatorDb.input.definition.WriterGeocodingDefinition;
+import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.data.OsmConst;
 import com.asamm.osmTools.generatorDb.data.OsmConst.OSMTagKey;
 import com.asamm.osmTools.generatorDb.data.WayEx;
@@ -44,9 +44,9 @@ public class CityController extends AaddressController {
         return new CityController (dc, null, null);
     }
 
-    WriterGeocodingDefinition wgd;
+    WriterAddressDefinition wgd;
 
-    public CityController(ADataContainer dc, DatabaseAddress databaseAddress, WriterGeocodingDefinition wgd) {
+    public CityController(ADataContainer dc, DatabaseAddress databaseAddress, WriterAddressDefinition wgd) {
 
         super(dc, databaseAddress);
 
@@ -276,7 +276,13 @@ public class CityController extends AaddressController {
         boundary.setCityType(cityType);
         boundary.setNameLangs(OsmUtils.getNamesLangMutation(entity, "name", bName));
         boundary.setOfficialNamesInternational(OsmUtils.getNamesLangMutation(entity, "official_name", bName));
+
+        // obtain alt_names
+        boundary.setNamesAlternative(new ArrayList<String>(
+                OsmUtils.getNamesLangMutation(entity, "alt_name", bName).values()));
+        // add other names like int_name
         boundary.addNameAlternative(OsmUtils.getTagValue(entity, OSMTagKey.INT_NAME));
+
 
         boundary.setWebsite(OsmUtils.getTagValue(entity, OSMTagKey.WEBSITE));
         boundary.setWikipedia(OsmUtils.getTagValue(entity, OSMTagKey.WIKIPEDIA));
@@ -308,6 +314,7 @@ public class CityController extends AaddressController {
             Region region = new Region(
                     boundary.getId(),
                     boundary.getEntityType(),
+                    "",
                     boundary.getName(),
                     boundary.getNameLangs(),
                     boundary.getGeom());
@@ -333,7 +340,9 @@ public class CityController extends AaddressController {
      * @param boundary to test and create region
      */
     private void createRegion(Boundary boundary){
-        Region region = new Region(boundary.getId(), boundary.getEntityType(), boundary.getName(), boundary.getNameLangs(), boundary.getGeom());
+        Region region = new Region(
+                boundary.getId(), boundary.getEntityType(), "",
+                boundary.getName(), boundary.getNameLangs(), boundary.getGeom());
 
         IndexController.getInstance().insertRegion(region);
         //((DatabaseAddress)db).insertRegion(region);

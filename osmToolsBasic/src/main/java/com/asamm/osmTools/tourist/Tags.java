@@ -22,12 +22,12 @@ public class Tags {
     public String natural;
     public String layer;
     public String whitesea;
+    public long parentRelId;
 
     // for polabska stezka
     public String highway;
     public String tracktype;
-    
-    
+
     // for cyclo nodetrack
     public String rcn;
     public String rcn_ref;
@@ -37,24 +37,23 @@ public class Tags {
     //for hiking
     public String osmcsymbol;
     public String osmc; // store information for mapsforge, boolean whearher tags has values osmcsymbol
-    //public ArrayList<String> osmcSymbolElements;
     public String osmc_color;
     public String osmc_background;
     public String osmc_foreground;
     public String kct_barva;
     public String kct_green;
-    
     public String colour;
-    
-    public long parentRelId;
-    
-    // list of possibles tags for cycloroute
+
+    //for ski
+    public String pisteType;
+    public String pisteGrooming;
+    public String pisteDifficulty;
 
     /**
      * Create copy of tags object
      * @param tags
      */
-    public Tags (Tags tags){
+    public Tags (Tags tags) {
         this.type = tags.type;
         this.route = tags.route;
         this.network = tags.network;
@@ -76,9 +75,12 @@ public class Tags {
         this.osmc_background = tags.osmc_background;
         this.osmc_foreground = tags.osmc_foreground;
         this.kct_barva = tags.kct_barva;
-        this.kct_green  = tags.kct_green;
+        this.kct_green = tags.kct_green;
         this.colour = tags.colour;
         this.parentRelId = tags.parentRelId;
+        this.pisteType = tags.pisteType;
+        this.pisteGrooming = tags.pisteGrooming;
+        this.pisteDifficulty = tags.pisteDifficulty;
     }
 
     public Tags (){
@@ -147,27 +149,62 @@ public class Tags {
             if (tag.key.equals("colour")){
                 colour = tag.val.toLowerCase();
             }
-//            if (tag.key.equals("note")){
-//                note = tag.val;
-//            }
-            
+            if (tag.key.equals("piste:type")){
+                pisteType = tag.val.toLowerCase();
+            }
+            if (tag.key.equals("piste:grooming")){
+                pisteGrooming = tag.val.toLowerCase();
+            }
+            if (tag.key.equals("piste:difficulty")){
+                pisteDifficulty = tag.val.toLowerCase();
+            }
         }
-        
     }
-    
+
+    /**
+     * Check if relation is any type hiking, cycling or ski track that can be expanded into ways
+     * @return <code>True</code> if relation can be used as source for tourist ways
+     */
+    public boolean isTouristRelation(){
+        return (isRegularBycicle() || isMtb() || isHiking() || isSki());
+    }
+
+    /**
+     * Test if relation type is cycle track
+     * @return
+     */
     public boolean isRegularBycicle(){
             return (route != null && route.equals("bicycle"));
     }
-    
+
+    /**
+     * Test if relation can be MRB route
+     * @return
+     */
     public boolean  isMtb() {
         return (route != null && route.equals("mtb"));
     }
-    
+
+    /**
+     * Check if tags defines hiking route
+     * @return
+     */
     public boolean isHiking() {
         return (route != null && (route.equals("hiking") ||
                             route.toLowerCase().equals("foot")));
     }
-    
+
+    /**
+     * Test if tags for relation define the ski relation
+     * @return <code>true</code> if relation is valid SKI
+     */
+    public boolean  isSki() {
+        return (route != null && (route.equals("piste") || route.equals("ski")));
+    }
+
+    /**
+     * Split osmc:symbol tag into base color, background and foreground color
+     */
     public void parseOsmcSymbol () {
         //test if has tag osmc:symbol
         //osmcSymbolElements = new ArrayList<String>();
@@ -206,6 +243,7 @@ public class Tags {
      * @return 
      */
     public boolean validate () {
+
         if (isRegularBycicle()){
             if (isTagEmpty(network)){
                 Main.LOG.warning("[warn_cyc_001] Relation id="+parentRelId+" has empty network tag." 
@@ -228,6 +266,7 @@ public class Tags {
                         + " Set new value lcn");
                 network = "lcn";
             }
+            this.osmc = "yes";
             return true;
         }
         
@@ -248,6 +287,7 @@ public class Tags {
                         + " Set new value network=lcn ");
                 network = "lcn";
             }
+            this.osmc = "yes";
             return true;
         }
         else if (isHiking()){
@@ -317,7 +357,11 @@ public class Tags {
             //color is corect set mapsforge attribute
             this.osmc = "yes";
             
-            //System.out.println("Relation "+parentRelId+" ma network: "+network);
+            return true;
+        }
+        else if (isSki()){
+            // nothing to validate
+            this.osmc = "yes";
             return true;
         }
         return false;
@@ -409,6 +453,16 @@ public class Tags {
         if (kct_green != null){
             str += "\n   <tag k=\"kct_green\" v=\""+StringEscapeUtils.escapeXml(kct_green)+"\"/>";
         }
+
+        if (pisteType != null){
+            str += "\n   <tag k=\"piste:type\" v=\""+StringEscapeUtils.escapeXml(pisteType)+"\"/>";
+        }
+        if (pisteGrooming != null){
+            str += "\n   <tag k=\"piste:grooming\" v=\""+StringEscapeUtils.escapeXml(pisteGrooming)+"\"/>";
+        }
+        if (pisteDifficulty != null){
+            str += "\n   <tag k=\"piste:difficulty\" v=\""+StringEscapeUtils.escapeXml(pisteDifficulty)+"\"/>";
+        }
         return str;
     }
     
@@ -430,7 +484,7 @@ public class Tags {
     private String getColorFromOsmc(String osmcsymbol){
         int position = osmcsymbol.indexOf(":");
         if (position == -1){
-            // value has no colon : for this reason try to validate whole value of osmcsymbol string
+            // value has no color : for this reason try to validate whole value of osmcsymbol string
             if(isOsmcColorValid(osmcsymbol)){
                 return osmcsymbol;
             }

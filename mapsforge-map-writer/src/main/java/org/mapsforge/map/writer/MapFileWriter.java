@@ -154,6 +154,9 @@ public final class MapFileWriter {
 			}
 
 			// TODO is this the right place to simplify, or is it better before clipping?
+
+            LOGGER.log(Level.INFO, "VOLDA: simplification factor: " + configuration.getSimplification());
+
 			if (this.configuration.getSimplification() > 0
 					&& this.tile.getZoomlevel() <= Constants.MAX_SIMPLIFICATION_BASE_ZOOM) {
 				processedGeometry = GeoUtils.simplifyGeometry(this.way, processedGeometry, this.maxZoomInterval,
@@ -194,6 +197,8 @@ public final class MapFileWriter {
 				}
 			}
 
+			LOGGER.info("VOLDA Encoder: " + this.configuration.getEncodingChoice());
+
 			switch (this.configuration.getEncodingChoice()) {
 				case SINGLE:
 					blocks = DeltaEncoder.encode(blocks, Encoding.DELTA);
@@ -208,8 +213,10 @@ public final class MapFileWriter {
 					int simDoubleDelta = DeltaEncoder.simulateSerialization(blocksDoubleDelta);
 					if (simDelta <= simDoubleDelta) {
 						blocks = blocksDelta;
+						LOGGER.info("VOLDA Encoder: use simple simpleDelta");
 					} else {
 						blocks = blocksDoubleDelta;
+						LOGGER.info("VOLDA Encoder: use double delta");
 					}
 					break;
 			}
@@ -489,6 +496,13 @@ public final class MapFileWriter {
 			appendWhitespace(DEBUG_BLOCK_SIZE - sb.toString().getBytes(UTF8_CHARSET).length, poiBuffer);
 		}
 
+		// ---------- VOLDA --------------
+		String msg = "Write NODE " + poi.getId() + " lat: " + poi.getLatitude() + "; "
+				+ "lon: " + poi.getLongitude();
+		LOGGER.log(Level.FINE, msg);
+
+		// ------------------------------
+
 		// write poi features to the file
 		poiBuffer.put(Serializer.getVariableByteSigned(poi.getLatitude() - currentTileLat));
 		poiBuffer.put(Serializer.getVariableByteSigned(poi.getLongitude() - currentTileLon));
@@ -592,6 +606,14 @@ public final class MapFileWriter {
 				// simply a single way (not a multi polygon)
 				wayBuffer.put(Serializer.getVariableByteUnsigned(1));
 			}
+
+			// -----------  VOLDA -------------
+            List<Integer> nodes = wayDataBlock.getOuterWay();
+            Iterator<Integer> waynodeIterator = nodes.iterator();
+            LOGGER.info ("WAY node: " + waynodeIterator.next().intValue());
+            LOGGER.info ("WAY node: " + waynodeIterator.next().intValue());
+
+            // ------------------------------
 
 			// write block for (outer/simple) way
 			writeWay(wayDataBlock.getOuterWay(), currentTileLat, currentTileLon, wayBuffer);
@@ -714,11 +736,27 @@ public final class MapFileWriter {
 	static void writeWayNodes(List<Integer> waynodes, int currentTileLat, int currentTileLon, ByteBuffer buffer) {
 		if (!waynodes.isEmpty() && waynodes.size() % 2 == 0) {
 			Iterator<Integer> waynodeIterator = waynodes.iterator();
-			buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLat));
-			buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLon));
+
+            LOGGER.info ("currentTileLat: " + currentTileLat);
+            LOGGER.info ("currentTileLon: " + currentTileLon);
+
+            int firstLatValue = waynodeIterator.next().intValue() - currentTileLat;
+            int firstLonValue = waynodeIterator.next().intValue() - currentTileLon;
+
+            LOGGER.info ("firstLatValue: " + firstLatValue);
+            LOGGER.info ("firstLonValue: " + firstLonValue);
+
+            buffer.put(Serializer.getVariableByteSigned(firstLatValue));
+            buffer.put(Serializer.getVariableByteSigned(firstLonValue));
+
+			//buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLat));
+			//buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue() - currentTileLon));
 
 			while (waynodeIterator.hasNext()) {
-				buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue()));
+			    int value = waynodeIterator.next().intValue();
+                LOGGER.info ("WAY next node: " + value);
+                buffer.put(Serializer.getVariableByteSigned(value));
+				//buffer.put(Serializer.getVariableByteSigned(waynodeIterator.next().intValue()));
 			}
 		}
 	}

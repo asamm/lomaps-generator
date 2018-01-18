@@ -133,6 +133,8 @@ public class Boundary {
         return entityType;
     }
 
+    // DEFAULT LOCAL NAME
+
     public String getName() {
         return name;
     }
@@ -143,8 +145,10 @@ public class Boundary {
         }
     }
 
-    public String getShortName() {
-        return shortName;
+    // SHORT NAME
+
+    public String getShortName (){
+        return this.shortName;
     }
 
     public void setShortName(String shortName) {
@@ -153,6 +157,7 @@ public class Boundary {
         }
     }
 
+    // CITY TYPE
 
     public City.CityType getCityType() {
         return cityType;
@@ -162,6 +167,8 @@ public class Boundary {
         this.cityType = cityType;
     }
 
+    // ADMIN LEVEL
+
     public int getAdminLevel() {
         return adminLevel;
     }
@@ -169,6 +176,8 @@ public class Boundary {
     public void setAdminLevel(int adminLevel) {
         this.adminLevel = adminLevel;
     }
+
+    // ADMIN CENTER
 
     public long getAdminCenterId() {
         return adminCenterId;
@@ -178,6 +187,7 @@ public class Boundary {
         this.adminCenterId = adminCenterId;
     }
 
+    // NAMES MULTILANG
 
     public THashMap<String, String> getNameLangs() {
         return nameLangs;
@@ -187,6 +197,8 @@ public class Boundary {
         this.nameLangs = nameLangs;
     }
 
+    // OFICIAL NAMES MULTILANG
+
     public THashMap<String, String> getOfficialNamesInternational() {
         return officialNamesInternational;
     }
@@ -194,6 +206,8 @@ public class Boundary {
     public void setOfficialNamesInternational(THashMap<String, String> officialNamesInternational) {
         this.officialNamesInternational = officialNamesInternational;
     }
+
+    // ALTERNATIVE NAMES INTERNATIONAL
 
     public List<String> getNamesAlternative() {
         return namesAlternative;
@@ -212,6 +226,8 @@ public class Boundary {
         }
         this.namesAlternative.add(nameOther);
     }
+
+    // GEOMETRY
 
     public MultiPolygon getGeom() {
         return geom;

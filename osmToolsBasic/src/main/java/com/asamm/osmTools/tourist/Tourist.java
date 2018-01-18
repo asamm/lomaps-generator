@@ -66,12 +66,15 @@ public class Tourist {
     
     public void create () throws IOException, XmlPullParserException {
         Main.LOG.info("Start parsing file "+map.getPathSource()+" for tourist path");
-        //newParse();
-        parse();
 
+        // read relations and ways from input orig data
+        parseInputXml();
+
+        //
         reorganize();
+
         Main.LOG.info("Start writing tourist path to file "+map.getPathTourist());
-        parseWays();
+        parseUpdateWays();
     }
     
 //    public void converse() {
@@ -84,7 +87,7 @@ public class Tourist {
      * @throws IOException
      * @throws XmlPullParserException
      */
-    public void parse() throws IOException, XmlPullParserException {
+    public void parseInputXml() throws IOException, XmlPullParserException {
          try {
             CmdTourist ct  =  new CmdTourist(map);
             ct.createCmd();
@@ -146,7 +149,6 @@ public class Tourist {
                         t.fillAttributes(parser);
                         node.tags.setValue(t);
                     }
-                    
                 }
                 else if (tag == KXmlParser.END_TAG){
                     tagName = parser.getName();
@@ -199,8 +201,13 @@ public class Tourist {
         }
 
     }
-    
-    public void parseWays() throws IOException, XmlPullParserException {
+
+    /**
+     * Read input xml again and update members of tourist relation to contain tags from parent relation
+     * @throws IOException
+     * @throws XmlPullParserException
+     */
+    public void parseUpdateWays() throws IOException, XmlPullParserException {
         
         try {
             CmdTourist ct  =  new CmdTourist(map);
@@ -306,7 +313,7 @@ public class Tourist {
     }
 
     /**
-     * Scan relation and check if tourist relation
+     * Scan relations and find the hiking, cycling or ski relations that will be used for expands data to ways
      */
     public void reorganize () {
 
@@ -315,29 +322,21 @@ public class Tourist {
 
             rel = relations.valueAt(i);
 
-            //Logger.i(TAG, "Testing if relation is tourist,  relation id: " + rel.id);
+            if ( !rel.tags.isTouristRelation()){
+                continue;  // skip relation that can be used as tourist
+            }
 
+            rel.tags.parseOsmcSymbol();
 
-            if (rel.tags.isRegularBycicle() || rel.tags.isMtb() || rel.tags.isHiking()){
-               
-                
-                rel.tags.parseOsmcSymbol();
-                //TODO tady jen tupe testuju jestli ma spravne tagy a kdyz nema, tak 
-                //ji vyhodim. Do budoucna mozna nejaky sofis. system, ktery by treba odhadoval??
-                // test if tags of this relation are valid
-                if (!rel.tags.validate()){
-                    continue;
-                }
-                
-                // set parent tags. In this list is every cyclo relation parent for 
-                // its members
-                rel.parentTags = rel.tags;
-                rel.membersToList(relations,wl,-1); // there is -1 because this relation has no parent relation
-                //System.out.println("Relation "+rel.id+" ma network: "+rel.tags.network);
-            } 
+            // test if tags of this relation are valid for
+            if (!rel.tags.validate()){
+                continue;
+            }
+
+            // set parent tags. In this list is every relation parent for its members
+            rel.parentTags = rel.tags;
+            rel.membersToWayList(relations,wl,-1); // there is -1 because this relation has no parent relation
         }
-        
-      
     }
     
     public static String startTag2String(KXmlParser parser) throws XmlPullParserException, IOException{

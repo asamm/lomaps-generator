@@ -25,6 +25,8 @@ public class AItemMap {
     private String mSourceId;
     // ID of region
     private String mRegionId;
+    // ID of parent region
+    private String mParentRegionId;
     // directory name
     private String mDir;
     // folder for generation
@@ -35,6 +37,8 @@ public class AItemMap {
     private boolean mClipIncompleteEntities;
     // prefered language for generating
     private String mPrefLang;
+    // ISO Alpha2 country code used only for creation store region DB
+    private String mRegionCode;
 
 
     // URL source for map file
@@ -57,10 +61,12 @@ public class AItemMap {
             mActions = parent.getActionsCopy();
             mSourceId = parent.getSourceId();
             mRegionId = parent.getRegionId();
+            mParentRegionId = parent.getParentRegionId();
             mDir = parent.getDir();
             mDirGen = parent.getDirGen();
             mCountryName = parent.getCountryName();
             mPrefLang = parent.getPrefLang();
+            mRegionCode = parent.getRegionCode();
             mUrl = parent.getUrl();
             mCycleNode = parent.getCycleNode();
             mContourSep = parent.getContourSep();
@@ -76,11 +82,13 @@ public class AItemMap {
         mActions = new ArrayList<>();
         mSourceId = "";
         mRegionId = "";
+        mParentRegionId = "";
         mDir = "";
         mDirGen = "";
         mCountryName = "";
         mClipIncompleteEntities = false;
         mPrefLang = "";
+        mRegionCode = "";
         mUrl = "";
         mCycleNode = "";
         mContourSep = "";
@@ -179,11 +187,12 @@ public class AItemMap {
 
         // regionId
         if (parser.getAttributeValue(null, "regionId") != null) {
-            if (mRegionId  != null && mRegionId.length() > 0){
-                mRegionId = mRegionId + "." + parser.getAttributeValue(null, "regionId");
-            }else {
-                mRegionId = parser.getAttributeValue(null, "regionId");
-            }
+            mRegionId = parser.getAttributeValue(null, "regionId");
+        }
+
+        // parentReegionId
+        if (parser.getAttributeValue(null, "parentRegionId") != null) {
+            mParentRegionId = parser.getAttributeValue(null, "parentRegionId");
         }
 
         // dir
@@ -228,6 +237,9 @@ public class AItemMap {
 
         if (parser.getAttributeValue(null, "prefLang") != null) {
             mPrefLang = parser.getAttributeValue(null, "prefLang");
+        }
+        if (parser.getAttributeValue(null, "regionCode") != null) {
+            mRegionCode = parser.getAttributeValue(null, "regionCode");
         }
 
         // other basis parameters
@@ -281,6 +293,12 @@ public class AItemMap {
     }
 
     public String getParentRegionId () {
+
+        if (mParentRegionId != null && mParentRegionId.length() > 0){
+            return mParentRegionId;
+        }
+
+        // as fallback parse parent id from region id
         int index = mRegionId.lastIndexOf(".");
         if (index == -1){
             return mRegionId;
@@ -320,6 +338,8 @@ public class AItemMap {
     }
 
     public String getPrefLang() { return mPrefLang;   }
+
+    public String getRegionCode() {return mRegionCode;}
 
     public String getUrl() {
         return mUrl;

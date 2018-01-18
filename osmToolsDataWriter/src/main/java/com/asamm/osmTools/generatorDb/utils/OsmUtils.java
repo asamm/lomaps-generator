@@ -33,6 +33,24 @@ public class OsmUtils {
         return null;
     }
 
+    /**
+     * Prapare string with values of entity tags
+     * @param entity
+     * @return
+     */
+    public static String printTags (Entity entity) {
+
+        String str = "Entity: " + entity.getType().toString() + ", id:  " + entity.getId();
+        Collection<Tag> tags =  entity.getTags();
+        if(tags == null){
+            return  str;
+        }
+        for (Tag tag : tags){
+            str += "\n " + tag.getKey() + "=" + tag.getValue() + " , ";
+        }
+        return str;
+    }
+
 
     /**
      * Parse entity tags and find value possible street name
