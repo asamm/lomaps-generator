@@ -35,6 +35,10 @@ public class CityController extends AaddressController {
 
     private static final String TAG = CityController.class.getSimpleName();
 
+    private static final boolean isDebugEntity = true;
+
+    private static final long debugEntityId = 90143;
+
     /**
      * Needed for generation boundaries from relation. Ways with this ids ware already use for generation of bounds
      */
@@ -184,8 +188,9 @@ public class CityController extends AaddressController {
         Boundary boundary = new Boundary(entity.getId(), entityType);
         boundary.setName(bName);
 
-
-        //Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
+        if (isDebugEntity && entity.getId() == debugEntityId){
+            Logger.i(TAG, "---- Create boundary for entity " + entity.getId() + ", name: " + bName);
+        }
 
         if (entity.getType() == EntityType.Way){
 
@@ -291,7 +296,10 @@ public class CityController extends AaddressController {
             boundary.setPopulation(Integer.valueOf(populStr));
         }
 
-        //Logger.i(TAG, "Administrative/place entity: " + boundary.toString());
+
+        if (isDebugEntity && entity.getId() == debugEntityId){
+            Logger.i(TAG, "Administrative/place entity created: " + boundary.toString());
+        }
 
         IndexController.getInstance().insertBoundary(boundary.getGeom().getEnvelopeInternal(), boundary);
         return boundary;
@@ -330,7 +338,9 @@ public class CityController extends AaddressController {
             dc.addBoundary(boundary);
         }
         else {
-            //Logger.i(TAG, "checkRegisterBoundary: boundary does not have admin level for city: " + boundary.toString());
+            if (isDebugEntity && boundary.getId() == debugEntityId){
+                Logger.i(TAG, "checkRegisterBoundary: boundary does not have admin level for city: " + boundary.toString());
+            }
         }
     }
 
@@ -361,6 +371,10 @@ public class CityController extends AaddressController {
         List<Boundary> boundaries = dc.getBoundaries();
         for (Boundary boundary :  boundaries){
 
+            if (isDebugEntity && boundary.getId() == debugEntityId){
+                Logger.i(TAG, "Search for center city for boundary: " + boundary.toString());
+            }
+
             String boundaryName = boundary.getName().toLowerCase();
             String altBoundaryName = boundary.getShortName().toLowerCase();
             Collection<City> cities = dc.getCities();
@@ -380,13 +394,19 @@ public class CityController extends AaddressController {
             // try to load city based on admin center id (if defined)
             if(cityFound == null && boundary.hasAdminCenterId()) {
                 cityFound = dc.getCity(boundary.getAdminCenterId()); // can be null
+
+                if (cityFound != null && isDebugEntity && boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "City founded by admin Id. Boundary id: "+boundary.getId()+ " city: " + cityFound.toString());
+                }
             }
 
             if(cityFound == null) {
                 for (City city : cities) {
                     if (boundaryName.equalsIgnoreCase(city.getName()) || altBoundaryName.equalsIgnoreCase(city.getName())){
                         if (boundary.getGeom().contains(city.getCenter())) {
-                            //Logger.i(TAG, "City were founded by name and contains for boundary: "+boundary.getId()+ " city: " + city.toString());
+                            if (isDebugEntity && boundary.getId() == debugEntityId){
+                                Logger.i(TAG, "City found by name. Boundary id: "+boundary.getId()+ " city: " + city.toString());
+                            }
                             if (canBeSetAsCenterCity (boundary, city)){
                                 cityFound = city;
                                 break;
@@ -413,7 +433,9 @@ public class CityController extends AaddressController {
 
             // there is no city for this boundary > try to guess and create new one from boundary informations
             if (cityFound == null && boundary.hasCityType()){
-
+                if (isDebugEntity && boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Create center city for boundary from boundary infomation: "  + boundary.getId());
+                }
                 cityFound = createMissingCity(boundary);
                 if (cityFound.isValid()){
                     boundary.setAdminCenterId(cityFound.getOsmId());
@@ -423,11 +445,18 @@ public class CityController extends AaddressController {
             }
 
             if (cityFound != null){
+                if (isDebugEntity && boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Found center city for boundary: "  + boundary.getId() +
+                        " Founded city: " + cityFound.toString());
+                }
+
                 // OK we have center city for boundary > put them into cache and compare priority
                 checkPriorityBoundaryForCity(dc, boundary, cityFound);
             }
             else {
-                //Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
+                if (isDebugEntity && boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Not found any center city for boundary: "  + boundary.toString());
+                }
             }
         }
     }
@@ -445,18 +474,23 @@ public class CityController extends AaddressController {
         Boundary oldBoundary = centerCityBoundaryMap.getValue(city);
         if (oldBoundary == null){
             //there is no registered boundary for this city > simple register it
-//            if (city.getOsmId() == 60806241){
-//                Logger.i(TAG, "Put A boundary " + boundary.toString());
-//            }
+            if (isDebugEntity && boundary.getId() == debugEntityId){
+                Logger.i(TAG, "Put city and boundary into map. Boundary id: "+boundary.getId()+ " city: " + city.toString());
+            }
+
             centerCityBoundaryMap.put(city, boundary);
         }
         else if (oldBoundary.getAdminLevel() == boundary.getAdminLevel()
                 && oldBoundary != boundary
                 && oldBoundary.getName().equalsIgnoreCase(boundary.getName())){
-            // this condition is inspiration from OSMand probably can happen that there
-            // are to boundaries for the same city
+
             MultiPolygon newBounds = GeomUtils.fixInvalidGeom(oldBoundary.getGeom().union(boundary.getGeom()));
             oldBoundary.setGeom(newBounds);
+
+            if (isDebugEntity && oldBoundary.getId() == debugEntityId || boundary.getId() == debugEntityId){
+                Logger.i(TAG, "Combine geometries of boundaries. Old boundary id: "+oldBoundary.getId()
+                        + " new boundary id: " + boundary.getId());
+            }
         }
 
         else {
@@ -465,6 +499,18 @@ public class CityController extends AaddressController {
 
             if (newBoundaryPriority < oldBoundaryPriority){
                 centerCityBoundaryMap.put(city, boundary);
+
+                if (isDebugEntity && oldBoundary.getId() == debugEntityId || boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Replace the old boundary with better priority. Old boundary id: "+oldBoundary.getId()
+                            + " new boundary id: " + boundary.getId());
+                }
+            }
+            else {
+
+                if (isDebugEntity && oldBoundary.getId() == debugEntityId || boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Boundary priority is not enought to replace the previous. Old boundary id: "+oldBoundary.getId()
+                            + " new boundary id: " + boundary.getId());
+                }
             }
         }
     }
@@ -507,6 +553,10 @@ public class CityController extends AaddressController {
             return true;
         }
         // this city is SUBURB, HAMLET OR DISTRICT and boundary is something on admin <= 5 do not allow to use it as center
+        if (isDebugEntity && boundary.getId() == debugEntityId){
+            Logger.i(TAG, "City can not be used as center for boundary: "+boundary.getId()+ " city: " + city.toString());
+        }
+
         return false;
     }
 

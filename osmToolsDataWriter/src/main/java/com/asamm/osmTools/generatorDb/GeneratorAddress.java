@@ -80,12 +80,8 @@ public class GeneratorAddress extends AGenerator {
         insertRegionsToDB(dc);
         insertCitiesToDB(dc);
 
-        Utils.printUsedMemory();
-
         // ----- Step 6 - 7 create streets from relations streets -----
         createStreets(dc);
-        Utils.printUsedMemory();
-
         Logger.i(TAG, "Joining ways and preparation for insert: " + sc.timeJoinWaysToStreets /1000.0 + " sec" );
         Logger.i(TAG, "Finding cities for street: " + sc.timeFindStreetCities /1000.0 + " sec" );
         Logger.i(TAG, "Finding cities loading first 30 cities: " + sc.timeLoadNereastCities /1000.0 + " sec" );
@@ -98,13 +94,10 @@ public class GeneratorAddress extends AGenerator {
         Logger.i(TAG, "=== Step 8 - create houses ===");
         Logger.i(TAG, "Create houses from relations");
         hc.createHousesFromRelations();
-        Utils.printUsedMemory();
         Logger.i(TAG, "Create houses from ways");
         hc.createHousesFromWays();
-        Utils.printUsedMemory();
         Logger.i(TAG, "Create houses from nodes");
         hc.createHousesFromNodes();
-        Utils.printUsedMemory();
 
         Logger.i(TAG, "Create houses for unnamed streets");
         dc.clearWayStreetCache();
@@ -184,6 +177,9 @@ public class GeneratorAddress extends AGenerator {
             IndexController.getInstance().insertCityGeom(city);
 
             // insert city into database
+            if (boundary != null && boundary.getId() == 397113){
+                Logger.i(TAG, "Insert city with boundary to DB: "+boundary.getId()+ " city: " + city.toString());
+            }
             ((DatabaseAddress) db).insertCity(city);
         }
 
