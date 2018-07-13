@@ -161,7 +161,8 @@ abstract class Cmd {
         // finally add to command list
         addCommand("--bp");
         addCommand("file="+map.getPathPolygon());
-        //addCommand("completeWays=yes"); workaround for russia where are long highways
+        //addCommand("completeWays=yes");
+        //addCommand("completeRelations=yes");
 
         if (map.getClipIncompleteEntities()){
             addCommand("clipIncompleteEntities=true");
