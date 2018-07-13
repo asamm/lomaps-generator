@@ -234,7 +234,7 @@ public class DatabasePoi extends ADatabaseHandler {
             psInsertP.setLong(1, poi.getId());
             psInsertP.setString(2, poi.getEntityType().getCode());
 			if (poi.getName() != null && poi.getName().length() > 0) {
-				psInsertP.setString(3, getEscapedText(poi.getName()));
+				psInsertP.setString(3, poi.getName());
 			}
 			String geom = String.format("POINT (%f %f)", poi.getLon(), poi.getLat());
 			psInsertP.setString(4, getEscapedText(geom));

@@ -37,7 +37,7 @@ public class CityController extends AaddressController {
 
     private static final boolean isDebugEntity = true;
 
-    private static final long debugEntityId = 90143;
+    private static final long debugEntityId = 62484;
 
     /**
      * Needed for generation boundaries from relation. Ways with this ids ware already use for generation of bounds

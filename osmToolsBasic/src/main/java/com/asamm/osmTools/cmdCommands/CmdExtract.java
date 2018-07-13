@@ -7,7 +7,9 @@ package com.asamm.osmTools.cmdCommands;
     import com.asamm.osmTools.mapConfig.ItemMap;
     import com.asamm.osmTools.mapConfig.MapSource;
 
-/**
+    import java.io.IOException;
+
+    /**
  *
  * @author volda
  */
