@@ -120,11 +120,23 @@ public class CmdGenerate extends Cmd {
         //addDebugFile();
         addZoomInterval();
         //addWayClipping();
+
         addSimplificationFactor();
         addBboxEnlargement(10);
+
+        addLabelPosition();
+        addPolylabel();
+
+        // get num of cpu cores
+        int cores = Runtime.getRuntime().availableProcessors();
+
+        addThreads(cores);
+
         addMapComment();
     }
-    
+
+
+
     private void addMapWriter() throws IOException {
         // prepare directory
         prepareDirectory(getMap().getPathGenerate());
@@ -152,7 +164,19 @@ public class CmdGenerate extends Cmd {
     private void addMapComment() {
         addCommand("comment=" + Parameters.MAP_COMMENT);
     }
-    
+
+    private void addLabelPosition() {
+        addCommand("label-position=true");
+    }
+
+    private void addPolylabel() {
+        addCommand("polylabel=true");
+    }
+
+    private void addThreads(int threads) {
+        addCommand("threads="+threads);
+    }
+
     private void addType(){
         //firstly decide based on forceType from config xml
         if (getMap().getForceType() != null && !getMap().getForceType().isEmpty()){

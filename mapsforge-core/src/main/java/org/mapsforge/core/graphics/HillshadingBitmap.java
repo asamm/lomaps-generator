@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011, 2012, 2013 mapsforge.org
+ * Copyright 2017 usrusr
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -14,28 +14,26 @@
  */
 package org.mapsforge.core.graphics;
 
-public interface Matrix {
-    void reset();
+import org.mapsforge.core.model.BoundingBox;
+
+public interface HillshadingBitmap extends Bitmap {
+    enum Border {
+        WEST(true), NORTH(false), EAST(true), SOUTH(false);
+
+        public final boolean vertical;
+
+        Border(boolean vertical) {
+            this.vertical = vertical;
+        }
+    }
 
     /**
-     * @param theta an angle measured in radians.
+     * Return geo bounds of the area within the padding.
      */
-    void rotate(float theta);
+    BoundingBox getAreaRect();
 
     /**
-     * @param theta an angle measured in radians.
+     * Optional padding (lies outside of areaRect).
      */
-    void rotate(float theta, float pivotX, float pivotY);
-
-    /**
-     * Scale around center.
-     *
-     * @param scaleX the scale factor in x-direction
-     * @param scaleY the scale factor in y-direction
-     */
-    void scale(float scaleX, float scaleY);
-
-    void scale(float scaleX, float scaleY, float pivotX, float pivotY);
-
-    void translate(float translateX, float translateY);
+    int getPadding();
 }

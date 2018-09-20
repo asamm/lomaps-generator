@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.GenerateType;
 
-class DataGeneratorFactory extends TaskManagerFactory {
+class DataLoMapsDbGeneratorFactory extends TaskManagerFactory {
 
 	private static final String PARAM_TYPE = "-type";
 	private static final String PARAM_TESTING = "-testing";
@@ -41,7 +41,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
 		conf.validate();
 
 		// define task
-		DataGeneratorTask task = new DataGeneratorTask(conf);
+		DataLoMapsDbGeneratorTask task = new DataLoMapsDbGeneratorTask(conf);
 
 		// return prepared configuration
 		return new SinkManager(taskConfig.getId(), task, taskConfig.getPipeArgs());
@@ -150,7 +150,7 @@ class DataGeneratorFactory extends TaskManagerFactory {
                         cmdAtrSplit[i], cmdAtrSplit[++i], cmdAtrSplit[++i], cmdAtrSplit[++i]));
             }
         }
-        else if (atrStorageType.equals(PARAM_STORAGE_TYPE_GEO_DATABASE)){
+        else if (atrStorageType.equals( PARAM_STORAGE_TYPE_GEO_DATABASE)){
 
             // for geo database is not needed to define path to geojson file
 

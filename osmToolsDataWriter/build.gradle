@@ -13,7 +13,7 @@ dependencies {
     compile 'mysql:mysql-connector-java:5.1.39'
     //compile group: 'org.geotools', name: 'gt-geojson', version: '13.2'
     compile 'org.wololo:jts2geojson:0.3.1'
-    providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
+    compile 'org.openstreetmap.osmosis:osmosis-core:0.46'
 
 }
 

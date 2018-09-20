@@ -1,6 +1,7 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2014 Ludwig M Brinckmann
+ * Copyright 2016-2017 devemux86
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -18,41 +19,46 @@ package org.mapsforge.core.graphics;
 import org.mapsforge.core.model.Point;
 
 public interface Paint {
-	int getTextHeight(String text);
+    int getColor();
 
-	int getTextWidth(String text);
+    float getStrokeWidth();
 
-	boolean isTransparent();
+    int getTextHeight(String text);
 
-	void setBitmapShader(Bitmap bitmap);
-	void setBitmapShaderShift(Point origin);
+    int getTextWidth(String text);
 
-	void setColor(Color color);
+    boolean isTransparent();
 
-	/**
-	 * The default value is {@link Color#BLACK}.
-	 */
-	void setColor(int color);
+    void setBitmapShader(Bitmap bitmap);
 
-	void setDashPathEffect(float[] strokeDasharray);
+    void setBitmapShaderShift(Point origin);
 
-	/**
-	 * The default value is {@link Cap#ROUND}.
-	 */
-	void setStrokeCap(Cap cap);
+    void setColor(Color color);
 
-	void setStrokeJoin(Join join);
+    /**
+     * The default value is {@link Color#BLACK}.
+     */
+    void setColor(int color);
 
-	void setStrokeWidth(float strokeWidth);
+    void setDashPathEffect(float[] strokeDasharray);
 
-	/**
-	 * The default value is {@link Style#FILL}.
-	 */
-	void setStyle(Style style);
+    /**
+     * The default value is {@link Cap#ROUND}.
+     */
+    void setStrokeCap(Cap cap);
 
-	void setTextAlign(Align align);
+    void setStrokeJoin(Join join);
 
-	void setTextSize(float textSize);
+    void setStrokeWidth(float strokeWidth);
 
-	void setTypeface(FontFamily fontFamily, FontStyle fontStyle);
+    /**
+     * The default value is {@link Style#FILL}.
+     */
+    void setStyle(Style style);
+
+    void setTextAlign(Align align);
+
+    void setTextSize(float textSize);
+
+    void setTypeface(FontFamily fontFamily, FontStyle fontStyle);
 }

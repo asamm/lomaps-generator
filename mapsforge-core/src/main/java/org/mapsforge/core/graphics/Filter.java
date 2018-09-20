@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011, 2012, 2013 mapsforge.org
+ * Copyright 2016 devemux86
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -14,28 +14,6 @@
  */
 package org.mapsforge.core.graphics;
 
-public interface Matrix {
-    void reset();
-
-    /**
-     * @param theta an angle measured in radians.
-     */
-    void rotate(float theta);
-
-    /**
-     * @param theta an angle measured in radians.
-     */
-    void rotate(float theta, float pivotX, float pivotY);
-
-    /**
-     * Scale around center.
-     *
-     * @param scaleX the scale factor in x-direction
-     * @param scaleY the scale factor in y-direction
-     */
-    void scale(float scaleX, float scaleY);
-
-    void scale(float scaleX, float scaleY, float pivotX, float pivotY);
-
-    void translate(float translateX, float translateY);
+public enum Filter {
+    GRAYSCALE, GRAYSCALE_INVERT, INVERT, NONE
 }

@@ -1,6 +1,8 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2015 lincomatic
+ * Copyright 2017 devemux86
+ * Copyright 2017-2018 Gustl22
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -14,18 +16,6 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.mapsforge.map.writer;
-
-import gnu.trove.iterator.TLongIterator;
-import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.set.hash.TLongHashSet;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.mapsforge.map.writer.model.MapWriterConfiguration;
 import org.mapsforge.map.writer.model.TDNode;
@@ -44,304 +34,349 @@ import org.openstreetmap.osmosis.core.store.NoSuchIndexElementException;
 import org.openstreetmap.osmosis.core.store.SimpleObjectStore;
 import org.openstreetmap.osmosis.core.store.SingleClassObjectSerializationFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import gnu.trove.iterator.TLongIterator;
+import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.set.hash.TLongHashSet;
+
 /**
  * A TileBasedDataStore that uses the hard disk as storage device for temporary data structures.
  */
 public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
 
-	/**
-	 * Creates a new {@link HDTileBasedDataProcessor}.
-	 * 
-	 * @param configuration
-	 *            the configuration
-	 * @return a new instance of a {@link HDTileBasedDataProcessor}
-	 */
-	public static HDTileBasedDataProcessor newInstance(MapWriterConfiguration configuration) {
-		return new HDTileBasedDataProcessor(configuration);
-	}
+    /**
+     * Creates a new {@link HDTileBasedDataProcessor}.
+     *
+     * @param configuration the configuration
+     * @return a new instance of a {@link HDTileBasedDataProcessor}
+     */
+    public static HDTileBasedDataProcessor newInstance(MapWriterConfiguration configuration) {
+        return new HDTileBasedDataProcessor(configuration);
+    }
 
-	final TLongObjectMap<List<TDRelation>> additionalRelationTags;
-	final TLongObjectMap<TDWay> virtualWays;
-	private final IndexedObjectStore<Node> indexedNodeStore;
-	private final IndexedObjectStore<Way> indexedWayStore;
+    final TLongObjectMap<List<TDRelation>> additionalRelationTags;
+    final TLongObjectMap<TDWay> virtualWays;
+    private final IndexedObjectStore<Node> indexedNodeStore;
+    private final IndexedObjectStore<Way> indexedWayStore;
 
-	private IndexedObjectStoreReader<Node> nodeIndexReader;
-	private final SimpleObjectStore<Relation> relationStore;
+    private IndexedObjectStoreReader<Node> nodeIndexReader;
+    private final SimpleObjectStore<Relation> relationStore;
 
-	private final HDTileData[][][] tileData;
-	private IndexedObjectStoreReader<Way> wayIndexReader;
+    private final HDTileData[][][] tileData;
+    private IndexedObjectStoreReader<Way> wayIndexReader;
 
-	private final SimpleObjectStore<Way> wayStore;
+    private final SimpleObjectStore<Way> wayStore;
 
-	private HDTileBasedDataProcessor(MapWriterConfiguration configuration) {
-		super(configuration);
-		this.indexedNodeStore = new IndexedObjectStore<>(new SingleClassObjectSerializationFactory(Node.class),
-				"idxNodes");
-		this.indexedWayStore = new IndexedObjectStore<>(new SingleClassObjectSerializationFactory(Way.class), "idxWays");
-		// indexedRelationStore = new IndexedObjectStore<Relation>(
-		// new SingleClassObjectSerializationFactory(
-		// Relation.class), "idxWays");
-		this.wayStore = new SimpleObjectStore<>(new SingleClassObjectSerializationFactory(Way.class), "heapWays", true);
-		this.relationStore = new SimpleObjectStore<>(new SingleClassObjectSerializationFactory(Relation.class),
-				"heapRelations", true);
+    private HDTileBasedDataProcessor(MapWriterConfiguration configuration) {
+        super(configuration);
+        this.indexedNodeStore = new IndexedObjectStore<>(new SingleClassObjectSerializationFactory(Node.class),
+                "idxNodes");
+        this.indexedWayStore = new IndexedObjectStore<>(new SingleClassObjectSerializationFactory(Way.class), "idxWays");
+        // indexedRelationStore = new IndexedObjectStore<Relation>(
+        // new SingleClassObjectSerializationFactory(
+        // Relation.class), "idxWays");
+        this.wayStore = new SimpleObjectStore<>(new SingleClassObjectSerializationFactory(Way.class), "heapWays", true);
+        this.relationStore = new SimpleObjectStore<>(new SingleClassObjectSerializationFactory(Relation.class),
+                "heapRelations", true);
 
-		this.tileData = new HDTileData[this.zoomIntervalConfiguration.getNumberOfZoomIntervals()][][];
-		for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
-			this.tileData[i] = new HDTileData[this.tileGridLayouts[i].getAmountTilesHorizontal()][this.tileGridLayouts[i]
-					.getAmountTilesVertical()];
-		}
-		this.virtualWays = new TLongObjectHashMap<>();
-		this.additionalRelationTags = new TLongObjectHashMap<>();
-	}
+        this.tileData = new HDTileData[this.zoomIntervalConfiguration.getNumberOfZoomIntervals()][][];
+        for (int i = 0; i < this.zoomIntervalConfiguration.getNumberOfZoomIntervals(); i++) {
+            this.tileData[i] = new HDTileData[this.tileGridLayouts[i].getAmountTilesHorizontal()][this.tileGridLayouts[i]
+                    .getAmountTilesVertical()];
+        }
+        this.virtualWays = new TLongObjectHashMap<>();
+        this.additionalRelationTags = new TLongObjectHashMap<>();
+    }
 
-	@Override
-	public void addNode(Node node) {
-		this.indexedNodeStore.add(node.getId(), node);
-		TDNode tdNode = TDNode.fromNode(node, this.preferredLanguages);
-		addPOI(tdNode);
-	}
+    @Override
+    public void addNode(Node node) {
+        super.addNode(node);
+        this.indexedNodeStore.add(node.getId(), node);
+        TDNode tdNode = TDNode.fromNode(node, this.preferredLanguages);
+        addPOI(tdNode);
+    }
 
-	@Override
-	public void addRelation(Relation relation) {
-		this.relationStore.add(relation);
-	}
+    @Override
+    public void addRelation(Relation relation) {
+        super.addRelation(relation);
+        this.relationStore.add(relation);
+    }
 
-	@Override
-	public void addWay(Way way) {
-		this.wayStore.add(way);
-		this.indexedWayStore.add(way.getId(), way);
-		this.maxWayID = Math.max(way.getId(), this.maxWayID);
-	}
+    @Override
+    public void addWay(Way way) {
+        super.addWay(way);
+        this.wayStore.add(way);
+        this.indexedWayStore.add(way.getId(), way);
+        this.maxWayID = Math.max(way.getId(), this.maxWayID);
+    }
 
-	// TODO add accounting of average number of tiles per way
-	@Override
-	public void complete() {
-		this.indexedNodeStore.complete();
-		this.nodeIndexReader = this.indexedNodeStore.createReader();
+    @Override
+    public void close() {
+        this.indexedNodeStore.close();
+        this.indexedWayStore.close();
+        this.wayStore.close();
+        this.relationStore.close();
+    }
 
-		this.indexedWayStore.complete();
-		this.wayIndexReader = this.indexedWayStore.createReader();
+    // TODO add accounting of average number of tiles per way
+    @Override
+    public void complete() {
+        this.indexedNodeStore.complete();
+        this.nodeIndexReader = this.indexedNodeStore.createReader();
 
-		// handle relations
-		ReleasableIterator<Relation> relationReader = this.relationStore.iterate();
-		RelationHandler relationHandler = new RelationHandler();
-		while (relationReader.hasNext()) {
-			Relation entry = relationReader.next();
-			TDRelation tdRelation = TDRelation.fromRelation(entry, this, this.preferredLanguages);
-			relationHandler.execute(tdRelation);
-		}
+        this.indexedWayStore.complete();
+        this.wayIndexReader = this.indexedWayStore.createReader();
 
-		// handle ways
-		ReleasableIterator<Way> wayReader = this.wayStore.iterate();
-		WayHandler wayHandler = new WayHandler();
-		while (wayReader.hasNext()) {
-			Way way = wayReader.next();
-			TDWay tdWay = TDWay.fromWay(way, this, this.preferredLanguages);
-			if (tdWay == null) {
-				continue;
-			}
-			List<TDRelation> associatedRelations = this.additionalRelationTags.get(tdWay.getId());
-			if (associatedRelations != null) {
-				for (TDRelation tileDataRelation : associatedRelations) {
-					tdWay.mergeRelationInformation(tileDataRelation);
-				}
-			}
+        LOGGER.info("handle coastlines" +
+                (this.tagValues ? " and implicit way relations..." : "..."));
+        // Prepare implicit way relations
+        // (should be done here, before handling ways, although
+        // the WayHandler does only process ids in HD Processor)
+        int nWays = 0;
+        ReleasableIterator<Way> wayReader = this.wayStore.iterate();
+        while (wayReader.hasNext()) {
+            if (this.progressLogs) {
+                if (++nWays % 10000 == 0) {
+                    System.out.print("Ways: " + this.nfCounts.format(nWays)
+                            + " / " + this.nfCounts.format(getWaysNumber()) + "\r");
+                }
+            }
 
-			wayHandler.execute(tdWay);
-		}
+            Way way = wayReader.next();
+            TDWay tdWay = TDWay.fromWay(way, this, this.preferredLanguages);
+            if (tdWay == null) {
+                continue;
+            }
+            prepareImplicitWayRelations(tdWay);
+        }
 
-		OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
-		OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
-	}
+        // handle implicit relations
+        handleImplicitWayRelations();
 
-	@Override
-	public Set<TDWay> getCoastLines(TileCoordinate tc) {
-		if (tc.getZoomlevel() <= TileInfo.TILE_INFO_ZOOMLEVEL) {
-			return Collections.emptySet();
-		}
-		TileCoordinate correspondingOceanTile = tc.translateToZoomLevel(TileInfo.TILE_INFO_ZOOMLEVEL).get(0);
+        LOGGER.info("handle relations...");
+        ReleasableIterator<Relation> relationReader = this.relationStore.iterate();
+        RelationHandler relationHandler = new RelationHandler();
+        while (relationReader.hasNext()) {
+            Relation entry = relationReader.next();
+            TDRelation tdRelation = TDRelation.fromRelation(entry, this, this.preferredLanguages);
+            relationHandler.execute(tdRelation);
+        }
 
-		if (this.wayIndexReader == null) {
-			throw new IllegalStateException("way store not accessible, call complete() first");
-		}
+        LOGGER.info("handle ways...");
+        wayReader = this.wayStore.iterate();
+        WayHandler wayHandler = new WayHandler();
+        while (wayReader.hasNext()) {
+            Way way = wayReader.next();
+            TDWay tdWay = TDWay.fromWay(way, this, this.preferredLanguages);
+            if (tdWay == null) {
+                continue;
+            }
 
-		TLongHashSet coastlines = this.tilesToCoastlines.get(correspondingOceanTile);
-		if (coastlines == null) {
-			return Collections.emptySet();
-		}
+            // #HDstoreData: handled here only for tag count - handled for writing in method: fromHDTileData()
+            List<TDRelation> associatedRelations = this.additionalRelationTags.get(tdWay.getId());
+            if (associatedRelations != null) {
+                for (TDRelation tileDataRelation : associatedRelations) {
+                    tdWay.mergeRelationInformation(tileDataRelation);
+                }
+            }
 
-		TLongIterator it = coastlines.iterator();
-		HashSet<TDWay> coastlinesAsTDWay = new HashSet<>(coastlines.size());
-		while (it.hasNext()) {
-			long id = it.next();
-			TDWay tdWay = null;
-			try {
-				tdWay = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
-			} catch (NoSuchIndexElementException e) {
-				LOGGER.finer("coastline way non-existing" + id);
-			}
-			if (tdWay != null) {
-				coastlinesAsTDWay.add(tdWay);
-			}
-		}
-		return coastlinesAsTDWay;
-	}
+            wayHandler.execute(tdWay);
+        }
 
-	@Override
-	public synchronized List<TDWay> getInnerWaysOfMultipolygon(long outerWayID) {
-		TLongArrayList innerwayIDs = this.outerToInnerMapping.get(outerWayID);
-		if (innerwayIDs == null) {
-			return null;
-		}
-		return getInnerWaysOfMultipolygon(innerwayIDs.toArray());
-	}
+        OSMTagMapping.getInstance().optimizePoiOrdering(this.histogramPoiTags);
+        OSMTagMapping.getInstance().optimizeWayOrdering(this.histogramWayTags);
+    }
 
-	@Override
-	public TDNode getNode(long id) {
-		if (this.nodeIndexReader == null) {
-			throw new IllegalStateException("node store not accessible, call complete() first");
-		}
+    @Override
+    public Set<TDWay> getCoastLines(TileCoordinate tc) {
+        if (tc.getZoomlevel() <= TileInfo.TILE_INFO_ZOOMLEVEL) {
+            return Collections.emptySet();
+        }
+        TileCoordinate correspondingOceanTile = tc.translateToZoomLevel(TileInfo.TILE_INFO_ZOOMLEVEL).get(0);
 
-		try {
-			return TDNode.fromNode(this.nodeIndexReader.get(id), this.preferredLanguages);
-		} catch (NoSuchIndexElementException e) {
-			LOGGER.finer("node cannot be found in index: " + id);
-			return null;
-		}
-	}
+        if (this.wayIndexReader == null) {
+            throw new IllegalStateException("way store not accessible, call complete() first");
+        }
 
-	@Override
-	public TileData getTile(int baseZoomIndex, int tileCoordinateX, int tileCoordinateY) {
-		HDTileData hdt = getTileImpl(baseZoomIndex, tileCoordinateX, tileCoordinateY);
-		if (hdt == null) {
-			return null;
-		}
+        TLongHashSet coastlines = this.tilesToCoastlines.get(correspondingOceanTile);
+        if (coastlines == null) {
+            return Collections.emptySet();
+        }
 
-		return fromHDTileData(hdt);
-	}
+        TLongIterator it = coastlines.iterator();
+        HashSet<TDWay> coastlinesAsTDWay = new HashSet<>(coastlines.size());
+        while (it.hasNext()) {
+            long id = it.next();
+            TDWay tdWay = null;
+            try {
+                tdWay = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
+            } catch (NoSuchIndexElementException e) {
+                LOGGER.finer("coastline way non-existing" + id);
+            }
+            if (tdWay != null) {
+                coastlinesAsTDWay.add(tdWay);
+            }
+        }
+        return coastlinesAsTDWay;
+    }
 
-	@Override
-	public TDWay getWay(long id) {
-		if (this.wayIndexReader == null) {
-			throw new IllegalStateException("way store not accessible, call complete() first");
-		}
+    @Override
+    public synchronized List<TDWay> getInnerWaysOfMultipolygon(long outerWayID) {
+        TLongArrayList innerwayIDs = this.outerToInnerMapping.get(outerWayID);
+        if (innerwayIDs == null) {
+            return null;
+        }
+        return getInnerWaysOfMultipolygon(innerwayIDs.toArray());
+    }
 
-		try {
-			return TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
-		} catch (NoSuchIndexElementException e) {
-			LOGGER.finer("way cannot be found in index: " + id);
-			return null;
-		}
-	}
+    @Override
+    public TDNode getNode(long id) {
+        if (this.nodeIndexReader == null) {
+            throw new IllegalStateException("node store not accessible, call complete() first");
+        }
 
-	@Override
-	public void release() {
-		this.indexedNodeStore.release();
-		this.indexedWayStore.release();
-		this.wayStore.release();
-		this.relationStore.release();
-	}
+        try {
+            return TDNode.fromNode(this.nodeIndexReader.get(id), this.preferredLanguages);
+        } catch (NoSuchIndexElementException e) {
+            LOGGER.finer("node cannot be found in index: " + id);
+            return null;
+        }
+    }
 
-	@Override
-	protected HDTileData getTileImpl(int zoom, int tileX, int tileY) {
-		int tileCoordinateXIndex = tileX - this.tileGridLayouts[zoom].getUpperLeft().getX();
-		int tileCoordinateYIndex = tileY - this.tileGridLayouts[zoom].getUpperLeft().getY();
-		// check for valid range
-		if (tileCoordinateXIndex < 0 || tileCoordinateYIndex < 0 || this.tileData[zoom].length <= tileCoordinateXIndex
-				|| this.tileData[zoom][tileCoordinateXIndex].length <= tileCoordinateYIndex) {
-			return null;
-		}
+    @Override
+    public TileData getTile(int baseZoomIndex, int tileCoordinateX, int tileCoordinateY) {
+        HDTileData hdt = getTileImpl(baseZoomIndex, tileCoordinateX, tileCoordinateY);
+        if (hdt == null) {
+            return null;
+        }
 
-		HDTileData td = this.tileData[zoom][tileCoordinateXIndex][tileCoordinateYIndex];
-		if (td == null) {
-			td = new HDTileData();
-			this.tileData[zoom][tileCoordinateXIndex][tileCoordinateYIndex] = td;
-		}
+        return fromHDTileData(hdt);
+    }
 
-		return td;
-	}
+    @Override
+    public TDWay getWay(long id) {
+        if (this.wayIndexReader == null) {
+            throw new IllegalStateException("way store not accessible, call complete() first");
+        }
 
-	@Override
-	protected void handleAdditionalRelationTags(TDWay way, TDRelation relation) {
-		List<TDRelation> associatedRelations = this.additionalRelationTags.get(way.getId());
-		if (associatedRelations == null) {
-			associatedRelations = new ArrayList<>();
-			this.additionalRelationTags.put(way.getId(), associatedRelations);
-		}
-		associatedRelations.add(relation);
-	}
+        try {
+            return TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
+        } catch (NoSuchIndexElementException e) {
+            LOGGER.finer("way cannot be found in index: " + id);
+            return null;
+        }
+    }
 
-	@Override
-	protected void handleVirtualInnerWay(TDWay virtualWay) {
-		this.virtualWays.put(virtualWay.getId(), virtualWay);
-	}
+    @Override
+    protected HDTileData getTileImpl(int zoom, int tileX, int tileY) {
+        int tileCoordinateXIndex = tileX - this.tileGridLayouts[zoom].getUpperLeft().getX();
+        int tileCoordinateYIndex = tileY - this.tileGridLayouts[zoom].getUpperLeft().getY();
+        // check for valid range
+        if (tileCoordinateXIndex < 0 || tileCoordinateYIndex < 0 || this.tileData[zoom].length <= tileCoordinateXIndex
+                || this.tileData[zoom][tileCoordinateXIndex].length <= tileCoordinateYIndex) {
+            return null;
+        }
 
-	@Override
-	protected void handleVirtualOuterWay(TDWay virtualWay) {
-		this.virtualWays.put(virtualWay.getId(), virtualWay);
-	}
+        HDTileData td = this.tileData[zoom][tileCoordinateXIndex][tileCoordinateYIndex];
+        if (td == null) {
+            td = new HDTileData();
+            this.tileData[zoom][tileCoordinateXIndex][tileCoordinateYIndex] = td;
+        }
 
-	private RAMTileData fromHDTileData(HDTileData hdt) {
-		final RAMTileData td = new RAMTileData();
-		TLongIterator it = hdt.getPois().iterator();
-		while (it.hasNext()) {
-			td.addPOI(TDNode.fromNode(this.nodeIndexReader.get(it.next()), this.preferredLanguages));
-		}
+        return td;
+    }
 
-		it = hdt.getWays().iterator();
-		while (it.hasNext()) {
-			TDWay way = null;
-			long id = it.next();
-			try {
-				way = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
-				td.addWay(way);
-			} catch (NoSuchIndexElementException e) {
-				// is it a virtual way?
-				way = this.virtualWays.get(id);
-				if (way != null) {
-					td.addWay(way);
-				} else {
-					LOGGER.finer("referenced way non-existing" + id);
-				}
-			}
+    @Override
+    protected void handleAdditionalRelationTags(TDWay way, TDRelation relation) {
+        List<TDRelation> associatedRelations = this.additionalRelationTags.get(way.getId());
+        if (associatedRelations == null) {
+            associatedRelations = new ArrayList<>();
+            this.additionalRelationTags.put(way.getId(), associatedRelations);
+        }
+        associatedRelations.add(relation);
+    }
 
-			if (way != null) {
-				if (this.outerToInnerMapping.contains(way.getId())) {
-					way.setShape(TDWay.MULTI_POLYGON);
-				}
+    @Override
+    protected void handleVirtualInnerWay(TDWay virtualWay) {
+        this.virtualWays.put(virtualWay.getId(), virtualWay);
+    }
 
-				List<TDRelation> associatedRelations = this.additionalRelationTags.get(id);
-				if (associatedRelations != null) {
-					for (TDRelation tileDataRelation : associatedRelations) {
-						way.mergeRelationInformation(tileDataRelation);
-					}
-				}
-			}
-		}
+    @Override
+    protected void handleVirtualOuterWay(TDWay virtualWay) {
+        this.virtualWays.put(virtualWay.getId(), virtualWay);
+    }
 
-		return td;
-	}
+    private RAMTileData fromHDTileData(HDTileData hdt) {
+        final RAMTileData td = new RAMTileData();
+        TLongIterator it = hdt.getPois().iterator();
+        while (it.hasNext()) {
+            td.addPOI(TDNode.fromNode(this.nodeIndexReader.get(it.next()), this.preferredLanguages));
+        }
 
-	private List<TDWay> getInnerWaysOfMultipolygon(long[] innerWayIDs) {
-		if (innerWayIDs == null) {
-			return Collections.emptyList();
-		}
-		List<TDWay> res = new ArrayList<>();
-		for (long id : innerWayIDs) {
-			TDWay current = null;
-			try {
-				current = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
-			} catch (NoSuchIndexElementException e) {
-				current = this.virtualWays.get(id);
-				if (current == null) {
-					LOGGER.fine("multipolygon with outer way id " + id + " references non-existing inner way " + id);
-					continue;
-				}
-			}
+        it = hdt.getWays().iterator();
+        while (it.hasNext()) {
+            TDWay way = null;
+            long id = it.next();
+            try {
+                way = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
+                td.addWay(way);
+            } catch (NoSuchIndexElementException e) {
+                // is it a virtual way?
+                way = this.virtualWays.get(id);
+                if (way != null) {
+                    td.addWay(way);
+                } else {
+                    LOGGER.finer("referenced way non-existing" + id);
+                }
+            }
 
-			res.add(current);
-		}
+            if (way != null) {
+                // #HDstoreData: additional processing of data only in HD processor
+                addImplicitRelationInformation(way);
 
-		return res;
-	}
+                if (this.outerToInnerMapping.contains(way.getId())) {
+                    way.setShape(TDWay.MULTI_POLYGON);
+                }
+
+                List<TDRelation> associatedRelations = this.additionalRelationTags.get(id);
+                if (associatedRelations != null) {
+                    for (TDRelation tileDataRelation : associatedRelations) {
+                        way.mergeRelationInformation(tileDataRelation);
+                    }
+                }
+            }
+        }
+
+        return td;
+    }
+
+    private List<TDWay> getInnerWaysOfMultipolygon(long[] innerWayIDs) {
+        if (innerWayIDs == null) {
+            return Collections.emptyList();
+        }
+        List<TDWay> res = new ArrayList<>();
+        for (long id : innerWayIDs) {
+            TDWay current = null;
+            try {
+                current = TDWay.fromWay(this.wayIndexReader.get(id), this, this.preferredLanguages);
+            } catch (NoSuchIndexElementException e) {
+                current = this.virtualWays.get(id);
+                if (current == null) {
+                    LOGGER.fine("multipolygon with outer way id " + id + " references non-existing inner way " + id);
+                    continue;
+                }
+            }
+
+            res.add(current);
+        }
+
+        return res;
+    }
 }

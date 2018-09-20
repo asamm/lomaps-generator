@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011, 2012, 2013 mapsforge.org
+ * Copyright 2016 devemux86
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -12,30 +12,18 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.mapsforge.core.graphics;
+package org.mapsforge.core.util;
 
-public interface Matrix {
-    void reset();
-
-    /**
-     * @param theta an angle measured in radians.
-     */
-    void rotate(float theta);
+public final class Utils {
 
     /**
-     * @param theta an angle measured in radians.
+     * Null safe equals.
      */
-    void rotate(float theta, float pivotX, float pivotY);
+    public static boolean equals(Object o1, Object o2) {
+        return (o1 == o2) || (o1 != null && o1.equals(o2));
+    }
 
-    /**
-     * Scale around center.
-     *
-     * @param scaleX the scale factor in x-direction
-     * @param scaleY the scale factor in y-direction
-     */
-    void scale(float scaleX, float scaleY);
-
-    void scale(float scaleX, float scaleY, float pivotX, float pivotY);
-
-    void translate(float translateX, float translateY);
+    private Utils() {
+        throw new IllegalStateException();
+    }
 }

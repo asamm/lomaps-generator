@@ -28,11 +28,11 @@ public class DatabaseStoreMysql {
 
     private static final String IDX_DATASTORE_REGION_ID = "idx_datastore_region_id";
 
-    private String url = "jdbc:mysql://104.155.156.154:3306/storedb";
+    private String url = "jdbc:mysql://104.155.156.154:3306/storedb"; // DEV
+    private String password = "a4cuntvTXDqogv24QDZOQ9qR"; // DEV
     //private String url = "jdbc:mysql://localhost:3306/storedb";
+    //private String url = "jdbc:mysql://35.184.159.49:3306/storedb"; // PROD
     private String username = "storedb";
-    private String password = "a4cuntvTXDqogv24QDZOQ9qR";
-
 
     private Connection conn = null;
 
