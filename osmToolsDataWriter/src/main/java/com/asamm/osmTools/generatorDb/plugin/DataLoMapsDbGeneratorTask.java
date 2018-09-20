@@ -25,16 +25,16 @@ import static com.asamm.osmTools.generatorDb.plugin.AConfiguration.GenerateType;
  * 
  * @author bross
  */
-public class DataGeneratorTask implements Sink {
+public class DataLoMapsDbGeneratorTask implements Sink {
 
-    private static final String TAG = DataGeneratorTask.class.getSimpleName();
+    private static final String TAG = DataLoMapsDbGeneratorTask.class.getSimpleName();
 
 	// container for all data
 	private ADataContainer dc = null;
 	// generator for result database
     private AGenerator generator = null;
 
-	DataGeneratorTask(AConfiguration config) {
+	DataLoMapsDbGeneratorTask(AConfiguration config) {
         Logger.d(TAG, "DataGeneratorTask(), start");
 
 
@@ -148,8 +148,9 @@ public class DataGeneratorTask implements Sink {
 		generator.destroy();
 	}
 
-	public final void release() {
-		// nothing to do
 
-	}
+    @Override
+    public void close() {
+        // nothing to do
+    }
 }

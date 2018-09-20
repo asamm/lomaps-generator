@@ -1,6 +1,7 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2014 Ludwig M Brinckmann
+ * Copyright 2017 usrusr
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -17,41 +18,47 @@ package org.mapsforge.core.graphics;
 
 import org.mapsforge.core.mapelements.PointTextContainer;
 import org.mapsforge.core.mapelements.SymbolContainer;
+import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.core.model.Point;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public interface GraphicFactory {
-	Bitmap createBitmap(int width, int height);
+    Bitmap createBitmap(int width, int height);
 
-	Bitmap createBitmap(int width, int height, boolean isTransparent);
+    Bitmap createBitmap(int width, int height, boolean isTransparent);
 
-	Canvas createCanvas();
+    Canvas createCanvas();
 
-	int createColor(Color color);
+    int createColor(Color color);
 
-	int createColor(int alpha, int red, int green, int blue);
+    int createColor(int alpha, int red, int green, int blue);
 
-	Matrix createMatrix();
+    Matrix createMatrix();
 
-	Paint createPaint();
+    /**
+     * Create a single channel bitmap for hillshading, may include a buffer.
+     */
+    HillshadingBitmap createMonoBitmap(int width, int height, byte[] buffer, int padding, BoundingBox area);
 
-	Paint createPaint(Paint paint);
+    Paint createPaint();
 
-	Path createPath();
+    Paint createPaint(Paint paint);
 
-	PointTextContainer createPointTextContainer(Point xy, Display display, int priority, String text, Paint paintFront, Paint paintBack,
-	                                            SymbolContainer symbolContainer, Position position, int maxTextWidth);
+    Path createPath();
 
-	ResourceBitmap createResourceBitmap(InputStream inputStream, int hash) throws IOException;
+    PointTextContainer createPointTextContainer(Point xy, Display display, int priority, String text, Paint paintFront, Paint paintBack,
+                                                SymbolContainer symbolContainer, Position position, int maxTextWidth);
 
-	TileBitmap createTileBitmap(InputStream inputStream, int tileSize, boolean isTransparent) throws IOException;
+    ResourceBitmap createResourceBitmap(InputStream inputStream, int hash) throws IOException;
 
-	TileBitmap createTileBitmap(int tileSize, boolean isTransparent);
+    TileBitmap createTileBitmap(InputStream inputStream, int tileSize, boolean isTransparent) throws IOException;
 
-	InputStream platformSpecificSources(String relativePathPrefix, String src) throws IOException;
+    TileBitmap createTileBitmap(int tileSize, boolean isTransparent);
 
-	ResourceBitmap renderSvg(InputStream inputStream, float scaleFactor, int width, int height, int percent, int hash) throws IOException;
+    InputStream platformSpecificSources(String relativePathPrefix, String src) throws IOException;
+
+    ResourceBitmap renderSvg(InputStream inputStream, float scaleFactor, int width, int height, int percent, int hash) throws IOException;
 
 }

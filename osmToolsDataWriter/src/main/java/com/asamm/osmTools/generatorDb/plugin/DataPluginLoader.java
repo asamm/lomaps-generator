@@ -19,7 +19,7 @@ public class DataPluginLoader implements PluginLoader {
 
 	public Map<String, TaskManagerFactory> loadTaskFactories() {
     	// create factory that will handle request for generation LoMaps db
-		DataGeneratorFactory factory = new DataGeneratorFactory();
+		DataLoMapsDbGeneratorFactory factory = new DataLoMapsDbGeneratorFactory();
 		HashMap<String, TaskManagerFactory> map = new HashMap<String, TaskManagerFactory>();
 		map.put(PLUGIN_LOMAPS_DB, factory);
 		map.put("gDb", factory);

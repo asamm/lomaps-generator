@@ -190,6 +190,11 @@ public abstract class AGenerator {
             // add all maps
             for (ItemMap map : ar) {
                 ce.addBoundingPolygon(map);
+                if (map.hasAction(Parameters.Action.GENERATE)){
+                    ce.addCompleteWays();
+                    ce.addCompleteRelations();
+                }
+
                 ce.addWritePbf(map.getPathSource(), true);
             }
 
@@ -226,7 +231,7 @@ public abstract class AGenerator {
         Logger.i(TAG, "actionCountryBorder, source: " + mp.getName());
 
         // map where key is mappack id and value is list of map to generate boundaries from source
-        Map<String, List<ItemMap>> mapTableBySourceId = prepareCountriesForSource(mp, storageType);
+        Map<String, List<ItemMap>> mapTableBySourceId = prepareMapsForSource(mp, storageType);
 
 
         // for every source run generation of country borders
@@ -259,11 +264,11 @@ public abstract class AGenerator {
     }
 
     /**
-     * For every source prepare list of countries that can be generated from source
+     * For every source prepare list of maps that can be generated from source
      * @param mp source mappack that can be used as source for generated counties boundaries
      * @return
      */
-    private Map<String, List<ItemMap>> prepareCountriesForSource (
+    protected Map<String, List<ItemMap>> prepareMapsForSource (
             ItemMapPack mp, ConfigurationCountry.StorageType storageType) {
 
         // map where key is mappack id and value is list of map to generate boundaries from source
@@ -302,7 +307,7 @@ public abstract class AGenerator {
         for (ItemMapPack mapPack : mp.getMapPacks()){
 
             // for every map pack get country boundaries that will be generated
-            Map<String, List<ItemMap>> sourcesSubMap = prepareCountriesForSource(mapPack,storageType);
+            Map<String, List<ItemMap>> sourcesSubMap = prepareMapsForSource(mapPack,storageType);
 
             // combine result with parent source map
             for (Map.Entry<String, List<ItemMap>> entry : sourcesSubMap.entrySet()) {

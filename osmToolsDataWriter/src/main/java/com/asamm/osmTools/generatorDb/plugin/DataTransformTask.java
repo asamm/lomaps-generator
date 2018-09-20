@@ -1,20 +1,17 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
-import com.asamm.osmTools.generatorDb.AGenerator;
 import com.asamm.osmTools.generatorDb.address.ResidentialAreaCreator;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
-import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;
 import com.asamm.osmTools.generatorDb.input.definition.WriterTransformDefinition;
 import com.asamm.osmTools.generatorDb.osmgeom.JtsGeometryConverter;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Polygon;
-import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.container.v0_6.*;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
-import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
 import org.openstreetmap.osmosis.core.task.v0_6.Sink;
+import org.openstreetmap.osmosis.core.task.v0_6.SinkDatasetSource;
 import org.openstreetmap.osmosis.core.task.v0_6.SinkSource;
 
 import java.util.*;
@@ -24,7 +21,7 @@ import java.util.*;
  */
 public class DataTransformTask implements SinkSource {
 
-    private static final String TAG = DataGeneratorTask.class.getSimpleName();
+    private static final String TAG = DataLoMapsDbGeneratorTask.class.getSimpleName();
 
     private Sink sink;
 
@@ -33,10 +30,11 @@ public class DataTransformTask implements SinkSource {
 
 
 
-    public DataTransformTask (){
+    public DataTransformTask (ConfigurationTransform configTransform){
 
         try {
-            WriterTransformDefinition wtd = new WriterTransformDefinition();
+            // define generators parameters based on config that contains path to cmd parameters
+            WriterTransformDefinition wtd = new WriterTransformDefinition(configTransform);
 
             //dc = new DataContainerRam(wtd);
             dc = new DataContainerHdd(wtd);
@@ -118,12 +116,11 @@ public class DataTransformTask implements SinkSource {
         // close output pipe
         sink.complete();
 
-        dc.destroy();
-    }
+        Logger.i(TAG, "Sink completed");
 
-    @Override
-    public void release() {
-        sink.release();
+        dc.destroy();
+
+        Logger.i(TAG, "DC destroyed");
     }
 
     @Override
@@ -131,4 +128,8 @@ public class DataTransformTask implements SinkSource {
         this.sink = sink;
     }
 
+    @Override
+    public void close() {
+        sink.close();
+    }
 }

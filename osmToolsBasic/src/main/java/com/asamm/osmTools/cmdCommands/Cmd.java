@@ -147,6 +147,18 @@ abstract class Cmd {
         addCommand("--buffer");
     }
 
+    public void addCompleteWays() {
+        addCommand("completeWays=true");
+    }
+
+    public void addCompleteRelations() {
+        addCommand("completeRelations=true");
+    }
+
+    public void addCascadingRelations() {
+        addCommand("cascadingRelations=true");
+    }
+
     public void addTee(int mapCount) {
         addCommand("--tee");
         addCommand(String.valueOf(mapCount));

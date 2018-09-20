@@ -13,18 +13,18 @@
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
     <bytecodeTargetLevel>
-      <module name="locusApi_main" target="1.7" />
-      <module name="locusApi_test" target="1.7" />
-      <module name="mapsforge-core_main" target="1.7" />
-      <module name="mapsforge-core_test" target="1.7" />
-      <module name="mapsforge-map-writer_main" target="1.7" />
-      <module name="mapsforge-map-writer_test" target="1.7" />
-      <module name="osmToolsBasic_main" target="1.7" />
-      <module name="osmToolsBasic_test" target="1.7" />
-      <module name="osmToolsCore_main" target="1.7" />
-      <module name="osmToolsCore_test" target="1.7" />
-      <module name="osmToolsDataWriter_main" target="1.7" />
-      <module name="osmToolsDataWriter_test" target="1.7" />
+      <module name="locusApi_main" target="1.8" />
+      <module name="locusApi_test" target="1.8" />
+      <module name="mapsforge-core_main" target="1.8" />
+      <module name="mapsforge-core_test" target="1.8" />
+      <module name="mapsforge-map-writer_main" target="1.8" />
+      <module name="mapsforge-map-writer_test" target="1.8" />
+      <module name="osmToolsBasic_main" target="1.8" />
+      <module name="osmToolsBasic_test" target="1.8" />
+      <module name="osmToolsCore_main" target="1.8" />
+      <module name="osmToolsCore_test" target="1.8" />
+      <module name="osmToolsDataWriter_main" target="1.8" />
+      <module name="osmToolsDataWriter_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
