@@ -206,6 +206,10 @@ public class GeneratorAddress extends AGenerator {
             @Override
             public void onJoin(Street streetToInsert) {
 
+//                if (streetToInsert.getName().equals("Young Street")) {
+//                    Logger.i(TAG, "On join STREET: " + streetToInsert.toString());
+//                }
+
                 List<Street> streetsToInsert = new ArrayList<Street>();
 
                 // SPLIT BASED ON TOP LEVEL CITIES GEOMS
@@ -214,13 +218,14 @@ public class GeneratorAddress extends AGenerator {
                 double diagonalLength = Utils.getDistance(
                         envelope.getMinY(), envelope.getMinX(), envelope.getMaxY(), envelope.getMaxX());
 
-                if (diagonalLength > Const.ADR_MAX_DIAGONAL_STREET_LENGTH){
-                    // street is too long try to separate it based on villages, town or cities geom
-                    streetsToInsert = sc.splitLongStreet(streetToInsert);
-                }
-                else if (streetToInsert.getGeometry().getNumGeometries() > 1){
+                if (streetToInsert.getGeometry().getNumGeometries() > 1){
                     // street geom has more parts. Maybe it is two different streets > try to separate them
                     streetsToInsert = sc.splitToCityParts (streetToInsert);
+                }
+                else if (diagonalLength > Const.ADR_MAX_DIAGONAL_STREET_LENGTH){
+                    // street is too long try to separate it based on villages, town or cities geom
+
+                    streetsToInsert = sc.splitLongStreet(streetToInsert);
                 }
                 else {
                     streetsToInsert.add(streetToInsert);

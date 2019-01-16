@@ -4,6 +4,7 @@ import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders;
 import com.asamm.osmTools.cmdCommands.CmdExtract;
+import com.asamm.osmTools.cmdCommands.CmdExtractOsmium;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
@@ -11,6 +12,8 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
 import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -177,35 +180,52 @@ public abstract class AGenerator {
             }
         });
 
+
+        // write to log and start stop watch
+        TimeWatch time = new TimeWatch();
+
+
         // finally handle data
         for (int i = 0, m = sources.size(); i < m; i++) {
+
             String sourceId = sources.get(i);
-            List<ItemMap> ar = mapTableBySourceId.get(sourceId);
 
-            CmdExtract ce =  new CmdExtract(ms, sourceId);
-            ce.addReadSource();
-            ce.addTee(ar.size());
-            ce.addBuffer();
-
-            // add all maps
-            for (ItemMap map : ar) {
-                ce.addBoundingPolygon(map);
-                if (map.hasAction(Parameters.Action.GENERATE)){
-                    ce.addCompleteWays();
-                    ce.addCompleteRelations();
-                }
-
-                ce.addWritePbf(map.getPathSource(), true);
-            }
-
-            // write to log and start stop watch
-            TimeWatch time = new TimeWatch();
             Logger.i(TAG, "Extracting maps from source: " + sourceId);
-            Logger.i(TAG, ce.getCmdLine());
             Main.mySimpleLog.print("\nExtract Maps from: " + sourceId + " ...");
 
-            // now create simple array
-            ce.execute();
+
+            List<ItemMap> ar = mapTableBySourceId.get(sourceId);
+
+            long sourceSize = new File(ms.getMapById(sourceId).getPathSource()).length();
+            long exportSize = 0;
+
+            CmdExtractOsmium ceo = new CmdExtractOsmium(ms, sourceId);
+            boolean completeRelations = false;
+            for (int j=0, size = ar.size(); j < size; j++){
+                ItemMap map = ar.get(j);
+                ceo.addExtractMap(map);
+
+                if (map.hasAction(Parameters.Action.GENERATE)){
+                    completeRelations = true;
+                }
+
+                // export only 10 maps in one step due to memory limitation
+                if (j!= 0 && j % 10 == 0){
+                    ceo.createCmd(completeRelations);
+
+                    Logger.i(TAG, ceo.getCmdLine());
+                    ceo.execute();
+
+                    ceo = new CmdExtractOsmium(ms, sourceId);
+                }
+                else if ( j + 1 == size && j % 10 != 0){
+                    // generate the rest of maps from loop
+                    ceo.createCmd(completeRelations);
+                    Logger.i(TAG, ceo.getCmdLine());
+                    ceo.execute();
+
+                }
+            }
             Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
         }
 

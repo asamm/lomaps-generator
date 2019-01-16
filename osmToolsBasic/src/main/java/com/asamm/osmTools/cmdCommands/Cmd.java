@@ -32,7 +32,9 @@ abstract class Cmd {
 
         GRAPHOPPER,
 
-        STORE_UPLOAD
+        STORE_UPLOAD,
+
+        OSMIUM
     }
 
     // current map item
@@ -55,7 +57,11 @@ abstract class Cmd {
         // add basic
         if (mExternalApp == ExternalApp.OSMOSIS) {
             addCommand(Parameters.getOsmosisExe());
-        } else if (mExternalApp == ExternalApp.GRAPHOPPER) {
+        }
+        else if (mExternalApp == ExternalApp.OSMIUM) {
+            addCommand(Parameters.getOsmium());
+        }
+        else if (mExternalApp == ExternalApp.GRAPHOPPER) {
             // add required command to start
             addCommand(Parameters.getPreShellCommand());
             // add GraphHopper command

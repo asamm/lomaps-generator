@@ -181,13 +181,15 @@ public class StreetController extends AaddressController {
                 continue;
             }
 
-
             List<String> isInList = getIsInList(way);
 
             // create street geom
             MultiLineString mls = createStreetGeom(way, null);
             if ( !isValidGeometry(mls)) {
                 // probably associate Address relation that does not contain any street member > skip it
+//                if (wayId == 124055317){
+//                    Logger.i(TAG, "createWayStreetFromWays(): invalid geometry, skip");
+//                }
                 continue;
             }
 
@@ -210,11 +212,12 @@ public class StreetController extends AaddressController {
                 dc.addWayStreetHashName(wayStreet);
                 dc.addWayStreetByOsmId(wayStreet);
                 IndexController.getInstance().insertWayStreetNamed(wayStreet.getGeometry().getEnvelopeInternal(), wayStreet);
+
             }
 
-            if (wayId == 24346977){
-                Logger.i(TAG, "createWayStreetFromWays(): Creates wayStreet: " + wayStreet.toString() );
-            }
+//            if (wayId == 124055317){
+//                Logger.i(TAG, "createWayStreetFromWays(): Creates wayStreet: " + wayStreet.toString() );
+//            }
         }
     }
 
@@ -273,17 +276,19 @@ public class StreetController extends AaddressController {
 
                 do {
                     sameStreetFounded = false;
+
                     for (int j = i-1; j >= 0; j--){
                         Street wayStreetToJoin = wayStreets.get(j);
-                        if (wayStreet.getName().equals("Vestermarksvej")) {
-                            Logger.i(TAG, "test way street: " + wayStreetToJoin.toString());
-                        }
 
                         if (isFromTheSameCities(cityIds, wayStreetToJoin.getCityIds())){
                             // it street from the same cities prepare them for join
 //                            if (wayStreet.getName().equals("Via Verdi")) {
 //                                Logger.i(TAG, "Add geometry: " + Utils.geomToGeoJson(wayStreetToJoin.getGeometry()));
 //                            }
+                            if (wayStreet.getId() == 124055317){
+                                Logger.i(TAG, "joinWayStreets(): Is from the same city, add for join: " + wayStreet.toString() );
+                            }
+
                             waysGeomsToJoin.add(wayStreetToJoin.getGeometry());
                             cityIds.addAll(wayStreetToJoin.getCityIds());
                             houses.addAll(wayStreetToJoin.getHouses());
@@ -303,7 +308,7 @@ public class StreetController extends AaddressController {
                 Collection<LineString> lineStrings = lineMerger.getMergedLineStrings();
                 MultiLineString mls = GeomUtils.mergeLinesToMultiLine(lineStrings);
                 if (mls == null) {
-                    //Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
+                    Logger.w(TAG, "joinWayStreets(): Can not create geometry for street:  " + wayStreet.getOsmId());
                     continue;
                 }
 
@@ -361,15 +366,18 @@ public class StreetController extends AaddressController {
 
         if (topCities.size() <= 1){
             // streets contains only one city
-//            if (streetToSplit.getName().equals("Via Appia")){
-//                Logger.i(TAG, "There is only one top city >  nothing to cut");
-//            }
+            if (streetToSplit.getName().equals("Young Street")){
+                Logger.i(TAG, "splitGeomByParentCities(): There is only one top city >  nothing to cut");
+            }
             streets.add(streetToSplit);
             return streets;
         }
 
         // SPLIT STREETS BY CITIES GEOM
-        // Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
+        if (streetToSplit.getName().equals("Young Street")){
+            Logger.i(TAG, "****Num of cities " +topCities.size() + " ; split line: " + streetToSplit.toString());
+        }
+
 
         for (City city : topCities){
             // create copy from street to split
@@ -378,8 +386,11 @@ public class StreetController extends AaddressController {
             // PREPARE NEW GEOMETRY
 
             Geometry geomIntersection = null;
-            //Logger.i(TAG, "Line for cut: " + GeomUtils.geomToGeoJson(streetToSplit.getGeometry()));
-            //Logger.i(TAG, "City for cut: " + GeomUtils.geomToGeoJson(city.getGeom()));
+            if (streetToSplit.getName().equals("Young Street")) {
+                Logger.i(TAG, "splitGeomByParentCities():  Line for cut: " + GeomUtils.geomToGeoJson(streetToSplit.getGeometry()));
+                Logger.i(TAG, "splitGeomByParentCities():  City for cut: " + GeomUtils.geomToGeoJson(city.getGeom()));
+            }
+
             try {
                 geomIntersection = streetToSplit.getGeometry().intersection(city.getGeom());
             }
@@ -392,6 +403,9 @@ public class StreetController extends AaddressController {
 
             // test if there is any intersection
             if (mls == null || !mls.isValid() || mls.isEmpty()){
+                if (streetToSplit.getName().equals("Young Street")) {
+                    Logger.i(TAG, "splitGeomByParentCities():  intersection with city is empty or not valid, city: " + city.toString());
+                }
                 continue;
             }
 
@@ -402,8 +416,9 @@ public class StreetController extends AaddressController {
                 continue;
             }
 
-            //Logger.i(TAG, "Intersection line: " + Utils.geomToGeoJson(mls));
-
+            if (streetToSplit.getName().equals("Young Street")) {
+                Logger.i(TAG, "splitGeomByParentCities(): Intersection line: " + GeomUtils.geomToGeoJson(mls));
+            }
             // set geometry from intersection to new street
             street.setGeometry(mls);
             street.addCities(findCitiesForPlace(street.getGeometry(), street.getIsIn(), street.getOsmId()));
@@ -421,6 +436,10 @@ public class StreetController extends AaddressController {
 
             // new street is created
             streets.add(street);
+
+            if (streetToSplit.getName().equals("Young Street")) {
+                Logger.i(TAG, "splitGeomByParentCities():  Crated new street: " + street.toString());
+            }
 
             // remove intersection part from source street
             Geometry geomDifference = streetToSplit.getGeometry().difference(city.getGeom());
@@ -445,7 +464,13 @@ public class StreetController extends AaddressController {
         return streets;
     }
 
+
     public List<Street> splitStreetIntoTwoHalf (Street streetToSplit){
+
+//        if (streetToSplit.getName().equals("Young Street")) {
+//            Logger.i(TAG, "splitStreetIntoTwoHalf: " + streetToSplit.toString());
+//        }
+
         // split geometry of street envelope into two polygons
         if (streetToSplit.getGeometry() == null){
             List<Street> streets = new ArrayList<>();
@@ -476,6 +501,7 @@ public class StreetController extends AaddressController {
         // prepare new cutted geometries for new street
         street1.setGeometry(GeomUtils.geometryToMultilineString(poly1.intersection(streetToSplit.getGeometry())));
         street2.setGeometry(GeomUtils.geometryToMultilineString(poly2.intersection(streetToSplit.getGeometry())));
+
 
         // split houses into half
         THashSet<House> houses1 = new THashSet<>();
@@ -508,7 +534,7 @@ public class StreetController extends AaddressController {
         double maxHeight = 0.15;
         double maxWidth = 0.15;
 
-//        if (streetToSplit.getName().equals("Drykkjeåvegen")){
+//        if (streetToSplit.getName().equals("Young Street")){
 //            Logger.i(TAG, "Joined street to split: "  + streetToSplit.toString());
 //        }
 
@@ -632,9 +658,9 @@ public class StreetController extends AaddressController {
         MultiLineString mls = streetToSplit.getGeometry();
         int numGeomElements = mls.getNumGeometries();
 
-        if (streetToSplit.getName().equalsIgnoreCase("Schwarzer Weg")){
-            Logger.i(TAG, "splitToCityParts(): Num of multilinestreet: " + numGeomElements + " street: " + streetToSplit.toString());
-        }
+//        if (streetToSplit.getName().equalsIgnoreCase("Young Street")){
+//            Logger.i(TAG, "splitToCityParts(): Num of multilinestreet: " + numGeomElements + " street: " + streetToSplit.toString());
+//        }
 
         // from parent street get list of linestring from which is created
         List<LineString> elements = new ArrayList<>();
@@ -1209,12 +1235,13 @@ public class StreetController extends AaddressController {
      */
     private MultiLineString createStreetGeom (Entity entity, TLongArrayList processedRelationIds){
 
-
-
         if (entity == null){
             return null;
         }
-        //Logger.i(TAG, "Create streetm geom grom entity: " + entity.getId() + " adn type: " + entity.getType().toString());
+
+//        if (entity.getId() == 124055317){
+//            Logger.i(TAG, "createStreetGeom(): Create streetm geom grom entity: " + entity.getId() + " adn type: " + entity.getType().toString());
+//        }
         if (entity.getType() == EntityType.Node){
             return null;
         }
@@ -1287,10 +1314,17 @@ public class StreetController extends AaddressController {
         GeometryFactory geometryFactory = new GeometryFactory();
         // get full way with nodes
         WayEx wayEx = dc.getWay(way);
+
+//        if (way.getId() == 124055317){
+//            Logger.i(TAG, "createStreetGeomFromWay(): wayEx is valid: " + wayEx.isValid());
+//        }
+
         if (wayEx == null || !wayEx.isValid()){
             return null;
         }
         LineString ls = geometryFactory.createLineString(wayEx.getCoordinates());
+
+
         return geometryFactory.createMultiLineString(new LineString[]{ls});
     }
 }
