@@ -119,13 +119,12 @@ public class CmdGenerate extends Cmd {
         addTagConf(Parameters.mTouristTagMapping);
         //addDebugFile();
         addZoomInterval();
-        //addWayClipping();
 
         addSimplificationFactor();
         addBboxEnlargement(10);
 
-        addLabelPosition();
-        addPolylabel();
+        //addLabelPosition();
+        //addMapboxPolylabel();
 
         // get num of cpu cores
         int cores = Runtime.getRuntime().availableProcessors();
@@ -169,7 +168,7 @@ public class CmdGenerate extends Cmd {
         addCommand("label-position=true");
     }
 
-    private void addPolylabel() {
+    private void addMapboxPolylabel() {
         addCommand("polylabel=true");
     }
 

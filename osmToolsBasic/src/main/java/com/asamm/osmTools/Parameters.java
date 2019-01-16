@@ -153,6 +153,7 @@ public class Parameters {
 
     // path to osmosis command
     private static String mOsmosisExe;
+    private static String mOsmium;
     private static String mOgr2ogr;
     private static String mPythonDir;
     private static String mPython2Dir;
@@ -339,6 +340,10 @@ public class Parameters {
 
     public static String getOsmosisExe() {
         return mOsmosisExe;
+    }
+
+    public static String getOsmium(){
+        return mOsmium;
     }
 
     public static String getGraphHopperExe() {
@@ -600,6 +605,7 @@ public class Parameters {
 
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
+            mOsmium = "/usr/local/bin/osmium";
             phyghtDir = "/usr/local/bin/phyghtmap";
             mOgr2ogr = "/usr/local/bin/ogr2ogr";
             mPythonDir = "/usr/bin/python3";
@@ -608,6 +614,7 @@ public class Parameters {
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
             mOsmosisExe = new File (osmosisPath + "osmosis.bat").getAbsolutePath();
+            mOsmium = "osmium";
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
             mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
             mPythonDir = "C:\\Python27\\python.exe";
@@ -616,6 +623,7 @@ public class Parameters {
             mPostShellCommand = "'";
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
+            mOsmium = "/usr/local/bin/osmium";
             phyghtDir = "/usr/bin/phyghtmap";
             mOgr2ogr = "/usr/bin/ogr2ogr";
             mPythonDir = "/usr/bin/python";

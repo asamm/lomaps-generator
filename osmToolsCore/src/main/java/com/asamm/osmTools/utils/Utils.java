@@ -195,6 +195,18 @@ public class Utils {
         return false;
     }
 
+    public static boolean createParentDirs(String path){
+        File file =  new File(path);
+        if (!file.exists()){
+            try {
+                FileUtils.forceMkdir(file.getParentFile());
+            } catch (IOException ioe){
+                throw new IllegalArgumentException("Error while creating directory structure :" + ioe);
+            }
+        }
+        return false;
+    }
+
     public static boolean isSystemWindows() {
         String os = System.getProperty("os.name").toLowerCase();
         return os.contains("win");

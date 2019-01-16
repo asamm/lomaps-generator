@@ -806,9 +806,13 @@ public class DatabaseAddress extends ADatabaseHandler {
     public long insertStreet(Street street){
 
         if ( !street.isValid()){
-            //Logger.i(TAG, "Street for insert is not valid: " + street.toString());
+            //Logger.i(TAG, "Street for insert into DB is not valid: " + street.toString());
             return -1;
         }
+
+//        if (street.getName().equals("Young Street")) {
+//            Logger.i(TAG, "insertStreet(): Insert street into DB: " + street.toString());
+//        }
 
         try {
             int id = streetIdSequence++;
@@ -819,11 +823,6 @@ public class DatabaseAddress extends ADatabaseHandler {
 
             String name = street.getName();
 
-//            String nameNormalized = Utils.normalizeNames(name);
-//            if ( !nameNormalized.equals(name)){
-//                //store full name only if normalized name is different
-//                psInsertStreet.setString(2, name);
-//            }
             String nameNormalized = Utils.normalizeNames(name).toLowerCase();
             psInsertStreet.setString(2, name);
             psInsertStreet.setString(3, nameNormalized);
