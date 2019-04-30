@@ -94,36 +94,10 @@ public final class MercatorProjection {
                 pixelXToLongitude(pixelX, mapSize));
     }
 
-//    /**
-//     * @param scaleFactor the scale factor for which the size of the world map should be returned.
-//     * @return the horizontal and vertical size of the map in pixel at the given scale.
-//     * @throws IllegalArgumentException if the given scale factor is < 1
-//     */
-//    public static long getMapSizeWithScaleFactor(double scaleFactor, int tileSize) {
-//        if (scaleFactor < 1) {
-//            throw new IllegalArgumentException("scale factor must not < 1 " + scaleFactor);
-//        }
-//        return (long) (tileSize * (Math.pow(2, scaleFactorToZoomLevel(scaleFactor))));
-//    }
-//
-//    /**
-//     * @param zoomLevel the zoom level for which the size of the world map should be returned.
-//     * @return the horizontal and vertical size of the map in pixel at the given zoom level.
-//     * @throws IllegalArgumentException if the given zoom level is negative.
-//     */
-//    public static long getMapSize(byte zoomLevel, int tileSize) {
-//        if (zoomLevel < 0) {
-//            throw new IllegalArgumentException("zoom level must not be negative: " + zoomLevel);
-//        }
-//        return (long) tileSize << zoomLevel;
-//    }
-
     /**
-     * @param scaleFactor
-     *            the scale factor for which the size of the world map should be returned.
-     * @return the horizontal and vertical size of the map in pixel at the given zoom level.
-     * @throws IllegalArgumentException
-     *             if the given scale factor is < 1
+     * @param scaleFactor the scale factor for which the size of the world map should be returned.
+     * @return the horizontal and vertical size of the map in pixel at the given scale.
+     * @throws IllegalArgumentException if the given scale factor is < 1
      */
     public static long getMapSizeWithScaleFactor(double scaleFactor, int tileSize) {
 
@@ -137,11 +111,9 @@ public final class MercatorProjection {
     }
 
     /**
-     * @param zoomLevel
-     *            the zoom level for which the size of the world map should be returned.
+     * @param zoomLevel the zoom level for which the size of the world map should be returned.
      * @return the horizontal and vertical size of the map in pixel at the given zoom level.
-     * @throws IllegalArgumentException
-     *             if the given zoom level is negative.
+     * @throws IllegalArgumentException if the given zoom level is negative.
      */
     public static long getMapSize(byte zoomLevel, int tileSize) {
 

@@ -40,7 +40,12 @@ public class CmdExtractOsmium extends Cmd {
         configJ.put("extracts", extractsJ);
     }
 
+    public boolean hasMapForExtraction(){
+        return (extractsJ.size() > 0);
+    }
+
     public void addExtractMap (ItemMap map){
+
 
         // create needed parent folders
         Utils.createParentDirs(map.getPathSource());

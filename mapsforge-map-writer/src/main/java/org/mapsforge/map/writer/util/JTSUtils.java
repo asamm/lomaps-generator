@@ -51,6 +51,7 @@ public final class JTSUtils {
      * @return the array of coordinates
      */
     public static Coordinate[] toCoordinates(TDWay way) {
+
         Coordinate[] coordinates = new Coordinate[way.getWayNodes().length];
         if (way.isReversedInRelation()) {
             for (int i = 0; i < coordinates.length; i++) {
@@ -61,6 +62,7 @@ public final class JTSUtils {
                 coordinates[i] = toCoordinate(way.getWayNodes()[i]);
             }
         }
+
         return coordinates;
     }
 
@@ -72,11 +74,6 @@ public final class JTSUtils {
      * @return the JTS geometry
      */
     public static Geometry toJtsGeometry(TDWay way, List<TDWay> innerWays) {
-        if (way == null) {
-            LOGGER.warning("way is null");
-            return null;
-        }
-
         if (way.isForcePolygonLine()) {
             // may build a single line string if inner ways are empty
             return buildMultiLineString(way, innerWays);

@@ -37,7 +37,7 @@ public class LocusServerConst {
     public static final String MESSAGE = "message";
     public static final String JSON_ITEMS = "items";
 
-    public static final String LISTING = "listing";
+    public static final String LISTING = "listings";
     public static final String NAME = "name";
     public static final String CODE = "code";
     public static final String ICON = "iconId";

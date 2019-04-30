@@ -117,7 +117,7 @@ public abstract class AGenerator {
 
     public void actionExtract(ItemMapPack mp, final MapSource ms)
             throws IOException, InterruptedException {
-        Logger.d(TAG, "actionExtract(" + mp + ", " + ms + ")");
+        Logger.i(TAG, "actionExtract(" + mp.getName() + ", " + ms.hasData() + ")");
         // create hashTable where identificator is sourceId of map and values is an list of
         // all map with same sourceId
         Map<String, List<ItemMap>> mapTableBySourceId = new Hashtable<>();
@@ -136,6 +136,7 @@ public abstract class AGenerator {
                 // test if file for extract exist. If yes don't add it into ar
                 String writeFileLocation = actualMap.getPathSource();
                 if (!new File(writeFileLocation).exists()){
+                    Logger.i(TAG, "Add map for extraction: " +writeFileLocation );
                     itemsToExtract.add(actualMap);
                 } else {
                     Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
@@ -151,6 +152,7 @@ public abstract class AGenerator {
             String key = keys.next();
             List<ItemMap> ar = mapTableBySourceId.get(key);
             if (ar.isEmpty()) {
+                Logger.i(TAG, "Skip for source: " +key);
                 continue;
             }
 
@@ -203,6 +205,7 @@ public abstract class AGenerator {
             boolean completeRelations = false;
             for (int j=0, size = ar.size(); j < size; j++){
                 ItemMap map = ar.get(j);
+                Logger.i(TAG, "Add map for extraction: " + map.getName());
                 ceo.addExtractMap(map);
 
                 if (map.hasAction(Parameters.Action.GENERATE)){
@@ -218,14 +221,14 @@ public abstract class AGenerator {
 
                     ceo = new CmdExtractOsmium(ms, sourceId);
                 }
-                else if ( j + 1 == size && j % 10 != 0){
-                    // generate the rest of maps from loop
-                    ceo.createCmd(completeRelations);
-                    Logger.i(TAG, ceo.getCmdLine());
-                    ceo.execute();
-
-                }
             }
+            if (ceo.hasMapForExtraction()){
+                // process the rest of map
+                ceo.createCmd(completeRelations);
+                Logger.i(TAG, ceo.getCmdLine());
+                ceo.execute();
+            }
+
             Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
         }
 
