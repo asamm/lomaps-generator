@@ -656,6 +656,7 @@ public final class MapFileWriter {
             }
 
             // write block for (outer/simple) way
+
             writeWay(wayDataBlock.getOuterWay(), currentTileLat, currentTileLon, wayBuffer);
 
             // write blocks for inner ways
@@ -1054,6 +1055,8 @@ public final class MapFileWriter {
             LOGGER.warning("Invalid way node count: " + wayNodeCount);
         }
         buffer.put(Serializer.getVariableByteUnsigned(wayNodeCount));
+
+
 
         // write the way nodes:
         // the first node is always stored with four bytes
