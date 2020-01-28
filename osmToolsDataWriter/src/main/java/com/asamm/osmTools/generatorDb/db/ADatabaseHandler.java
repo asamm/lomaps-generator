@@ -1,23 +1,17 @@
 package com.asamm.osmTools.generatorDb.db;
 
-import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
-import com.vividsolutions.jts.io.*;
-import org.apache.commons.io.IOUtils;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import com.vividsolutions.jts.io.WKBReader;
+import com.vividsolutions.jts.io.WKBWriter;
+import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteOpenMode;
 
 import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.sql.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public abstract class ADatabaseHandler {
 
@@ -81,10 +75,9 @@ public abstract class ADatabaseHandler {
         stmt.setQueryTimeout(30);
 
         // load spatialite extension
-        if (Utils.isSystemWindows()){
+        if (Utils.isSystemWindows()) {
             executeStatement("SELECT load_extension('mod_spatialite')");
-        }
-        else {
+        } else {
 //          executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
 //          executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libspatialite.so.5')");
 //          executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6')");

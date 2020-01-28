@@ -26,34 +26,50 @@ public class Street extends Storable {
 
     private static final String TAG = Street.class.getSimpleName();
 
-    /** It's not OSM entity id > id for database */
+    /**
+     * It's not OSM entity id > id for database
+     */
     private int id;
 
-    /** This value is set only for custom wayStreet before joined street is created
-     * CAn be id of OSM way or OSM relation*/
+    /**
+     * This value is set only for custom wayStreet before joined street is created
+     * CAn be id of OSM way or OSM relation
+     */
     private long osmId;
 
-    /** Name of the street */
+    /**
+     * Name of the street
+     */
     private String name;
 
-    /** OSM id of place in which is street located. basicaly is used only for wayStreet when create hash */
+    /**
+     * OSM id of place in which is street located. basicaly is used only for wayStreet when create hash
+     */
     private long cityId;
 
-    /** IDs of cities in which can be this way*/
+    /**
+     * IDs of cities in which can be this way
+     */
     private TLongHashSet cityIds;
 
-    /** Value of is_in tag */
+    /**
+     * Value of is_in tag
+     */
     private List<String> isIn;
 
-    /** keep information if street were created from track or path */
+    /**
+     * keep information if street were created from track or path
+     */
     private boolean isPath;
 
     private THashSet<House> houses;
 
-    /** JTS multiline geometry of the street*/
+    /**
+     * JTS multiline geometry of the street
+     */
     private MultiLineString geometry;
 
-    public Street (){
+    public Street() {
         reset();
     }
 
@@ -65,11 +81,9 @@ public class Street extends Storable {
         this.geometry = mls;
     }
 
-    public Street (byte[] data) throws IOException {
-        super(data);
-    }
-
-    /** Constructor for copy of object */
+    /**
+     * Constructor for copy of object
+     */
     public Street(Street street) {
 
         reset();
@@ -84,15 +98,15 @@ public class Street extends Storable {
         this.geometry = street.geometry;
     }
 
-    public boolean isValid () {
+    public boolean isValid() {
 
-        if (name == null || name.length() == 0){
+        if (name == null || name.length() == 0) {
             return false;
         }
-        if (geometry == null){
+        if (geometry == null) {
             return false;
         }
-        if (cityIds.size() <= 0){
+        if (cityIds.size() <= 0) {
             return false;
         }
         return true;
@@ -103,7 +117,7 @@ public class Street extends Storable {
      *
      * @return true if has assigned at least one house
      */
-    public boolean hasHouses () {
+    public boolean hasHouses() {
         return (houses != null || houses.size() > 0);
     }
 
@@ -124,9 +138,6 @@ public class Street extends Storable {
     /**************************************************/
     /*             STORABLE PART
     /**************************************************/
-
-
-
     @Override
     protected int getVersion() {
         return 0;
@@ -141,15 +152,17 @@ public class Street extends Storable {
         //read list of cityIds
         int size = dr.readInt();
         cityIds = new TLongHashSet();
-        for (int i=0; i < size; i++){
+        for (int i = 0; i < size; i++) {
             cityIds.add(dr.readLong());
         }
         isPath = dr.readBoolean();
 
         size = dr.readInt();
         houses = new THashSet<>();
-        for (int i=0; i < size; i++){
-            houses.add(new House(dr));
+        for (int i = 0; i < size; i++) {
+            House house = new House();
+            house.read(dr);
+            houses.add(house);
         }
 
         WKBReader wkbReader = new WKBReader();
@@ -170,13 +183,13 @@ public class Street extends Storable {
         // write list of city ids
         dw.writeInt(cityIds.size());
         TLongIterator iterator = cityIds.iterator();
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             dw.writeLong(iterator.next());
         }
         dw.writeBoolean(isPath);
 
         dw.writeInt(houses.size());
-        for (House house : houses){
+        for (House house : houses) {
             dw.write(house.getAsBytes());
         }
         WKBWriter wkbWriter = new WKBWriter();
@@ -188,8 +201,6 @@ public class Street extends Storable {
     /**************************************************/
     /*             GETTERS & SETTERS
     /**************************************************/
-
-
     public int getId() {
         return id;
     }
@@ -219,12 +230,12 @@ public class Street extends Storable {
     }
 
     public void setCityIds(TLongHashSet cityIds) {
-        if (cityIds != null){
+        if (cityIds != null) {
             this.cityIds = cityIds;
         }
     }
 
-    public void setCities (List<City> cities) {
+    public void setCities(List<City> cities) {
         cityIds.clear();
         for (City city : cities) {
             cityIds.add(city.getOsmId());
@@ -239,7 +250,7 @@ public class Street extends Storable {
     }
 
     public void addCityId(long cityId) {
-        if (cityIds == null){
+        if (cityIds == null) {
             cityIds = new TLongHashSet();
         }
         cityIds.add(cityId);
@@ -250,7 +261,7 @@ public class Street extends Storable {
     }
 
     public void setName(String name) {
-        if (name != null){
+        if (name != null) {
             this.name = name;
         }
     }
@@ -266,12 +277,12 @@ public class Street extends Storable {
     }
 
     public void addIsIn(String isInName) {
-        if (isInName != null){
+        if (isInName != null) {
             this.isIn.add(isInName);
         }
     }
 
-    public void addHouse (House house){
+    public void addHouse(House house) {
         houses.add(house);
     }
 
@@ -288,7 +299,7 @@ public class Street extends Storable {
     }
 
     public void setHouses(THashSet<House> houses) {
-        if (houses != null){
+        if (houses != null) {
             this.houses = houses;
         }
     }
@@ -303,16 +314,17 @@ public class Street extends Storable {
 
     /**
      * Get centroid of street geom and convert it into integer coordinates
+     *
      * @return coordinates of centroid as integer array [lon, lat]
      */
-    public int[] getOriginForHouseDTO(){
+    public int[] getOriginForHouseDTO() {
         Point centroid = geometry.getEnvelope().getCentroid();
         return GeomUtils.pointToIntegerValues(centroid);
     }
 
     @Override
     public String toString() {
-        String str =  "Street{" +
+        String str = "Street{" +
                 "id=" + id +
                 ", osmId=" + osmId +
                 ", name='" + name + '\'' +
@@ -320,10 +332,10 @@ public class Street extends Storable {
                 ", cityIds=[";
 
         TLongIterator iterator = cityIds.iterator();
-        while (iterator.hasNext()){
-            str += iterator.next() + ", " ;
+        while (iterator.hasNext()) {
+            str += iterator.next() + ", ";
         }
-        str +="], isPath=" + isPath +
+        str += "], isPath=" + isPath +
                 ", houses size=" + houses.size() +
                 ", geometry=" + GeomUtils.geomToGeoJson(geometry) +
                 '}';

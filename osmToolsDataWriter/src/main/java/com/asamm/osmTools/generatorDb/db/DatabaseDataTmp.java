@@ -379,8 +379,8 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             ResultSet rs = psSelectWayStreets.executeQuery();
 
             while (rs.next()) {
-                byte[] data = rs.getBytes(1);
-                Street street = new Street(data);
+                Street street = new Street();
+                street.read(rs.getBytes(1));
                 loadedStreets.add(street);
             }
         } catch (Exception e) {
@@ -430,9 +430,8 @@ public class DatabaseDataTmp extends ADatabaseHandler {
                     Logger.i(TAG, " selectWayStreetsNamed(): Can not create unnamed street with id; SQL: " + sql);
                     continue;
                 }
-                Street street = new Street(data);
-
-
+                Street street = new Street();
+                street.read(data);
                 streets.add(street);
             }
 
@@ -494,8 +493,9 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             ResultSet rs = psSelectWayStreetsByOsmId.executeQuery();
 
             while (rs.next()) {
-                byte[] data = rs.getBytes(1);
-                return new Street(data);
+                Street street = new Street();
+                street.read(rs.getBytes(1));
+                return street;
             }
         } catch (Exception e) {
             Logger.e(TAG, "selectWayStreetByOsmId(), problem with query", e);
@@ -536,7 +536,8 @@ public class DatabaseDataTmp extends ADatabaseHandler {
                     Logger.i(TAG, " selectWayStreetsByOsmIds(): Can not create waystreet with id; SQL: " + sql);
                     continue;
                 }
-                Street street = new Street(data);
+                Street street = new Street();
+                street.read(data);
                 streets.add(street);
             }
 

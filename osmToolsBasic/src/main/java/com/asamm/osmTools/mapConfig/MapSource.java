@@ -18,7 +18,7 @@ public class MapSource {
     private List<ItemMapPack> mMapPackList;
 
     public MapSource() {
-        mMapPackList = new ArrayList<ItemMapPack>();
+        mMapPackList = new ArrayList<>();
     }
 
     public boolean hasData() {

@@ -4,8 +4,6 @@
  */
 package com.asamm.osmTools.utils;
 
-import java.io.File;
-import java.util.Properties;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -14,12 +12,14 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import java.io.File;
+import java.util.Properties;
 
 /**
- *
  * @author volda
  */
 public class MailHandler {
+
     private String SMTP_HOST_NAME;
     private int SMTP_HOST_PORT;
     private String SMTP_AUTH_USER;
@@ -29,23 +29,19 @@ public class MailHandler {
         SMTP_HOST_NAME = "smtp.gmail.com";
         SMTP_HOST_PORT = 465;
         SMTP_AUTH_USER = "no-reply@asamm.com";
-        SMTP_AUTH_PWD  = "JlTNiAjW5zesykEh";
-    
-    }
-    
-    public void sendEmail(String emailTo, String subject, String text, String pathToAttachment) throws Exception{
-        
+        SMTP_AUTH_PWD = "JlTNiAjW5zesykEh";
 
+    }
+
+    public void sendEmail(String emailTo, String subject, String text, String pathToAttachment) throws Exception {
         try {
 
-           Properties props = new Properties();
- 
+            Properties props = new Properties();
             props.put("mail.transport.protocol", "smtps");
             props.put("mail.smtps.host", SMTP_HOST_NAME);
             props.put("mail.smtps.auth", "true");
             // props.put("mail.smtps.quitwait", "false");
 
-            
             Session mailSession = Session.getDefaultInstance(props);
             //mailSession.setDebug(true);
             Transport transport = mailSession.getTransport();
@@ -54,11 +50,10 @@ public class MailHandler {
             // message subject
             message.setSubject(subject);
             // message body
-           // message.setContent(text, "text/plain");
+            // message.setContent(text, "text/plain");
 
             message.addRecipient(Message.RecipientType.TO,
-                 new InternetAddress(emailTo));
-            
+                    new InternetAddress(emailTo));
 
             // create the message part
             MimeBodyPart messageBodyPart = new MimeBodyPart();
@@ -71,31 +66,27 @@ public class MailHandler {
 
             // Part two is attachment
             File attachedFile = new File(pathToAttachment);
-            if (attachedFile.exists()){
+            if (attachedFile.exists()) {
                 messageBodyPart = new MimeBodyPart();
                 DataSource source = new FileDataSource(new File(pathToAttachment));
                 messageBodyPart.setDataHandler(new DataHandler(source));
                 messageBodyPart.setFileName(attachedFile.getName());
                 multipart.addBodyPart(messageBodyPart);
-                
-            }           
+            }
 
             // Put parts in message
             message.setContent(multipart);
 
             transport.connect
-              (SMTP_HOST_NAME, SMTP_HOST_PORT, SMTP_AUTH_USER, SMTP_AUTH_PWD);
+                    (SMTP_HOST_NAME, SMTP_HOST_PORT, SMTP_AUTH_USER, SMTP_AUTH_PWD);
 
             transport.sendMessage(message,
-                message.getRecipients(Message.RecipientType.TO));
+                    message.getRecipients(Message.RecipientType.TO));
             transport.close();
-        
+
         } catch (MessagingException e) {
             System.out.println("Error during sending email");
             throw new RuntimeException(e);
         }
     }
-
-    
-    
 }
