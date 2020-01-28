@@ -22,27 +22,26 @@ public class House extends Storable{
 
     private static final String TAG = House.class.getSimpleName();
 
-
     /** OSM id of entity from which was house created. It's not unique */
-    private long osmId;
+    private long osmId = 0;
 
     /** The house number (may contain letters, dashes or other characters). */
-    private String number;
+    private String number = "";
 
     /** The name of a house.
      This is sometimes used in some countries like England instead of (or in addition to) a house number.*/
-    private String name;
+    private String name = "";
 
     /** For value addr:street*/
-    private String streetName;
+    private String streetName = "";
 
     /** For value addr:city*/
-    private String cityName;
+    private String cityName = "";
 
-    private String place;
+    private String place = "";
 
     /** Value of is_in tag, Used only for houses without sreeet*/
-    private List<String> isIn;
+    private List<String> isIn = new ArrayList<>();
 
     /**  Serialized house does not contain whole postCode but only reference to table of postcodes*/
     private int postCodeId;
@@ -50,12 +49,8 @@ public class House extends Storable{
     /** Position of house */
     private Point center;
 
-    public House(DataReaderBigEndian dr) throws IOException {
-        super(dr);
-    }
-
-    public House (byte[] data) throws IOException {
-        super(data);
+    public House() {
+        super();
     }
 
     public House(long osmId, String number, String name, int postCodeId, Point center) {
@@ -102,18 +97,6 @@ public class House extends Storable{
     @Override
     protected int getVersion() {
         return 0;
-    }
-
-    @Override
-    public void reset() {
-
-        this.osmId = 0;
-        this.number = "";
-        this.name = "";
-        this.streetName = "";
-        this.cityName = "";
-        this.place = "";
-        this.isIn = new ArrayList<>();
     }
 
     @Override

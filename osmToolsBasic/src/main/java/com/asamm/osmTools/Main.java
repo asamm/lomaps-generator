@@ -4,15 +4,14 @@
  */
 package com.asamm.osmTools;
 
-import java.util.logging.Handler;
-import java.util.logging.Logger;
-
 import com.asamm.osmTools.generator.GenLoMaps;
 import com.asamm.osmTools.generator.GenStoreRegionDB;
 import com.asamm.osmTools.utils.*;
 
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+
 /**
- *
  * @author volda
  */
 public class Main {
@@ -28,7 +27,7 @@ public class Main {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         //start timer
         TimeWatch timer = new TimeWatch();
@@ -40,11 +39,10 @@ public class Main {
             Parameters.initialize();
 
             // handle all possible actions
-            if (Parameters.getGenType() == Parameters.GenType.LOMAPS){
+            if (Parameters.getGenType() == Parameters.GenType.LOMAPS) {
                 GenLoMaps genLoMaps = new GenLoMaps();
                 genLoMaps.process();
-            }
-            else if (Parameters.getGenType() == Parameters.GenType.STORE_GEOCODING){
+            } else if (Parameters.getGenType() == Parameters.GenType.STORE_GEOCODING) {
                 GenStoreRegionDB genStoreGeo = new GenStoreRegionDB();
                 genStoreGeo.process();
             }

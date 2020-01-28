@@ -14,7 +14,7 @@ import java.util.Iterator;
 /**
  * Created by voldapet on 2016-09-16 .
  */
-public class GenStoreRegionDB extends  AGenerator{
+public class GenStoreRegionDB extends AGenerator {
 
     private static final String TAG = GenStoreRegionDB.class.getSimpleName();
 
@@ -22,15 +22,12 @@ public class GenStoreRegionDB extends  AGenerator{
     private MapSource mMapSource;
 
     public GenStoreRegionDB() throws IOException, XmlPullParserException {
-
         mMapSource = parseConfigXml(new File(Parameters.getConfigStoreGeoPath()));
-
     }
 
-    public void process () throws IOException, InterruptedException {
-
+    public void process() throws IOException, InterruptedException {
         // are there any data in mappack
-        if (!mMapSource.hasData()){
+        if (!mMapSource.hasData()) {
             Logger.w(TAG, "No data was obtain from config xml");
             return;
         }
@@ -43,11 +40,8 @@ public class GenStoreRegionDB extends  AGenerator{
             actionExtract(mp, mMapSource);
 
             Logger.i(TAG, "Map pack: " + mp.getName());
-            actionCountryBorder (mp, mMapSource, ConfigurationCountry.StorageType.STORE_REGION_DB);
+            actionCountryBorder(mp, mMapSource, ConfigurationCountry.StorageType.STORE_REGION_DB);
 
         }
     }
-
-
-
 }

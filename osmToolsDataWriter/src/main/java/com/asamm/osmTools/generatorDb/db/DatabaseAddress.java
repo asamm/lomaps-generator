@@ -1108,7 +1108,8 @@ public class DatabaseAddress extends ADatabaseHandler {
             while (rs.next()){
 
                 start = System.currentTimeMillis();
-                house = new House(rs.getBytes(1));
+                house = new House();
+                house.read(rs.getBytes(1));
                 timeDtoDeSerializeHouse += System.currentTimeMillis() - start;
 
                 // crate simplified version od house with relative coordinates

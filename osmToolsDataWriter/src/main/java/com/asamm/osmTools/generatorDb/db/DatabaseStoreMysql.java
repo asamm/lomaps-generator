@@ -8,12 +8,10 @@ import com.asamm.osmTools.generatorDb.utils.Language;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.*;
-import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 
 import java.sql.*;
 import java.util.Map;
-
 
 import static com.asamm.store.LocusServerConst.*;
 
@@ -45,28 +43,35 @@ public class DatabaseStoreMysql {
     protected WKTReader wktReader;
 
 
-
     // PREPARED STATEMENTS
 
-    /** Precompiled statement for inserting regions into db*/
+    /**
+     * Precompiled statement for inserting regions into db
+     */
     private PreparedStatement psInsertRegion;
 
     /** */
     private PreparedStatement psSelectRegionIdByDatastoreId;
 
-    /** Insert international names of city*/
+    /**
+     * Insert international names of city
+     */
     private PreparedStatement psInsertRegionNames;
 
-    /** Load region from database for defined OSM ID and entity type*/
+    /**
+     * Load region from database for defined OSM ID and entity type
+     */
     private PreparedStatement psSelectRegionByOSM;
 
-    /** Update region geometry*/
+    /**
+     * Update region geometry
+     */
     private PreparedStatement psUpdateRegionGeomByOSM;
 
 
-    public DatabaseStoreMysql ()  {
+    public DatabaseStoreMysql() {
 
-        initConnection ();
+        initConnection();
 
         createTables();
 
@@ -82,16 +87,15 @@ public class DatabaseStoreMysql {
     /**
      * Initialize database connection to MySQL database
      */
-    private void initConnection()  {
+    private void initConnection() {
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
 
-            this.conn = DriverManager.getConnection(url,username,password);
+            this.conn = DriverManager.getConnection(url, username, password);
 
             this.stmt = conn.createStatement();
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             Logger.e(TAG, "initConnection()", e);
             e.printStackTrace();
         } catch (SQLException e) {
@@ -115,7 +119,7 @@ public class DatabaseStoreMysql {
         try {
             if (conn != null) {
                 conn.commit();
-                if (closeConnection ) {
+                if (closeConnection) {
                     conn.close();
                 }
             }
@@ -127,7 +131,7 @@ public class DatabaseStoreMysql {
     /**
      * Create needed tables for geotables
      */
-    private void createTables()  {
+    private void createTables() {
 
         String sql = "";
         try {
@@ -139,8 +143,8 @@ public class DatabaseStoreMysql {
             sql += COL_REGION_CODE + " VARCHAR(10), ";
             sql += COL_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ";
             sql += ", " + COL_NAME + "_" + Const.DEFAULT_LANG_CODE + " VARCHAR(511) NOT NULL ";
-            for (Language language : Language.values()){
-                sql += ", " + COL_NAME+"_"+language.getCode() + " VARCHAR(511) NOT NULL ";
+            for (Language language : Language.values()) {
+                sql += ", " + COL_NAME + "_" + language.getCode() + " VARCHAR(511) NOT NULL ";
             }
             sql += "," + COL_GEOM + " GEOMETRY NOT NULL,";
             sql += " UNIQUE KEY " + IDX_DATASTORE_REGION_ID + " (" + COL_STORE_REGION_ID + ")";
@@ -161,33 +165,33 @@ public class DatabaseStoreMysql {
             psSelectRegionIdByDatastoreId = conn.prepareStatement("SELECT " + COL_ID + " FROM " + TN_SLS_REGION +
                     " WHERE " + COL_STORE_REGION_ID + " = ? ");
 
-            String sqlInsertRegion = "INSERT INTO "+ TN_SLS_REGION +" (";
-            sqlInsertRegion += COL_PARENT_ID +", " + COL_STORE_REGION_ID ;
-            sqlInsertRegion += ", " + COL_REGION_CODE + "," + COL_REGION_LEVEL ;
-            sqlInsertRegion += ", " + COL_NAME + "_" + Const.DEFAULT_LANG_CODE ;
+            String sqlInsertRegion = "INSERT INTO " + TN_SLS_REGION + " (";
+            sqlInsertRegion += COL_PARENT_ID + ", " + COL_STORE_REGION_ID;
+            sqlInsertRegion += ", " + COL_REGION_CODE + "," + COL_REGION_LEVEL;
+            sqlInsertRegion += ", " + COL_NAME + "_" + Const.DEFAULT_LANG_CODE;
             for (Language lang : Language.values()) {
-                sqlInsertRegion +=  ", " + COL_NAME + "_" + lang.getCode() ;
+                sqlInsertRegion += ", " + COL_NAME + "_" + lang.getCode();
             }
-            sqlInsertRegion +=  ", " + COL_GEOM+") VALUES (";
+            sqlInsertRegion += ", " + COL_GEOM + ") VALUES (";
             sqlInsertRegion += createQuestionMarksForINStatement(5 + Language.values().length);
             sqlInsertRegion += ", GeomFromWKB(?, 4326))";
             sqlInsertRegion += " ON DUPLICATE KEY UPDATE ";
-            sqlInsertRegion += COL_PARENT_ID +" = VALUES(" + COL_PARENT_ID+")";
-            sqlInsertRegion += ", "+COL_STORE_REGION_ID +" = VALUES(" + COL_STORE_REGION_ID+")";
-            sqlInsertRegion += ", "+COL_REGION_CODE +" = VALUES(" + COL_REGION_CODE+")";
-            sqlInsertRegion += ", "+COL_REGION_LEVEL +" = VALUES(" + COL_REGION_LEVEL+")";
+            sqlInsertRegion += COL_PARENT_ID + " = VALUES(" + COL_PARENT_ID + ")";
+            sqlInsertRegion += ", " + COL_STORE_REGION_ID + " = VALUES(" + COL_STORE_REGION_ID + ")";
+            sqlInsertRegion += ", " + COL_REGION_CODE + " = VALUES(" + COL_REGION_CODE + ")";
+            sqlInsertRegion += ", " + COL_REGION_LEVEL + " = VALUES(" + COL_REGION_LEVEL + ")";
 
-            sqlInsertRegion += ", "+COL_NAME + "_" + Const.DEFAULT_LANG_CODE +" = VALUES(" + COL_NAME + "_" + Const.DEFAULT_LANG_CODE+")";
+            sqlInsertRegion += ", " + COL_NAME + "_" + Const.DEFAULT_LANG_CODE + " = VALUES(" + COL_NAME + "_" + Const.DEFAULT_LANG_CODE + ")";
             for (Language lang : Language.values()) {
-                sqlInsertRegion += ", "+COL_NAME + "_" + lang.getCode() +" = VALUES(" + COL_NAME + "_" + lang.getCode()+")";
+                sqlInsertRegion += ", " + COL_NAME + "_" + lang.getCode() + " = VALUES(" + COL_NAME + "_" + lang.getCode() + ")";
             }
-            sqlInsertRegion += ", "+COL_GEOM +" = VALUES(" + COL_GEOM+")";
+            sqlInsertRegion += ", " + COL_GEOM + " = VALUES(" + COL_GEOM + ")";
             psInsertRegion = conn.prepareStatement(sqlInsertRegion);
 
 
         } catch (SQLException e) {
             Logger.e(TAG, "initPreparedStatements(), problem with creation prepared statement", e);
-                    e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -198,7 +202,7 @@ public class DatabaseStoreMysql {
         String sql = "";
         try {
 
-            sql ="DROP TABLE IF EXISTS  "+ TN_SLS_REGION;
+            sql = "DROP TABLE IF EXISTS  " + TN_SLS_REGION;
             executeStatement(sql);
 
             //re create tables again
@@ -210,7 +214,7 @@ public class DatabaseStoreMysql {
         }
     }
 
-    protected PreparedStatement createPreparedStatement (String sql) throws SQLException {
+    protected PreparedStatement createPreparedStatement(String sql) throws SQLException {
         return conn.prepareStatement(sql);
     }
 
@@ -222,10 +226,11 @@ public class DatabaseStoreMysql {
     /**
      * In mysql db  has region primary id as integer. Method get this in id from SQL database based on
      * old datastore regionId
+     *
      * @param dataStoreRegionId datastore id of region to get id
      * @return id of region or -1 if such region does not exist in db
      */
-    public int getRegionId (String dataStoreRegionId){
+    public int getRegionId(String dataStoreRegionId) {
         Logger.i(TAG, "getRegionId(), Get region id based on dataStoreId: " + dataStoreRegionId);
 
         try {
@@ -234,11 +239,10 @@ public class DatabaseStoreMysql {
 
             ResultSet rs = psSelectRegionIdByDatastoreId.executeQuery();
 
-            while (rs.next()){
+            while (rs.next()) {
                 return rs.getInt(1);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             Logger.e(TAG, "getRegionId(), problem with query", e);
             e.printStackTrace();
         }
@@ -247,11 +251,12 @@ public class DatabaseStoreMysql {
 
     /**
      * Load geometry of specified region from SQL database
-     * @param osmId osm object id
+     *
+     * @param osmId      osm object id
      * @param entityType type of osm object
      * @return geometry for region or null if do not exist any region in database for id and object type
      */
-    public Geometry getRegionGeom (long osmId, EntityType  entityType) {
+    public Geometry getRegionGeom(long osmId, EntityType entityType) {
 
         Geometry geom = null;
         try {
@@ -260,42 +265,41 @@ public class DatabaseStoreMysql {
             psSelectRegionByOSM.setString(2, getOsmEntityTypeCode(entityType));
 
             ResultSet rs = psSelectRegionByOSM.executeQuery();
-            if (rs.next()){
+            if (rs.next()) {
                 byte[] data = rs.getBytes(1);
                 geom = wkbReader.read(data);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             Logger.e(TAG, "getRegionGeom(), problem with query", e);
             throw new RuntimeException("Problem when getting geometry for element osmId: " + osmId
                     + " and osm type: " + entityType.toString());
         } catch (ParseException e) {
-                e.printStackTrace();
+            e.printStackTrace();
         }
         return geom;
-}
+    }
 
     /**
      * Insert region into store database
+     *
      * @param region region to insert
      */
     public void insertRegion(Region region, ConfigurationCountry.CountryConf countryConf) {
 
-        Logger.i(TAG, "insertRegion(), Insert region to DB: " + region.getEnName()+
-                                            ", datastoreID: " + countryConf.getDataStoreRegionId());
+        Logger.i(TAG, "insertRegion(), Insert region to DB: " + region.getEnName() +
+                ", datastoreID: " + countryConf.getDataStoreRegionId());
         Geometry geomSimplified = GeomUtils.simplifyMultiPolygon(region.getGeom(), Const.GEO_COUNTRY_POLYGON_SIMPLIFICATION_DISTANCE);
 
         try {
 
             // get parent region id based on datastore id
             int parentId = -1;
-            if ( !countryConf.getDataStoreRegionId().equals("wo")){
+            if (!countryConf.getDataStoreRegionId().equals("wo")) {
                 parentId = getRegionId(countryConf.getDataStoreParentRegionId());
-              if (parentId == -1){
+                if (parentId == -1) {
                     throw new RuntimeException("Can not obtain SQL region id for: " + countryConf.getDataStoreParentRegionId());
                 }
-            }
-            else {
+            } else {
                 parentId = 0; // for worldwide is parent id 0
             }
 
@@ -312,10 +316,10 @@ public class DatabaseStoreMysql {
             psInsertRegion.setInt(counter++, region.getAdminLevel());
 
             String nameLocal = region.getNamesInternational().get(LANGUAGE_LOCAL_POSTFIX);
-            nameLocal = (nameLocal == null) ?  names.get(Language.ENGLISH.getCode()) : nameLocal;
+            nameLocal = (nameLocal == null) ? names.get(Language.ENGLISH.getCode()) : nameLocal;
             psInsertRegion.setString(counter++, nameLocal); // add name in local language
 
-            for (Language language : Language.values()){
+            for (Language language : Language.values()) {
                 String name = names.get(language.getCode());
                 psInsertRegion.setString(counter++, name);
             }
@@ -325,16 +329,14 @@ public class DatabaseStoreMysql {
             int responseCode = psInsertRegion.executeUpdate();
 
             commit(false);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             Logger.e(TAG, "insertRegion(), problem with query", e);
             try {
                 conn.rollback();
             } catch (SQLException e1) {
                 e1.printStackTrace();
             }
-        }
-        finally {
+        } finally {
             try {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
@@ -389,42 +391,39 @@ public class DatabaseStoreMysql {
 
     /**
      * Convert entity type into database osm type code
+     *
      * @param entityType type of object to get store database code
      * @return code for store database
      */
-    private String getOsmEntityTypeCode (EntityType entityType){
+    private String getOsmEntityTypeCode(EntityType entityType) {
 
-        if (entityType == EntityType.Relation){
+        if (entityType == EntityType.Relation) {
             return "r";
-        }
-        else if (entityType == EntityType.Way){
+        } else if (entityType == EntityType.Way) {
             return "w";
-        }
-        else if (entityType == EntityType.Node){
+        } else if (entityType == EntityType.Node) {
             return "n";
-        }
-        else if (entityType == EntityType.Bound){
+        } else if (entityType == EntityType.Bound) {
             return "b";
         }
         return "n";
     }
 
 
-
     /**
      * For prepared statements that contains IN section is needed customize SQL because number
      * of question marks is not always the same. This method create set of question marks based on size of list
+     *
      * @param size num of question marks to create
      * @return set of question marks for example "?,?,?"
      */
-    private String createQuestionMarksForINStatement(int size){
+    private String createQuestionMarksForINStatement(int size) {
 
         String str = "";
-        for (int i = 0; i < size; i++){
-            if (i == size -1){
+        for (int i = 0; i < size; i++) {
+            if (i == size - 1) {
                 str += " ?";
-            }
-            else {
+            } else {
                 str += " ?,";
             }
         }
@@ -437,39 +436,38 @@ public class DatabaseStoreMysql {
      * Also compare old non-en values to new one to recognize if new non-english values should be replaced with
      * new EN value
      *
-     * @param newLangs lang mutations to save
-     * @param oldLangs old set of languages to compare with new one. set null for first import
+     * @param newLangs   lang mutations to save
+     * @param oldLangs   old set of languages to compare with new one. set null for first import
      * @param strictMode Set <code>true</code> method raise exception if default EN value is not defined (useful for names)
      * @return
      * @throws RuntimeException
      */
     protected Map<String, String> updateMultiLangs(
-            Map<String, String> newLangs, Map<String, String> oldLangs, boolean strictMode) throws RuntimeException{
+            Map<String, String> newLangs, Map<String, String> oldLangs, boolean strictMode) throws RuntimeException {
 
         // check if EN name is defined
         String enName = newLangs.get(Language.ENGLISH.getCode());
-        if (strictMode  && (enName == null || enName.length() == 0)){
+        if (strictMode && (enName == null || enName.length() == 0)) {
             throw new RuntimeException("Text value in english is not defined");
         }
 
         String enNameOld = "";
-        if (oldLangs != null){
+        if (oldLangs != null) {
             enNameOld = oldLangs.get(Language.ENGLISH.getCode());
         }
 
         // check if every language has defined the name if not copy use the EN value, also compare the new value with old
 
-        for (Language language : Language.values()){
+        for (Language language : Language.values()) {
 
             String newName = newLangs.get(language.getCode());
 
-            if (newName != null && newName.length() > 0){
-                if (newName.equals(enNameOld)){
+            if (newName != null && newName.length() > 0) {
+                if (newName.equals(enNameOld)) {
                     // the new name is the same as old en name > use current en name
                     newLangs.put(language.getCode(), enName);
                 }
-            }
-            else {
+            } else {
                 newLangs.put(language.getCode(), enName);
             }
         }

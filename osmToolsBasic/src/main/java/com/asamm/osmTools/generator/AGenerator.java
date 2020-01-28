@@ -3,7 +3,6 @@ package com.asamm.osmTools.generator;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders;
-import com.asamm.osmTools.cmdCommands.CmdExtract;
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;
@@ -12,8 +11,6 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
 import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -30,10 +27,10 @@ public abstract class AGenerator {
     private static final String TAG = AGenerator.class.getSimpleName();
 
 
-
     /**
      * Read base definition XML config file and create structure of mapPacks and maps to generate
-     * @param xmlFile  xml config file to parse
+     *
+     * @param xmlFile xml config file to parse
      * @return
      * @throws IOException
      * @throws XmlPullParserException
@@ -46,8 +43,8 @@ public abstract class AGenerator {
         try {
 
             // test if config file exist
-            if (!xmlFile.exists()){
-                throw new IllegalArgumentException("Config file "+ xmlFile.getAbsolutePath() + " does not exist!" );
+            if (!xmlFile.exists()) {
+                throw new IllegalArgumentException("Config file " + xmlFile.getAbsolutePath() + " does not exist!");
             }
 
             // prepare variables
@@ -79,7 +76,6 @@ public abstract class AGenerator {
                         // set boundaries from polygons
 
                         map.setBoundsFromPolygon();
-
 
 
                         // finally add map to container
@@ -135,11 +131,11 @@ public abstract class AGenerator {
 
                 // test if file for extract exist. If yes don't add it into ar
                 String writeFileLocation = actualMap.getPathSource();
-                if (!new File(writeFileLocation).exists()){
-                    Logger.i(TAG, "Add map for extraction: " +writeFileLocation );
+                if (!new File(writeFileLocation).exists()) {
+                    Logger.i(TAG, "Add map for extraction: " + writeFileLocation);
                     itemsToExtract.add(actualMap);
                 } else {
-                    Logger.i(TAG, "Map for extraction: " +writeFileLocation+ " already exist. No action performed" );
+                    Logger.i(TAG, "Map for extraction: " + writeFileLocation + " already exist. No action performed");
                 }
             }
         }
@@ -152,7 +148,7 @@ public abstract class AGenerator {
             String key = keys.next();
             List<ItemMap> ar = mapTableBySourceId.get(key);
             if (ar.isEmpty()) {
-                Logger.i(TAG, "Skip for source: " +key);
+                Logger.i(TAG, "Skip for source: " + key);
                 continue;
             }
 
@@ -161,31 +157,25 @@ public abstract class AGenerator {
         }
 
         // sort by availability
-        Collections.sort(sources, new Comparator<String>() {
+        sources.sort((source1, source2) -> {
+            // get required parameters
+            String file1 = ms.getMapById(source1).getPathSource();
+            boolean ex1 = new File(file1).exists();
+            String file2 = ms.getMapById(source2).getPathSource();
+            boolean ex2 = new File(file2).exists();
 
-            @Override
-            public int compare(String source1, String source2) {
-                // get required parameters
-                String file1 = ms.getMapById(source1).getPathSource();
-                boolean ex1 = new File(file1).exists();
-                String file2 = ms.getMapById(source2).getPathSource();
-                boolean ex2 = new File(file2).exists();
-
-                // compare data
-                if (ex1) {
-                    return -1;
-                } else if (ex2) {
-                    return 1;
-                } else {
-                    return 0;
-                }
+            // compare data
+            if (ex1) {
+                return -1;
+            } else if (ex2) {
+                return 1;
+            } else {
+                return 0;
             }
         });
 
-
         // write to log and start stop watch
         TimeWatch time = new TimeWatch();
-
 
         // finally handle data
         for (int i = 0, m = sources.size(); i < m; i++) {
@@ -203,17 +193,17 @@ public abstract class AGenerator {
 
             CmdExtractOsmium ceo = new CmdExtractOsmium(ms, sourceId);
             boolean completeRelations = false;
-            for (int j=0, size = ar.size(); j < size; j++){
+            for (int j = 0, size = ar.size(); j < size; j++) {
                 ItemMap map = ar.get(j);
                 Logger.i(TAG, "Add map for extraction: " + map.getName());
                 ceo.addExtractMap(map);
 
-                if (map.hasAction(Parameters.Action.GENERATE)){
+                if (map.hasAction(Parameters.Action.GENERATE)) {
                     completeRelations = true;
                 }
 
                 // export only 10 maps in one step due to memory limitation
-                if (j!= 0 && j % 10 == 0){
+                if (j != 0 && j % 10 == 0) {
                     ceo.createCmd(completeRelations);
 
                     Logger.i(TAG, ceo.getCmdLine());
@@ -222,14 +212,14 @@ public abstract class AGenerator {
                     ceo = new CmdExtractOsmium(ms, sourceId);
                 }
             }
-            if (ceo.hasMapForExtraction()){
+            if (ceo.hasMapForExtraction()) {
                 // process the rest of map
                 ceo.createCmd(completeRelations);
                 Logger.i(TAG, ceo.getCmdLine());
                 ceo.execute();
             }
 
-            Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+            Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
         }
 
         // execute extract also on sub-packs
@@ -263,13 +253,13 @@ public abstract class AGenerator {
             ItemMap sourceMap = mapSource.getMapById(entry.getKey());
             List<ItemMap> mapToCreate = entry.getValue();
 
-            if (mapToCreate.size() == 0){
+            if (mapToCreate.size() == 0) {
                 continue;
             }
 
             // filter only boundary values from source
             CmdCountryBorders cmdCBfilter = new CmdCountryBorders(sourceMap, storageType);
-            if (!cmdCBfilter.getFilteredTempMap().exists()){
+            if (!cmdCBfilter.getFilteredTempMap().exists()) {
                 cmdCBfilter.addTaskFilter();
                 Logger.i(TAG, "Filter for generation country bound, command: " + cmdCBfilter.getCmdLine());
                 cmdCBfilter.execute();
@@ -278,7 +268,7 @@ public abstract class AGenerator {
             CmdCountryBorders cmdBorders = new CmdCountryBorders(sourceMap, storageType);
             cmdBorders.addGeneratorCountryBoundary();
             cmdBorders.addCountries(mapToCreate);
-            Logger.i(TAG, "Generate country boundary, command: " + cmdBorders.getCmdLine() );
+            Logger.i(TAG, "Generate country boundary, command: " + cmdBorders.getCmdLine());
             cmdBorders.execute();
 
             // delete tmp file
@@ -288,10 +278,11 @@ public abstract class AGenerator {
 
     /**
      * For every source prepare list of maps that can be generated from source
+     *
      * @param mp source mappack that can be used as source for generated counties boundaries
      * @return
      */
-    protected Map<String, List<ItemMap>> prepareMapsForSource (
+    protected Map<String, List<ItemMap>> prepareMapsForSource(
             ItemMapPack mp, ConfigurationCountry.StorageType storageType) {
 
         // map where key is mappack id and value is list of map to generate boundaries from source
@@ -299,7 +290,6 @@ public abstract class AGenerator {
 
         // fill hash table with values in first step proccess map in mappack
         for (ItemMap map : mp.getMaps()) {
-
 
 
             if (!map.hasAction(Parameters.Action.GENERATE)
@@ -327,10 +317,10 @@ public abstract class AGenerator {
         }
 
         // now get submaps for mappack and their mappack...
-        for (ItemMapPack mapPack : mp.getMapPacks()){
+        for (ItemMapPack mapPack : mp.getMapPacks()) {
 
             // for every map pack get country boundaries that will be generated
-            Map<String, List<ItemMap>> sourcesSubMap = prepareMapsForSource(mapPack,storageType);
+            Map<String, List<ItemMap>> sourcesSubMap = prepareMapsForSource(mapPack, storageType);
 
             // combine result with parent source map
             for (Map.Entry<String, List<ItemMap>> entry : sourcesSubMap.entrySet()) {
@@ -346,6 +336,4 @@ public abstract class AGenerator {
 
         return mapTableBySourceId;
     }
-
-
 }

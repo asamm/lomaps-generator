@@ -10,14 +10,18 @@ project('osmToolsDataWriter') {
 
 allprojects {
     repositories {
-       mavenCentral()
+        jcenter()
+        mavenCentral()
     }
 }
 
 // Configuration for all plain Java projects
 
-project.ext.javaprojects = ["mapsforge-core", "mapsforge-map-writer",
-                            "osmToolsCore", "osmToolsBasic", "osmToolsDataWriter"]
+project.ext.javaprojects = ["mapsforge-core",
+                            "mapsforge-map-writer",
+                            "osmToolsCore",
+                            "osmToolsBasic",
+                            "osmToolsDataWriter"]
 
 configure(filterProjects(project.javaprojects)) {
     apply plugin: 'java'

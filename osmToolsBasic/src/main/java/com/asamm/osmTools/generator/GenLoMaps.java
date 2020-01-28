@@ -25,14 +25,17 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
  * Created by voldapet on 2016-09-16 .
  */
-public class GenLoMaps extends  AGenerator{
+public class GenLoMaps extends AGenerator {
 
     private static final String TAG = GenLoMaps.class.getSimpleName();
 
@@ -51,7 +54,7 @@ public class GenLoMaps extends  AGenerator{
         List<Parameters.Action> actionList = Parameters.getActions();
 
         // are there any data in mappack?
-        if (!mMapSource.hasData()){
+        if (!mMapSource.hasData()) {
             Logger.w(TAG, "No data was obtain from config xml");
             return;
         }
@@ -74,15 +77,15 @@ public class GenLoMaps extends  AGenerator{
                     continue;
                 }
 
-                if (action == Parameters.Action.ADDRESS_POI_DB){
-                    actionCountryBorder (mp, mMapSource, ConfigurationCountry.StorageType.GEOJSON);
+                if (action == Parameters.Action.ADDRESS_POI_DB) {
+                    actionCountryBorder(mp, mMapSource, ConfigurationCountry.StorageType.GEOJSON);
                 }
 
                 actionAllInOne(mp, action);
             }
 
             // needs to write definition JSON to file (in case that map was generated)
-            if (action == Parameters.Action.CREATE_JSON){
+            if (action == Parameters.Action.CREATE_JSON) {
                 UploadDefinitionCreator.getInstace().writeToFile();
             }
 
@@ -95,8 +98,6 @@ public class GenLoMaps extends  AGenerator{
     }
 
 
-
-
     private void printLogHeader(Parameters.Action action) {
         String line = "================ " + action.getLabel().toUpperCase() + " ================\n";
         Logger.i(TAG, line);
@@ -105,16 +106,17 @@ public class GenLoMaps extends  AGenerator{
 
     /**************************************************/
     /*                PERFORM ACTIONS                 */
+
     /**************************************************/
 
     public void actionAllInOne(ItemMapPack mp, Parameters.Action action)
             throws Exception {
 
         // iterate over all maps and perform actions
-        for (int i = 0, m = mp.getMapsCount(); i < m; i++){
+        for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
             ItemMap map = mp.getMap(i);
 
-            switch (action){
+            switch (action) {
                 //download
                 case DOWNLOAD:
                     actionDownload(map);
@@ -134,7 +136,7 @@ public class GenLoMaps extends  AGenerator{
                     actionTourist(map);
                     break;
                 case TRANFORM:
-                    actionTransformData (map);
+                    actionTransformData(map);
                 case CONTOUR:
                     actionContour(map);
                     break;
@@ -155,11 +157,10 @@ public class GenLoMaps extends  AGenerator{
         }
 
         // iterate over all MapPacks and call same function on them
-        for (int i = 0, m = mp.getMapPackCount(); i < m; i++){
+        for (int i = 0, m = mp.getMapPackCount(); i < m; i++) {
             actionAllInOne(mp.getMapPack(i), action);
         }
     }
-
 
 
     private class PackForExtract {
@@ -242,7 +243,7 @@ public class GenLoMaps extends  AGenerator{
         // check if DB file exits and we should overwrite it
         if (!Parameters.isRewriteFiles() && new File(map.getPathAddressPoiDb()).exists()) {
             Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
-                    "' already exist - skipped." );
+                    "' already exist - skipped.");
             return;
         }
 
@@ -254,7 +255,7 @@ public class GenLoMaps extends  AGenerator{
         // firstly simplify source file
         CmdLoMapsDbPlugin cmdPoiFilter = new CmdLoMapsDbPlugin(map);
         cmdPoiFilter.addTaskSimplifyForPoi(definition);
-        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine() );
+        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine());
         cmdPoiFilter.execute(0, true);
 
         // now execute db poi generating
@@ -271,7 +272,7 @@ public class GenLoMaps extends  AGenerator{
 
         CmdLoMapsDbPlugin cmdAddres = new CmdLoMapsDbPlugin(map);
         cmdAddres.addGeneratorAddress();
-        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine() );
+        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine());
         cmdAddres.execute(0, false);
 
         // delete tmp file
@@ -289,9 +290,9 @@ public class GenLoMaps extends  AGenerator{
         }
 
         // check if file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles()  && new File(map.getPathCoastline()).exists()){
+        if (!Parameters.isRewriteFiles() && new File(map.getPathCoastline()).exists()) {
             Logger.i(TAG, "File with land area " + map.getPathCoastline()
-                    + " already exist - skipped." );
+                    + " already exist - skipped.");
             return;
         }
 
@@ -308,20 +309,20 @@ public class GenLoMaps extends  AGenerator{
         }
 
         // check if file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles()  && new File(map.getPathTourist()).exists()){
+        if (!Parameters.isRewriteFiles() && new File(map.getPathTourist()).exists()) {
             Logger.i(TAG, "File with tourist path " + map.getPathTourist()
-                    + " already exist - skipped." );
+                    + " already exist - skipped.");
             return;
         }
 
         // test if source file exist
-        if (!new File (map.getPathSource()).exists()){
+        if (!new File(map.getPathSource()).exists()) {
             throw new IllegalArgumentException("Input file for creation tourist path "
-                    +map.getPathSource()+" does not exist!");
+                    + map.getPathSource() + " does not exist!");
         }
 
         // start tourist
-        Tourist tourist =  new Tourist(map);
+        Tourist tourist = new Tourist(map);
 
         // write to log and start stop watch
         TimeWatch time = new TimeWatch();
@@ -345,7 +346,7 @@ public class GenLoMaps extends  AGenerator{
         }
 
         // check if output file with transformed data already exist
-        if (!Parameters.isRewriteFiles()  && new File(map.getPathTranform()).exists()){
+        if (!Parameters.isRewriteFiles() && new File(map.getPathTranform()).exists()) {
             Logger.i(TAG, "File with transformed data, already exist. Skip data transform action; path: "
                     + map.getPathTranform());
             return;
@@ -353,15 +354,14 @@ public class GenLoMaps extends  AGenerator{
 
         CmdTransformData cdt = new CmdTransformData(map);
         cdt.addDataTransform();
-        Logger.i(TAG, "Transform custom OSM data, command: " + cdt.getCmdLine() );
+        Logger.i(TAG, "Transform custom OSM data, command: " + cdt.getCmdLine());
         cdt.execute();
     }
 
 
-
     // ACTION CONTOUR
 
-    private void actionContour(ItemMap map) throws IOException, InterruptedException{
+    private void actionContour(ItemMap map) throws IOException, InterruptedException {
         // check if we want to do this action
         if (!map.hasAction(Parameters.Action.CONTOUR)) {
             return;
@@ -375,8 +375,8 @@ public class GenLoMaps extends  AGenerator{
 
         // write to log and start stop watch
         TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nContour: "+map.getName()+" ...");
-        Logger.i(TAG, "Creating contours: "+map.getPathContour());
+        Main.mySimpleLog.print("\nContour: " + map.getName() + " ...");
+        Logger.i(TAG, "Creating contours: " + map.getPathContour());
 
         // create commands for generation contours
         CmdContour cc = new CmdContour(map);
@@ -384,11 +384,10 @@ public class GenLoMaps extends  AGenerator{
         String cmdRunLastLine = cc.execute();
 
 
-
         // test if exist noSRTM file, delete it before try to create new, because rename new contour
-        File contourNoSrtm = new File (map.getPathContour()+"."+Parameters.contourNoSRTM);
-        if (contourNoSrtm.exists()){
-            if (!contourNoSrtm.delete()){
+        File contourNoSrtm = new File(map.getPathContour() + "." + Parameters.contourNoSRTM);
+        if (contourNoSrtm.exists()) {
+            if (!contourNoSrtm.delete()) {
                 throw new IllegalArgumentException("Can not delete file: " + contourNoSrtm.getAbsolutePath());
             }
         }
@@ -398,7 +397,7 @@ public class GenLoMaps extends  AGenerator{
         if (cmdRunLastLine.toLowerCase().contains("no files for this area")) {
             Utils.createEmptyFile(map.getPathContour() + "." + Parameters.contourNoSRTM);
             Main.mySimpleLog.print("\t\t\t no SRTM data");
-            Logger.i(TAG, "No SRTM data for map: "+map.getPathContour());
+            Logger.i(TAG, "No SRTM data for map: " + map.getPathContour());
             //STOP TIMEWATCH
             time = null;
         }
@@ -410,7 +409,7 @@ public class GenLoMaps extends  AGenerator{
             cs.createCmdSort();
             cs.execute();
             cs.rename();
-            Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+            Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
 
             // stop timeWatch
             time.stopCount();
@@ -419,7 +418,7 @@ public class GenLoMaps extends  AGenerator{
 
     // ACTION MERGE
 
-    private void actionMerge(ItemMap map) throws IOException, InterruptedException{
+    private void actionMerge(ItemMap map) throws IOException, InterruptedException {
 
         if (!map.hasAction(Parameters.Action.GENERATE)) {
             return;
@@ -433,14 +432,14 @@ public class GenLoMaps extends  AGenerator{
         Logger.i(TAG, "merge:" + isContour + ", " + isTourist + ", " + isCoastline);
         if (!map.hasAction(Parameters.Action.CONTOUR) &&
                 !map.hasAction(Parameters.Action.TOURIST) &&
-                !isCoastline){
+                !isCoastline) {
             //Nothing for merginf map will be skipped
             //System.out.println("Nic pro "+map.name);
             return;
         }
 
         // test if merged file already exist
-        if (!Parameters.isRewriteFiles()  && new File (map.getPathMerge()).exists()) {
+        if (!Parameters.isRewriteFiles() && new File(map.getPathMerge()).exists()) {
             // nothing to do file already exist
             Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist");
             //set information that map is merged
@@ -449,41 +448,40 @@ public class GenLoMaps extends  AGenerator{
         }
 
         // test if file with flag no srtm exist
-        boolean existNoSrtm = new File(map.getPathContour()+"."+Parameters.contourNoSRTM).exists();
-        if (isContour){
+        boolean existNoSrtm = new File(map.getPathContour() + "." + Parameters.contourNoSRTM).exists();
+        if (isContour) {
             if (!new File(map.getPathContour()).exists() && !existNoSrtm) {
                 //there no file
-                throw new IllegalArgumentException ("Contour lines: "+map.getPathContour()+ " does not exist");
-            }
-            else if (existNoSrtm && !new File(map.getPathContour()).exists()){
+                throw new IllegalArgumentException("Contour lines: " + map.getPathContour() + " does not exist");
+            } else if (existNoSrtm && !new File(map.getPathContour()).exists()) {
                 //no SRTM exist -> contour will not be merged
                 isContour = false;
             }
         }
 
-        if (isTourist && !new File (map.getPathTourist()).exists()){
-            throw new IllegalArgumentException ("Tourist path: "+map.getPathContour()+ " does not exist.");
+        if (isTourist && !new File(map.getPathTourist()).exists()) {
+            throw new IllegalArgumentException("Tourist path: " + map.getPathContour() + " does not exist.");
         }
-        if (isCoastline && !new File (map.getPathCoastline()).exists()){
-            throw new IllegalArgumentException("Coastlines path: "+ map.getPathCoastline() + " does not exist.");
+        if (isCoastline && !new File(map.getPathCoastline()).exists()) {
+            throw new IllegalArgumentException("Coastlines path: " + map.getPathCoastline() + " does not exist.");
         }
 
         // test if extracted map exist
-        if (!new File(map.getPathSource()).exists()){
-            throw new IllegalArgumentException ("Extracted base map for merging: " +
+        if (!new File(map.getPathSource()).exists()) {
+            throw new IllegalArgumentException("Extracted base map for merging: " +
                     map.getPathSource() + " does not exist.");
         }
 
         TimeWatch time = new TimeWatch();
         // prepare cmd line and string for log
-        String logStr = "Merging maps: "+map.getPathSource() +" and ";
+        String logStr = "Merging maps: " + map.getPathSource() + " and ";
         CmdMerge cm = new CmdMerge(map);
         cm.createCmd();
 
-        Main.mySimpleLog.print("\nMarging: "+map.getName()+" ...");
-        Logger.i(TAG, "Merge map parts, command: " + cm.getCmdLine() );
+        Main.mySimpleLog.print("\nMarging: " + map.getName() + " ...");
+        Logger.i(TAG, "Merge map parts, command: " + cm.getCmdLine());
         cm.execute();
-        Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
         time.stopCount();
 
         //set information about margin
@@ -496,22 +494,22 @@ public class GenLoMaps extends  AGenerator{
 
         // generate contour lines
         if (map.hasAction(Parameters.Action.GENERATE) && map.getContourSep().equals("yes")) {
-            if (Parameters.isRewriteFiles()  || !new File(map.getPathGenerateContour()).exists()){
+            if (Parameters.isRewriteFiles() || !new File(map.getPathGenerateContour()).exists()) {
                 CmdGenerate cgc = new CmdGenerate((map));
                 cgc.createCmdContour();
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Generating separated contour map: "+map.getPathGenerateContour());
+                Logger.i(TAG, "Generating separated contour map: " + map.getPathGenerateContour());
 
-                Main.mySimpleLog.print("\nGenerate contours: "+map.getName()+" ...");
+                Main.mySimpleLog.print("\nGenerate contours: " + map.getName() + " ...");
                 cgc.execute();
 
                 // clean tmp
                 Logger.i(TAG, "Deleting files in tmp dir: " + Consts.DIR_TMP);
                 Utils.deleteFilesInDir(Consts.DIR_TMP);
 
-                Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
 
             } else {
                 Logger.i(TAG, "Generated contourlines " + map.getPathGenerateContour()
@@ -519,33 +517,33 @@ public class GenLoMaps extends  AGenerator{
             }
         }
 
-        if (map.hasAction(Parameters.Action.GENERATE)){
-            if (Parameters.isRewriteFiles()  || !new File(map.getPathGenerate()).exists()){
+        if (map.hasAction(Parameters.Action.GENERATE)) {
+            if (Parameters.isRewriteFiles() || !new File(map.getPathGenerate()).exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
                 cg.createCmd();
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Generating map: "+map.getPathGenerate());
-                Logger.i(TAG, "Generating map cmd: "+cg.getCmdLine());
+                Logger.i(TAG, "Generating map: " + map.getPathGenerate());
+                Logger.i(TAG, "Generating map cmd: " + cg.getCmdLine());
 
-                Main.mySimpleLog.print("\nGenerate: "+map.getName()+" ...");
+                Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
                 cg.execute(2, true);
 
                 // clean tmp
-                Logger.i(TAG, "Deleting files in tmp dir: "+Consts.DIR_TMP);
+                Logger.i(TAG, "Deleting files in tmp dir: " + Consts.DIR_TMP);
                 Utils.deleteFilesInDir(Consts.DIR_TMP);
 
-                Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
             } else {
-                Logger.i(TAG, "Generated map "+map.getPathGenerate()+ " already exists. Nothing to do.");
+                Logger.i(TAG, "Generated map " + map.getPathGenerate() + " already exists. Nothing to do.");
             }
         }
     }
 
     // ACTION META TABLE
 
-    private void actionInsertMetaData (ItemMap itemMap) throws Exception {
+    private void actionInsertMetaData(ItemMap itemMap) throws Exception {
 
         if (!itemMap.hasAction(Parameters.Action.ADDRESS_POI_DB) || !itemMap.hasAction(Parameters.Action.GENERATE)) {
             return;
@@ -572,12 +570,12 @@ public class GenLoMaps extends  AGenerator{
         Geometry geom = WriterAddressDefinition.createDbGeom(
                 itemMap.getPathJsonPolygon(), itemMap.getPathCountryBoundaryGeoJson());
 
-        if (!geom.isValid()){
+        if (!geom.isValid()) {
             geom = GeomUtils.fixInvalidGeom(geom);
         }
 
 
-        if ( !geom.isValid() || geom.isEmpty() || geom.getArea() == 0){
+        if (!geom.isValid() || geom.isEmpty() || geom.getArea() == 0) {
             Logger.i(TAG, GeomUtils.geomToGeoJson(geom));
             throw new IllegalArgumentException("Country map geom is not valid, map : " + itemMap.getName());
         }
@@ -600,16 +598,16 @@ public class GenLoMaps extends  AGenerator{
 
     // ACTION COMPRESS
 
-    private void actionCompress(ItemMap map) throws IOException{
+    private void actionCompress(ItemMap map) throws IOException {
 
-        if (!map.hasAction(Parameters.Action.GENERATE) && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+        if (!map.hasAction(Parameters.Action.GENERATE) && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)) {
             // map hasn't any result file for compress
             return;
         }
 
         if (!Parameters.isRewriteFiles() && new File(map.getPathResult()).exists()) {
             Logger.d(TAG, "File with compressed result '" + map.getPathResult() +
-                    "' already exist - skipped." );
+                    "' already exist - skipped.");
             return;
         }
 
@@ -620,10 +618,10 @@ public class GenLoMaps extends  AGenerator{
         // change lastChange attribute of generated file
         // this workaround how to set date of map file in Locus
         List<String> filesToCompress = new ArrayList<>();
-        if (map.hasAction(Parameters.Action.GENERATE)){
+        if (map.hasAction(Parameters.Action.GENERATE)) {
             File mapFile = new File(map.getPathGenerate());
-            if (!mapFile.exists()){
-                throw new IllegalArgumentException("Map file for compression: " + map.getPathGenerate()+" does not exist.");
+            if (!mapFile.exists()) {
+                throw new IllegalArgumentException("Map file for compression: " + map.getPathGenerate() + " does not exist.");
             }
             // rewrite bytes in header to set new creation date
             RandomAccessFile raf = new RandomAccessFile(mapFile, "rw");
@@ -634,11 +632,11 @@ public class GenLoMaps extends  AGenerator{
             filesToCompress.add(map.getPathGenerate());
         }
 
-        if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)){
+        if (map.hasAction(Parameters.Action.ADDRESS_POI_DB)) {
 
             File poiDbFile = new File(map.getPathAddressPoiDb());
             if (!poiDbFile.exists()) {
-                throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb()+" does not exist.");
+                throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb() + " does not exist.");
             }
 
             filesToCompress.add(poiDbFile.getAbsolutePath());
@@ -647,7 +645,7 @@ public class GenLoMaps extends  AGenerator{
         // compress file
         Utils.compressFiles(filesToCompress, map.getPathResult());
 
-        Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }
 
     // ACTION UPLOAD
@@ -662,15 +660,15 @@ public class GenLoMaps extends  AGenerator{
         cmdUpload.createCmd();
         cmdUpload.execute(3);
 
-        Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }
 
     // ACTION CREATE JSON UPLOAD DEFINITION
 
-    public void actionCreateJSON(ItemMap map) throws IOException{
+    public void actionCreateJSON(ItemMap map) throws IOException {
         UploadDefinitionCreator dc = UploadDefinitionCreator.getInstace();
 
-        if (map.hasAction(Parameters.Action.GENERATE)){
+        if (map.hasAction(Parameters.Action.GENERATE)) {
             dc.addMap(map);
         }
     }
