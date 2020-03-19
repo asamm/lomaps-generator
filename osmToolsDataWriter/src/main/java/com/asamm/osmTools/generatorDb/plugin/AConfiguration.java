@@ -1,7 +1,5 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
-import com.asamm.osmTools.generatorDb.utils.Utils;
-
 import java.io.File;
 
 public abstract class AConfiguration {

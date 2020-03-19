@@ -20,8 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.attribute.annotation.*;
-
 /**
  * This class can add annotations to a given parameter annotations attribute.
  * Annotations to be added must have been filled out beforehand.

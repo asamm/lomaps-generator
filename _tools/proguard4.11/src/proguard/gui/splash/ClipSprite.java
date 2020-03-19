@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This Sprite encapsulates another Sprite, which is clipped by a clip Sprite.
  *

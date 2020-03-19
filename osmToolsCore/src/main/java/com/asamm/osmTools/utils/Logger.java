@@ -83,14 +83,11 @@ public class Logger {
         try {
             java.util.logging.Logger logger = java.util.logging.Logger.getLogger("log");
             createLogDir();
-//            mFh = new FileHandler(Parameters.DIR_LOGS + Parameters.FILE_SEP + "world2vec.log");
-//            mFh.setFormatter(new SimpleFormatter());
-//            logger.addHandler(mFh);
             return logger;
         } catch(Exception e) {
             e.printStackTrace();
+            throw new IllegalStateException("Can not create logger");
         }
-        return null;
     }
 
     public static void createLogDir() {

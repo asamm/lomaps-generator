@@ -20,7 +20,6 @@
  */
 package proguard.obfuscate;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.ClassVisitor;
 
 /**

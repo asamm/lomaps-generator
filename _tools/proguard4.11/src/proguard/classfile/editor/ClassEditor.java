@@ -20,8 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-
 /**
  * This class can add interfaces and class members to a given class.
  * Elements to be added must be filled out beforehand, including their

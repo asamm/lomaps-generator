@@ -20,7 +20,6 @@
  */
 package proguard.classfile.constant;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 
 import java.io.UnsupportedEncodingException;

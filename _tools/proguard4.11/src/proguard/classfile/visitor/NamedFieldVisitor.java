@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This class visits ProgramMember objects referring to fields, identified by
  * a name and descriptor pair.

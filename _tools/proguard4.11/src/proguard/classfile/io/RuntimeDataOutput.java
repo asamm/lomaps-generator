@@ -20,8 +20,6 @@
  */
 package proguard.classfile.io;
 
-import java.io.*;
-
 /**
  * This class delegates its method calls to the corresponding DataOutput methods,
  * converting its IOExceptions to RuntimeExceptions.

@@ -20,15 +20,8 @@
  */
 package proguard.shrink;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.annotation.visitor.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.constant.*;
 import proguard.classfile.editor.ConstantPoolRemapper;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 
 import java.util.Arrays;
 

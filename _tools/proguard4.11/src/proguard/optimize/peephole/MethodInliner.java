@@ -20,20 +20,9 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.editor.*;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 import proguard.optimize.KeepMarker;
-import proguard.optimize.info.*;
-
-import java.util.*;
 
 /**
  * This AttributeVisitor inlines short methods or methods that are only invoked

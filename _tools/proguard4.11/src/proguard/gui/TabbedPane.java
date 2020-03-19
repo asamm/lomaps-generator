@@ -20,11 +20,6 @@
  */
 package proguard.gui;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-
-
 /**
  * This <code>Jpanel</code> is similar to a <code>JTabbedPane</code>.
  * It uses buttons on the left-hand side to switch between panels.

@@ -20,8 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
 /**
  * This DataEntryWriter delegates to a given DataEntryWriter, or failing that,
  * to another given DataEntryWriter.

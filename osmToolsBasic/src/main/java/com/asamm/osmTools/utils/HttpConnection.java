@@ -4,6 +4,9 @@
  */
 package com.asamm.osmTools.utils;
 
+import com.asamm.osmTools.Main;
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -13,9 +16,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Hashtable;
 import java.util.Map;
-
-import com.asamm.osmTools.Main;
-import org.apache.commons.io.IOUtils;
 
 /**
  *

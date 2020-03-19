@@ -20,9 +20,7 @@ package org.mapsforge.core.model;
 import org.junit.Test;
 import org.mapsforge.core.util.LatLongUtils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests related to {@link LatLong}.

@@ -4,12 +4,12 @@
  */
 package com.asamm.osmTools.tourist;
 
-import java.util.ArrayList;
-
-import com.asamm.osmTools.utils.Logger;
-import org.kxml2.io.KXmlParser;
 import com.asamm.osmTools.Main;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.SparseArray;
+import org.kxml2.io.KXmlParser;
+
+import java.util.ArrayList;
 
 /**
  *

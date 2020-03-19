@@ -20,11 +20,6 @@
  */
 package proguard.ant;
 
-import org.apache.tools.ant.*;
-import org.apache.tools.ant.types.*;
-import proguard.*;
-
-import java.io.*;
 import java.util.Properties;
 
 /**

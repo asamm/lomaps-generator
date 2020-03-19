@@ -22,7 +22,6 @@ package proguard.optimize.peephole;
 
 import proguard.classfile.ProgramClass;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassVisitor inlines siblings in the program classes that it visits,

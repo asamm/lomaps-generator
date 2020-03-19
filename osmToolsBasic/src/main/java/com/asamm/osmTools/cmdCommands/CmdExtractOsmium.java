@@ -7,9 +7,8 @@ package com.asamm.osmTools.cmdCommands;
     import com.asamm.osmTools.mapConfig.ItemMap;
     import com.asamm.osmTools.mapConfig.MapSource;
     import com.asamm.osmTools.utils.Utils;
-    import org.apache.commons.io.FileUtils;
-    import org.json.simple.JSONArray;
-    import org.json.simple.JSONObject;
+    import net.minidev.json.JSONArray;
+    import net.minidev.json.JSONObject;
 
     import java.io.File;
 
@@ -65,7 +64,7 @@ public class CmdExtractOsmium extends Cmd {
     /**
      * Write temporary config json file to the hdd
      */
-    public void writeConfigJsonFile(){
+    private void writeConfigJsonFile(){
         Utils.writeStringToFile(new File(CONFIG_TMP_JSON_FILE), configJ.toJSONString(), false);
     }
 

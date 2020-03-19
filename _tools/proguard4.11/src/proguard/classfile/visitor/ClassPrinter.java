@@ -20,18 +20,8 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.annotation.visitor.*;
-import proguard.classfile.attribute.preverification.*;
-import proguard.classfile.attribute.preverification.visitor.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
 
 import java.io.PrintStream;
 

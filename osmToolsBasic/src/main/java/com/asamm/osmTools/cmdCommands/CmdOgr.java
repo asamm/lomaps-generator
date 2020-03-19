@@ -5,9 +5,7 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
-import com.asamm.osmTools.generatorDb.address.Boundary;
 import com.asamm.osmTools.mapConfig.ItemMap;
-import com.asamm.osmTools.sea.Boundaries;
 
 import java.io.File;
 

@@ -20,12 +20,8 @@
  */
 package proguard.gui;
 
-import proguard.*;
 import proguard.util.ListUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 

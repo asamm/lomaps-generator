@@ -20,7 +20,6 @@
  */
 package proguard.evaluation;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.CodeAttribute;
 import proguard.classfile.instruction.ConstantInstruction;
 import proguard.evaluation.value.Value;

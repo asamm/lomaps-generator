@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
 /**
  * This interface specifies the methods for a visitor of method parameters or
  * field types (which can be considered parameters when storing values). The

@@ -20,9 +20,6 @@
  */
 package proguard.classfile.util;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
 /**
  * This MemberVisitor lets a given parameter visitor visit all the parameters
  * of the methods that it visits. The parameters do not include or count the

@@ -20,11 +20,8 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
 import java.awt.RenderingHints.Key;
-import java.awt.font.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
 import java.util.Map;

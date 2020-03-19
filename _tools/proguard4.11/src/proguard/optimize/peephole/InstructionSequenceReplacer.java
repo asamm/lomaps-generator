@@ -20,14 +20,10 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.CodeAttribute;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.editor.*;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
+import proguard.classfile.util.InstructionSequenceMatcher;
 
 /**
  * This InstructionVisitor replaces a given pattern instruction sequence by

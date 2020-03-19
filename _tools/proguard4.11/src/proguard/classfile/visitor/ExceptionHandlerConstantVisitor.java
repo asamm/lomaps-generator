@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.ExceptionInfoVisitor;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 

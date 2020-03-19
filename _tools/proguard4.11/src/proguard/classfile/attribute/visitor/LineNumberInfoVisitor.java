@@ -20,10 +20,6 @@
  */
 package proguard.classfile.attribute.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-
-
 /**
  * This interface specifies the methods for a visitor of
  * <code>LineNumberInfo</code> objects. Note that there is only a single

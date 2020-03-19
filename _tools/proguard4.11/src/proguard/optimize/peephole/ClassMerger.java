@@ -20,17 +20,11 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.AttributeNameFilter;
-import proguard.classfile.constant.visitor.*;
-import proguard.classfile.editor.*;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
+import proguard.classfile.editor.AccessFixer;
+import proguard.classfile.editor.ClassReferenceFixer;
+import proguard.classfile.editor.MemberReferenceFixer;
 import proguard.optimize.KeepMarker;
-import proguard.optimize.info.*;
-import proguard.util.*;
-
-import java.util.*;
 
 /**
  * This ClassVisitor inlines the classes that it visits in a given target class,

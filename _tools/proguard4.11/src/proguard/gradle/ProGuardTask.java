@@ -22,16 +22,9 @@ package proguard.gradle;
 
 import groovy.lang.Closure;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.file.*;
-import org.gradle.api.logging.*;
-import org.gradle.api.tasks.*;
-import proguard.*;
 import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 import proguard.util.ListUtil;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * This Task allows to configure and run ProGuard from Gradle.

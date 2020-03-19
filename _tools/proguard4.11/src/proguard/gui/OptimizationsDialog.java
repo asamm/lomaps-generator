@@ -21,12 +21,6 @@
 package proguard.gui;
 
 import proguard.optimize.Optimizer;
-import proguard.util.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-import java.awt.event.*;
 
 /**
  * This <code>JDialog</code> allows the user to enter a String.

@@ -20,10 +20,6 @@
  */
 package proguard.shrink;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
-
 /**
  * This ClassVisitor and MemberVisitor recursively marks all classes
  * and class elements that are being used. For each element, it finds the

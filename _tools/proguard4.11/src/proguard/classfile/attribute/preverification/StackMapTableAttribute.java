@@ -20,8 +20,6 @@
  */
 package proguard.classfile.attribute.preverification;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.preverification.visitor.StackMapFrameVisitor;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 

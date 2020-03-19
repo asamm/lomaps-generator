@@ -22,8 +22,8 @@ package proguard.classfile;
 
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
+import proguard.classfile.util.ClassSubHierarchyInitializer;
+import proguard.classfile.util.ClassSuperHierarchyInitializer;
 
 /**
  * This Clazz is a compact representation of the essential data in a Java class.

@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This VariableColor is constant over time.
  *

@@ -20,7 +20,6 @@
  */
 package proguard.io;
 
-import proguard.classfile.*;
 import proguard.classfile.util.ClassUtil;
 
 import java.io.IOException;

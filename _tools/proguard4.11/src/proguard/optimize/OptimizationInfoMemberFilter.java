@@ -20,9 +20,9 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.MemberVisitor;
-import proguard.optimize.info.*;
+import proguard.optimize.info.FieldOptimizationInfo;
+import proguard.optimize.info.MethodOptimizationInfo;
 
 /**
  * This <code>MemberVisitor</code> delegates its visits to another given

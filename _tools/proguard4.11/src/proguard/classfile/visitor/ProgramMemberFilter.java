@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This <code>MemberVisitor</code> delegates its visits to another given
  * <code>MemberVisitor</code>, but only when visiting members of program

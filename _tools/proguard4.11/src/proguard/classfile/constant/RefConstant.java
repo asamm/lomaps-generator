@@ -20,9 +20,6 @@
  */
 package proguard.classfile.constant;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
 /**
  * This Constant represents a ref constant in the constant pool.
  *

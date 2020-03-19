@@ -24,10 +24,6 @@ import proguard.MemberSpecification;
 import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
 import java.util.List;
 
 

@@ -22,11 +22,8 @@ package proguard.ant;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.types.DataType;
-import proguard.*;
 import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
-
-import java.util.*;
 
 /**
  * This DataType represents a class specification in Ant.

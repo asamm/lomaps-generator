@@ -20,8 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.attribute.*;
-
 /**
  * This class can add line numbers to a given line number table attribute.
  * Line numbers to be added must have been filled out beforehand.

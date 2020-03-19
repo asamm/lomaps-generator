@@ -21,11 +21,7 @@
 package proguard.ant;
 
 import org.apache.tools.ant.BuildException;
-import proguard.*;
 import proguard.classfile.util.ClassUtil;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * This Task allows to configure and run ProGuard from Ant.

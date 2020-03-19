@@ -1,9 +1,9 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.data.RelationEx;
 import com.asamm.osmTools.generatorDb.data.WayEx;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
 import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.TLongList;

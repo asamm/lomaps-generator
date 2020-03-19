@@ -20,14 +20,9 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
 
 /**
  * This AttributeVisitor fixes all inappropriate special/virtual/static/interface

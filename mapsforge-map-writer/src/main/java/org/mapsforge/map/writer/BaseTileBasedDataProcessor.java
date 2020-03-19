@@ -17,41 +17,6 @@
  */
 package org.mapsforge.map.writer;
 
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.TopologyException;
-import org.mapsforge.core.model.BoundingBox;
-import org.mapsforge.core.util.LatLongUtils;
-import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.writer.model.MapWriterConfiguration;
-import org.mapsforge.map.writer.model.NodeResolver;
-import org.mapsforge.map.writer.model.OSMTag;
-import org.mapsforge.map.writer.model.TDNode;
-import org.mapsforge.map.writer.model.TDRelation;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileBasedDataProcessor;
-import org.mapsforge.map.writer.model.TileCoordinate;
-import org.mapsforge.map.writer.model.TileData;
-import org.mapsforge.map.writer.model.TileGridLayout;
-import org.mapsforge.map.writer.model.TileInfo;
-import org.mapsforge.map.writer.model.WayResolver;
-import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
-import org.mapsforge.map.writer.util.GeoUtils;
-import org.mapsforge.map.writer.util.OSMUtils;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TLongObjectHashMap;
@@ -59,6 +24,23 @@ import gnu.trove.map.hash.TShortIntHashMap;
 import gnu.trove.procedure.TObjectProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.TopologyException;
+import org.mapsforge.core.model.BoundingBox;
+import org.mapsforge.core.util.LatLongUtils;
+import org.mapsforge.core.util.MercatorProjection;
+import org.mapsforge.map.writer.model.*;
+import org.mapsforge.map.writer.util.GeoUtils;
+import org.mapsforge.map.writer.util.OSMUtils;
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
+import org.openstreetmap.osmosis.core.domain.v0_6.Way;
+
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, NodeResolver, WayResolver {
 

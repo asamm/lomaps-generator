@@ -20,8 +20,6 @@
  */
 package proguard.obfuscate;
 
-import proguard.classfile.*;
-import proguard.classfile.util.*;
 import proguard.util.ListUtil;
 
 

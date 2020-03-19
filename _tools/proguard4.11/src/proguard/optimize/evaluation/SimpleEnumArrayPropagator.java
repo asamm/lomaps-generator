@@ -20,11 +20,8 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
-import proguard.evaluation.value.*;
-import proguard.optimize.info.*;
+import proguard.optimize.info.SimpleEnumMarker;
 
 /**
  * This ClassVisitor propagates the value of the $VALUES field to the values()

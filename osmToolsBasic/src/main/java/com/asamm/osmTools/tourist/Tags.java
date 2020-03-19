@@ -4,9 +4,9 @@
  */
 package com.asamm.osmTools.tourist;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  *

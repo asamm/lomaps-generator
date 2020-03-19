@@ -20,7 +20,6 @@
  */
 package proguard.classfile.attribute.annotation;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.Attribute;
 import proguard.classfile.attribute.annotation.visitor.ElementValueVisitor;
 import proguard.classfile.attribute.visitor.AttributeVisitor;

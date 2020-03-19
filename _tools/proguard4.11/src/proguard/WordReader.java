@@ -20,9 +20,6 @@
  */
 package proguard;
 
-import java.io.*;
-
-
 /**
  * An abstract reader of words, with the possibility to include other readers.
  * Words are separated by spaces or broken off at delimiters. Words containing

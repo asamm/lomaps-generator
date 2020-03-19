@@ -20,7 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.ClassConstant;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.SimplifiedVisitor;

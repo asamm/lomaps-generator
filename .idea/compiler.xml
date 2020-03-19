@@ -1,30 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <option name="DEFAULT_COMPILER" value="Eclipse" />
-    <wildcardResourcePatterns>
-      <entry name="!?*.java" />
-      <entry name="!?*.form" />
-      <entry name="!?*.class" />
-      <entry name="!?*.groovy" />
-      <entry name="!?*.scala" />
-      <entry name="!?*.flex" />
-      <entry name="!?*.kt" />
-      <entry name="!?*.clj" />
-    </wildcardResourcePatterns>
     <bytecodeTargetLevel>
-      <module name="locusApi_main" target="1.8" />
-      <module name="locusApi_test" target="1.8" />
-      <module name="mapsforge-core_main" target="1.8" />
-      <module name="mapsforge-core_test" target="1.8" />
-      <module name="mapsforge-map-writer_main" target="1.8" />
-      <module name="mapsforge-map-writer_test" target="1.8" />
-      <module name="osmToolsBasic_main" target="1.8" />
-      <module name="osmToolsBasic_test" target="1.8" />
-      <module name="osmToolsCore_main" target="1.8" />
-      <module name="osmToolsCore_test" target="1.8" />
-      <module name="osmToolsDataWriter_main" target="1.8" />
-      <module name="osmToolsDataWriter_test" target="1.8" />
+      <module name="OsmTools.mapsforge-core.main" target="1.8" />
+      <module name="OsmTools.mapsforge-core.test" target="1.8" />
+      <module name="OsmTools.mapsforge-map-writer.main" target="1.8" />
+      <module name="OsmTools.mapsforge-map-writer.test" target="1.8" />
+      <module name="OsmTools.osmToolsBasic.main" target="1.8" />
+      <module name="OsmTools.osmToolsBasic.test" target="1.8" />
+      <module name="OsmTools.osmToolsCore.main" target="1.8" />
+      <module name="OsmTools.osmToolsCore.test" target="1.8" />
+      <module name="OsmTools.osmToolsDataWriter.main" target="1.8" />
+      <module name="OsmTools.osmToolsDataWriter.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

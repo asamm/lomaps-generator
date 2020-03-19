@@ -20,9 +20,6 @@
  */
 package proguard;
 
-import proguard.io.*;
-import proguard.util.*;
-
 import java.util.List;
 
 

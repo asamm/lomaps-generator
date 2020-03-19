@@ -20,9 +20,6 @@
  */
 package proguard.obfuscate;
 
-import java.io.*;
-import java.util.*;
-
 /**
  * This <code>NameFactory</code> generates names that are read from a
  * specified input file.

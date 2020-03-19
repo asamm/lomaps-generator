@@ -20,9 +20,6 @@
  */
 package proguard.classfile.util;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
 /**
  * This class provides methods to find class members in a given class or in its
  * hierarchy.

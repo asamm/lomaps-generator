@@ -20,11 +20,7 @@
  */
 package proguard.shrink;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 
 import java.io.PrintStream;
 

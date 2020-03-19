@@ -20,11 +20,7 @@
  */
 package proguard.ant;
 
-import org.apache.tools.ant.*;
-import proguard.*;
-
 import java.io.IOException;
-import java.util.*;
 
 /**
  * This Task allows to define a ProGuard configuration from Ant.

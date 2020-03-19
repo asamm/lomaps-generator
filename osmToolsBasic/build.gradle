@@ -1,17 +1,36 @@
 configurations { providedCompile }
 
+repositories {
+    // Asamm private repository
+    maven {
+        url "http://repository.asamm.com/repository/maven-public"
+        credentials {
+            username "$asammMavenUser"
+            password "$asammMavenPassword"
+        }
+    }
+
+    // Maven repo
+    maven {
+        url  "http://jcenter.bintray.com"
+    }
+    jcenter()
+}
+
 dependencies {
     compile project(":osmToolsCore")
     compile project(":osmToolsDataWriter")
 
+    compile "com.asamm.locus:api-store:1.2.9"
+
     compile 'org.apache.httpcomponents:httpclient:4.3.4'
     compile 'org.apache.httpcomponents:httpcore:4.3.2'
-    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile group: 'net.minidev', name: 'json-smart', version: '2.3'
     compile 'javax.mail:mail:1.4.1'
     providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
 }
 
-def versionCode = 0.4
+def versionCode = 0.5
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {

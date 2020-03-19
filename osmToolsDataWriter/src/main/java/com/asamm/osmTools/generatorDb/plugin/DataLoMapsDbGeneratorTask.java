@@ -1,6 +1,9 @@
 package com.asamm.osmTools.generatorDb.plugin;
 
-import com.asamm.osmTools.generatorDb.*;
+import com.asamm.osmTools.generatorDb.AGenerator;
+import com.asamm.osmTools.generatorDb.GeneratorAddress;
+import com.asamm.osmTools.generatorDb.GeneratorCountryBoundary;
+import com.asamm.osmTools.generatorDb.GeneratorPoi;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerHdd;
 import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;

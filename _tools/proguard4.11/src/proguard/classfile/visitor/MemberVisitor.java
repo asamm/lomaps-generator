@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This interface specifies the methods for a visitor of
  * <code>ProgramMember</code> objects and <code>LibraryMember</code>

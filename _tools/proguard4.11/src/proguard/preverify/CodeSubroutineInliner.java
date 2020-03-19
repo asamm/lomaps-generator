@@ -20,14 +20,9 @@
  */
 package proguard.preverify;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
 import proguard.classfile.editor.CodeAttributeComposer;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 import proguard.optimize.peephole.BranchTargetFinder;
 
 /**

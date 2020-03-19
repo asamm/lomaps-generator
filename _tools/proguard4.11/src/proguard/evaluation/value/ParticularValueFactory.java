@@ -20,8 +20,6 @@
  */
 package proguard.evaluation.value;
 
-import proguard.classfile.*;
-
 /**
  * This value factory creates particular values.
  *

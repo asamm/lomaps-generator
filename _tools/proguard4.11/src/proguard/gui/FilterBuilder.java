@@ -20,8 +20,6 @@
  */
 package proguard.gui;
 
-import javax.swing.*;
-
 /**
  * This class builds filters corresponding to the selections and names of a
  * given list of check boxes.

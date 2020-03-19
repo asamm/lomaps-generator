@@ -25,10 +25,7 @@ import proguard.classfile.editor.ClassElementSorter;
 import proguard.classfile.visitor.ClassPrinter;
 import proguard.obfuscate.Obfuscator;
 import proguard.optimize.Optimizer;
-import proguard.preverify.*;
 import proguard.shrink.Shrinker;
-
-import java.io.*;
 
 /**
  * Tool for shrinking, optimizing, obfuscating, and preverifying Java classes.

@@ -20,7 +20,8 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
+import proguard.classfile.Clazz;
+import proguard.classfile.Method;
 import proguard.classfile.util.SimplifiedVisitor;
 
 /**

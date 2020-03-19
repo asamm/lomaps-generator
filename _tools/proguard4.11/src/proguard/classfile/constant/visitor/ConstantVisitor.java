@@ -21,7 +21,6 @@
 package proguard.classfile.constant.visitor;
 
 import proguard.classfile.Clazz;
-import proguard.classfile.constant.*;
 
 
 /**

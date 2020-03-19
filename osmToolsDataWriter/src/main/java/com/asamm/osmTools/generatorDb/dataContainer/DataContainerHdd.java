@@ -1,15 +1,15 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.db.DatabaseDataTmp;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.utils.Logger;
 import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
-import java.io.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;

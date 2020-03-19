@@ -20,13 +20,6 @@
  */
 package proguard.classfile.util;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.preverification.*;
-import proguard.classfile.constant.*;
-import proguard.classfile.instruction.*;
-
 /**
  * This abstract utility class allows to implement various visitor interfaces
  * with simplified methods. The provided methods delegate to other versions

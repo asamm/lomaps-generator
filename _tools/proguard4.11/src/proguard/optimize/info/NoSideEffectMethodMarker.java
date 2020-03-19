@@ -20,8 +20,6 @@
  */
 package proguard.optimize.info;
 
-import proguard.classfile.*;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
 
 /**

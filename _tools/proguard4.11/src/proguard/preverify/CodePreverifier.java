@@ -20,19 +20,10 @@
  */
 package proguard.preverify;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.preverification.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.editor.*;
 import proguard.classfile.instruction.InstructionConstants;
 import proguard.classfile.util.SimplifiedVisitor;
 import proguard.classfile.visitor.ClassPrinter;
-import proguard.evaluation.*;
-import proguard.evaluation.value.*;
-import proguard.optimize.evaluation.*;
-
-import java.util.*;
 
 /**
  * This class can preverify methods in program class pools, according to a given

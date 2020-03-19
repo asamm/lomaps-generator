@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
 /**
  * This <code>ClassVisitor</code> delegates its visits to one of two
  * <code>ClassVisitor</code> instances, depending on whether the name of

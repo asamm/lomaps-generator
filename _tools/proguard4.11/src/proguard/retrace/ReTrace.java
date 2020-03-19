@@ -21,11 +21,6 @@
 package proguard.retrace;
 
 import proguard.classfile.util.ClassUtil;
-import proguard.obfuscate.*;
-
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
 
 
 /**

@@ -14,14 +14,13 @@
  */
 package org.mapsforge.map.writer;
 
+import gnu.trove.list.array.TLongArrayList;
 import org.mapsforge.map.writer.model.TDNode;
 import org.mapsforge.map.writer.model.TDWay;
 import org.mapsforge.map.writer.model.TileData;
 
 import java.util.List;
 import java.util.Map;
-
-import gnu.trove.list.array.TLongArrayList;
 
 public class HDTileData extends TileData {
     private final TLongArrayList pois;

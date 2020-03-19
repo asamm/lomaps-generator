@@ -20,11 +20,8 @@
  */
 package proguard.evaluation.value;
 
-import proguard.classfile.*;
 import proguard.classfile.util.ClassUtil;
 import proguard.classfile.visitor.ClassCollector;
-
-import java.util.*;
 
 /**
  * This ReferenceValue represents a partially evaluated reference value.

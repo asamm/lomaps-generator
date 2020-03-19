@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
 /**
  * This <code>MemberVisitor</code> lets a given <code>MemberVisitor</code>
  * visit all members that have the same name and type as the visited methods

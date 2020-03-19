@@ -22,8 +22,6 @@ package proguard.io;
 
 import proguard.classfile.ClassConstants;
 
-import java.io.*;
-
 
 /**
  * This DataEntryWriter writes data entries to individual files in a given

@@ -20,8 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.annotation.*;
 import proguard.classfile.attribute.annotation.visitor.AnnotationVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
 

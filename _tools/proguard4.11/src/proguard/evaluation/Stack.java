@@ -20,8 +20,6 @@
  */
 package proguard.evaluation;
 
-import proguard.evaluation.value.*;
-
 import java.util.Arrays;
 
 /**

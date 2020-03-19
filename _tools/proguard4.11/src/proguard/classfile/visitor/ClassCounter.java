@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
 /**
  * This ClassVisitor counts the number of classes that has been visited.
  *

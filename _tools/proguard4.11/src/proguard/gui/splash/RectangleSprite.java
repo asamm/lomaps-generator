@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This Sprite represents an animated rounded rectangle. It can optionally be filled.
  *

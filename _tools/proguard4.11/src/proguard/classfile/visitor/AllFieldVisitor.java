@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This ClassVisitor lets a given MemberVisitor visit all FieldMember
  * objects of the classes      it visits.

@@ -20,9 +20,6 @@
  */
 package proguard;
 
-import java.io.*;
-import java.util.*;
-
 /**
  * This class checks and prints out information about the GPL.
  *

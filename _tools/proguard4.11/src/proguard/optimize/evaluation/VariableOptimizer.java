@@ -20,11 +20,6 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.editor.*;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
 
 /**

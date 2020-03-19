@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This MemberVisitor     delegates all method calls to a MemberVisitor
  * that can be changed at any time.

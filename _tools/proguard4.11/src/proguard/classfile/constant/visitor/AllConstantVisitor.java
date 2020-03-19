@@ -20,7 +20,6 @@
  */
 package proguard.classfile.constant.visitor;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.ClassVisitor;
 
 

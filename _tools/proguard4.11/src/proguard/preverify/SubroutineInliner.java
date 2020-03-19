@@ -21,9 +21,7 @@
 package proguard.preverify;
 
 import proguard.Configuration;
-import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.AllAttributeVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This class can inline subroutines in methods. This is generally useful (i.e.

@@ -20,9 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.constant.*;
-
 /**
  * This class can add constant pool entries to a given class.
  *

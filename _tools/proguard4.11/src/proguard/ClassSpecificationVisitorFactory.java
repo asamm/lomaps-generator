@@ -20,9 +20,7 @@
  */
 package proguard;
 
-import proguard.classfile.attribute.annotation.visitor.*;
 import proguard.classfile.attribute.visitor.AllAttributeVisitor;
-import proguard.classfile.visitor.*;
 
 import java.util.List;
 

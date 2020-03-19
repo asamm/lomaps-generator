@@ -7,8 +7,6 @@ package com.asamm.osmTools.generatorDb.utils;
  */
 public final class Const {
 
-
-
     // CITY PARAMETERS
 
     /**

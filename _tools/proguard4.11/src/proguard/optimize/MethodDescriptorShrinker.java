@@ -20,14 +20,11 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.editor.ConstantPoolEditor;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
-import proguard.optimize.info.*;
+import proguard.optimize.info.ParameterUsageMarker;
+import proguard.optimize.info.VariableUsageMarker;
 import proguard.optimize.peephole.VariableShrinker;
 
 /**

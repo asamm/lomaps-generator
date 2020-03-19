@@ -20,13 +20,6 @@
  */
 package proguard.shrink;
 
-import proguard.*;
-import proguard.classfile.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.visitor.*;
-
-import java.io.*;
-
 /**
  * This class shrinks class pools according to a given configuration.
  *

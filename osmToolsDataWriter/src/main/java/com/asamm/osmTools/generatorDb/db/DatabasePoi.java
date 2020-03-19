@@ -1,12 +1,11 @@
 package com.asamm.osmTools.generatorDb.db;
 
-import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
+import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.utils.Logger;
 
-import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
-
+import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import javax.naming.directory.InvalidAttributesException;
+import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
 
 
 public class DatabasePoi extends ADatabaseHandler {

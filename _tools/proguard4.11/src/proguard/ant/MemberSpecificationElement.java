@@ -27,8 +27,6 @@ import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 import proguard.util.ListUtil;
 
-import java.util.*;
-
 /**
  * This DataType represents a class member specification in Ant.
  *

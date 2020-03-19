@@ -15,12 +15,7 @@ package com.asamm.osmTools.utils.base64;
 // Sample program to encode a binary file into a Base64 text file.
 // Author: Christian d'Heureuse (www.source-code.biz)
 
-import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * @author menion

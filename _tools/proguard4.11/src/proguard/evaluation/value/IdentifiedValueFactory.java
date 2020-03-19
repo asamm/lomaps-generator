@@ -20,8 +20,6 @@
  */
 package proguard.evaluation.value;
 
-import proguard.classfile.*;
-
 /**
  * This particular value factory attaches a unique ID to any unknown values.
  *

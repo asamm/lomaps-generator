@@ -20,10 +20,8 @@
  */
 package proguard.gui;
 
-import proguard.*;
+import proguard.ProGuard;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.PrintStream;
 
 

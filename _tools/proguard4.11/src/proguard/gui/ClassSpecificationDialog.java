@@ -20,14 +20,9 @@
  */
 package proguard.gui;
 
-import proguard.*;
 import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 
 /**

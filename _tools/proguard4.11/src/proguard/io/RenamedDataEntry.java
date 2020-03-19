@@ -20,8 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
 /**
  * This DataEntry wraps another data entry, returning a different name instead
  * of the wrapped data entry's name.

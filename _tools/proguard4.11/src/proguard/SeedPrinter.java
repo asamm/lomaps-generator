@@ -21,10 +21,8 @@
 package proguard;
 
 import proguard.classfile.ClassPool;
-import proguard.classfile.visitor.*;
-import proguard.optimize.*;
 
-import java.io.*;
+import java.io.IOException;
 
 /**
  * This class prints out the seeds specified by keep options.

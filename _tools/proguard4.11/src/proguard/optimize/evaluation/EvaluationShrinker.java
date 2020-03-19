@@ -20,19 +20,12 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.constant.RefConstant;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.editor.CodeAttributeEditor;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 import proguard.evaluation.TracedStack;
-import proguard.evaluation.value.*;
-import proguard.optimize.info.*;
 
 import java.util.Arrays;
 

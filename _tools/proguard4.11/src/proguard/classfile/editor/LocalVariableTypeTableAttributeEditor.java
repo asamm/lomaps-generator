@@ -20,8 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.attribute.*;
-
 /**
  * This class can add local variables to a given local variable type table
  * attribute.

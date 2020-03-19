@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This <code>ClassVisitor</code> lets a given <code>ClassVisitor</code>
  * travel to the first concrete subclasses down in its hierarchy of abstract

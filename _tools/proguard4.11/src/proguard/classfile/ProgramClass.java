@@ -22,10 +22,8 @@ package proguard.classfile;
 
 import proguard.classfile.attribute.Attribute;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.ClassSubHierarchyInitializer;
-import proguard.classfile.visitor.*;
 
 /**
  * This Clazz is a complete representation of the data in a Java class.

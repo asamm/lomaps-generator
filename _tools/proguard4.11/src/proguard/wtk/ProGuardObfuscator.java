@@ -21,9 +21,6 @@
 package proguard.wtk;
 
 import com.sun.kvem.environment.Obfuscator;
-import proguard.*;
-
-import java.io.*;
 
 
 /**

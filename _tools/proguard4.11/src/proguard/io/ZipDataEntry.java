@@ -22,9 +22,6 @@ package proguard.io;
 
 import proguard.classfile.ClassConstants;
 
-import java.io.*;
-import java.util.zip.*;
-
 /**
  * This <code>DataEntry</code> represents a ZIP entry.
  *

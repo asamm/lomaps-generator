@@ -24,8 +24,7 @@ import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 import proguard.util.ListUtil;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
 
 
 /**

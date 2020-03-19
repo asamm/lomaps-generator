@@ -20,12 +20,8 @@
  */
 package proguard.optimize.info;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.instruction.*;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassPoolVisitor marks all methods that have side effects.

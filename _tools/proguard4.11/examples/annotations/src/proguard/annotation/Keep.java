@@ -6,8 +6,6 @@
  */
 package proguard.annotation;
 
-import java.lang.annotation.*;
-
 /**
  * This annotation specifies not to optimize or obfuscate the annotated class or
  * class member as an entry point.

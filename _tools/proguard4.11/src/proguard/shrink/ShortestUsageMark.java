@@ -20,10 +20,6 @@
  */
 package proguard.shrink;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
-
 /**
  * This class can be used as a mark when keeping classes, class members, and
  * other elements. It can be certain or preliminary. It also contains additional

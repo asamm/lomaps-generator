@@ -20,10 +20,7 @@
  */
 package proguard.io;
 
-import proguard.classfile.*;
 import proguard.classfile.io.ProgramClassWriter;
-
-import java.io.*;
 
 
 /**

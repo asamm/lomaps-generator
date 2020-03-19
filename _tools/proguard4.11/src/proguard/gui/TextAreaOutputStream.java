@@ -20,10 +20,6 @@
  */
 package proguard.gui;
 
-import javax.swing.*;
-import java.io.*;
-
-
 /**
  * This <code>PrintStream</code> appends its output to a given text area.
  *

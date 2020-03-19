@@ -20,9 +20,6 @@
  */
 package proguard;
 
-import java.io.*;
-
-
 /**
  * A <code>WordReader</code> that returns words from an argument list.
  * Single arguments are split into individual words if necessary.

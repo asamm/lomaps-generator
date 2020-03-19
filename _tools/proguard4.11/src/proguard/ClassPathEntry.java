@@ -22,7 +22,6 @@ package proguard;
 
 import proguard.util.ListUtil;
 
-import java.io.*;
 import java.util.List;
 
 

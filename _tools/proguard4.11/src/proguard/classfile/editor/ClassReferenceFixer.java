@@ -20,15 +20,7 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.annotation.visitor.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassVisitor fixes references of constant pool entries, fields,

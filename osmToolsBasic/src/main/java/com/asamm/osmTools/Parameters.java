@@ -9,9 +9,13 @@ import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.List;
 
 /**
  *
@@ -24,7 +28,7 @@ public class Parameters {
     // BASIC PARAMETERS
 
     // flag if files should be rewrote during work. Useful for testing
-    private static boolean mRewriteFiles;
+    private static boolean mRewriteFiles = false;
 
     // ACTION PARAMETERS
 
@@ -117,7 +121,7 @@ public class Parameters {
 
     private static final String mConfigAddressPath = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "config_address.xml";
 
-    private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUpload" + Consts.FILE_SEP + "upload_definition.json";
+    private static final String mUploadDefinitionJsonPath = Consts.DIR_BASE + "storeUploadeDefinition.json";
 
     private static final String mMapDescriptionDefinition = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "map_description_definition.json";
 
@@ -144,7 +148,7 @@ public class Parameters {
     // set basic values
     static {
         mVersionName = "";
-        mActionList = new ArrayList<Action>();
+        mActionList = new ArrayList<>();
         mHgtDir = "hgt"; // default location for SRTM files
         mIsMailing = false;
     }
@@ -158,12 +162,13 @@ public class Parameters {
     private static String mPythonDir;
     private static String mPython2Dir;
     private static String mShp2osmDir;
+    private static String mStoreUploaderPath;
 
+    private static boolean mIsDev = false;
     private static String mPreShellCommand;
     private static String mPostShellCommand;
     // path to graphHopper shell script
     private static String mGraphHopperExe;
-    private static String mStoreUploadScr;
 
     public static String mapOutputFormat = "osm.pbf";  //posibilities: "osm" or "pbf"
     //Contour lines definition 
@@ -172,31 +177,24 @@ public class Parameters {
     public static String contourNoSRTM = "noSRTMdata";
     public static String mTouristTagMapping;
     private static String mContourTagMapping;
-    
-    public static String htmlMapHeaderFile = Consts.DIR_BASE + "config" +
-            Consts.FILE_SEP + "maps_header.html";
-    public static String htmlMapPath;
 
     private static String mCustomDataDir;
     
     // TOURIST
 
-    public static String tagMappingFile;
     public static long touristNodeId    = 15000000000L;
     public static long touristWayId     = 16000000000L;
     public static long contourNodeId    = 18000000000L;
     public static long contourWayId     = 20000000000L;
     public static long costlineBorderId = 22000000000L;
                                     
-    private static String mCoastlineShpFile;
-    
     // by this variable decide if print for every tags new way or only
     // find the phighest parent tags and print only one way with this highest tag 
     public static final boolean printHighestWay = false;
 
-    // the list of bycicle network type
-    public static  Hashtable<String,Integer> bycicleNetworkType = new Hashtable<String, Integer>();
-    public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<String, Integer>();
+    // the list of bicycle network type
+    public static  Hashtable<String,Integer> bycicleNetworkType = new Hashtable<>();
+    public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<>();
     public static  ArrayList<String> hikingColourType;
 
     // description in header of map file
@@ -215,14 +213,9 @@ public class Parameters {
     private static final int mDbDataAddressVersion = 2;
 
 
-
-
-    /***************************************************/
     /*                     GETTERS                     */
-    /***************************************************/
 
     // DEFINED PARAMETERS FROM ARGUMENTS
-
 
     public static boolean isRewriteFiles() {
         return mRewriteFiles;
@@ -289,9 +282,9 @@ public class Parameters {
 
 
     /**
-     * Return defined path to the firectory with static data. If dir is not defined then
+     * Return defined path to the directory with static data. If dir is not defined then
      * working directory is returned
-     * @return
+     * @return path to directory with static data
      */
     public static String getDataDir() {
         if (mDataDir == null || mDataDir.length() == 0){
@@ -318,10 +311,6 @@ public class Parameters {
 
     public static String getShp2osmDir() {
         return mShp2osmDir;
-    }
-
-    public static String getStoreUploadScr() {
-        return mStoreUploadScr;
     }
 
     public static boolean isMailing() {
@@ -354,6 +343,13 @@ public class Parameters {
         return mCustomDataDir;
     }
 
+    public static String getStoreUploaderPath() {
+        return mStoreUploaderPath;
+    }
+
+    public static boolean getIsDev() {
+        return mIsDev;
+    }
 
     // DB META DATA PARAMS
 
@@ -366,9 +362,7 @@ public class Parameters {
     }
 
 
-    /***************************************************/
     /*               BASIC FUNCTIONS                   */
-    /***************************************************/
 
     /**
      * Core function that parse input arguments (defined by user) to
@@ -410,6 +404,13 @@ public class Parameters {
                 setGeneratorType(args[i]);
             }
 
+            if (args[i].equals("--storeUploader") && !args[++i].startsWith("--") ){
+                setStoreUploaderPath(args[i]);
+            }
+
+            if (args[i].equals("--isDev")){
+                setIsDev();
+            }
             // set defined actions
             if (args[i].equals("--actions") && !args[++i].startsWith("--") ){
                 setActions(args[i]);
@@ -448,7 +449,8 @@ public class Parameters {
                     Logger.w(TAG, "Wrong value for argument --email. Possible values yes|no");
                     System.exit(1);
                 }
-            }        }
+            }
+        }
 
            // check parameter 'version'
         if (mVersionName == null || mVersionName.length() == 0) {
@@ -461,6 +463,16 @@ public class Parameters {
             Logger.w(TAG, "parseArgs(), missing argument 'actions'");
             System.exit(1);
         }
+
+        // check if path for to upload script is defined
+        if (getStoreUploaderPath() == null){
+            Logger.w(TAG, "Please define path to Store uploader script. Use parameter  --storeUploader <path>");
+            System.exit(1);
+        }
+        if (! new File(getStoreUploaderPath()).exists()){
+            Logger.w(TAG, "Store uploader script doesn't exist in the location: " + getStoreUploaderPath());
+            System.exit(1);
+        }
     }
 
     /**
@@ -468,6 +480,21 @@ public class Parameters {
      */
     private static void setGeneratorType(String s) {
         genType = GenType.createFromValue(s);
+    }
+
+    /**
+     * Set path to store uploader script
+     * @param path path to uploader
+     */
+    private static void setStoreUploaderPath(String path){
+        mStoreUploaderPath = new File(path).getAbsolutePath().toString();
+    }
+
+    /**
+     * Parse cmd parameter to boolean value if is upload data to dev or prod environment of Locus Store
+     */
+    private static void setIsDev(){
+        mIsDev = true;
     }
 
     /**
@@ -594,9 +621,6 @@ public class Parameters {
         // shp2osm script location
         mShp2osmDir = "shp2osm" + Consts.FILE_SEP + "shp2osm.py";
 
-        // location of script for uploading results
-        mStoreUploadScr = "storeUpload" + Consts.FILE_SEP + "upload.py";
-
         // graphHopper path
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
                 getAbsolutePath();
@@ -679,7 +703,7 @@ public class Parameters {
         // check osmosis directory
         File fileOsmosis = new File(getOsmosisExe());
         if (!fileOsmosis.exists() || !fileOsmosis.isFile()) {
-            throw new IllegalArgumentException("Invalid Osmosis file:" + getOsmosisExe());
+            throw new IllegalArgumentException("Check of osmosis file exists:" + getOsmosisExe());
         }
 
         // check graphHopper directory

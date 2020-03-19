@@ -5,10 +5,7 @@
 package com.asamm.osmTools.utils;
 
 
-import com.asamm.osmTools.Main;
 import com.asamm.osmTools.mapConfig.ItemMap;
-
-import java.io.File;
 
 /**
  *

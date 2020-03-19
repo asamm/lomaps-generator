@@ -20,7 +20,6 @@
  */
 package proguard.classfile.attribute;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.ClassVisitor;
 
 /**

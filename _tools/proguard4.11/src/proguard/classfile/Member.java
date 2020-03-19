@@ -20,8 +20,6 @@
  */
 package proguard.classfile;
 
-import proguard.classfile.visitor.*;
-
 /**
  * Representation of a field or method from a class.
  *

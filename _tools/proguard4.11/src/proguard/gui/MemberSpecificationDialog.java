@@ -25,11 +25,6 @@ import proguard.classfile.ClassConstants;
 import proguard.classfile.util.ClassUtil;
 import proguard.util.ListUtil;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-import java.awt.event.*;
-
 /**
  * This <code>JDialog</code> allows the user to enter a String.
  *

@@ -1,20 +1,26 @@
 package com.asamm.osmTools.server;
 
+import com.asamm.locus.api.v2.server.admin.StoreAdminFile;
+import com.asamm.locus.api.v2.server.admin.StoreAdminItem;
+import com.asamm.locus.api.v2.server.admin.StoreAdminItemListing;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.mapConfig.ItemMap;
+import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
-import com.asamm.store.LocusServerConst;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONStyle;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.apache.commons.io.FileUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -35,26 +41,24 @@ public class UploadDefinitionCreator {
     private static UploadDefinitionCreator instance = null;
 
     // JSON file with general settings for upload
-    private static final String STORE_ITEM_DEFINITION_PATH = "storeUpload/store_item_definition.json";
+    private static final String STORE_ITEM_DEFINITION_PATH = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "default_store_item_definition.json";
+    ;
 
     /**
      * JSON object that hold whole definition of files / store item for uploading
      */
-    private JSONArray jsonItems;
+    private List<StoreAdminItem> storeItems;
 
     /**
      * Contains definition for upload that are common for all maps
      */
     private JSONObject defJson;
 
-
-
     private UploadDefinitionCreator() {
 
-        jsonItems = new JSONArray();
+        storeItems = new ArrayList<>();
 
-
-        JSONParser parser = new JSONParser();
+        JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
 
         Object obj = null;
         try {
@@ -79,24 +83,25 @@ public class UploadDefinitionCreator {
         return instance;
     }
 
+    /**
+     * Add new map to the JSON definition generator
+     * @param map map to add into upload definition
+     */
     public void addMap (ItemMap map){
 
-        Logger.i(TAG, "creating json definition for " + map.getName());
+        Logger.i(TAG, "creating storeAdmin item for " + map.getName());
 
-        JSONObject jsonItem = createJsonItem(map);
-
-        //Logger.i(TAG, "Add json item into array " + jsonItem.toJSONString());
-
-        jsonItems.add(jsonItem);
+        storeItems.add(mapToStoreAdminItem(map));
     }
 
-
-    public void writeToFile() {
+    /**
+     * Write generated upload json into def file
+     */
+    public void writeToJsonDefFile() {
 
         String defString  =  getDefinitionJsonString();
         //Logger.i(TAG, defString);
         File defFile = new File(Parameters.getUploadDefinitionJsonPath());
-
 
         try {
             FileUtils.writeStringToFile(defFile, defString, UTF_8);
@@ -111,27 +116,30 @@ public class UploadDefinitionCreator {
      */
     public String getDefinitionJsonString (){
 
-        if (jsonItems.size() == 0){
+        if (storeItems.size() == 0){
             // no map was created into JSON object so there is nothing to write into file
             Logger.w(TAG,"Array of items definition for upload is empty - nothing to write into upload definition JSON");
             return "";
         }
 
-        JSONObject jsonDef = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
 
-        jsonDef.put(LocusServerConst.JSON_ITEMS, jsonItems);
-        return jsonDef.toJSONString();
+        for (StoreAdminItem sai : storeItems){
+            jsonArray.add(sai.toJson()) ;
+        }
+
+        return jsonArray.toJSONString();
     }
 
     /**
-     * Create JSON that contains needed definition for upload one map
-     * @param map map to create upload JSON
+     * Create Store Item defintion that contains needed definition for upload one map
+     * @param map map to create item definition
      * @return
      */
-    private JSONObject createJsonItem (ItemMap map){
+    private StoreAdminItem mapToStoreAdminItem(ItemMap map){
 
         // create copy from common definition json
-        JSONObject jsonItem = new JSONObject(defJson);
+        StoreAdminItem sai = new StoreAdminItem(defJson);
 
         File resultFile = new File(map.getPathResult());
 
@@ -139,66 +147,42 @@ public class UploadDefinitionCreator {
             throw new IllegalArgumentException("Create definition upload JSON failed: File for uploading does not exist:  "+map.getPathResult());
         }
 
-        JSONArray listing = new JSONArray();
-        JSONArray listingDef = (JSONArray) jsonItem.get(LocusServerConst.LISTING);
+        // set map name to listing
         String name = map.getNameReadable() + ITEM_NAME_VECTOR_POSTFIX;
-
-        Iterator<JSONObject> iterator = listingDef.iterator();
-        while (iterator.hasNext()){
-            // create copy for language of listing
-            JSONObject langJson = new JSONObject(iterator.next());
-            langJson.put(LocusServerConst.NAME,name);
-            listing.add(langJson);
+        for (StoreAdminItemListing sail : sai.getListings()){
+            sail.setName(name);
         }
-        // assing new listing to the item json
-        jsonItem.put(LocusServerConst.LISTING, listing);
 
         // compute loCoins
-        jsonItem.put(LocusServerConst.LOCOINS, computeLocoins(resultFile) );
+        sai.setLoCoins(computeLocoins(resultFile));
 
-        jsonItem.put(LocusServerConst.REGION_IDS, getItemRegion(map.getRegionId()));
+        sai.setRegionDatastoreIds(Arrays.asList(map.getRegionId()));
 
-        jsonItem.put(LocusServerConst.PREFERED_LANG, map.getPrefLang());
-
-        // ------- VERSION --- add JSON object of version
-        JSONObject jsonVersionDef = (JSONObject) jsonItem.get(LocusServerConst.VERSION);
-        jsonItem.put(LocusServerConst.VERSION, createJsonVersion(jsonVersionDef, map));
+        // Version
+        sai.getVersion().setName(Parameters.getVersionName());
+        sai.getVersion().setStoreAdminFile(createJsonFile(map));
 
         // put polygon definition into item obj.
-        jsonItem.put(LocusServerConst.ITEM_AREA, map.getItemAreaGeoJson());
+        sai.setItemArea(map.getItemAreaGeoJson());
 
-        return jsonItem;
-    }
-
-
-
-    private JSONObject createJsonVersion(JSONObject jsonVersion, ItemMap map){
-
-        jsonVersion = new JSONObject(jsonVersion);
-
-        jsonVersion.put(LocusServerConst.NAME, Parameters.getVersionName());
-        jsonVersion.put(LocusServerConst.FILE, createJsonFile(map));
-
-        //Logger.i (TAG, createJsonFile(map).toJSONString());
-        return jsonVersion;
+        return sai;
     }
 
 
     /**
-     * Prepare JSON object where are defined important information for ItemVersionFile
-     * @param map
-     * @return
+     * Prepare Admin file obj where are defined important information for ItemVersionFile
+     * @param map map we create upload definition for
+     * @return item file definition
      */
-    private JSONObject createJsonFile (ItemMap map){
+    private StoreAdminFile createJsonFile (ItemMap map){
 
-        JSONObject jsonFile =  new JSONObject();
-        jsonFile.put(LocusServerConst.FILE_DELETE_SOURCE, true);
-        jsonFile.put(LocusServerConst.FILE_UNPACK, true);
-        jsonFile.put(LocusServerConst.FILE_REFRESH_MAPS, true);
-        jsonFile.put(LocusServerConst.LOCATIONS, map.getPathResult());
-        jsonFile.put(LocusServerConst.DESTINATION_PATH, getClientDestinationPath(map));
+        StoreAdminFile saf = new StoreAdminFile();
+        saf.setClientDeleteSource(true);
+        saf.setClientFileUnpack(true);
+        saf.setLocationPath(map.getPathResult());
+        saf.setClientDestination(getClientDestinationPath(map));
 
-        return jsonFile;
+        return saf;
     }
 
     /**
@@ -242,15 +226,5 @@ public class UploadDefinitionCreator {
      */
     private String getClientDestinationPath (ItemMap map) {
         return Utils.changeSlashToUnix(CLIENT_VECTOR_MAP_DESTINATION + map.getDirGen());
-    }
-
-    /**
-     * Prepare JSONarray from simple array of regionIds
-     * @return
-     */
-    private JSONArray getItemRegion (String regionId){
-        JSONArray jsonRegions = new JSONArray();
-        jsonRegions.add(regionId);
-        return  jsonRegions;
     }
 }

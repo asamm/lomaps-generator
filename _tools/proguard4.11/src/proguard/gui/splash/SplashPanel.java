@@ -22,9 +22,6 @@ package proguard.gui.splash;
 
 import proguard.gui.SwingUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 
 /**

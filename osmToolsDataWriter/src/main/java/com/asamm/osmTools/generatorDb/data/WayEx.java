@@ -1,16 +1,14 @@
 package com.asamm.osmTools.generatorDb.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
-import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Coordinate;
-import locus.api.utils.Utils;
 import org.openstreetmap.osmosis.core.domain.v0_6.CommonEntityData;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 import org.openstreetmap.osmosis.core.domain.v0_6.WayNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Custom definition of OSM way entity object

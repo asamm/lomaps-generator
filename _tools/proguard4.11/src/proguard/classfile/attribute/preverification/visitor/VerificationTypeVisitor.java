@@ -20,9 +20,7 @@
  */
 package proguard.classfile.attribute.preverification.visitor;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.CodeAttribute;
-import proguard.classfile.attribute.preverification.*;
 
 /**
  * This interface specifies the methods for a visitor of

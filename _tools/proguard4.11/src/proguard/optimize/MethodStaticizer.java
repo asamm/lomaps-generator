@@ -20,7 +20,6 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.editor.MethodInvocationFixer;
 import proguard.classfile.util.SimplifiedVisitor;

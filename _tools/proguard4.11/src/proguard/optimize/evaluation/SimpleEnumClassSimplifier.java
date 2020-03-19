@@ -20,17 +20,10 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.*;
-import proguard.classfile.editor.*;
-import proguard.classfile.instruction.*;
+import proguard.classfile.editor.MemberReferenceFixer;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 import proguard.optimize.info.SimpleEnumMarker;
-import proguard.optimize.peephole.*;
 
 /**
  * This ClassVisitor simplifies the classes that it visits to simple enums.

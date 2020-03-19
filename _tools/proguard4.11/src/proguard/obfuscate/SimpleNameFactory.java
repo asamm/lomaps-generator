@@ -20,9 +20,6 @@
  */
 package proguard.obfuscate;
 
-import java.util.*;
-
-
 /**
  * This <code>NameFactory</code> generates unique short names, using mixed-case
  * characters or lower-case characters only.

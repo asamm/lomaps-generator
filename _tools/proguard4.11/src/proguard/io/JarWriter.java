@@ -22,11 +22,6 @@ package proguard.io;
 
 import proguard.classfile.ClassConstants;
 
-import java.io.*;
-import java.util.*;
-import java.util.jar.*;
-import java.util.zip.*;
-
 
 /**
  * This DataEntryWriter sends data entries to a given jar/zip file.

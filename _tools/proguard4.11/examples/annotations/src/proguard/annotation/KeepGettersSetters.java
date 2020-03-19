@@ -6,8 +6,6 @@
  */
 package proguard.annotation;
 
-import java.lang.annotation.*;
-
 /**
  * This annotation specifies to keep all getters and setters of the annotated
  * class from being shrunk, optimized, or obfuscated as entry points.

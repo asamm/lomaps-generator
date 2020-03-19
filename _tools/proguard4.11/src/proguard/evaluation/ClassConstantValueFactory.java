@@ -20,7 +20,6 @@
  */
 package proguard.evaluation;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.ClassConstant;
 import proguard.evaluation.value.ValueFactory;
 

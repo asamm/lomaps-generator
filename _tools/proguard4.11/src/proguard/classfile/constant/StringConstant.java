@@ -20,9 +20,7 @@
  */
 package proguard.classfile.constant;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This Constant represents a string constant in the constant pool.

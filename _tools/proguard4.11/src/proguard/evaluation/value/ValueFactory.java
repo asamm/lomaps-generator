@@ -20,7 +20,6 @@
  */
 package proguard.evaluation.value;
 
-import proguard.classfile.*;
 import proguard.classfile.util.ClassUtil;
 
 /**

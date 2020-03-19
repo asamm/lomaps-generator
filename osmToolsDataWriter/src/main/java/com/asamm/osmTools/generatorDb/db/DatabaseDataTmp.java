@@ -16,7 +16,10 @@ import org.openstreetmap.osmosis.core.store.DynamicStoreClassRegister;
 
 import javax.naming.directory.InvalidAttributesException;
 import java.io.*;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

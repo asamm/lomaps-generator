@@ -20,7 +20,6 @@
  */
 package proguard.shrink;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.MemberVisitor;
 
 /**

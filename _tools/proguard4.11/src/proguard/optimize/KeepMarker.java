@@ -20,9 +20,7 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
 import proguard.classfile.util.MethodLinker;
-import proguard.classfile.visitor.*;
 import proguard.optimize.info.NoSideEffectMethodMarker;
 
 

@@ -20,9 +20,8 @@
  */
 package proguard.ant;
 
-import org.apache.tools.ant.*;
-import org.apache.tools.ant.types.*;
-import proguard.*;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.types.Path;
 import proguard.util.ListUtil;
 
 import java.io.File;

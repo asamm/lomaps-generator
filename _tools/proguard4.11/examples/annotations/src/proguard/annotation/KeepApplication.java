@@ -6,8 +6,6 @@
  */
 package proguard.annotation;
 
-import java.lang.annotation.*;
-
 /**
  * This annotation specifies to keep the annotated class as an application,
  * together with its a main method.

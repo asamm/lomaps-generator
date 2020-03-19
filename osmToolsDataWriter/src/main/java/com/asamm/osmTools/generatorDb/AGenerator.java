@@ -1,13 +1,8 @@
 package com.asamm.osmTools.generatorDb;
 
-import com.asamm.osmTools.generatorDb.data.AOsmObject;
-import com.asamm.osmTools.generatorDb.data.WayEx;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.utils.Logger;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-
-import java.util.List;
 
 public abstract class AGenerator {
 

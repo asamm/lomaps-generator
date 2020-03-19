@@ -20,9 +20,6 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.constant.*;
-import proguard.classfile.instruction.*;
 import proguard.classfile.visitor.ClassPrinter;
 
 /**

@@ -20,9 +20,6 @@
  */
 package proguard.obfuscate;
 
-import java.io.*;
-
-
 /**
  * This class can parse mapping files and invoke a processor for each of the
  * mapping entries.

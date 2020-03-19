@@ -20,8 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
 /**
  * This DataEntryWriter delegates to one of two other DataEntryWriter instances,
  * depending on whether the data entry passes through a given data entry filter

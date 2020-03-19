@@ -9,11 +9,10 @@ import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
-
+import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.apache.commons.io.FileUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 
 import java.io.BufferedReader;
@@ -428,7 +427,7 @@ public class ItemMap extends AItemMap {
             throw new IllegalArgumentException("Can not read JSON polygon file "+fileJsonPolyg.getAbsolutePath());
         }
         // replace line brakes
-        JSONParser parser=new JSONParser();
+        JSONParser parser=new JSONParser(net.minidev.json.parser.JSONParser.DEFAULT_PERMISSIVE_MODE);
         JSONObject obj= null;
         try {
             obj = (JSONObject) parser.parse(jsonPolygon);

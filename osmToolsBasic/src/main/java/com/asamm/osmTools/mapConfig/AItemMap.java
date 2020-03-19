@@ -3,7 +3,6 @@ package com.asamm.osmTools.mapConfig;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Utils;
-
 import org.kxml2.io.KXmlParser;
 
 import java.util.ArrayList;

@@ -20,8 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
 /**
  * This interface describes a data entry, e.g. a ZIP entry, a file, or a
  * directory.

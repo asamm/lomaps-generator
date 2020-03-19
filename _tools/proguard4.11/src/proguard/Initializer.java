@@ -25,12 +25,8 @@ import proguard.classfile.attribute.annotation.visitor.AllElementValueVisitor;
 import proguard.classfile.attribute.visitor.AllAttributeVisitor;
 import proguard.classfile.constant.visitor.AllConstantVisitor;
 import proguard.classfile.instruction.visitor.AllInstructionVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
-import proguard.util.*;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * This class initializes class pools.

@@ -20,11 +20,6 @@
  */
 package proguard.classfile.attribute.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.preverification.*;
-
 /**
  * This AttributeVisitor delegates all visits to each AttributeVisitor
  * in a given list.

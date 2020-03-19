@@ -1,8 +1,5 @@
 package com.asamm.osmTools.generatorDb;
 
-import java.io.File;
-import java.util.List;
-
 import com.asamm.osmTools.generatorDb.data.AOsmObject;
 import com.asamm.osmTools.generatorDb.data.OsmPoi;
 import com.asamm.osmTools.generatorDb.data.WayEx;
@@ -12,6 +9,9 @@ import com.asamm.osmTools.generatorDb.db.DatabasePoi;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+
+import java.io.File;
+import java.util.List;
 
 public class GeneratorPoi extends AGenerator {
 	

@@ -23,7 +23,6 @@ package proguard.optimize.peephole;
 import proguard.classfile.constant.Constant;
 import proguard.classfile.editor.CodeAttributeEditor;
 import proguard.classfile.instruction.Instruction;
-import proguard.classfile.instruction.visitor.*;
 
 /**
  * This InstructionVisitor replaces multiple instruction sequences at once.

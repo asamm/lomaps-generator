@@ -20,16 +20,9 @@
  */
 package proguard.obfuscate;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
 import proguard.classfile.constant.ClassConstant;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.ClassVisitor;
-import proguard.util.*;
-
-import java.util.*;
 
 /**
  * This <code>ClassVisitor</code> comes up with obfuscated names for the

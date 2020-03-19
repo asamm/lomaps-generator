@@ -20,11 +20,6 @@
  */
 package proguard.classfile.util;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
-
-import java.util.*;
-
 /**
  * This ClassVisitor links all corresponding non-private, non-static,
  * non-initializer methods in the class hierarchies of all visited classes.

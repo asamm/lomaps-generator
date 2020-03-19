@@ -21,9 +21,7 @@
 package proguard.preverify;
 
 import proguard.Configuration;
-import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.AllAttributeVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This class can preverify methods in program class pools, according to a given

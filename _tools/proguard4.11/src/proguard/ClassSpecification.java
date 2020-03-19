@@ -20,8 +20,6 @@
  */
 package proguard;
 
-import java.util.*;
-
 /**
  * This class stores a specification of classes and possibly class members.
  * The specification is template-based: the class names and class member names

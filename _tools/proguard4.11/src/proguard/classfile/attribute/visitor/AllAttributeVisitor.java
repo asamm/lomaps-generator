@@ -20,10 +20,7 @@
  */
 package proguard.classfile.attribute.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassVisitor, MemberVisitor, and AttributeVisitor lets a given

@@ -20,8 +20,6 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
 import proguard.optimize.KeepMarker;
 

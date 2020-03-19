@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This interface represents a Font that varies with time.
  *

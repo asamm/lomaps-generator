@@ -21,7 +21,6 @@
 package proguard.classfile.attribute.visitor;
 
 import proguard.classfile.Clazz;
-import proguard.classfile.attribute.*;
 import proguard.classfile.util.SimplifiedVisitor;
 
 /**

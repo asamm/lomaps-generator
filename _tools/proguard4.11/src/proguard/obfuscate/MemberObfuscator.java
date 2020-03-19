@@ -20,11 +20,8 @@
  */
 package proguard.obfuscate;
 
-import proguard.classfile.*;
-import proguard.classfile.util.*;
+import proguard.classfile.util.MethodLinker;
 import proguard.classfile.visitor.MemberVisitor;
-
-import java.util.*;
 
 /**
  * This MemberVisitor obfuscates all class members that it visits.

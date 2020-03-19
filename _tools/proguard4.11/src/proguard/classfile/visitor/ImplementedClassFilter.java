@@ -20,8 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
 /**
  * This <code>ClassVisitor</code> delegates its visits to another given
  * <code>ClassVisitor</code>, except for classes that extend or implement

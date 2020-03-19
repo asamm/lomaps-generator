@@ -9,7 +9,6 @@ import java.io.File;
 import java.sql.*;
 
 import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;
-import static com.asamm.locus.features.loMaps.LoMapsDbConst.COL_ID;
 
 /**
  * Created by voldapet on 2015-10-27 .

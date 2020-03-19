@@ -20,8 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
 /**
  * This DataEntryWriter lets another DataEntryWriter write the parent data
  * entries.

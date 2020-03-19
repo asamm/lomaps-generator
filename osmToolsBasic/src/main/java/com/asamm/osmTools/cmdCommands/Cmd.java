@@ -69,13 +69,13 @@ abstract class Cmd {
         }
         else if (mExternalApp == ExternalApp.STORE_UPLOAD) {
             // add python
-            addCommand(Parameters.getPythonDir());
+            addCommand("java");
 
             // stdout will not be buffered
-            addCommand("-u");
+            addCommand("-jar");
 
             // add path to the script
-            addCommand(Parameters.getStoreUploadScr());
+            addCommand(Parameters.getStoreUploaderPath());
         }
     }
 

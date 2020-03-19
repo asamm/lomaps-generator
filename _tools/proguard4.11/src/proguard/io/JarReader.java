@@ -21,7 +21,6 @@
 package proguard.io;
 
 import java.io.IOException;
-import java.util.zip.*;
 
 /**
  * This DataEntryReader lets a given DataEntryReader read all data entries of

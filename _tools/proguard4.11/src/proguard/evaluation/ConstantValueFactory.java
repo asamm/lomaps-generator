@@ -20,11 +20,8 @@
  */
 package proguard.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.evaluation.value.*;
 
 /**
  * This class creates Value instance that correspond to specified constant pool

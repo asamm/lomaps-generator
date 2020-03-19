@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-import proguard.util.*;
-
 import java.util.List;
 
 /**

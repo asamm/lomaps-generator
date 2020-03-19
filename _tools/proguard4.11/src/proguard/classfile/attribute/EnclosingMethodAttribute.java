@@ -20,9 +20,7 @@
  */
 package proguard.classfile.attribute;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This Attribute represents an enclosing method attribute.

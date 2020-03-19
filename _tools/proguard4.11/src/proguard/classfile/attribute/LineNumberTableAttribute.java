@@ -20,9 +20,6 @@
  */
 package proguard.classfile.attribute;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.visitor.*;
-
 /**
  * This Attribute represents a line number table attribute.
  *

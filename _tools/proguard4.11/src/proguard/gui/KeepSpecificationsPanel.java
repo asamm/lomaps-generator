@@ -20,10 +20,6 @@
  */
 package proguard.gui;
 
-import proguard.*;
-
-import javax.swing.*;
-
 /**
  * This <code>ListPanel</code> allows the user to add, edit, move, and remove
  * KeepClassSpecification entries in a list.

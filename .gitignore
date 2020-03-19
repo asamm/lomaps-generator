@@ -1,0 +1,23 @@
+# Generated files
+bin/
+build/
+captures/
+gen/
+out/
+
+# Gradle files
+.gradle/
+
+# Intellij
+*.iml
+.idea/
+
+gradle/
+goauth_secrets/
+
+# working testing folder with sample data
+_work/
+_logs/
+
+# Tools
+_tools/

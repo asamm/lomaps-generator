@@ -4,13 +4,13 @@
  */
 package com.asamm.osmTools.tourist;
 
+import com.asamm.osmTools.utils.Utils;
+import org.kxml2.io.KXmlParser;
+
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.kxml2.io.KXmlParser;
-
-import com.asamm.osmTools.utils.Utils;
 
 /**
  *

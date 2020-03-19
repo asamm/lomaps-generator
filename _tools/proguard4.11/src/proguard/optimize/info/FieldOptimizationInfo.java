@@ -20,12 +20,8 @@
  */
 package proguard.optimize.info;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
 import proguard.classfile.util.SimplifiedVisitor;
 import proguard.evaluation.ConstantValueFactory;
-import proguard.evaluation.value.*;
 
 /**
  * This class stores some optimization information that can be attached to

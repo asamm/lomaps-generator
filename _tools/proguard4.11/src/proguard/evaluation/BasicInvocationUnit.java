@@ -20,14 +20,9 @@
  */
 package proguard.evaluation;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.CodeAttribute;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.instruction.*;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
-import proguard.evaluation.value.*;
 
 /**
  * This InvocationUnit sets up the variables for entering a method,

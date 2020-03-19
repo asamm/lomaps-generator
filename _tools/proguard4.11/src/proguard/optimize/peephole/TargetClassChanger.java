@@ -20,16 +20,10 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.annotation.visitor.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.editor.*;
+import proguard.classfile.editor.ClassReferenceFixer;
+import proguard.classfile.editor.MemberReferenceFixer;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassVisitor replaces references to classes and class members if the

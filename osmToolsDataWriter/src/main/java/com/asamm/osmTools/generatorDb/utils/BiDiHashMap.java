@@ -3,7 +3,6 @@ package com.asamm.osmTools.generatorDb.utils;
 import gnu.trove.map.hash.THashMap;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by voldapet on 2015-12-02

@@ -20,9 +20,6 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-
 /**
  * This class can add and delete attributes to and from classes, fields,
  * methods, and code attributes. Attributes to be added must be filled out

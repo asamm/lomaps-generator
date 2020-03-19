@@ -20,12 +20,7 @@
  */
 package proguard.io;
 
-import proguard.classfile.*;
-import proguard.classfile.io.*;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.ClassVisitor;
-
-import java.io.*;
 
 /**
  * This DataEntryReader applies a given ClassVisitor to the class

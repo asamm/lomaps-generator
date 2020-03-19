@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This Sprite displays another Sprite in a given time interval.
  * The time of the encapsulated Sprite is shifted by the start time.

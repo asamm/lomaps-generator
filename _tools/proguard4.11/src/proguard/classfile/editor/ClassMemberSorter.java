@@ -20,10 +20,7 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
 import proguard.classfile.visitor.ClassVisitor;
-
-import java.util.*;
 
 /**
  * This ClassVisitor sorts the class members of the classes that it visits.

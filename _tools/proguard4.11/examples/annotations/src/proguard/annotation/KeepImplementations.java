@@ -6,8 +6,6 @@
  */
 package proguard.annotation;
 
-import java.lang.annotation.*;
-
 /**
  * This annotation specifies to keep all implementations or extensions of the
  * annotated class as entry points.

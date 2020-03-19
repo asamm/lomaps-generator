@@ -12,12 +12,7 @@
  ***************************************************************************/
 package com.asamm.osmTools.utils.base64;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author menion

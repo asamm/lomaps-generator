@@ -20,8 +20,6 @@
  */
 package proguard.classfile.util;
 
-import proguard.util.*;
-
 import java.io.PrintStream;
 import java.util.List;
 

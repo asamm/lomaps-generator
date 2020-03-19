@@ -21,7 +21,6 @@
 package proguard.classfile.editor;
 
 import proguard.classfile.ProgramClass;
-import proguard.classfile.attribute.annotation.*;
 
 /**
  * This class can add and delete element values to and from a given target

@@ -20,10 +20,6 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.instruction.*;
 import proguard.classfile.util.SimplifiedVisitor;
 import proguard.optimize.info.ExceptionInstructionChecker;
 

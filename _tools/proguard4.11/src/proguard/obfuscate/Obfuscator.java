@@ -20,17 +20,6 @@
  */
 package proguard.obfuscate;
 
-import proguard.*;
-import proguard.classfile.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.editor.*;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
-import proguard.util.*;
-
-import java.io.*;
-import java.util.*;
-
 /**
  * This class can perform obfuscation of class pools according to a given
  * specification.

@@ -17,12 +17,7 @@ package org.mapsforge.core.model;
 import org.junit.Assert;
 import org.mapsforge.core.util.IOUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 final class TestUtils {
     static void equalsTest(Object object1, Object object2) {

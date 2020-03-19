@@ -6,9 +6,11 @@ import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
 import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
-import com.asamm.osmTools.generatorDb.utils.*;
+import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
+import com.asamm.osmTools.generatorDb.utils.Const;
+import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Envelope;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.File;

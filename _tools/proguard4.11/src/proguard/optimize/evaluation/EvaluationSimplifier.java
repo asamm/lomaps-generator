@@ -20,16 +20,10 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.editor.*;
-import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.ClassPrinter;
 import proguard.evaluation.TracedVariables;
-import proguard.evaluation.value.*;
 import proguard.optimize.info.SideEffectInstructionChecker;
 
 import java.util.Arrays;

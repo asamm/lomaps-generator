@@ -19,10 +19,10 @@ import com.asamm.osmTools.utils.db.DatabaseData;
 import com.asamm.osmTools.utils.io.ZipUtils;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTWriter;
+import net.minidev.json.JSONArray;
+import net.minidev.json.parser.JSONParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
@@ -86,7 +86,7 @@ public class GenLoMaps extends AGenerator {
 
             // needs to write definition JSON to file (in case that map was generated)
             if (action == Parameters.Action.CREATE_JSON) {
-                UploadDefinitionCreator.getInstace().writeToFile();
+                UploadDefinitionCreator.getInstace().writeToJsonDefFile();
             }
 
             // perform remaining actions
@@ -557,7 +557,7 @@ public class GenLoMaps extends AGenerator {
         DatabaseData dbData = new DatabaseData(dbAddressPoiFile);
 
         // read description from definition json
-        JSONParser parser = new JSONParser();
+        JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
         JSONArray descriptionJson = (JSONArray) parser.parse(
                 new FileReader(Parameters.getMapDescriptionDefinitionJsonPath()));
 
@@ -656,9 +656,9 @@ public class GenLoMaps extends AGenerator {
         Logger.i(TAG, "Start action upload ");
         Main.mySimpleLog.print("Uplad data....");
 
-        CmdUpload cmdUpload = new CmdUpload(CmdUpload.UploadAction.UPDATE_ITEM);
+        CmdUpload cmdUpload = new CmdUpload();
         cmdUpload.createCmd();
-        cmdUpload.execute(3);
+        cmdUpload.execute(1);
 
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }
@@ -671,5 +671,6 @@ public class GenLoMaps extends AGenerator {
         if (map.hasAction(Parameters.Action.GENERATE)) {
             dc.addMap(map);
         }
+
     }
 }

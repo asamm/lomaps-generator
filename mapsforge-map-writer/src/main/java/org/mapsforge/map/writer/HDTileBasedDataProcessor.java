@@ -17,34 +17,19 @@
  */
 package org.mapsforge.map.writer;
 
-import org.mapsforge.map.writer.model.MapWriterConfiguration;
-import org.mapsforge.map.writer.model.TDNode;
-import org.mapsforge.map.writer.model.TDRelation;
-import org.mapsforge.map.writer.model.TDWay;
-import org.mapsforge.map.writer.model.TileCoordinate;
-import org.mapsforge.map.writer.model.TileData;
-import org.mapsforge.map.writer.model.TileInfo;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
-import org.openstreetmap.osmosis.core.store.IndexedObjectStore;
-import org.openstreetmap.osmosis.core.store.IndexedObjectStoreReader;
-import org.openstreetmap.osmosis.core.store.NoSuchIndexElementException;
-import org.openstreetmap.osmosis.core.store.SimpleObjectStore;
-import org.openstreetmap.osmosis.core.store.SingleClassObjectSerializationFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.hash.TLongHashSet;
+import org.mapsforge.map.writer.model.*;
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
+import org.openstreetmap.osmosis.core.domain.v0_6.Way;
+import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
+import org.openstreetmap.osmosis.core.store.*;
+
+import java.util.*;
 
 /**
  * A TileBasedDataStore that uses the hard disk as storage device for temporary data structures.

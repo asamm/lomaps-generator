@@ -20,12 +20,10 @@
  */
 package proguard.obfuscate;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.ClassConstant;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.editor.ConstantPoolEditor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This <code>ClassVisitor</code> renames the class names and class member

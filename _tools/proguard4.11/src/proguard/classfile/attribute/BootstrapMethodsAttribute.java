@@ -21,7 +21,6 @@
 package proguard.classfile.attribute;
 
 import proguard.classfile.Clazz;
-import proguard.classfile.attribute.visitor.*;
 
 /**
  * This Attribute represents a bootstrap methods attribute.

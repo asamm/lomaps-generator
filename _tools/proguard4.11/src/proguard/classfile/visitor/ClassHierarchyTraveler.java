@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This <code>ClassVisitor</code> lets a given <code>ClassVisitor</code>
  * optionally travel to the visited class, its superclass, its interfaces, and

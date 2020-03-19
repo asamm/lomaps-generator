@@ -22,8 +22,6 @@ package proguard;
 
 import proguard.classfile.ClassPool;
 import proguard.classfile.util.WarningPrinter;
-import proguard.classfile.visitor.*;
-import proguard.io.*;
 
 import java.io.IOException;
 

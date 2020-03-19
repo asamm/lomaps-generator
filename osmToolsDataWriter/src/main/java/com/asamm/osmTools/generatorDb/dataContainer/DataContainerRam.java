@@ -1,14 +1,16 @@
 package com.asamm.osmTools.generatorDb.dataContainer;
 
-import java.util.*;
-
-import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import com.asamm.osmTools.generatorDb.address.Street;
+import com.asamm.osmTools.generatorDb.input.definition.AWriterDefinition;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class DataContainerRam extends ADataContainer {
 

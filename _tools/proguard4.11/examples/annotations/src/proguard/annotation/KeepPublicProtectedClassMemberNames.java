@@ -6,8 +6,6 @@
  */
 package proguard.annotation;
 
-import java.lang.annotation.*;
-
 /**
  * This annotation specifies to keep all public or protected class members of
  * the annotated class from being optimized or obfuscated as entry points.

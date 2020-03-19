@@ -20,11 +20,6 @@
  */
 package proguard.classfile.attribute.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.preverification.*;
-
 /**
  * This AttributeVisitor delegates its visits another AttributeVisitor, but
  * only when the visited attribute is not empty. For instance, a local variable

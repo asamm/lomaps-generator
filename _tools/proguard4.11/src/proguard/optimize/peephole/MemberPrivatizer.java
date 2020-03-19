@@ -20,9 +20,7 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
 import proguard.classfile.editor.MethodInvocationFixer;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
 import proguard.optimize.info.NonPrivateMemberMarker;
 

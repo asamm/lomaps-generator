@@ -20,12 +20,9 @@
  */
 package proguard.io;
 
-import proguard.classfile.*;
 import proguard.classfile.io.ProgramClassWriter;
 import proguard.classfile.util.SimplifiedVisitor;
 import proguard.classfile.visitor.ClassVisitor;
-
-import java.io.*;
 
 /**
  * This ClassVisitor writes out the ProgramClass objects that it visits to the

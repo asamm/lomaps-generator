@@ -22,8 +22,6 @@ package proguard.io;
 
 import proguard.classfile.ClassConstants;
 
-import java.io.*;
-
 /**
  * This <code>DataEntry</code> represents a file.
  *

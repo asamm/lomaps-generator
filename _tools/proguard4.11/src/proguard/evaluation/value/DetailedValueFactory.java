@@ -20,8 +20,6 @@
  */
 package proguard.evaluation.value;
 
-import proguard.classfile.*;
-
 /**
  * This identified value factory creates array reference values that also
  * represent their elements, in as far as possible.

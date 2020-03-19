@@ -20,14 +20,13 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
 import proguard.classfile.attribute.BootstrapMethodInfo;
 import proguard.classfile.attribute.visitor.BootstrapMethodInfoVisitor;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
 import proguard.classfile.visitor.MemberVisitor;
-import proguard.optimize.info.*;
+import proguard.optimize.info.ParameterUsageMarker;
+import proguard.optimize.info.VariableUsageMarker;
 import proguard.optimize.peephole.VariableShrinker;
 
 /**

@@ -20,8 +20,6 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.visitor.*;
 import proguard.optimize.info.SimpleEnumMarker;
 
 /**

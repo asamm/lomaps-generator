@@ -20,11 +20,7 @@
  */
 package proguard.classfile.io;
 
-import proguard.classfile.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
 
 import java.io.DataInput;
 

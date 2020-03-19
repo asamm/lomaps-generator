@@ -22,10 +22,8 @@ package proguard;
 
 import proguard.classfile.ClassPool;
 import proguard.classfile.util.ClassUtil;
-import proguard.io.*;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * This class writes the output class files.

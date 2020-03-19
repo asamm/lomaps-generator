@@ -20,9 +20,6 @@
  */
 package proguard.util;
 
-import java.util.*;
-
-
 /**
  * This class provides some utility methods for working with
  * <code>java.util.List</code> objects.

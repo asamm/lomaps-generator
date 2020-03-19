@@ -20,11 +20,8 @@
  */
 package proguard.optimize.info;
 
-import proguard.classfile.*;
-import proguard.classfile.constant.*;
 import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * This ClassVisitor marks all class members that can not be made private in the

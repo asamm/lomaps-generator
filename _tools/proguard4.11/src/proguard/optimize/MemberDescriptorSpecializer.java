@@ -20,9 +20,7 @@
  */
 package proguard.optimize;
 
-import proguard.classfile.*;
 import proguard.classfile.editor.ClassReferenceFixer;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
 import proguard.evaluation.value.Value;
 import proguard.optimize.evaluation.StoringInvocationUnit;

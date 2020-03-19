@@ -20,8 +20,6 @@
  */
 package proguard.gui.splash;
 
-import java.awt.*;
-
 /**
  * This interface describes objects that can paint themselves, possibly varying
  * as a function of time.

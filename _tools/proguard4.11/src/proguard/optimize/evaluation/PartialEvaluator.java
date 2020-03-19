@@ -20,15 +20,7 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.visitor.*;
 import proguard.classfile.constant.ClassConstant;
-import proguard.classfile.instruction.*;
-import proguard.classfile.util.*;
-import proguard.classfile.visitor.*;
-import proguard.evaluation.*;
-import proguard.evaluation.value.*;
 import proguard.optimize.peephole.BranchTargetFinder;
 
 import java.util.Arrays;

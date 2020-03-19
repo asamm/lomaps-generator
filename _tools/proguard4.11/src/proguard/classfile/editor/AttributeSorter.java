@@ -20,13 +20,8 @@
  */
 package proguard.classfile.editor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
-import proguard.classfile.visitor.*;
-
-import java.util.*;
 
 /**
  * This ClassVisitor sorts the attributes of the classes that it visits.

@@ -8,13 +8,18 @@ import com.asamm.osmTools.generatorDb.osmgeom.JtsGeometryConverter;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.Polygon;
-import org.openstreetmap.osmosis.core.container.v0_6.*;
+import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
+import org.openstreetmap.osmosis.core.container.v0_6.NodeContainer;
+import org.openstreetmap.osmosis.core.container.v0_6.RelationContainer;
+import org.openstreetmap.osmosis.core.container.v0_6.WayContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;
 import org.openstreetmap.osmosis.core.task.v0_6.Sink;
-import org.openstreetmap.osmosis.core.task.v0_6.SinkDatasetSource;
 import org.openstreetmap.osmosis.core.task.v0_6.SinkSource;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by voldapet on 14/1/2017.

@@ -22,10 +22,6 @@ package proguard.gui;
 
 import proguard.retrace.ReTrace;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.*;
-
 
 /**
  * This <code>Runnable</code> runs ReTrace, sending console output to a text

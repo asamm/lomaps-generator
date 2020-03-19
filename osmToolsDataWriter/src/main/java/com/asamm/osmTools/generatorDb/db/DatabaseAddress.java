@@ -19,7 +19,9 @@ import locus.api.utils.DataWriterBigEndian;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 import static com.asamm.locus.features.loMaps.LoMapsDbConst.*;

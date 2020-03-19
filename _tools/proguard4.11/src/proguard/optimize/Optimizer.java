@@ -20,23 +20,10 @@
  */
 package proguard.optimize;
 
-import proguard.*;
-import proguard.classfile.*;
-import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.visitor.*;
-import proguard.classfile.editor.*;
-import proguard.classfile.instruction.visitor.*;
 import proguard.classfile.util.MethodLinker;
-import proguard.classfile.visitor.*;
 import proguard.evaluation.InvocationUnit;
-import proguard.evaluation.value.*;
-import proguard.optimize.evaluation.*;
-import proguard.optimize.info.*;
-import proguard.optimize.peephole.*;
-import proguard.util.*;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * This class optimizes class pools according to a given configuration.

@@ -25,7 +25,6 @@ import proguard.classfile.util.ClassUtil;
 import proguard.classfile.visitor.ClassVersionSetter;
 
 import java.io.IOException;
-import java.util.*;
 
 /**
  * This class sets the target version on program classes.

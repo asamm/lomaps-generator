@@ -20,10 +20,8 @@
  */
 package proguard.optimize.evaluation;
 
-import proguard.classfile.*;
 import proguard.classfile.constant.RefConstant;
 import proguard.evaluation.BasicInvocationUnit;
-import proguard.evaluation.value.*;
 
 /**
  * This InvocationUnit loads parameter values and return values that were

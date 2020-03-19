@@ -22,7 +22,6 @@ package proguard.classfile;
 
 import proguard.classfile.attribute.Attribute;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
-import proguard.classfile.visitor.*;
 
 /**
  * Representation of a field from a program class.

@@ -20,9 +20,6 @@
  */
 package proguard.classfile.visitor;
 
-import proguard.classfile.*;
-
-
 /**
  * This ClassVisitor delegates all visits to each ClassVisitor
  * in a given list.

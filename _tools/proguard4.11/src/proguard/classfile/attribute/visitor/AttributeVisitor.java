@@ -20,11 +20,6 @@
  */
 package proguard.classfile.attribute.visitor;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
-import proguard.classfile.attribute.annotation.*;
-import proguard.classfile.attribute.preverification.*;
-
 /**
  * This interface specifies the methods for a visitor of <code>Attribute</code>
  * objects.

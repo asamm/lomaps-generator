@@ -20,9 +20,6 @@
  */
 package proguard;
 
-import java.util.*;
-
-
 /**
  * This class represents a class path, as a list of ClassPathEntry objects.
  *

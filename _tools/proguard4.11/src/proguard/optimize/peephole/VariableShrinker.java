@@ -20,14 +20,12 @@
  */
 package proguard.optimize.peephole;
 
-import proguard.classfile.*;
-import proguard.classfile.attribute.*;
 import proguard.classfile.attribute.visitor.AttributeVisitor;
 import proguard.classfile.editor.VariableEditor;
-import proguard.classfile.util.*;
 import proguard.classfile.visitor.MemberVisitor;
-import proguard.optimize.*;
-import proguard.optimize.info.*;
+import proguard.optimize.MethodDescriptorShrinker;
+import proguard.optimize.MethodStaticizer;
+import proguard.optimize.info.ParameterUsageMarker;
 
 /**
  * This MemberVisitor removes unused local variables from the code of the methods

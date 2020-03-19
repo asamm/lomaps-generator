@@ -20,9 +20,6 @@
  */
 package proguard.io;
 
-import java.io.*;
-
-
 /**
  * This interface provides methods for writing data entries, such as ZIP entries
  * or files. The implementation determines to which type of data entry the
