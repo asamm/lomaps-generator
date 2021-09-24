@@ -122,5 +122,14 @@ public class DataContainerRam extends ADataContainer {
         return ids;
     }
 
-
+    /**
+     * Clear cache for nodes, ways and relations
+     */
+    public void resetEntityContainers() {
+        nodes = new THashMap<Long, Node>();
+        ways = new THashMap<Long, Way>();
+        relations = new THashMap<Long, Relation>();
+        wayStreets = new THashMap<>();
+        wayStreetsByOsmId = new THashMap<>();
+    }
 }

@@ -629,9 +629,9 @@ public class Parameters {
 
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
-            mOsmium = "/usr/local/bin/osmium";
+            mOsmium = "osmium";
             phyghtDir = "/usr/local/bin/phyghtmap";
-            mOgr2ogr = "/usr/local/bin/ogr2ogr";
+            mOgr2ogr = "ogr2ogr";
             mPythonDir = "/usr/bin/python3";
             mPython2Dir = "/usr/bin/python2";
             mPreShellCommand = "";
@@ -647,9 +647,9 @@ public class Parameters {
             mPostShellCommand = "'";
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
-            mOsmium = "/usr/local/bin/osmium";
+            mOsmium = "osmium";
             phyghtDir = "/usr/bin/phyghtmap";
-            mOgr2ogr = "/usr/bin/ogr2ogr";
+            mOgr2ogr = "ogr2ogr";
             mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
             mPostShellCommand = "";

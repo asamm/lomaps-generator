@@ -123,39 +123,8 @@ public class DatabasePoi extends ADatabaseHandler {
 		executeStatement(sql);
 		
 		// STATEMENTS
-		
-		// statement for values table
-		psInsertTV = conn.prepareStatement(
-				"INSERT INTO " + TN_TAG_VALUES + "(" + COL_NAME + ") VALUES(?)",
-				Statement.RETURN_GENERATED_KEYS);
-		
-		// prepare statements
-		StringBuilder sbP = new StringBuilder();
-		sbP.append("INSERT INTO " + TN_POINTS + " " +
-                "(" + COL_ID + ", " + COL_TYPE + ", " + COL_NAME + ", " + COL_GEOM + ") " +
-                "VALUES (?, ?, ?, GeomFromText(?, 4326))");
-		psInsertP = conn.prepareStatement(sbP.toString(),
-				Statement.RETURN_GENERATED_KEYS);
-		
-		// prepare statement for TN_POINTS_ROOT_SUB
-		StringBuilder sbPRS = new StringBuilder();
-		sbPRS.append("INSERT INTO ").append(TN_POINTS_ROOT_SUB).append(" (");
-		sbPRS.append(TN_POINTS).append("_").append(COL_ID).append(", ");
-		sbPRS.append(TN_FOLDERS_ROOT).append("_").append(COL_ID).append(", ");
-		sbPRS.append(TN_FOLDERS_SUB).append("_").append(COL_ID).append(") ");
-		sbPRS.append("VALUES (?, ?, ?)");
-		psInsertPRS = conn.prepareStatement(
-				sbPRS.toString(), Statement.RETURN_GENERATED_KEYS);
-		
-		// prepare statement for TN_POINTS_KEY_VALUE
-		StringBuilder sbPKV = new StringBuilder();
-		sbPKV.append("INSERT INTO ").append(TN_POINTS_KEY_VALUE).append(" (");
-		sbPKV.append(TN_POINTS).append("_").append(COL_ID).append(", ");
-		sbPKV.append(TN_TAG_KEYS).append("_").append(COL_ID).append(", ");
-		sbPKV.append(TN_TAG_VALUES).append("_").append(COL_ID).append(") ");
-		sbPKV.append("VALUES (?, ?, ?)");
-		psInsertPKV = conn.prepareStatement(
-				sbPKV.toString(), Statement.RETURN_GENERATED_KEYS);
+		initPreparedStatements();
+
 	}
 
     @Override
@@ -181,7 +150,43 @@ public class DatabasePoi extends ADatabaseHandler {
         executeStatement(sql);
         super.destroy();
     }
-	
+
+	@Override
+	protected void initPreparedStatements() throws SQLException {
+		// statement for values table
+		psInsertTV = conn.prepareStatement(
+				"INSERT INTO " + TN_TAG_VALUES + "(" + COL_NAME + ") VALUES(?)",
+				Statement.RETURN_GENERATED_KEYS);
+
+		// prepare statements
+		StringBuilder sbP = new StringBuilder();
+		sbP.append("INSERT INTO " + TN_POINTS + " " +
+				"(" + COL_ID + ", " + COL_TYPE + ", " + COL_NAME + ", " + COL_GEOM + ") " +
+				"VALUES (?, ?, ?, GeomFromText(?, 4326))");
+		psInsertP = conn.prepareStatement(sbP.toString(),
+				Statement.RETURN_GENERATED_KEYS);
+
+		// prepare statement for TN_POINTS_ROOT_SUB
+		StringBuilder sbPRS = new StringBuilder();
+		sbPRS.append("INSERT INTO ").append(TN_POINTS_ROOT_SUB).append(" (");
+		sbPRS.append(TN_POINTS).append("_").append(COL_ID).append(", ");
+		sbPRS.append(TN_FOLDERS_ROOT).append("_").append(COL_ID).append(", ");
+		sbPRS.append(TN_FOLDERS_SUB).append("_").append(COL_ID).append(") ");
+		sbPRS.append("VALUES (?, ?, ?)");
+		psInsertPRS = conn.prepareStatement(
+				sbPRS.toString(), Statement.RETURN_GENERATED_KEYS);
+
+		// prepare statement for TN_POINTS_KEY_VALUE
+		StringBuilder sbPKV = new StringBuilder();
+		sbPKV.append("INSERT INTO ").append(TN_POINTS_KEY_VALUE).append(" (");
+		sbPKV.append(TN_POINTS).append("_").append(COL_ID).append(", ");
+		sbPKV.append(TN_TAG_KEYS).append("_").append(COL_ID).append(", ");
+		sbPKV.append(TN_TAG_VALUES).append("_").append(COL_ID).append(") ");
+		sbPKV.append("VALUES (?, ?, ?)");
+		psInsertPKV = conn.prepareStatement(
+				sbPKV.toString(), Statement.RETURN_GENERATED_KEYS);
+	}
+
 	private Hashtable<String, Long> insertValueTable( String tableName,
 			List<String> data) throws SQLException {
 

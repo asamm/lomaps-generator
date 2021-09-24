@@ -55,7 +55,6 @@ public abstract class ADatabaseHandler {
     private void initialize() throws ClassNotFoundException,
             SQLException, InvalidAttributesException, IOException {
 
-
         // load the SQLite-JDBC driver using the current class loader
         Class.forName("org.sqlite.JDBC");
 
@@ -153,22 +152,28 @@ public abstract class ADatabaseHandler {
     protected void restartConnection() {
         commit(true);
         try {
-            conn = DriverManager.getConnection(
-                    "jdbc:sqlite:" + dbFile.getAbsolutePath());
+            conn.close();
 
-            conn.setAutoCommit(false);
+            initialize();
 
-            stmt = conn.createStatement();
-            stmt.setQueryTimeout(30);
+            initPreparedStatements();
 
             // set ready flag
             ready = true;
         } catch (SQLException e) {
             Logger.e(TAG, "restartConnection()", e);
             e.printStackTrace();
+        } catch (InvalidAttributesException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
 
     }
+
+    protected abstract void initPreparedStatements() throws SQLException;
 
     protected void vacuum() {
 

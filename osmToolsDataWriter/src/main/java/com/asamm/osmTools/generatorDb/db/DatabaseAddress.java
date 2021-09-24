@@ -9,6 +9,8 @@ import com.asamm.osmTools.utils.Logger;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
+import com.vividsolutions.jts.io.WKBWriter;
+import com.vividsolutions.jts.io.WKTWriter;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.array.TIntArrayList;
@@ -132,7 +134,8 @@ public class DatabaseAddress extends ADatabaseHandler {
         pathStreetIds = new TIntArrayList();
 	}
 
-    private void initPreparedStatements() throws SQLException {
+    @Override
+    protected void initPreparedStatements() throws SQLException {
         // create prepared statemennts
 
         psInsertRegion = createPreparedStatement(
@@ -1045,8 +1048,10 @@ public class DatabaseAddress extends ADatabaseHandler {
 
         Street streetLoaded = null;
         try{
+            psSelectStreet.clearParameters();
             psSelectStreet.setInt(1, streetId);
             ResultSet rs = psSelectStreet.executeQuery();
+
 
             while (rs.next()){
 
@@ -1148,6 +1153,7 @@ public class DatabaseAddress extends ADatabaseHandler {
         byte[] dataZipped = Utils.compressByteArray(dw.toByteArray());
         timeDtoZipData += System.currentTimeMillis() - start;
 
+        dw = null;
         return dataZipped;
     }
 
@@ -1214,16 +1220,21 @@ public class DatabaseAddress extends ADatabaseHandler {
     public void updateStreetHouseBlob(long streetId, byte[] houseData) {
 
         try{
+            psUpdateStreet.clearParameters();
+
             psUpdateStreet.setBytes(1, houseData);
             psUpdateStreet.setLong(2, streetId);
 
-            psUpdateStreet.addBatch();
+            psUpdateStreet.execute();
             updateStreetHouseBlobCounter++;
 
-            if (updateStreetHouseBlobCounter % 1000 == 0 ){
-                psUpdateStreet.executeBatch();
-                updateStreetHouseBlobCounter = 0;
+            if (updateStreetHouseBlobCounter % 5000 == 0){
                 commit(false);
+                Logger.i(TAG, "Updated streets: " + updateStreetHouseBlobCounter);
+                Utils.printUsedMemory();
+                // it's needed repeatedly reset the reader and writer to avoid OOM error
+                wkbWriter = new WKBWriter();
+                wkbReader = new WKBReader();
             }
 
         } catch (SQLException e) {
@@ -1381,6 +1392,8 @@ public class DatabaseAddress extends ADatabaseHandler {
                continue;
             }
         }
+        commit(false);
+        geometryFactory = null;
     }
 
 //    public void simplifyCityGeom(City city, Boundary boundary) {

@@ -1,17 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel>
-      <module name="OsmTools.mapsforge-core.main" target="1.8" />
-      <module name="OsmTools.mapsforge-core.test" target="1.8" />
-      <module name="OsmTools.mapsforge-map-writer.main" target="1.8" />
-      <module name="OsmTools.mapsforge-map-writer.test" target="1.8" />
-      <module name="OsmTools.osmToolsBasic.main" target="1.8" />
-      <module name="OsmTools.osmToolsBasic.test" target="1.8" />
-      <module name="OsmTools.osmToolsCore.main" target="1.8" />
-      <module name="OsmTools.osmToolsCore.test" target="1.8" />
-      <module name="OsmTools.osmToolsDataWriter.main" target="1.8" />
-      <module name="OsmTools.osmToolsDataWriter.test" target="1.8" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8" />
   </component>
 </project>

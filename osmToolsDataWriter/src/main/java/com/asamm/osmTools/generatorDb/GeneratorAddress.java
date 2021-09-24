@@ -2,6 +2,7 @@ package com.asamm.osmTools.generatorDb;
 
 import com.asamm.osmTools.generatorDb.address.*;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
+import com.asamm.osmTools.generatorDb.dataContainer.DataContainerRam;
 import com.asamm.osmTools.generatorDb.db.ADatabaseHandler;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
 import com.asamm.osmTools.generatorDb.index.IndexController;
@@ -283,6 +284,9 @@ public class GeneratorAddress extends AGenerator {
         IndexController.getInstance().clearAll ();
         dc.clearAll();
 
+        if (dc instanceof DataContainerRam){
+            ((DataContainerRam)dc).resetEntityContainers();
+        }
     }
 
     /**************************************************/
@@ -290,6 +294,9 @@ public class GeneratorAddress extends AGenerator {
     /**************************************************/
 
     private void updateStreetsWriteHouses() {
+
+        Logger.i(TAG, "updateStreetsWriteHouses:");
+
         DatabaseAddress databaseAddress = getDatabaseAddress();
         TIntArrayList pathStreetIds = databaseAddress.getPathStreetIds();
         int lastStreetId = databaseAddress.getStreetIdSequence();
@@ -302,7 +309,7 @@ public class GeneratorAddress extends AGenerator {
         long timeWriteHousesUpdateStreet = 0;
         long timeWriteHousesDeleteStreet = 0;
 
-
+        Logger.i(TAG, "Num of streets to load: " + lastStreetId);
         for (int id = 0; id <= lastStreetId; id++ ){
 
             // load street from database
@@ -335,12 +342,14 @@ public class GeneratorAddress extends AGenerator {
                 timeWriteHousesDeleteStreet += System.currentTimeMillis() - start;
                 continue;
             }
+
             start = System.currentTimeMillis();
             databaseAddress.updateStreetHouseBlob(id, data);
             timeWriteHousesUpdateStreet += System.currentTimeMillis() - start;
-
-
         }
+
+        Logger.i(TAG, "Finalize and update street house blob" );
+
         databaseAddress.finalizeUpdateStreetHouseBlob();
 
 

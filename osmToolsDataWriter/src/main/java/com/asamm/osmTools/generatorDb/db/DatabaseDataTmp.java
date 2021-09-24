@@ -68,17 +68,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         setTables();
 
         // prepare statements
-        psInsertNode = createPreparedStatement("INSERT INTO nodes (id, data) VALUES (?, ?)");
-        psInsertWay = createPreparedStatement("INSERT INTO ways (id, data) VALUES (?, ?)");
-        psInsertRelation = createPreparedStatement("INSERT INTO relations (id, data) VALUES (?, ?)");
-        psInsertWayStreet = createPreparedStatement("INSERT INTO Streets (hash, data) VALUES (?, ?)");
-        psInsertWayStreetByOsmId = createPreparedStatement("INSERT INTO Waystreets (id, data) VALUES (?, ?)");
-
-        psSelectNode = createPreparedStatement("SELECT data FROM nodes WHERE id=?");
-        psSelectWay = createPreparedStatement("SELECT data FROM ways WHERE id=?");
-        psSelectRelation = createPreparedStatement("SELECT data FROM relations WHERE id=?");
-        psSelectWayStreets = createPreparedStatement("SELECT data from Streets where hash=?");
-        psSelectWayStreetsByOsmId = createPreparedStatement("SELECT data from Waystreets where id=?");
+        initPreparedStatements();
 
         baos = new ByteArrayOutputStream();
         dosw = new DataOutputStoreWriter(new DataOutputStream(baos));
@@ -94,6 +84,20 @@ public class DatabaseDataTmp extends ADatabaseHandler {
 
     }
 
+    @Override
+    protected void initPreparedStatements() throws SQLException {
+        psInsertNode = createPreparedStatement("INSERT INTO nodes (id, data) VALUES (?, ?)");
+        psInsertWay = createPreparedStatement("INSERT INTO ways (id, data) VALUES (?, ?)");
+        psInsertRelation = createPreparedStatement("INSERT INTO relations (id, data) VALUES (?, ?)");
+        psInsertWayStreet = createPreparedStatement("INSERT INTO Streets (hash, data) VALUES (?, ?)");
+        psInsertWayStreetByOsmId = createPreparedStatement("INSERT INTO Waystreets (id, data) VALUES (?, ?)");
+
+        psSelectNode = createPreparedStatement("SELECT data FROM nodes WHERE id=?");
+        psSelectWay = createPreparedStatement("SELECT data FROM ways WHERE id=?");
+        psSelectRelation = createPreparedStatement("SELECT data FROM relations WHERE id=?");
+        psSelectWayStreets = createPreparedStatement("SELECT data from Streets where hash=?");
+        psSelectWayStreetsByOsmId = createPreparedStatement("SELECT data from Waystreets where id=?");
+    }
 
     @Override
     protected void setTables() throws SQLException, InvalidAttributesException {
@@ -171,6 +175,8 @@ public class DatabaseDataTmp extends ADatabaseHandler {
         // delete the tmp database file itself
         dbFile.delete();
     }
+
+
 
     public void insertNode(long id, Entity entity) {
 

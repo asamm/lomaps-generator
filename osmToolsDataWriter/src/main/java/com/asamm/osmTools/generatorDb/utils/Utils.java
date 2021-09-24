@@ -84,8 +84,7 @@ public class Utils {
             bos.write(buf, 0, count);
         }
         locus.api.utils.Utils.closeStream(bos);
-        byte[] compressedData = bos.toByteArray();
-        return compressedData;
+        return bos.toByteArray();
     }
 
     /**************************************************/
