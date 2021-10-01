@@ -30,7 +30,7 @@ dependencies {
     providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
 }
 
-def versionCode = "0.5.1"
+def versionCode = "0.5.2"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {

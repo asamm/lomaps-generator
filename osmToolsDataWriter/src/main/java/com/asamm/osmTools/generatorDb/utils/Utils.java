@@ -254,4 +254,13 @@ public class Utils {
         long usedMem = runtime.totalMemory() - runtime.freeMemory();
         Logger.i("Utils", "Used memory: " + usedMem / mb);
     }
+
+    public static void checkGarbageMemory(){
+        long limit = 3 * 1024 * 1024 * 1024;
+        long freeMem = Runtime.getRuntime().freeMemory();
+        if (freeMem < limit);{
+            Logger.i("Utils", "Free memory: " +freeMem/1024/1024 + "MB, do GC");
+            System.gc();
+        }
+    }
 }

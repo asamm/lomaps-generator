@@ -897,10 +897,10 @@ public class DatabaseAddress extends ADatabaseHandler {
             if (housesIdSequence % 10000 == 0){
                 commit(false);
                 int pow = (int) Math.log10(housesIdSequence);
-                if (housesIdSequence % (int) Math.pow(10 , pow) == 0){
-                    Logger.i(TAG, "Inserted houses: " + housesIdSequence);
-                    Utils.printUsedMemory();
-                }
+//                if (housesIdSequence % (int) Math.pow(10 , pow) == 0){
+//                    Logger.i(TAG, "Inserted houses: " + housesIdSequence);
+//                    Utils.printUsedMemory();
+//                }
             }
 
             return houseId;
@@ -1108,6 +1108,7 @@ public class DatabaseAddress extends ADatabaseHandler {
             ResultSet rs = psSelectHousesInStreet.executeQuery();
 
             House house = null;
+            HouseDTO houseDTO = null;
             byte[] dataDTO = null;
             timeDtoSelectHouses += System.currentTimeMillis() - start;
 
@@ -1121,7 +1122,7 @@ public class DatabaseAddress extends ADatabaseHandler {
 
                 // crate simplified version od house with relative coordinates
                 start = System.currentTimeMillis();
-                HouseDTO houseDTO = new HouseDTO(
+                houseDTO = new HouseDTO(
                         house.getNumber(),
                         house.getName(),
                         house.getPostCodeId(),
@@ -1135,6 +1136,9 @@ public class DatabaseAddress extends ADatabaseHandler {
                     count++;
                     dw.write(dataDTO);
                 }
+                house = null;
+                houseDTO = null;
+                dataDTO = null;
             }
         }
         catch (SQLException e) {
@@ -1228,13 +1232,10 @@ public class DatabaseAddress extends ADatabaseHandler {
             psUpdateStreet.execute();
             updateStreetHouseBlobCounter++;
 
-            if (updateStreetHouseBlobCounter % 5000 == 0){
+            if (updateStreetHouseBlobCounter % 2000 == 0){
                 commit(false);
                 Logger.i(TAG, "Updated streets: " + updateStreetHouseBlobCounter);
-                Utils.printUsedMemory();
-                // it's needed repeatedly reset the reader and writer to avoid OOM error
-                wkbWriter = new WKBWriter();
-                wkbReader = new WKBReader();
+                Utils.checkGarbageMemory();
             }
 
         } catch (SQLException e) {

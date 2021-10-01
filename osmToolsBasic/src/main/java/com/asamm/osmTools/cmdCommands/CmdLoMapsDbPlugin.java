@@ -221,7 +221,7 @@ public class CmdLoMapsDbPlugin extends Cmd {
 
         File file = new File(getMap().getPathSource());
         int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 650) {
+        if (size <= 540) {
             addCommand("-dataContainerType=ram");
         }
         else {
