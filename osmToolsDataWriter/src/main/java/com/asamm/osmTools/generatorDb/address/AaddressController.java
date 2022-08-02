@@ -2,7 +2,7 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.db.DatabaseAddress;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.GeometryFactory;
 
 /**
  * Created by voldapet on 2016-03-10 .

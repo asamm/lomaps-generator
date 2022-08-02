@@ -6,8 +6,8 @@ import com.asamm.osmTools.generatorDb.utils.Const;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Language;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.*;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.*;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 
 import java.sql.*;

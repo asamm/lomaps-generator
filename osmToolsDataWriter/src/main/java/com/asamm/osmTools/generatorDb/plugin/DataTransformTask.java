@@ -7,7 +7,7 @@ import com.asamm.osmTools.generatorDb.input.definition.WriterTransformDefinition
 import com.asamm.osmTools.generatorDb.osmgeom.JtsGeometryConverter;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Polygon;
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
 import org.openstreetmap.osmosis.core.container.v0_6.NodeContainer;
 import org.openstreetmap.osmosis.core.container.v0_6.RelationContainer;

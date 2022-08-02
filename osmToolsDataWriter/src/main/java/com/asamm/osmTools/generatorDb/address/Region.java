@@ -1,7 +1,7 @@
 package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.vividsolutions.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.MultiPolygon;
 import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.domain.v0_6.EntityType;
 

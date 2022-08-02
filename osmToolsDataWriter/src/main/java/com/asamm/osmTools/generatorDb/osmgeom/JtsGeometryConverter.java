@@ -1,6 +1,6 @@
 package com.asamm.osmTools.generatorDb.osmgeom;
 
-import com.vividsolutions.jts.geom.*;
+import org.locationtech.jts.geom.*;
 import gnu.trove.map.hash.THashMap;
 import org.openstreetmap.osmosis.core.container.v0_6.*;
 import org.openstreetmap.osmosis.core.domain.v0_6.*;

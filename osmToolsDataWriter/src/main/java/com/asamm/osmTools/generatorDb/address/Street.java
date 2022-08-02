@@ -2,12 +2,12 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKBWriter;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TLongHashSet;

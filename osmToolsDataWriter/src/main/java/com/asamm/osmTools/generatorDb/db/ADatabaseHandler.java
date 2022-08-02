@@ -2,10 +2,10 @@ package com.asamm.osmTools.generatorDb.db;
 
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKBWriter;
-import com.vividsolutions.jts.io.WKTReader;
-import com.vividsolutions.jts.io.WKTWriter;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
 import org.sqlite.SQLiteConfig;
 
 import javax.naming.directory.InvalidAttributesException;
@@ -74,14 +74,9 @@ public abstract class ADatabaseHandler {
         stmt.setQueryTimeout(30);
 
         // load spatialite extension
-        if (Utils.isSystemWindows()) {
-            executeStatement("SELECT load_extension('mod_spatialite')");
-        } else {
-//          executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
-//          executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libspatialite.so.5')");
-//          executeStatement("SELECT load_extension('/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6')");
-            executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
-        }
+        executeStatement("SELECT load_extension('mod_spatialite')");
+        // older linux required full path
+        //executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
 
         // enabling Spatial Metadata using v.2.4.0 this automatically
         // initializes SPATIAL_REF_SYS and GEOMETRY_COLUMNS

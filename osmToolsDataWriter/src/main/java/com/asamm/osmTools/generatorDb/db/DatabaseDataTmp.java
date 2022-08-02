@@ -639,7 +639,7 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             street.setCityIds(cityIds);
 
             int count = drbe.readInt();
-            street.setGeometry((com.vividsolutions.jts.geom.MultiLineString) wkbReader.read(drbe.readBytes(count)));
+            street.setGeometry((org.locationtech.jts.geom.MultiLineString) wkbReader.read(drbe.readBytes(count)));
 
             return  street;
 

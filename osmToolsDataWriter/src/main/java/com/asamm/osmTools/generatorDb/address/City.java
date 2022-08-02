@@ -1,8 +1,8 @@
 package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
 import gnu.trove.map.hash.THashMap;
 
 import java.util.Map;

@@ -11,7 +11,7 @@ import com.asamm.osmTools.generatorDb.utils.BiDiHashMap;
 import com.asamm.osmTools.generatorDb.utils.Const;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Envelope;
+import org.locationtech.jts.geom.Envelope;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.File;

@@ -2,10 +2,10 @@ package com.asamm.osmTools.generatorDb.address;
 
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKBWriter;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
 import locus.api.objects.Storable;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;

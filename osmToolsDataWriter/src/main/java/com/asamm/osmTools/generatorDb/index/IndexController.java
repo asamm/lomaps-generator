@@ -6,11 +6,11 @@ import com.asamm.osmTools.generatorDb.address.Region;
 import com.asamm.osmTools.generatorDb.address.Street;
 import com.asamm.osmTools.generatorDb.dataContainer.ADataContainer;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.strtree.STRtree;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.strtree.STRtree;
 
 import java.util.ArrayList;
 import java.util.List;

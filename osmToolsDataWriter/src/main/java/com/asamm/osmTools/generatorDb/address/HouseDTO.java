@@ -3,7 +3,7 @@ package com.asamm.osmTools.generatorDb.address;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.generatorDb.utils.Utils;
 import com.asamm.osmTools.utils.Logger;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 import locus.api.utils.DataReaderBigEndian;
 import locus.api.utils.DataWriterBigEndian;
 
