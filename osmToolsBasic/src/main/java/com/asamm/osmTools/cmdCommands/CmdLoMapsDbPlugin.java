@@ -219,9 +219,8 @@ public class CmdLoMapsDbPlugin extends Cmd {
         addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB);
         addCommand("-type=address");
 
-        File file = new File(getMap().getPathSource());
-        int size = (int) (file.length() / 1024L / 1024L);
-        if (size <= 540) {
+        int size = (int) (mFileTempMap.length() / 1024L / 1024L);
+        if (size <= 300) {
             addCommand("-dataContainerType=ram");
         }
         else {
