@@ -14,7 +14,14 @@
  */
 package org.mapsforge.map.writer.util;
 
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.mapsforge.core.util.LatLongUtils;
 import org.mapsforge.map.writer.model.TDNode;
 import org.mapsforge.map.writer.model.TDWay;
@@ -44,7 +51,6 @@ public final class JTSUtils {
      * @return the array of coordinates
      */
     public static Coordinate[] toCoordinates(TDWay way) {
-
         Coordinate[] coordinates = new Coordinate[way.getWayNodes().length];
         if (way.isReversedInRelation()) {
             for (int i = 0; i < coordinates.length; i++) {
@@ -55,7 +61,6 @@ public final class JTSUtils {
                 coordinates[i] = toCoordinate(way.getWayNodes()[i]);
             }
         }
-
         return coordinates;
     }
 
@@ -67,6 +72,11 @@ public final class JTSUtils {
      * @return the JTS geometry
      */
     public static Geometry toJtsGeometry(TDWay way, List<TDWay> innerWays) {
+        if (way == null) {
+            LOGGER.warning("way is null");
+            return null;
+        }
+
         if (way.isForcePolygonLine()) {
             // may build a single line string if inner ways are empty
             return buildMultiLineString(way, innerWays);

@@ -2,7 +2,7 @@
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2015 lincomatic
  * Copyright 2017-2018 Gustl22
- * Copyright 2017 devemux86
+ * Copyright 2017-2019 devemux86
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -51,7 +51,7 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
         private Map<Integer, List<Integer>> outerToInner;
         private final WayPolygonizer polygonizer = new WayPolygonizer();
 
-        private int nRelations = 0;
+        private long nRelations = 0;
 
         @Override
         public boolean execute(TDRelation relation) {
@@ -247,7 +247,7 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
     }
 
     protected class WayHandler implements TObjectProcedure<TDWay> {
-        private int nWays = 0;
+        private long nWays = 0;
 
         @Override
         public boolean execute(TDWay way) {
@@ -305,9 +305,9 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
     protected final Map<Long, Long> partRootRelations;
 
     // Accounting
-    private int amountOfNodesProcessed = 0;
-    private int amountOfRelationsProcessed = 0;
-    private int amountOfWaysProcessed = 0;
+    private long amountOfNodesProcessed = 0;
+    private long amountOfRelationsProcessed = 0;
+    private long amountOfWaysProcessed = 0;
     protected final NumberFormat nfCounts = NumberFormat.getInstance();
 
     protected final ZoomIntervalConfiguration zoomIntervalConfiguration;
@@ -408,17 +408,17 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
     }
 
     @Override
-    public int getNodesNumber() {
+    public long getNodesNumber() {
         return amountOfNodesProcessed;
     }
 
     @Override
-    public int getRelationsNumber() {
+    public long getRelationsNumber() {
         return amountOfRelationsProcessed;
     }
 
     @Override
-    public int getWaysNumber() {
+    public long getWaysNumber() {
         return amountOfWaysProcessed;
     }
 
@@ -555,7 +555,7 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
             return;
         }
 
-        /*int progressImplicitRelations = 0;
+        /*long progressImplicitRelations = 0;
         float limitImplicitRelations = this.tilesToPartElements.entrySet().size();*/
 
         // Iterate through tiles which contain parts
@@ -574,7 +574,7 @@ abstract class BaseTileBasedDataProcessor implements TileBasedDataProcessor, Nod
                     + "%% - Tile (" + tilePartElementEntry.getKey().getX()
                     + ", " + tilePartElementEntry.getKey().getY() + ")";
             progressImplicitRelations++;
-            int nRootElements = 0;*/
+            long nRootElements = 0;*/
 
             // Load parts only once in cache
             List<TDWay> pElems = new ArrayList<>();

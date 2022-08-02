@@ -22,12 +22,7 @@ public class CmdShp2osm extends Cmd{
         super(map, ExternalApp.NO_EXTERNAL_APP);
         this.input = input;
         this.output = output;
-        
-        // test if python is installed in defined dir
-        if (!new File(Parameters.getPython2Dir()).exists()){
-            throw new IllegalArgumentException ("Python in location" + Parameters.getPython2Dir() +"  does not exist!");
-        }
-        
+
         //test if shp2osm.py scripot exist
         if (!new File (Parameters.getShp2osmDir()).exists()){
             throw new IllegalArgumentException ("Shp2Osm script in location" + Parameters.getShp2osmDir() +"  does not exist!");
@@ -35,12 +30,12 @@ public class CmdShp2osm extends Cmd{
     }
     
     public void createCmd(){
-        addCommand(Parameters.getPython2Dir());
+        addCommand(Parameters.getPythonDir());
         addCommand(Parameters.getShp2osmDir());
-        addCommand(input);
-        addCommand("--obj-count");
+        addCommand("--id");
         addCommand("100000000");
-        addCommand("--output-location");
+        addCommand("--output");
         addCommand(output);
+        addCommand(input);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2015 lincomatic
- * Copyright 2017 devemux86
+ * Copyright 2017-2019 devemux86
  * Copyright 2017-2018 Gustl22
  *
  * This program is free software: you can redistribute it and/or modify it under the
@@ -17,19 +17,34 @@
  */
 package org.mapsforge.map.writer;
 
+import org.mapsforge.map.writer.model.MapWriterConfiguration;
+import org.mapsforge.map.writer.model.TDNode;
+import org.mapsforge.map.writer.model.TDRelation;
+import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileCoordinate;
+import org.mapsforge.map.writer.model.TileData;
+import org.mapsforge.map.writer.model.TileInfo;
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
+import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
+import org.openstreetmap.osmosis.core.domain.v0_6.Way;
+import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
+import org.openstreetmap.osmosis.core.store.IndexedObjectStore;
+import org.openstreetmap.osmosis.core.store.IndexedObjectStoreReader;
+import org.openstreetmap.osmosis.core.store.NoSuchIndexElementException;
+import org.openstreetmap.osmosis.core.store.SimpleObjectStore;
+import org.openstreetmap.osmosis.core.store.SingleClassObjectSerializationFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import gnu.trove.iterator.TLongIterator;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.hash.TLongHashSet;
-import org.mapsforge.map.writer.model.*;
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
-import org.openstreetmap.osmosis.core.domain.v0_6.Way;
-import org.openstreetmap.osmosis.core.lifecycle.ReleasableIterator;
-import org.openstreetmap.osmosis.core.store.*;
-
-import java.util.*;
 
 /**
  * A TileBasedDataStore that uses the hard disk as storage device for temporary data structures.
@@ -124,7 +139,7 @@ public final class HDTileBasedDataProcessor extends BaseTileBasedDataProcessor {
         // Prepare implicit way relations
         // (should be done here, before handling ways, although
         // the WayHandler does only process ids in HD Processor)
-        int nWays = 0;
+        long nWays = 0;
         ReleasableIterator<Way> wayReader = this.wayStore.iterate();
         while (wayReader.hasNext()) {
             if (this.progressLogs) {

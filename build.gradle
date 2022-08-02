@@ -9,6 +9,9 @@ project('osmToolsDataWriter') {
 */
 
 allprojects {
+
+    ext.jUnitVersion = "4.12"
+
     repositories {
         jcenter()
         mavenCentral()
@@ -29,7 +32,7 @@ configure(filterProjects(project.javaprojects)) {
     apply plugin: 'pmd'
 
     dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testImplementation group: 'junit', name: 'junit', version: '4.11'
     }
 
     buildscript {

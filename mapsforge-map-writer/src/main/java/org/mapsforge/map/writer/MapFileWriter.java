@@ -5,7 +5,7 @@
  * Copyright 2016 mikes222
  * Copyright 2016-2018 devemux86
  * Copyright 2017 Ludwig M Brinckmann
- * Copyright 2017 Gustl22
+ * Copyright 2017-2019 Gustl22
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -24,19 +24,46 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
-import org.locationtech.jts.geom.*;
+
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.core.util.LatLongUtils;
 import org.mapsforge.core.util.MercatorProjection;
-import org.mapsforge.map.writer.model.*;
-import org.mapsforge.map.writer.util.*;
+import org.mapsforge.map.writer.model.Encoding;
+import org.mapsforge.map.writer.model.MapWriterConfiguration;
+import org.mapsforge.map.writer.model.OSMTag;
+import org.mapsforge.map.writer.model.TDNode;
+import org.mapsforge.map.writer.model.TDWay;
+import org.mapsforge.map.writer.model.TileBasedDataProcessor;
+import org.mapsforge.map.writer.model.TileCoordinate;
+import org.mapsforge.map.writer.model.TileData;
+import org.mapsforge.map.writer.model.TileInfo;
+import org.mapsforge.map.writer.model.WayDataBlock;
+import org.mapsforge.map.writer.model.ZoomIntervalConfiguration;
+import org.mapsforge.map.writer.util.Constants;
+import org.mapsforge.map.writer.util.GeoUtils;
+import org.mapsforge.map.writer.util.JTSUtils;
+import org.mapsforge.map.writer.util.OSMUtils;
+import org.mapsforge.map.writer.util.PolyLabel;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -424,7 +451,7 @@ public final class MapFileWriter {
         int tagAmount = node.getTags() == null ? 0 : node.getTags().size();
         if (tagAmount > (1 << HALF_BYTE_SHIFT) - 1) {
             // See #971
-            LOGGER.info(Arrays.toString(node.getTags().keySet().toArray()) + "\n" + Arrays.toString(node.getTags().values().toArray()));
+            LOGGER.severe("Too many tags: " + node.toStringDetailed());
             throw new RuntimeException("more than 15 tags aren't supported");
         }
         return (byte) (layer << HALF_BYTE_SHIFT | (short) tagAmount);
@@ -466,7 +493,7 @@ public final class MapFileWriter {
         int tagAmount = way.getTags() == null ? 0 : way.getTags().size();
         if (tagAmount > (1 << HALF_BYTE_SHIFT) - 1) {
             // See #971
-            LOGGER.info(Arrays.toString(way.getTags().keySet().toArray()) + "\n" + Arrays.toString(way.getTags().values().toArray()));
+            LOGGER.severe("Too many tags: " + way.toStringDetailed());
             throw new RuntimeException("more than 15 tags aren't supported");
         }
         return (byte) (layer << HALF_BYTE_SHIFT | (short) tagAmount);
@@ -628,7 +655,6 @@ public final class MapFileWriter {
             }
 
             // write block for (outer/simple) way
-
             writeWay(wayDataBlock.getOuterWay(), currentTileLat, currentTileLon, wayBuffer);
 
             // write blocks for inner ways
@@ -1027,8 +1053,6 @@ public final class MapFileWriter {
             LOGGER.warning("Invalid way node count: " + wayNodeCount);
         }
         buffer.put(Serializer.getVariableByteUnsigned(wayNodeCount));
-
-
 
         // write the way nodes:
         // the first node is always stored with four bytes

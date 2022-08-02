@@ -2,7 +2,7 @@
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2015-2018 devemux86
  * Copyright 2015-2016 lincomatic
- * Copyright 2017 Gustl22
+ * Copyright 2017-2019 Gustl22
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -24,9 +24,13 @@ import org.openstreetmap.osmosis.core.domain.v0_6.Entity;
 import org.openstreetmap.osmosis.core.domain.v0_6.Tag;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -409,6 +413,27 @@ public final class OSMUtils {
             }
         }
         return res;
+    }
+
+    /**
+     * @param tagMap the tag map
+     * @param isWay  indicates if tags belong to Way / Relation or to Node
+     * @return the tags as string
+     */
+    public static String tagsToString(Map<Short, Object> tagMap, boolean isWay) {
+        OSMTagMapping mapping = OSMTagMapping.getInstance();
+        StringBuilder sb = new StringBuilder("<id,k=v,v>[");
+        for (Map.Entry<Short, Object> tag : tagMap.entrySet()) {
+            sb.append("[");
+            sb.append(tag.getKey());
+            sb.append(", ");
+            sb.append(isWay ? mapping.getWayTag(tag.getKey()).tagKey() : mapping.getPoiTag(tag.getKey()).tagKey());
+            sb.append(", ");
+            sb.append(tag.getValue());
+            sb.append("],");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     private OSMUtils() {

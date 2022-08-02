@@ -18,19 +18,24 @@ repositories {
 }
 
 dependencies {
-    compile project(":osmToolsCore")
-    compile project(":osmToolsDataWriter")
+    implementation project(":osmToolsCore")
+    implementation project(":osmToolsDataWriter")
 
-    compile "com.asamm.locus:api-store:1.2.9"
+    implementation "com.asamm.locus:api-store:1.2.9"
 
-    compile 'org.apache.httpcomponents:httpclient:4.3.4'
-    compile 'org.apache.httpcomponents:httpcore:4.3.2'
-    compile group: 'net.minidev', name: 'json-smart', version: '2.3'
-    compile 'javax.mail:mail:1.4.1'
-    providedCompile group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.43.1'
+    implementation 'org.apache.httpcomponents:httpclient:4.3.4'
+    implementation 'org.apache.httpcomponents:httpcore:4.3.2'
+    implementation group: 'net.minidev', name: 'json-smart', version: '2.3'
+    implementation 'javax.mail:mail:1.4.1'
+    implementation group: 'org.openstreetmap.osmosis', name: 'osmosis-core', version:'0.47'
+    implementation 'commons-io:commons-io:2.4'
+    implementation 'net.sf.kxml:kxml2:2.2.2'
+    implementation 'org.locationtech.jts:jts-core:1.16.1'
+    implementation 'org.apache.commons:commons-lang3:3.4'
+    implementation 'org.xerial:sqlite-jdbc:3.15.1'
 }
 
-def versionCode = "0.5.2"
+def versionCode = "0.5.3"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {
@@ -38,9 +43,9 @@ jar {
         attributes 'Main-Class': 'com.asamm.osmTools.Main'
     }
 
-    archiveName = newArchiveName;
+    archiveFileName = newArchiveName;
     from {
-        configurations.compile.collect {
+        configurations.compileClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }

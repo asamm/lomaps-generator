@@ -1,35 +1,36 @@
 configurations { providedCompile }
 
 dependencies {
+
+    implementation project(":osmToolsCore")
+
     // Locus API
-    compile 'com.asamm:locus-api-core:0.3.13'
+    implementation 'com.asamm:locus-api-core:0.3.13'
 
-    compile project(":osmToolsCore")
-    compile 'org.xerial:sqlite-jdbc:3.15.1'
+    implementation 'org.xerial:sqlite-jdbc:3.15.1'
 
-    //compile fileTree(dir: 'libs', include: '*.jar')
-    compile(group: 'org.locationtech.jts', name: 'jts-core', version:'1.16.1') {
-        exclude(module: 'xercesImpl')
-    }
-    compile group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
-    compile 'org.postgresql:postgresql:42.2.2'
-    //compile group: 'org.geotools', name: 'gt-geojson', version: '13.2'
-    compile 'org.wololo:jts2geojson:0.3.1'
-    compile 'org.openstreetmap.osmosis:osmosis-core:0.47'
+    implementation group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
+    implementation 'org.postgresql:postgresql:42.2.2'
 
+    implementation 'org.wololo:jts2geojson:0.17.0'
+    implementation 'org.openstreetmap.osmosis:osmosis-core:0.47'
+
+    implementation 'org.apache.commons:commons-lang3:3.4'
+    implementation 'net.sf.kxml:kxml2:2.2.2'
+    implementation 'org.locationtech.jts:jts-core:1.16.1'
 }
 
 sourceSets.main.compileClasspath += configurations.providedCompile
 sourceSets.test.compileClasspath += configurations.providedCompile
 sourceSets.test.runtimeClasspath += configurations.providedCompile
 
-def versionCode = "0.3.1"
+def versionCode = "0.3.2"
 def newArchiveName = "osmToolsDataWriter_${versionCode}.jar"
 
 jar {
-    archiveName = newArchiveName;
+    archiveFileName = newArchiveName;
     from {
-        configurations.compile.collect {
+        configurations.compileClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }

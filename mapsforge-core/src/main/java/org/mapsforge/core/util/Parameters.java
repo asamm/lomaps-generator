@@ -1,5 +1,7 @@
 /*
- * Copyright 2017-2018 devemux86
+ * Copyright 2017-2022 devemux86
+ * Copyright 2019 Matthew Egeler
+ * Copyright 2020 Lukas Bai
  *
  * This program is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -16,15 +18,29 @@ package org.mapsforge.core.util;
 
 public final class Parameters {
 
+    public enum ParentTilesRendering {QUALITY, SPEED, OFF}
+
+    public enum SymbolScaling {ALL, POI}
+
     /**
-     * If true the <code>MapViewPosition2</code> will be used instead of default <code>MapViewPosition</code>.
+     * If true will use anti-aliasing in rendering.
      */
-    public static boolean MAP_VIEW_POSITION2 = false;
+    public static boolean ANTI_ALIASING = true;
+
+    /**
+     * If true the <code>FrameBufferHA3</code> will be used instead of default <code>FrameBufferHA2}</code>.
+     */
+    public static boolean FRAME_BUFFER_HA3 = true;
+
+    /**
+     * Process layer scroll events.
+     */
+    public static boolean LAYER_SCROLL_EVENT = false;
 
     /**
      * Maximum buffer size for map files.
      */
-    public static int MAXIMUM_BUFFER_SIZE = 8000000;
+    public static int MAXIMUM_BUFFER_SIZE = 10000000;
 
     /**
      * The default number of threads is one greater than the number of processors, as one thread is
@@ -35,12 +51,27 @@ public final class Parameters {
     public static int NUMBER_OF_THREADS = 1;//Runtime.getRuntime().availableProcessors() + 1;
 
     /**
+     * Parent tiles rendering mode.
+     */
+    public static ParentTilesRendering PARENT_TILES_RENDERING = ParentTilesRendering.QUALITY;
+
+    /**
      * If square frame buffer is enabled, the frame buffer allocated for drawing will be
      * large enough for drawing in either orientation, so no change is needed when the device
      * orientation changes. To avoid overly large frame buffers, the aspect ratio for this policy
      * determines when this will be used.
      */
     public static boolean SQUARE_FRAME_BUFFER = true;
+
+    /**
+     * Symbol scaling mode.
+     */
+    public static SymbolScaling SYMBOL_SCALING = SymbolScaling.POI;
+
+    /**
+     * Validate coordinates.
+     */
+    public static boolean VALIDATE_COORDINATES = true;
 
     private Parameters() {
         throw new IllegalStateException();

@@ -9,22 +9,29 @@ The steps described below expect installation on Ubuntu
 
 - install [osmium](https://osmcode.org/osmium-tool/) used for extraction planet file to the countries and states
 
-	```sudo apt-get install osmium-tools```
+    ```sudo apt-get install osmium-tools```
 	
 - install [phyghtmap](http://katze.tfiu.de/projects/phyghtmap/) used for generation of contour-lines from elevation hgt files.  
 
-	```sudo apt-get install phyghtmap```
+    ```sudo apt-get install phyghtmap```
 	
-- install [ogr2ogr](http://katze.tfiu.de/projects/phyghtmap/) set of tools. Generator uses ogr2ogr to cut global SHP files with coastlines into states areas
+- install [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) set of tools. Generator uses ogr2ogr to cut global SHP files with coastlines into states areas
 
-	```sudo apt-get install ogr2ogr``` 
+    ```sudo apt install libpq-dev gdal-bin libgdal-dev``` 
 	
 - install [spatialite](https://www.gaia-gis.it/fossil/libspatialite) spatialite libraries to generate Address and POI database
-	```
-	sudo apt-get install spatialite-bin
-	sudo apt-get install libsqlite3-mod-spatialite
-	``` 
-	
+    ```
+    sudo apt-get install spatialite-bin
+    sudo apt-get install libsqlite3-mod-spatialite
+    ``` 
+
+- install python and [ogr2osm](https://wiki.openstreetmap.org/wiki/Ogr2osm) script required when convert SHP Land Polygons
+  to the OSM format
+  ```
+  pip install ogr2osm
+  ``` 
+
+
 ### Static data
 
 LoMaps generator requires lot's of static data that are vital for generation. All needed data are available on NAS `NAS\content\maps\lomaps_generator\` Download the whole folder and do following steps:

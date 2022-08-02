@@ -619,7 +619,7 @@ public class Parameters {
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
 
         // shp2osm script location
-        mShp2osmDir = "shp2osm" + Consts.FILE_SEP + "shp2osm.py";
+        mShp2osmDir = "shp2osm" + Consts.FILE_SEP + "shpLand2osm.py";
 
         // graphHopper path
         mGraphHopperExe = new File("graphHopper" + Consts.FILE_SEP + "graphhopper.sh").
@@ -630,10 +630,10 @@ public class Parameters {
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             mOsmium = "osmium";
-            phyghtDir = "/usr/local/bin/phyghtmap";
+            phyghtDir = "phyghtmap";
             mOgr2ogr = "ogr2ogr";
-            mPythonDir = "/usr/bin/python3";
-            mPython2Dir = "/usr/bin/python2";
+            mPythonDir = "python3";
+            mPython2Dir = "python2";
             mPreShellCommand = "";
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
@@ -641,7 +641,7 @@ public class Parameters {
             mOsmium = "osmium";
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
             mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
-            mPythonDir = "C:\\Python27\\python.exe";
+            mPythonDir = "python";
             mPython2Dir = "C:\\Python27\\python.exe";
             mPreShellCommand = "c:\\work\\cygwin64\\bin\\bash.exe -c '";
             mPostShellCommand = "'";

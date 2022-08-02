@@ -16,25 +16,42 @@
  */
 package org.mapsforge.map.writer;
 
-import gnu.trove.map.hash.TShortIntHashMap;
-import gnu.trove.procedure.TShortIntProcedure;
-import gnu.trove.set.hash.TShortHashSet;
 import org.mapsforge.map.writer.model.OSMTag;
 import org.mapsforge.map.writer.osmosis.MapFileWriterTask;
 import org.mapsforge.map.writer.util.OSMUtils;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Logger;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import gnu.trove.map.hash.TShortIntHashMap;
+import gnu.trove.procedure.TShortIntProcedure;
+import gnu.trove.set.hash.TShortHashSet;
 
 /**
  * Reorders and maps tag ids according to their frequency in the input data. Ids are remapped so that the most frequent
@@ -663,5 +680,16 @@ public final class OSMTagMapping {
      */
     public void setTagValues(boolean tagValues) {
         this.tagValues = tagValues;
+
+        /* Ensure that implicit relations can be written (with id tag) */
+        if (this.tagValues) {
+            OSMTag tag = this.stringToWayTag.get(OSMTag.tagKey("id", "%f"));
+            if (tag == null) {
+                tag = new OSMTag(this.wayID, "id", "%f", Byte.MAX_VALUE, false, false, false);
+                if (addWayTag(tag, null)) {
+                    this.wayID++;
+                }
+            }
+        }
     }
 }

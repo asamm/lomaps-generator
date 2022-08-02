@@ -18,11 +18,6 @@ public class CmdContour extends Cmd{
     
     public CmdContour(ItemMap map) {
         super(map, ExternalApp.NO_EXTERNAL_APP);
-        // check phyghtmap location
-        if (!new File(Parameters.phyghtDir).exists()){
-            throw new IllegalArgumentException("Phyghtmap in location: " +
-                    Parameters.phyghtDir + " does not exist");
-        }
 
         // check location of polygon
         if (!new File(map.getPathPolygon()).exists()){

@@ -50,9 +50,7 @@ public final class MercatorProjection {
     // from operations that require a tileSize parameter (which is effectively cancelled
     // out). A shortcut version of those operations should be implemented and then this
     // variable be removed.
-    //private static final int DUMMY_TILE_SIZE = 256;
-    // Asamm customizaiton due to 512 tiles
-    private static final int DUMMY_TILE_SIZE = 512;
+    private static final int DUMMY_TILE_SIZE = 256;
 
     /**
      * Calculates the distance on the ground that is represented by a single pixel on the map.
@@ -100,10 +98,6 @@ public final class MercatorProjection {
      * @throws IllegalArgumentException if the given scale factor is < 1
      */
     public static long getMapSizeWithScaleFactor(double scaleFactor, int tileSize) {
-
-        // TODO asamm workaround due to changed tileSize
-        tileSize = 256;
-
         if (scaleFactor < 1) {
             throw new IllegalArgumentException("scale factor must not < 1 " + scaleFactor);
         }
@@ -116,10 +110,6 @@ public final class MercatorProjection {
      * @throws IllegalArgumentException if the given zoom level is negative.
      */
     public static long getMapSize(byte zoomLevel, int tileSize) {
-
-        // TODO asamm workaround due to changed tileSize
-        tileSize = 256;
-
         if (zoomLevel < 0) {
             throw new IllegalArgumentException("zoom level must not be negative: " + zoomLevel);
         }
@@ -127,14 +117,14 @@ public final class MercatorProjection {
     }
 
     public static Point getPixelWithScaleFactor(LatLong latLong, double scaleFactor, int tileSize) {
-        double pixelX = MercatorProjection.longitudeToPixelXWithScaleFactor(latLong.longitude, scaleFactor, tileSize);
-        double pixelY = MercatorProjection.latitudeToPixelYWithScaleFactor(latLong.latitude, scaleFactor, tileSize);
+        double pixelX = longitudeToPixelXWithScaleFactor(latLong.longitude, scaleFactor, tileSize);
+        double pixelY = latitudeToPixelYWithScaleFactor(latLong.latitude, scaleFactor, tileSize);
         return new Point(pixelX, pixelY);
     }
 
     public static Point getPixel(LatLong latLong, long mapSize) {
-        double pixelX = MercatorProjection.longitudeToPixelX(latLong.longitude, mapSize);
-        double pixelY = MercatorProjection.latitudeToPixelY(latLong.latitude, mapSize);
+        double pixelX = longitudeToPixelX(latLong.longitude, mapSize);
+        double pixelY = latitudeToPixelY(latLong.latitude, mapSize);
         return new Point(pixelX, pixelY);
     }
 
@@ -158,8 +148,8 @@ public final class MercatorProjection {
      * @return the relative pixel position to the origin values (e.g. for a tile)
      */
     public static Point getPixelRelative(LatLong latLong, long mapSize, double x, double y) {
-        double pixelX = MercatorProjection.longitudeToPixelX(latLong.longitude, mapSize) - x;
-        double pixelY = MercatorProjection.latitudeToPixelY(latLong.latitude, mapSize) - y;
+        double pixelX = longitudeToPixelX(latLong.longitude, mapSize) - x;
+        double pixelY = latitudeToPixelY(latLong.latitude, mapSize) - y;
         return new Point(pixelX, pixelY);
     }
 
@@ -320,7 +310,7 @@ public final class MercatorProjection {
      * @return pixels that represent the meters at the given zoom-level and latitude.
      */
     public static double metersToPixelsWithScaleFactor(float meters, double latitude, double scaleFactor, int tileSize) {
-        return meters / MercatorProjection.calculateGroundResolutionWithScaleFactor(latitude, scaleFactor, tileSize);
+        return meters / calculateGroundResolutionWithScaleFactor(latitude, scaleFactor, tileSize);
     }
 
     /**
@@ -332,7 +322,7 @@ public final class MercatorProjection {
      * @return pixels that represent the meters at the given zoom-level and latitude.
      */
     public static double metersToPixels(float meters, double latitude, long mapSize) {
-        return meters / MercatorProjection.calculateGroundResolution(latitude, mapSize);
+        return meters / calculateGroundResolution(latitude, mapSize);
     }
 
     /**

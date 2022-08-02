@@ -61,7 +61,7 @@ public class PolyLabel {
         }
 
         // As original geometry is used in other places clone it before re-projecting
-        polygon = (Polygon) polygon.clone();
+        polygon = (Polygon) polygon.copy();
 
         // Re-project coordinates. This is needed to get proper visual results for polygons
         // distorted my Mercator projection

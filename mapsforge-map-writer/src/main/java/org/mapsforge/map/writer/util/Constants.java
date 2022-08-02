@@ -52,9 +52,7 @@ public final class Constants {
     /**
      * The default size of a tile in pixel.
      */
-    //public static final int DEFAULT_TILE_SIZE = 256;
-    // Asamm customization due to 512
-    public static final int DEFAULT_TILE_SIZE = 512;
+    public static final int DEFAULT_TILE_SIZE = 256;
     /**
      * The default maximum base zoom level for which we apply a simplification algorithm to filter way points.
      */

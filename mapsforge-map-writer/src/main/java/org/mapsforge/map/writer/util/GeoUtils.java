@@ -1,7 +1,7 @@
 /*
  * Copyright 2010, 2011, 2012, 2013 mapsforge.org
  * Copyright 2015 lincomatic
- * Copyright 2017 Gustl22
+ * Copyright 2017-2019 Gustl22
  * Copyright 2018 devemux86
  *
  * This program is free software: you can redistribute it and/or modify it under the
@@ -17,7 +17,18 @@
  */
 package org.mapsforge.map.writer.util;
 
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.core.model.LatLong;
@@ -28,7 +39,11 @@ import org.mapsforge.map.writer.model.TDWay;
 import org.mapsforge.map.writer.model.TileCoordinate;
 import org.mapsforge.map.writer.model.WayDataBlock;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -202,7 +217,9 @@ public final class GeoUtils {
             }
             return bb;
         } catch (IllegalArgumentException ex) {
-            LOGGER.warning("wrong coordinates on way: " + way.toString() + "\nLat: " + wayNodes[0].getLatitude() + " Lon: " + wayNodes[0].getLongitude());
+            LOGGER.warning("wrong coordinates on way: " + way.toString()
+                    + "\nLat: " + LatLongUtils.microdegreesToDegrees(wayNodes[0].getLatitude())
+                    + " Lon: " + LatLongUtils.microdegreesToDegrees(wayNodes[0].getLongitude()));
         }
         return null;
     }
