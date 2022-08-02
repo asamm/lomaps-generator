@@ -129,6 +129,11 @@ public class CmdGenerate extends Cmd {
         // get num of cpu cores
         int cores = Runtime.getRuntime().availableProcessors();
 
+        if (cores > 4 ){
+            // TODO test working cores if haigher as 4
+            cores = 4;
+        }
+
         addThreads(cores);
 
         addMapComment();
@@ -191,12 +196,11 @@ public class CmdGenerate extends Cmd {
         }
         
         //set FileSizeLimit determined when use HD and when RAM
-        int fileSizeLimit = 360;
+        int fileSizeLimit = 650;
         // get map size
         long mapSizeMb = new File(getMap().getPathSource()).length();
         if (getMap().isMerged){
             mapSizeMb = new File(getMap().getPathMerge()).length();
-            fileSizeLimit = 360;
         } 
         mapSizeMb = mapSizeMb /1024/1024;
         //System.out.println("Velikost souboru "+getMap().file+" je:  "+ mapSizeMb);
