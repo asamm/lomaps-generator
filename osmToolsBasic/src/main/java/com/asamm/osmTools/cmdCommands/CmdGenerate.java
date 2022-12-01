@@ -129,11 +129,6 @@ public class CmdGenerate extends Cmd {
         // get num of cpu cores
         int cores = Runtime.getRuntime().availableProcessors();
 
-        if (cores > 4 ){
-            // TODO test working cores if haigher as 4
-            cores = 4;
-        }
-
         addThreads(cores);
 
         addMapComment();

@@ -33,7 +33,7 @@ public class CmdShp2osm extends Cmd{
         addCommand(Parameters.getPythonDir());
         addCommand(Parameters.getShp2osmDir());
         addCommand("--id");
-        addCommand("100000000");
+        addCommand(String.valueOf(Parameters.costlineBorderId));
         addCommand("--output");
         addCommand(output);
         addCommand(input);

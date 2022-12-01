@@ -3,6 +3,7 @@ package com.asamm.osmTools.generator;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders;
+import com.asamm.osmTools.cmdCommands.CmdExtract;
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;
@@ -185,8 +186,14 @@ public abstract class AGenerator {
             Logger.i(TAG, "Extracting maps from source: " + sourceId);
             Main.mySimpleLog.print("\nExtract Maps from: " + sourceId + " ...");
 
-
             List<ItemMap> ar = mapTableBySourceId.get(sourceId);
+
+            if (sourceId.equals("planet")){
+                // ugly hack to export first level into continents using old osmosis extract because some
+                // unknown issue in osmium tool
+                extractToContinents(ms, ar, sourceId);
+                continue;
+            }
 
             long sourceSize = new File(ms.getMapById(sourceId).getPathSource()).length();
             long exportSize = 0;
@@ -226,6 +233,36 @@ public abstract class AGenerator {
         for (int i = 0, m = mp.getMapPackCount(); i < m; i++) {
             actionExtract(mp.getMapPack(i), ms);
         }
+    }
+
+    private void extractToContinents(MapSource ms, List<ItemMap> ar, String sourceId) throws IOException, InterruptedException {
+
+
+        CmdExtract ce =  new CmdExtract(ms, sourceId);
+        ce.addReadSource();
+        ce.addTee(ar.size());
+        ce.addBuffer();
+
+        // add all maps
+        for (ItemMap map : ar) {
+            ce.addBoundingPolygon(map);
+            if (map.hasAction(Parameters.Action.GENERATE)){
+                ce.addCompleteWays();
+                ce.addCompleteRelations();
+            }
+
+            ce.addWritePbf(map.getPathSource(), true);
+        }
+
+        // write to log and start stop watch
+        TimeWatch time = new TimeWatch();
+        Logger.i(TAG, "Extracting maps from source: " + sourceId);
+        Logger.i(TAG, ce.getCmdLine());
+        Main.mySimpleLog.print("\nExtract Maps from: " + sourceId + " ...");
+
+        // now create simple array
+        ce.execute();
+
     }
 
 
