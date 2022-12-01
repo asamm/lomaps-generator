@@ -272,6 +272,12 @@ public class Tourist {
                         way.nodes.add(nd);
                     }
 
+                    if ((way != null) && tagName.equals("tag")){
+                        Tag t = new Tag();
+                        t.fillAttributes(parser);
+                        way.addOriginalTag(t);
+                    }
+
                 }
                 else if (tag == KXmlParser.END_TAG){
                     tagName = parser.getName();

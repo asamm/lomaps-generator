@@ -8,6 +8,8 @@ import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import java.util.Locale;
+
 /**
  *
  * @author volda
@@ -37,9 +39,13 @@ public class Tags {
     //for hiking
     public String osmcsymbol;
     public String osmc; // store information for mapsforge, boolean whearher tags has values osmcsymbol
+    public int osmc_order;
     public String osmc_color;
     public String osmc_background;
     public String osmc_foreground;
+    public String osmc_text;
+    public String osmc_text_color;
+    public String osmc_text_length;
     public String kct_barva;
     public String kct_green;
     public String colour;
@@ -71,9 +77,13 @@ public class Tags {
         this.note = tags.note;
         this.osmcsymbol = tags.osmcsymbol;
         this.osmc = tags.osmc;
+        this.osmc_order = tags.osmc_order;
         this.osmc_color = tags.osmc_color;
         this.osmc_background = tags.osmc_background;
         this.osmc_foreground = tags.osmc_foreground;
+        this.osmc_text = tags.osmc_text;
+        this.osmc_text_color = tags.osmc_text_color;
+        this.osmc_text_length = tags.osmc_text_length;
         this.kct_barva = tags.kct_barva;
         this.kct_green = tags.kct_green;
         this.colour = tags.colour;
@@ -86,7 +96,7 @@ public class Tags {
     public Tags (){
 
     }
-    
+
     public void setValue(Tag tag){
         if (tag.key != null && tag.val != null){
             if (tag.key.equals("rcn_ref")){
@@ -233,6 +243,17 @@ public class Tags {
                 case 2: 
                     osmc_foreground = tokens[i];
                     break;
+               case 3:
+                   if (tokens[i].length() <= 5){
+                       osmc_text_length = String.valueOf(tokens[i].length());
+                       osmc_text = tokens[i];
+                   }
+                   break;
+               case 4:
+                   if (isOsmcColorValid(tokens[i].toLowerCase())){
+                       osmc_text_color = tokens[i];
+                   }
+                   break;
             }
         }
     }
@@ -366,8 +387,11 @@ public class Tags {
         }
         return false;
     }
-    
-        
+
+    public String toXml(){
+        return this.toXml(0);
+    }
+
     /**
      * 
      * @param refsLength this the length of offset for ref caption. for example 
@@ -410,7 +434,7 @@ public class Tags {
 
         // for cyclo polabska
         if (highway != null){
-            str += "\n   <tag k=\"highway\" v=\""+StringEscapeUtils.escapeXml(highway)+"\"/>";
+            str += "\n   <tag k=\"osmc_highway\" v=\""+StringEscapeUtils.escapeXml(highway)+"\"/>";
         }
         if (tracktype != null){
             str += "\n   <tag k=\"tracktype\" v=\""+StringEscapeUtils.escapeXml(tracktype)+"\"/>";
@@ -429,13 +453,11 @@ public class Tags {
         if (state != null){
             str += "\n   <tag k=\"state\" v=\""+state+"\"/>";
         }
-//        if (note != null){
-//            str += "\n   <tag k=\"note\" v=\""+note+"\"/>";
-//        }
-        
-        //for hiking routes
         if (osmc != null){
             str += "\n   <tag k=\"osmc\" v=\""+osmc+"\"/>";
+        }
+        if (osmc_order > 0) {
+            str += "\n   <tag k=\"osmc_order\" v=\"" + StringEscapeUtils.escapeXml(String.valueOf(osmc_order)) + "\"/>";
         }
         if (osmc_color != null){
             str += "\n   <tag k=\"osmc_color\" v=\""+StringEscapeUtils.escapeXml(osmc_color)+"\"/>";
@@ -447,6 +469,16 @@ public class Tags {
         if (osmc_foreground != null){
             str += "\n   <tag k=\"osmc_foreground\" v=\""+StringEscapeUtils.escapeXml(osmc_foreground)+"\"/>";
         }
+        if (osmc_text != null){
+            str += "\n   <tag k=\"osmc_text\" v=\""+StringEscapeUtils.escapeXml(osmc_text)+"\"/>";
+        }
+        if (osmc_text_length != null){
+            str += "\n   <tag k=\"osmc_text_length\" v=\""+StringEscapeUtils.escapeXml(osmc_text_length)+"\"/>";
+        }
+        if (osmc_text_color != null){
+            str += "\n   <tag k=\"osmc_text_color\" v=\""+StringEscapeUtils.escapeXml(osmc_text_color)+"\"/>";
+        }
+
         if (kct_barva != null){
             str += "\n   <tag k=\"kct_barva\" v=\""+StringEscapeUtils.escapeXml(kct_barva)+"\"/>";
         }

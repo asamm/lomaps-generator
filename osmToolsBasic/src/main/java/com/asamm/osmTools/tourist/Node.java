@@ -183,7 +183,7 @@ public class Node {
             str += printHikingJunctionTag();
         }
         // print tags string
-        str += tags.toXml(0);
+        str += tags.toXml();
 
         //close the way
         str += "\n  </node>";
