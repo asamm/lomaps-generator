@@ -182,11 +182,11 @@ public class Parameters {
     
     // TOURIST
 
-    public static long touristNodeId    = 15000000000L;
-    public static long touristWayId     = 16000000000L;
-    public static long contourNodeId    = 18000000000L;
-    public static long contourWayId     = 20000000000L;
-    public static long costlineBorderId = 22000000000L;
+    public static long touristNodeId    = 15000000000000L;
+    public static long touristWayId     = 16000000000000L;
+    public static long contourNodeId    = 18000000000000L;
+    public static long contourWayId     = 20000000000000L;
+    public static long costlineBorderId = 22000000000000L;
                                     
     // by this variable decide if print for every tags new way or only
     // find the phighest parent tags and print only one way with this highest tag 
@@ -665,13 +665,16 @@ public class Parameters {
             
         // set list of possible colour of hiking routes (guess from osmc:symbol tag
         hikingColourType = new ArrayList<String>();
-        hikingColourType.add("blue");
-        hikingColourType.add("yellow");
-        hikingColourType.add("green");
-        hikingColourType.add("red");
         hikingColourType.add("black");
+        hikingColourType.add("blue");
+        hikingColourType.add("brown");
+        hikingColourType.add("green");
+        hikingColourType.add("orange");
+        hikingColourType.add("purple");
+        hikingColourType.add("red");
         hikingColourType.add("white");
-        
+        hikingColourType.add("yellow");
+
         // set order of hiking network tag
         hikingNetworkType.put("lwn", 1);
         hikingNetworkType.put("rwn", 2);
