@@ -68,7 +68,7 @@ public class Way {
                 Tags tags = tagsArray.get(i);
                 if (tags.type != null && tags.type.equalsIgnoreCase("superroute")){
                     tagsArray.remove(i);
-                    Logger.i(TAG, "Remove superroute, ID: " + tags.parentRelId);
+                    //Logger.i(TAG, "Remove superroute, ID: " + tags.parentRelId);
                 }
             }
         }
@@ -85,6 +85,25 @@ public class Way {
         }
         if (parser.getAttributeValue(null, "visible") != null){
             visible = parser.getAttributeValue(null, "visible");
+        }
+    }
+
+    /**
+     * In Germany are often background color the same as foreground
+     * The goal is to keep foreground color empty is same as background
+     * The osmc symbol with missing foreground will not be displayed
+     */
+    private void removeSameOsmcForegroundColor(){
+
+        for (Tags tags : tagsArray) {
+            if (tags.osmc_background != null && !tags.osmc_background.isEmpty()
+                    && tags.osmc_foreground != null && !tags.osmc_foreground.isEmpty()){
+
+                if (tags.osmc_foreground.startsWith(tags.osmc_background)){
+                    Logger.i(TAG, "Remove osmc foreground for way, ID: " + this.id);
+                    tags.osmc_foreground = "";
+                }
+            }
         }
     }
 
@@ -136,6 +155,9 @@ public class Way {
 
         // organize tourist tags by hiking, cycling and compute the order when multiple lines are on the same way
         this.computeOsmcOrder();
+
+        // remove duplicated color in foreground and background
+        this.removeSameOsmcForegroundColor();
 
         String str = "";   
         if (Parameters.printHighestWay){
