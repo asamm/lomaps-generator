@@ -683,7 +683,7 @@ public class Parameters {
         
         // Map COMMENT
         MAP_COMMENT =
-            " <div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
+            " <div><h4>Vector maps for <a href=\"http://www.locusmap.app\">Locus</a> application</h4>"
             + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
             + "<br />"
             + " Map data source OpenStreetMap community";
