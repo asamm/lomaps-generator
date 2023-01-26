@@ -188,12 +188,12 @@ public abstract class AGenerator {
 
             List<ItemMap> ar = mapTableBySourceId.get(sourceId);
 
-            if (sourceId.equals("planet")){
-                // ugly hack to export first level into continents using old osmosis extract because some
-                // unknown issue in osmium tool
-                extractToContinents(ms, ar, sourceId);
-                continue;
-            }
+//            if (sourceId.equals("planet")){
+//                // ugly hack to export first level into continents using old osmosis extract because some
+//                // unknown issue in osmium tool
+//                extractToContinents(ms, ar, sourceId);
+//                continue;
+//            }
 
             long sourceSize = new File(ms.getMapById(sourceId).getPathSource()).length();
             long exportSize = 0;
@@ -209,8 +209,8 @@ public abstract class AGenerator {
                     completeRelations = true;
                 }
 
-                // export only 10 maps in one step due to memory limitation
-                if (j != 0 && j % 10 == 0) {
+                // export only 5 maps in one step due to memory limitation
+                if (j != 0 && j % 7 == 0) {
                     ceo.createCmd(completeRelations);
 
                     Logger.i(TAG, ceo.getCmdLine());

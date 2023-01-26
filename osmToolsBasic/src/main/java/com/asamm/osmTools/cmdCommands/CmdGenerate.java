@@ -121,9 +121,9 @@ public class CmdGenerate extends Cmd {
         addZoomInterval();
 
         addSimplificationFactor();
-        addBboxEnlargement(10);
+        addBboxEnlargement(5);
 
-        //addLabelPosition();
+        addLabelPosition();
         //addMapboxPolylabel();
 
         // get num of cpu cores
@@ -191,7 +191,7 @@ public class CmdGenerate extends Cmd {
         }
         
         //set FileSizeLimit determined when use HD and when RAM
-        int fileSizeLimit = 650;
+        int fileSizeLimit = 550;
         // get map size
         long mapSizeMb = new File(getMap().getPathSource()).length();
         if (getMap().isMerged){
@@ -216,7 +216,8 @@ public class CmdGenerate extends Cmd {
     private void addSimplificationFactor () {
         //default
         //addCommand("simplification-factor=2.5");
-        addCommand("simplification-factor=5");
+        //addCommand("simplification-factor=5");
+        addCommand("simplification-factor=0.5");
     }
 
     private void addWayClipping () {

@@ -615,6 +615,8 @@ public class Parameters {
         mTouristTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
         mContourTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-contour.xml";
 
+        boolean isLoMapsV4 = false;
+
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
 
@@ -687,6 +689,9 @@ public class Parameters {
             + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
             + "<br />"
             + " Map data source OpenStreetMap community";
+        if ( !isLoMapsV4){
+            MAP_COMMENT = MAP_COMMENT.replace("locusmap.app", "locusmap.eu");
+        }
         if (mActionList.contains(Action.CONTOUR)){
             MAP_COMMENT +=
                  "<br /> "

@@ -16,7 +16,7 @@ sourceSets.test.runtimeClasspath += configurations.compileClasspath - configurat
 def version = '0.10.0'
 
 jar {
-    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.compileClasspath  .collect { it.isDirectory() ? it : zipTree(it) } }
 
     from('src/main/config/') {
         filter {

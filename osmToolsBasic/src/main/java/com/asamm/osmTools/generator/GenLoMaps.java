@@ -346,7 +346,7 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if output file with transformed data already exist
-        if (!Parameters.isRewriteFiles() && new File(map.getPathTranform()).exists()) {
+        if (new File(map.getPathTranform()).exists()) {
             Logger.i(TAG, "File with transformed data, already exist. Skip data transform action; path: "
                     + map.getPathTranform());
             return;

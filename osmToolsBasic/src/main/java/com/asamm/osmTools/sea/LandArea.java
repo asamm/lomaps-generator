@@ -159,7 +159,7 @@ public class LandArea {
         sb.append(cornerSW.toXmlString());
         sb.append(cornerSE.toXmlString());
         
-        sb.append(way.toXmlString(tags, 0, Parameters.costlineBorderId));
+        sb.append(way.toXmlString(tags, Parameters.costlineBorderId));
         Parameters.costlineBorderId++;
         
         sb.append("\n</osm>");

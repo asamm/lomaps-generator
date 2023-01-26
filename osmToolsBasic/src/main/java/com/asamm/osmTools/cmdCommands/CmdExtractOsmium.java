@@ -93,5 +93,6 @@ public class CmdExtractOsmium extends Cmd {
         }
         addCommand("-v");
         addCommand(getMap().getPathSource());
+        addCommand("--fsync");
     }
 }
