@@ -27,7 +27,6 @@ public class Tags {
     public long parentRelId;
 
     // for polabska stezka
-    public String highway;
     public String tracktype;
 
     // for cyclo nodetrack
@@ -37,6 +36,7 @@ public class Tags {
     public String note;
     
     //for hiking
+    public String highway;
     public String osmcsymbol;
     public String osmc; // store information for mapsforge, boolean whearher tags has values osmcsymbol
     public int osmc_order;
@@ -49,6 +49,7 @@ public class Tags {
     public String kct_barva;
     public String kct_green;
     public String colour;
+    public String sac_scale;
 
     //for ski
     public String pisteType;
@@ -84,6 +85,7 @@ public class Tags {
         this.osmc_text = tags.osmc_text;
         this.osmc_text_color = tags.osmc_text_color;
         this.osmc_text_length = tags.osmc_text_length;
+        this.sac_scale = tags.sac_scale;
         this.kct_barva = tags.kct_barva;
         this.kct_green = tags.kct_green;
         this.colour = tags.colour;
@@ -167,6 +169,9 @@ public class Tags {
             }
             if (tag.key.equals("piste:difficulty")){
                 pisteDifficulty = tag.val.toLowerCase();
+            }
+            if (tag.key.equals("sac_scale")){
+                sac_scale = tag.val.toLowerCase();
             }
         }
     }
@@ -388,18 +393,12 @@ public class Tags {
         return false;
     }
 
-    public String toXml(){
-        return this.toXml(0);
-    }
-
     /**
      * 
-     * @param refsLength this the length of offset for ref caption. for example 
-     *                   if we have two ways overlayd then text will have offset 
-     *                  using white space. This is terrible solution - i know
+     *
      * @return 
      */
-    public String toXml(int refsLength){
+    public String toXml(){
         String str = "";
           
         if (type != null){
@@ -415,11 +414,7 @@ public class Tags {
             str += "\n   <tag k=\"network\" v=\""+StringEscapeUtils.escapeXml(network)+"\"/>";
         }
         if (ref != null){
-            String freeSpace = "";
-            for (int i = 0; i < 3*refsLength; i++ ){
-                freeSpace += " "; 
-            }
-            str += "\n   <tag k=\"ref\" v=\""+StringEscapeUtils.escapeXml(freeSpace + ref)+"\"/>";
+            str += "\n   <tag k=\"ref\" v=\""+StringEscapeUtils.escapeXml(ref)+"\"/>";
         }
         if (name != null){
             str += "\n   <tag k=\"name\" v=\""+StringEscapeUtils.escapeXml(name)+"\"/>";
@@ -478,7 +473,9 @@ public class Tags {
         if (osmc_text_color != null){
             str += "\n   <tag k=\"osmc_text_color\" v=\""+StringEscapeUtils.escapeXml(osmc_text_color)+"\"/>";
         }
-
+        if (sac_scale != null){
+            str += "\n   <tag k=\"sac_scale\" v=\""+StringEscapeUtils.escapeXml(sac_scale)+"\"/>";
+        }
         if (kct_barva != null){
             str += "\n   <tag k=\"kct_barva\" v=\""+StringEscapeUtils.escapeXml(kct_barva)+"\"/>";
         }

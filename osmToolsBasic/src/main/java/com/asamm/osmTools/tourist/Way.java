@@ -147,8 +147,45 @@ public class Way {
             }
         });
     }
+
+
+    /**
+     * Combine the ref value and name into combination "name,  ref"
+     */
+    private void mergeRefAndName() {
+
+        for (Tags tags : this.tagsArray){
+            String ref = (tags.ref == null) ? "" : tags.ref;
+            String name = (tags.name == null) ? "" : tags.name;
+
+            if (name.length() > 0){
+                if (ref.length() > 0 && !name.contains(ref)) {
+                    // append ref to the existing name
+                    tags.name = name + ", " + ref;
+                }
+            }
+            else if (ref.length() > 0 && !name.contains(ref)) {
+                // name is empty replace it by ref value
+                tags.name = ref;
+            }
+        }
+    }
+
+    private void copyOriginalTagsToNewWays(){
+
+        for (Tags tags : tagsArray) {
+
+            // try to obtain the original highway tag and set it also into new hiking way
+            tags.highway = originalTags.highway;
+
+            tags.sac_scale = originalTags.sac_scale;
+        }
+    }
     
     public String toXml(){
+
+        // copy specific tags from original OSM way into created tourist ways
+        copyOriginalTagsToNewWays();
 
         // remove SuperRoute relation before organize the order and OSMC colors
         removeSuperRoute();
@@ -159,6 +196,8 @@ public class Way {
         // remove duplicated color in foreground and background
         this.removeSameOsmcForegroundColor();
 
+        this.mergeRefAndName();
+
         String str = "";   
         if (Parameters.printHighestWay){
              //find the highest TAGS ib tags array
@@ -166,43 +205,30 @@ public class Way {
             if (tags == null) {
                 return ""; 
             }
-            str += this.toXmlString(tags,0, Parameters.touristWayId);
+            str += this.toXmlString(tags,Parameters.touristWayId);
             Parameters.touristWayId++;
         } 
         else {  
-            // print the same number of ways as tags
-            // refsLength is keng of string of ref tags this is used for offset 
-            // of ref tag in situation when two or more ways are overlayed
-            int refsLength =0;
             for (Tags tags : tagsArray) {
 
                 //str += this.toXmlString(tags, refsLength);
-                str += this.toXmlString(tags, refsLength, Parameters.touristWayId);
+                str += this.toXmlString(tags, Parameters.touristWayId);
                 Parameters.touristWayId++;
-                
-                // =================  HERE IS OFFSET FOR REF TAG COMPUTED ==========
-                if (tags.ref != null){
-                    refsLength += tags.ref.length()+2;
-                }
             }
         }
         
         return str;
     }
-    
+
+
     /**
      * function write way with attributes nodes and specified tags to string
      * @param tags 
      * @return XML string
      */
-    public String toXmlString(Tags tags, int refsLength, long wayId){
+    public String toXmlString(Tags tags, long wayId){
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Date date =  new Date();
-
-        // try to obtain the original highway tag and set it also into new hiking way
-        tags.highway = originalTags.highway;
-
-
 
         String str = "";
         // print way heading
@@ -218,7 +244,7 @@ public class Way {
             str += "\n   <nd ref=\""+node.id+"\"/>";
         }
         // print tags string
-        str += tags.toXml(refsLength);
+        str += tags.toXml();
 
         //close the way
         str += "\n  </way>";
