@@ -15,6 +15,7 @@ dependencies {
     implementation 'org.wololo:jts2geojson:0.17.0'
     implementation 'org.openstreetmap.osmosis:osmosis-core:0.47'
 
+    implementation 'commons-io:commons-io:2.4'
     implementation 'org.apache.commons:commons-lang3:3.4'
     implementation 'net.sf.kxml:kxml2:2.2.2'
     implementation 'org.locationtech.jts:jts-core:1.16.1'
@@ -37,6 +38,18 @@ jar {
     from('src/main/config/') {
         include 'plugin.xml'
     }
+}
+
+task fatJar(type: Jar, dependsOn: configurations.runtimeClasspath) {
+    classifier 'jar-with-dependencies'
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+
+    }
+    with jar
 }
 
 def releaseTask = tasks.create(name: '_releaseOsmToolsDataWriter') {

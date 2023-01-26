@@ -220,7 +220,9 @@ public class CmdLoMapsDbPlugin extends Cmd {
         addCommand("-type=address");
 
         int size = (int) (mFileTempMap.length() / 1024L / 1024L);
-        if (size <= 300) {
+        // TODO change revert  back
+        // if (size <= 300) {
+        if (size <= 100) {
             addCommand("-dataContainerType=ram");
         }
         else {
