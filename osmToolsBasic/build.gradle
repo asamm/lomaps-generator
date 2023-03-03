@@ -35,7 +35,7 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.15.1'
 }
 
-def versionCode = "0.5.7"
+def versionCode = "0.6.0"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {
