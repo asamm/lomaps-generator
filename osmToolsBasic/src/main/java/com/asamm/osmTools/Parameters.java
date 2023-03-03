@@ -615,7 +615,7 @@ public class Parameters {
         mTouristTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
         mContourTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-contour.xml";
 
-        boolean isLoMapsV4 = false;
+        boolean isLoMapsV4 = true;
 
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;

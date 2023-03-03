@@ -90,7 +90,7 @@ public class Way {
 
     /**
      * In Germany are often background color the same as foreground
-     * The goal is to keep foreground color empty is same as background
+     * The goal is to keep foreground color empty if same as background
      * The osmc symbol with missing foreground will not be displayed
      */
     private void removeSameOsmcForegroundColor(){
