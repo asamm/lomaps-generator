@@ -210,9 +210,10 @@ public class Parameters {
     // META DATA TABLE
 
     private static final int mDbDataPoiVersion = 1;
+    private static final int mDbDataPoiVersionLoMapsV4 = 2;
     private static final int mDbDataAddressVersion = 2;
 
-
+    private static final boolean isLoMapsV4 = true;
     /*                     GETTERS                     */
 
     // DEFINED PARAMETERS FROM ARGUMENTS
@@ -354,6 +355,9 @@ public class Parameters {
     // DB META DATA PARAMS
 
     public static int getDbDataPoiVersion() {
+        if (isLoMapsV4){
+            return mDbDataPoiVersionLoMapsV4;
+        }
         return mDbDataPoiVersion;
     }
 
@@ -614,8 +618,6 @@ public class Parameters {
         // path to the mapsforge definition file for generation
         mTouristTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-tourist.xml";
         mContourTagMapping = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "tag-mapping-contour.xml";
-
-        boolean isLoMapsV4 = true;
 
         // osmosisDir
         String osmosisPath = "osmosis" + Consts.FILE_SEP + "bin" + Consts.FILE_SEP;
