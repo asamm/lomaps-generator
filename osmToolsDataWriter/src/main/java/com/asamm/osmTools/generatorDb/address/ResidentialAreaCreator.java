@@ -29,12 +29,14 @@ public class ResidentialAreaCreator {
     private static final String[] VALID_LANDUSE_TAGS = new String[]{
             "residential", "industrial", "railway", "commercial", "hospital", "brownfield", "cemetery"};
 
-    private static final int BUILDING_RESIDENTIAL_BUFFER_SIZE = 50; // meters
+    private static final int BUILDING_RESIDENTIAL_BUFFER_SIZE = 30; // meters
+
+    private static final int RESIDENTIAL_POLY_SIMPLY_FACTOR = 5; // meters
 
     private static final int MAX_BUILDING_POLY_COUNT_FOR_UNION = (int) 1e6;
 
     /*
-     * JTS index of areas that are taged as residential in defautl OSM data
+     * JTS index of areas that are taged as residential in default OSM data
      */
     private STRtree residentialAreasIndex;
 
@@ -49,7 +51,7 @@ public class ResidentialAreaCreator {
     private List<Geometry> landusePolygons;
 
     /*
-     * List store building rectagles that are joined in specified size;
+     * List store building rectangles that are joined in specified size;
      */
     private List<Geometry> tmpBuildingPolygons;
 
@@ -155,8 +157,8 @@ public class ResidentialAreaCreator {
         }
 
         Logger.i(TAG, "createPolygonsFromLanduseAreas: simplify languse geoms" );
-        // use ugly hack because some residentia areas in UK are close very close to aech other and cause topology exception
-        double distanceDeg = Utils.distanceToDeg(landuseGeom.getEnvelope().getCoordinate(), 20);
+        // use ugly hack because some residential areas in UK are close very close to each other and cause topology exception
+        double distanceDeg = Utils.distanceToDeg(landuseGeom.getEnvelope().getCoordinate(), 2);
         landuseGeom = DouglasPeuckerSimplifier.simplify(landuseGeom, distanceDeg).buffer(0.0);
 
         residentPolygons.add(landuseGeom);
@@ -259,7 +261,7 @@ public class ResidentialAreaCreator {
 
 
         // simplify merged geom
-        double distanceDeg = Utils.distanceToDeg(unionGeom.getEnvelope().getCoordinate(), 20);
+        double distanceDeg = Utils.distanceToDeg(unionGeom.getEnvelope().getCoordinate(), RESIDENTIAL_POLY_SIMPLY_FACTOR);
         unionGeom = DouglasPeuckerSimplifier.simplify(unionGeom, distanceDeg);
         unionGeom = unionGeom.buffer(0.0);
 
@@ -309,11 +311,11 @@ public class ResidentialAreaCreator {
     private List<Polygon> simplifyResidentialGeom(Geometry geom) {
 
         // simplify joined geometry
-        double distanceDeg = Utils.distanceToDeg(geom.getCoordinate(), 20);
+        double distanceDeg = Utils.distanceToDeg(geom.getCoordinate(), RESIDENTIAL_POLY_SIMPLY_FACTOR);
         geom = DouglasPeuckerSimplifier.simplify(geom, distanceDeg);
 
         // remove too small geometries
-        double minArea = Utils.metersToDeg(200) * Utils.metersToDeg(200);
+        double minArea = Utils.metersToDeg(3*BUILDING_RESIDENTIAL_BUFFER_SIZE) * Utils.metersToDeg(3*BUILDING_RESIDENTIAL_BUFFER_SIZE);
         List<Polygon> polygons = new ArrayList<>();
         for (int i = 0, size = geom.getNumGeometries(); i < size; i++) {
             Polygon polygon = (Polygon) geom.getGeometryN(i);
@@ -330,9 +332,9 @@ public class ResidentialAreaCreator {
         // union rest of polygons again
         UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polygons);
         Geometry residentialGeom = unaryUnionOp.union();
-        // buffer and create nagative buffer to create polygons little bit smooth
-        residentialGeom = residentialGeom.buffer(Utils.distanceToDeg(residentialGeom.getCoordinate(), 50));
-        residentialGeom = residentialGeom.buffer(-Utils.distanceToDeg(residentialGeom.getCoordinate(), 60));
+        // buffer and create negative buffer to create polygons little bit smooth
+        residentialGeom = residentialGeom.buffer(Utils.distanceToDeg(residentialGeom.getCoordinate(), 30));
+        residentialGeom = residentialGeom.buffer(-Utils.distanceToDeg(residentialGeom.getCoordinate(), 30));
 
         // simplify again
         residentialGeom = DouglasPeuckerSimplifier.simplify(residentialGeom, distanceDeg);
