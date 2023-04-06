@@ -427,9 +427,9 @@ public class Tags {
             str += "\n   <tag k=\"whitesea\" v=\""+StringEscapeUtils.escapeXml(whitesea)+"\"/>";
         }
 
-        // for cyclo polabska
         if (highway != null){
             str += "\n   <tag k=\"osmc_highway\" v=\""+StringEscapeUtils.escapeXml(highway)+"\"/>";
+            str += "\n   <tag k=\"lm_highway\" v=\""+StringEscapeUtils.escapeXml(highway)+"\"/>";
         }
         if (tracktype != null){
             str += "\n   <tag k=\"tracktype\" v=\""+StringEscapeUtils.escapeXml(tracktype)+"\"/>";

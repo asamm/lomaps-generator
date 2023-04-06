@@ -135,7 +135,7 @@ public class Way {
         tagsTypesMap.forEach((t, touristTags) -> {
 
             int counter = 0;
-            Set<String> colors = new HashSet<>(); // list of unique osmc colors for specific type of toursit route
+            Set<String> colors = new HashSet<>(); // list of unique osmc colors for specific type of tourist route
             for (Tags tags : touristTags){
 
                 if (tags.osmc_color != null && tags.osmc_color.length() > 0 && !colors.contains(tags.osmc_color)){
@@ -271,7 +271,6 @@ public class Way {
                 //now know that way is bycicle and it is able to compare based on network tag
                 net = tags.network;
                 pom = Parameters.bycicleNetworkType.get(net);
-                //System.out.println("Cesta " + this.id +" pom: "+ pom);
                 if (pom > highestNetworkNum){
                     highestTags = tags;
                     highestNetworkNum = pom;
@@ -283,8 +282,7 @@ public class Way {
                 //now know that way is bycicle and it is able to compare based on network tag
                 net = tags.network;
                 pom = Parameters.hikingNetworkType.get(net);
-                
-                System.out.println("Cesta " + this.id +" pom: "+ pom);
+
                 if (pom > highestNetworkNum){
                     highestTags = tags;
                     highestNetworkNum = pom;

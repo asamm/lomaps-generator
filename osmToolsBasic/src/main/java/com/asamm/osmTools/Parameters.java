@@ -188,8 +188,8 @@ public class Parameters {
     public static long contourWayId     = 20000000000000L;
     public static long costlineBorderId = 22000000000000L;
                                     
-    // by this variable decide if print for every tags new way or only
-    // find the phighest parent tags and print only one way with this highest tag 
+    // by this variable decide if print for all REF number for the routes or only the REF for the most important
+    // (international, national, regional...) route
     public static final boolean printHighestWay = false;
 
     // the list of bicycle network type
