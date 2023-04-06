@@ -31,9 +31,9 @@ public class ResidentialAreaCreator {
 
     private static final int BUILDING_RESIDENTIAL_BUFFER_SIZE = 30; // meters
 
-    private static final int RESIDENTIAL_POLY_SIMPLY_FACTOR = 5; // meters
+    private static final int RESIDENTIAL_POLY_SIMPLY_FACTOR = 10; // meters
 
-    private static final int MAX_BUILDING_POLY_COUNT_FOR_UNION = (int) 1e6;
+    private static final int MAX_BUILDING_POLY_COUNT_FOR_UNION = (int) 1e4;
 
     /*
      * JTS index of areas that are taged as residential in default OSM data
@@ -44,11 +44,6 @@ public class ResidentialAreaCreator {
      * Final polygons that can be residential and are use for whole union and buffering
      */
     private List<Geometry> residentPolygons;
-
-    /*
-     * Polygons created from OSM landuse areas. Inside this area aren't created new building rectangles
-     */
-    private List<Geometry> landusePolygons;
 
     /*
      * List store building rectangles that are joined in specified size;
@@ -77,7 +72,6 @@ public class ResidentialAreaCreator {
         this.residentialAreasIndex = new STRtree();
 
         this.residentPolygons = new ArrayList<>();
-        this.landusePolygons = new ArrayList<>();
         this.tmpBuildingPolygons = new ArrayList<>();
 
         this.geometryFactory = new GeometryFactory();
@@ -123,9 +117,11 @@ public class ResidentialAreaCreator {
     private void createPolygonsFromLanduseAreas() {
 
 
-
+        List<Geometry> landusePolygons = new ArrayList<>();
+        int areasCounter = 0;
         TLongList wayIds = dc.getWayIds();
         for (int i = 0, size = wayIds.size(); i < size; i++) {
+            areasCounter++;
             Way way = dc.getWayFromCache(wayIds.get(i));
 
             if (way == null || !isValidLanduse(way)) {
@@ -144,24 +140,18 @@ public class ResidentialAreaCreator {
 
                 landusePolygons.add(landusePoly);
                 residentialAreasIndex.insert(landusePoly.getEnvelopeInternal(), landusePoly);
+
+                if (areasCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION) {
+                    unionTempResidentPoly(landusePolygons);
+                    // clear temporary cache
+                    landusePolygons = new ArrayList<>();
+                    areasCounter = 0;
+                    Logger.i(TAG, "Num processed residential areas for union: " + residentPolygons.size());
+                }
             }
         }
-
-        // union osm landuse areas
-        Logger.i(TAG, "createPolygonsFromLanduseAreas: Union landuse areas. Num of poly: " + landusePolygons.size());
-        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(landusePolygons);
-        Geometry landuseGeom = unaryUnionOp.union();
-        if (landuseGeom == null){
-            // no land use geom was created from data
-            return;
-        }
-
-        Logger.i(TAG, "createPolygonsFromLanduseAreas: simplify languse geoms" );
-        // use ugly hack because some residential areas in UK are close very close to each other and cause topology exception
-        double distanceDeg = Utils.distanceToDeg(landuseGeom.getEnvelope().getCoordinate(), 2);
-        landuseGeom = DouglasPeuckerSimplifier.simplify(landuseGeom, distanceDeg).buffer(0.0);
-
-        residentPolygons.add(landuseGeom);
+        // process rest of residential areas
+        unionTempResidentPoly(landusePolygons);
     }
 
     /**
@@ -201,7 +191,10 @@ public class ResidentialAreaCreator {
             tmpBuildingPolygons.add(polygon);
 
             if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION) {
-                unionTempResidentPoly();
+                unionTempResidentPoly(tmpBuildingPolygons);
+                // clear temporary cache
+                tmpBuildingPolygons = new ArrayList<>();
+                tmpBuildingCounter = 0;
                 Logger.i(TAG, "Num processed building poly: " + residentalBuildingCounter);
             }
         }
@@ -233,31 +226,34 @@ public class ResidentialAreaCreator {
             tmpBuildingPolygons.add(polygon);
 
             if (tmpBuildingCounter >= MAX_BUILDING_POLY_COUNT_FOR_UNION) {
-                unionTempResidentPoly();
+                unionTempResidentPoly(tmpBuildingPolygons);
+                // clear temporary cache
+                tmpBuildingPolygons = new ArrayList<>();
+                tmpBuildingCounter = 0;
                 Logger.i(TAG, "Num processed building poly: " + residentalBuildingCounter);
             }
         }
 
         // process rest of tmp polygons
-        unionTempResidentPoly();
+        unionTempResidentPoly(tmpBuildingPolygons);
+        tmpBuildingPolygons = new ArrayList<>();
+        tmpBuildingCounter = 0;
         Logger.i(TAG, "Num processed building poly: " + residentalBuildingCounter);
     }
 
 
     // UNION TEMPORARY BUILDING POLY
-    private void unionTempResidentPoly() {
+    private void unionTempResidentPoly(List<Geometry> polygonToUnion) {
 
-        int size = tmpBuildingPolygons.size();
+        int size = polygonToUnion.size();
         if (size == 0){
-            // no building was created
             return;
         }
 
         long start = System.currentTimeMillis();
-        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(tmpBuildingPolygons);
+        UnaryUnionOp unaryUnionOp = new UnaryUnionOp(polygonToUnion);
         Geometry unionGeom = unaryUnionOp.union();
         Logger.i(TAG, "Union " + size + " polygons takes: " + (System.currentTimeMillis() - start) / 1000.0);
-
 
 
         // simplify merged geom
@@ -266,10 +262,6 @@ public class ResidentialAreaCreator {
         unionGeom = unionGeom.buffer(0.0);
 
         residentPolygons.add(unionGeom);
-
-        // clear temporary cachee
-        tmpBuildingPolygons = new ArrayList<>();
-        tmpBuildingCounter = 0;
     }
 
 

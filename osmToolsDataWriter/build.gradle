@@ -25,7 +25,7 @@ sourceSets.main.compileClasspath += configurations.providedCompile
 sourceSets.test.compileClasspath += configurations.providedCompile
 sourceSets.test.runtimeClasspath += configurations.providedCompile
 
-def versionCode = "0.3.3"
+def versionCode = "0.3.4"
 def newArchiveName = "osmToolsDataWriter_${versionCode}.jar"
 
 jar {
