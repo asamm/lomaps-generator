@@ -634,7 +634,7 @@ public class Parameters {
         if (Utils.isSystemUnix()){
             mOsmosisExe = new File(osmosisPath + "osmosis").getAbsolutePath();
             mOsmium = "osmium";
-            phyghtDir = "phyghtmap";
+            phyghtDir = "/osm_tools/vectorMaps/pyhgtmap/hgt_venv/bin/pyhgtmap";
             mOgr2ogr = "ogr2ogr";
             mPythonDir = "python3";
             mPython2Dir = "python2";
@@ -652,7 +652,7 @@ public class Parameters {
         } else {
             mOsmosisExe = new File (osmosisPath + "osmosis").getAbsolutePath();
             mOsmium = "osmium";
-            phyghtDir = "/usr/bin/phyghtmap";
+            phyghtDir = "/osm_tools/vectorMaps/pyhgtmap/hgt_venv/bin/pyhgtmap";
             mOgr2ogr = "ogr2ogr";
             mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";

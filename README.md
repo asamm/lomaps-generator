@@ -11,9 +11,22 @@ The steps described below expect installation on Ubuntu
 
     ```sudo apt-get install osmium-tools```
 	
-- install [phyghtmap](http://katze.tfiu.de/projects/phyghtmap/) used for generation of contour-lines from elevation hgt files.  
+- install [pyhgtmap](https://github.com/agrenott/pyhgtmap/) - pyhgtmap is a fork of the original [phyghtmap](http://katze.tfiu.de/projects/phyghtmap/) tool, 
+ which doesn't seem to be maintained anymore. It is used for generation of contour-lines from elevation hgt files.  
 
-    ```sudo apt-get install phyghtmap```
+    ```
+  sudo apt update
+  sudo apt install python3 python3-pip python3-venv
+  #navigate to the vector maps forlder
+  cd vectorMaps
+  mkdir pyhgtmap
+
+  python3 -m venv hgt_venv
+  # Switch to venv
+  . ./hgt_venv/bin/activate
+  # Install pyhgtmap with dependencies from PyPi
+  pip install pyhgtmap		
+     ```
 	
 - install [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) set of tools. Generator uses ogr2ogr to cut global SHP files with coastlines into states areas
 
