@@ -177,8 +177,10 @@ public class Way {
 
             // try to obtain the original highway tag and set it also into new hiking way
             tags.highway = originalTags.highway;
-
             tags.sac_scale = originalTags.sac_scale;
+
+            tags.tunnel = originalTags.tunnel;
+            tags.bridge = originalTags.bridge;
         }
     }
     

@@ -25,6 +25,8 @@ public class Tags {
     public String layer;
     public String whitesea;
     public long parentRelId;
+    public String tunnel;
+    public String bridge;
 
     // for polabska stezka
     public String tracktype;
@@ -70,6 +72,10 @@ public class Tags {
         this.natural = tags.natural;
         this.layer = tags.layer;
         this.whitesea = tags.whitesea;
+        this.parentRelId = tags.parentRelId;
+        this.tunnel = tags.tunnel;
+        this.bridge = tags.bridge;
+
         this.highway = tags.highway;
         this.tracktype = tags.tracktype;
         this.rcn = tags.rcn;
@@ -89,7 +95,7 @@ public class Tags {
         this.kct_barva = tags.kct_barva;
         this.kct_green = tags.kct_green;
         this.colour = tags.colour;
-        this.parentRelId = tags.parentRelId;
+
         this.pisteType = tags.pisteType;
         this.pisteGrooming = tags.pisteGrooming;
         this.pisteDifficulty = tags.pisteDifficulty;
@@ -131,6 +137,15 @@ public class Tags {
             }
             if (tag.key.equals("rcn")){
                 rcn = tag.val;
+                return;
+            }
+
+            if (tag.key.equals("tunnel")){
+                tunnel = tag.val;
+                return;
+            }
+            if (tag.key.equals("bridge")){
+                bridge = tag.val;
                 return;
             }
 
@@ -425,6 +440,13 @@ public class Tags {
         }
         if (whitesea != null){
             str += "\n   <tag k=\"whitesea\" v=\""+StringEscapeUtils.escapeXml(whitesea)+"\"/>";
+        }
+
+        if (tunnel != null){
+            str += "\n   <tag k=\"tunnel\" v=\""+StringEscapeUtils.escapeXml(tunnel)+"\"/>";
+        }
+        if (bridge != null){
+            str += "\n   <tag k=\"bridge\" v=\""+StringEscapeUtils.escapeXml(bridge)+"\"/>";
         }
 
         if (highway != null){
