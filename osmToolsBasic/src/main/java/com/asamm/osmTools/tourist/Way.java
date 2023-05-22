@@ -135,7 +135,21 @@ public class Way {
         tagsTypesMap.forEach((t, touristTags) -> {
 
             int counter = 0;
+            int counter_symbol_order = 0;
             Set<String> colors = new HashSet<>(); // list of unique osmc colors for specific type of tourist route
+            Set<String> osmc_foregrounds = new HashSet<>(); // list of unique osmc foregrounds icons for specific type of tourist route
+
+            // check if there is any iwn/rwn...without defined OSMC color
+            for (Tags tags : touristTags) {
+                if (isIwnNwnRwnLwn(tags) && (tags.osmc_color == null || tags.osmc_color.isEmpty())) {
+                    // this is any local or national, international hiking route without defined osmc color set it
+                    // as first order and simulate it as red color (another red color will have the same order as this one)
+                    colors.add("red");
+                    counter++;
+                    break;
+                }
+            }
+
             for (Tags tags : touristTags){
 
                 if (tags.osmc_color != null && tags.osmc_color.length() > 0 && !colors.contains(tags.osmc_color)){
@@ -144,10 +158,27 @@ public class Way {
                     tags.osmc_order = counter;
                     counter++;
                 }
+                if (tags.osmc_foreground != null && tags.osmc_foreground.length() > 0 && !osmc_foregrounds.contains(tags.osmc_foreground)){
+                    // such symbol isn't is list of used osmc foregrounds
+                    osmc_foregrounds.add(tags.osmc_foreground);
+                    tags.osmc_symbol_order = counter_symbol_order;
+                    counter_symbol_order++;
+                }
             }
         });
     }
 
+    /**
+     * Check if network tag defines any level of IWN to LWN
+     * @param tags
+     * @return
+     */
+    private boolean isIwnNwnRwnLwn(Tags tags){
+        if (tags.network != null){
+            return Parameters.hikingNetworkType.containsKey(tags.network.toLowerCase());
+        }
+        return false;
+    }
 
     /**
      * Combine the ref value and name into combination "name,  ref"
