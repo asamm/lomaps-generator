@@ -124,6 +124,8 @@ public class CmdGenerate extends Cmd {
         addBboxEnlargement(5);
 
         addLabelPosition();
+
+        addCommand("tag-values=true");
         //addMapboxPolylabel();
 
         // get num of cpu cores
