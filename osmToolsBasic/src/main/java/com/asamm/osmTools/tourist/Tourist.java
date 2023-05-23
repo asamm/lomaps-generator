@@ -332,6 +332,10 @@ public class Tourist {
                 continue;  // skip relation that can be used as tourist
             }
 
+            if ( !rel.tags.isValidTypeOrState()){
+                continue;  // skip relation because the route is disabled or only planned
+            }
+
             rel.tags.parseOsmcSymbol();
 
             // test if tags of this relation are valid for

@@ -12,10 +12,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -196,6 +193,9 @@ public class Parameters {
     public static  Hashtable<String,Integer> bycicleNetworkType = new Hashtable<>();
     public static  Hashtable<String,Integer> hikingNetworkType = new Hashtable<>();
     public static  ArrayList<String> hikingColourType;
+
+    // the list of values of "state" tag that represents not active tourist route (such route is not add into tourist ways)
+    public static List<String> invalidStatesForTouristRoute = Arrays.asList("proposed", "disused", "removed", "abandoned") ;
 
     // description in header of map file
     public static String MAP_COMMENT =

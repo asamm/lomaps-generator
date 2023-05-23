@@ -6,15 +6,22 @@ package com.asamm.osmTools.tourist;
 
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.utils.Logger;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  *
  * @author volda
  */
 public class Tags {
+
+    private static final String TAG = Tags.class.getSimpleName();
+
     public String type;
     public String route;
     public String network;
@@ -42,6 +49,7 @@ public class Tags {
     public String osmcsymbol;
     public String osmc; // store information for mapsforge, boolean whearher tags has values osmcsymbol
     public int osmc_order;
+    public int osmc_symbol_order;
     public String osmc_color;
     public String osmc_background;
     public String osmc_foreground;
@@ -86,6 +94,7 @@ public class Tags {
         this.osmc = tags.osmc;
         this.osmc_order = tags.osmc_order;
         this.osmc_color = tags.osmc_color;
+        this.osmc_symbol_order = tags.osmc_symbol_order;
         this.osmc_background = tags.osmc_background;
         this.osmc_foreground = tags.osmc_foreground;
         this.osmc_text = tags.osmc_text;
@@ -232,6 +241,28 @@ public class Tags {
         return (route != null && (route.equals("piste") || route.equals("ski")));
     }
 
+    /**
+     * Check that current route is "in use"
+     * @return
+     */
+    public boolean isValidTypeOrState(){
+        if (type != null){
+            if (type.equalsIgnoreCase("disused_route") || type.equalsIgnoreCase("disused:route")){
+                // route is not "active" remove it from processed way
+                return false;
+            }
+            if ( !type.equalsIgnoreCase("route")){
+                // only logging to know what combination may occur for type
+                Logger.i(TAG, "IS VALID TYPE: type=" + type);
+            }
+        }
+
+        if (state != null){
+            return !Parameters.invalidStatesForTouristRoute.contains(state);
+        }
+
+        return true;
+    }
     /**
      * Split osmc:symbol tag into base color, background and foreground color
      */
@@ -475,6 +506,9 @@ public class Tags {
         }
         if (osmc_order > 0) {
             str += "\n   <tag k=\"osmc_order\" v=\"" + StringEscapeUtils.escapeXml(String.valueOf(osmc_order)) + "\"/>";
+        }
+        if (osmc_symbol_order > 0) {
+            str += "\n   <tag k=\"osmc_symbol_order\" v=\"" + StringEscapeUtils.escapeXml(String.valueOf(osmc_symbol_order)) + "\"/>";
         }
         if (osmc_color != null){
             str += "\n   <tag k=\"osmc_color\" v=\""+StringEscapeUtils.escapeXml(osmc_color)+"\"/>";
