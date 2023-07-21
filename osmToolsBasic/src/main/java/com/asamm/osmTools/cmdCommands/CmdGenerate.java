@@ -131,7 +131,7 @@ public class CmdGenerate extends Cmd {
         // get num of cpu cores
         int cores = Runtime.getRuntime().availableProcessors();
 
-        addThreads(cores -1);
+        addThreads(cores);
 
         addMapComment();
     }
