@@ -24,9 +24,9 @@ public class Relations {
      * @param rel Relation to add
      */
     public void addRel(Relation rel){
-        this.relations.put(rel.id, rel);
+        this.relations.put(rel.getId(), rel);
         
-        this.relations.put(rel.id, rel);
+        this.relations.put(rel.getId(), rel);
     }
     
     public Relation getRel (long id){

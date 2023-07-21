@@ -8,6 +8,7 @@ import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdTourist;
 import com.asamm.osmTools.mapConfig.ItemMap;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.SparseArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -134,13 +135,13 @@ public class Tourist {
                         Member mem = new Member();
                         mem.fillAttributes(parser);
                         // add member to rhe relation members array
-                        rel.members.add(mem);
+                        rel.getMembers().add(mem);
                     }
                     
                     if ((rel != null) && tagName.equals("tag")){
                         Tag t = new Tag();
                         t.fillAttributes(parser);
-                        rel.tags.setValue(t);
+                        rel.getTags().setValue(t);
                     }
                     
                     // parse tags for cycle nodes for BE a NL maps
@@ -154,8 +155,8 @@ public class Tourist {
                     tagName = parser.getName();
                     if (tagName.equals("relation")){
                         // I need to know (for future) which relation is parent for tags
-                        rel.tags.setParentRelationId(rel.id);
-                        relations.put(rel.id, rel);
+                        rel.getTags().setParentRelationId(rel.getId());
+                        relations.put(rel.getId(), rel);
                         //System.out.println(rel.members.size());
                         rel = null;
                     }
@@ -328,23 +329,31 @@ public class Tourist {
 
             rel = relations.valueAt(i);
 
-            if ( !rel.tags.isTouristRelation()){
+            if (rel.getId() == 1401300){
+                Logger.i(TAG, "Relation ID: " + rel.getId());
+            }
+
+            rel.initChildRelation(relations);
+
+            if ( !rel.getTags().isTouristRelation()){
                 continue;  // skip relation that can be used as tourist
             }
 
-            if ( !rel.tags.isValidTypeOrState()){
+            if ( !rel.getTags().isValidTypeOrState()){
                 continue;  // skip relation because the route is disabled or only planned
             }
 
-            rel.tags.parseOsmcSymbol();
+            rel.getTags().parseOsmcSymbol();
 
             // test if tags of this relation are valid for
-            if (!rel.tags.validate()){
+            if (!rel.getTags().validate()){
                 continue;
             }
 
             // set parent tags. In this list is every relation parent for its members
-            rel.parentTags = rel.tags;
+            rel.setParentTags(rel.getTags());
+
+            // add tags of this relation to ways that are members of this relation
             rel.membersToWayList(relations,wl,-1); // there is -1 because this relation has no parent relation
         }
     }

@@ -66,7 +66,8 @@ public class Way {
         if (tagsArray != null){
             for(int i = tagsArray.size() - 1; i >= 0; --i) {
                 Tags tags = tagsArray.get(i);
-                if (tags.type != null && tags.type.equalsIgnoreCase("superroute")){
+                if (tags.type != null && tags.type.equalsIgnoreCase("superroute")
+                    && !tags.isOsmSymbolDefined() && !tags.isIwnNwnRwnLwn()){
                     tagsArray.remove(i);
                     //Logger.i(TAG, "Remove superroute, ID: " + tags.parentRelId);
                 }
@@ -141,7 +142,7 @@ public class Way {
 
             // check if there is any iwn/rwn...without defined OSMC color
             for (Tags tags : touristTags) {
-                if (isIwnNwnRwnLwn(tags) && (tags.osmc_color == null || tags.osmc_color.isEmpty())) {
+                if (tags.isIwnNwnRwnLwn() && (tags.osmc_color == null || tags.osmc_color.isEmpty())) {
                     // this is any local or national, international hiking route without defined osmc color set it
                     // as first order and simulate it as red color (another red color will have the same order as this one)
                     colors.add("red");
@@ -166,18 +167,6 @@ public class Way {
                 }
             }
         });
-    }
-
-    /**
-     * Check if network tag defines any level of IWN to LWN
-     * @param tags
-     * @return
-     */
-    private boolean isIwnNwnRwnLwn(Tags tags){
-        if (tags.network != null){
-            return Parameters.hikingNetworkType.containsKey(tags.network.toLowerCase());
-        }
-        return false;
     }
 
     /**
@@ -216,6 +205,10 @@ public class Way {
     }
     
     public String toXml(){
+
+        if (id == 97541653){
+            Logger.i(TAG, "Way ID: " + id);
+        }
 
         // copy specific tags from original OSM way into created tourist ways
         copyOriginalTagsToNewWays();

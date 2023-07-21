@@ -598,5 +598,21 @@ public class Tags {
     private boolean  isOsmcColorValid(String color) {
         return Parameters.hikingColourType.contains(color);
     }
+
+    /**
+     * Check if network tag defines any level of IWN to LWN
+     * @return
+     */
+    public boolean isIwnNwnRwnLwn(){
+        if (this.network != null){
+            return Parameters.hikingNetworkType.containsKey(this.network.toLowerCase());
+        }
+        return false;
+    }
+
+
+    public boolean isOsmSymbolDefined(){
+        return (osmc != null && osmc.length() > 0);
+    }
         
 }
