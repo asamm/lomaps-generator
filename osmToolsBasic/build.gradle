@@ -33,9 +33,13 @@ dependencies {
     implementation 'org.locationtech.jts:jts-core:1.16.1'
     implementation 'org.apache.commons:commons-lang3:3.4'
     implementation 'org.xerial:sqlite-jdbc:3.15.1'
+
+    compileOnly  'org.projectlombok:lombok:1.18.28'
+    annotationProcessor  'org.projectlombok:lombok:1.18.28'
+
 }
 
-def versionCode = "0.6.4"
+def versionCode = "0.6.4_core-max"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {
