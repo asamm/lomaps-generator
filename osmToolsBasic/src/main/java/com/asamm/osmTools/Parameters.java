@@ -9,7 +9,6 @@ import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -170,7 +169,10 @@ public class Parameters {
     public static String mapOutputFormat = "osm.pbf";  //posibilities: "osm" or "pbf"
     //Contour lines definition 
     public static String phyghtDir;
-    public static String contourStep = "20"; //meters;
+    public static String contourStepMeter = "20"; //meters;
+    public static String contourSource = "view3,view1";
+
+    public static String contourStepFeet = "50"; //feet;
     public static String contourNoSRTM = "noSRTMdata";
     public static String mTouristTagMapping;
     private static String mContourTagMapping;

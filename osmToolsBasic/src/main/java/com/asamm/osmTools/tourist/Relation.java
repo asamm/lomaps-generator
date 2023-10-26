@@ -60,18 +60,15 @@ public class Relation {
      * @param parentId
      */
     public void membersToWayList(SparseArray<Relation> relations, WayList wl, long parentId){
-       //counter ++;
-        if (id == 299338){
-            Logger.i(TAG, "Relation ID: " + id);
-        }
+
+//        if (id == 22602){
+//            Logger.i(TAG, "Relation ID: " + id);
+//        }
 
         if (!members.isEmpty()) {
 
             for (Member mbr : members ){
                 // test if member is not relations itselfs. if yes continue to next member
-//                if (mbr.ref == 97541653){
-//                    Logger.i(TAG, "Way ID: " + mbr.ref);
-//                }
                 if (mbr.ref == this.id){
                     Main.LOG.warning("Relation "+ this.id +" has itself a member");
                     continue;
@@ -87,7 +84,14 @@ public class Relation {
 
                     wl.addWay(mbr.ref, this.parentTags);
                 } else if (mbr.type.equals("relation")){
-                    
+
+                    if (mbr.role != null && mbr.role.equals("link")){
+                        // skip children relation that are type link
+                        // Connection is used for routes linking two different routes or linking a route
+                        // with for example a village centre.
+                        continue;
+                    }
+
                     Relation rel = relations.get(mbr.ref);
                     if (rel == null) {
                         continue; // member linked with relation which wasn't parsed from source data
@@ -121,9 +125,9 @@ public class Relation {
         }
         for (Relation relation : childRelations){
             // find any member of relation with ref equal to wayId
-            if (members.stream().anyMatch(mbr -> mbr.ref == wayId)) {
+            if (relation.getMembers().stream().anyMatch(mbr -> mbr.ref == wayId)) {
                 // if relation has valid tags then return true
-                return (tags.isOsmSymbolDefined() && tags.osmc_color.length() > 0) || this.tags.isIwnNwnRwnLwn();
+                return (tags.osmc_color != null && tags.osmc_color.length() > 0) || this.tags.isIwnNwnRwnLwn();
             }
         }
         return false;

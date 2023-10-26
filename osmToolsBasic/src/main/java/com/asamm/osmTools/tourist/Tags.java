@@ -267,17 +267,19 @@ public class Tags {
      * Split osmc:symbol tag into base color, background and foreground color
      */
     public void parseOsmcSymbol () {
-        //test if has tag osmc:symbol
-        //osmcSymbolElements = new ArrayList<String>();
+
         if (osmcsymbol == null || osmcsymbol.isEmpty()){
+            //there are NO information about osmc:symbol try to obtain color from another tags
+            osmc_color = this.getColorFromColorTags();
             return;
         }
         int position = osmcsymbol.indexOf(":");
         if (position == -1){
-            // osmcsymbol has no colon : for this reason try to validate whole value of osmcsymbol string
+            // osmcsymbol has no semicolon ":" for this reason try to validate the whole value of osmcsymbol string
             if(isOsmcColorValid(osmcsymbol)){
                 osmc_color = osmcsymbol;
             }
+            osmc_color = getColorFromColorTags();
             return;
         }
         int counter = 0;
@@ -285,8 +287,13 @@ public class Tags {
         String[] tokens = osmcsymbol.split(":");
         for (int i = 0; i < tokens.length; i++) {
            switch (i){
-                case 0: 
-                    osmc_color = tokens[i];                  
+                case 0:
+                    if (isOsmcColorValid(tokens[i].toLowerCase())){
+                        osmc_color = tokens[i];
+                    }
+                    else {
+                        osmc_color = getColorFromColorTags();
+                    }
                     break;
                 case 1: 
                     osmc_background = tokens[i];
@@ -308,8 +315,20 @@ public class Tags {
             }
         }
     }
-    
-    
+
+    /**
+     * Function try guess color for track from another tags
+     */
+    private String getColorFromColorTags() {
+
+        if (colour != null && !colour.isEmpty() && isOsmcColorValid(colour)){
+            // color tag is defined
+            return colour;
+        }
+        return "";
+    }
+
+
     /**
      * Test if Tags has all needed tag. It dependance based in type
      * @return 
@@ -380,8 +399,8 @@ public class Tags {
                 }
             }
             
-            //test if has tag osmc:symbol
-            if (osmcsymbol == null || osmcsymbol.isEmpty()){
+            //test if has tag osmc:symbol or defined color
+            if ((osmcsymbol == null || osmcsymbol.isEmpty()) && (osmc_color == null || osmc_color.isEmpty())){
                 //there are NO information about osmc:symbol
                 // set attributes for mapsforge
                 this.osmc = "no";
@@ -399,13 +418,7 @@ public class Tags {
                 }
                 return true;
             }
-                      
-            // test if osmcsymbol has valid values
-            if (osmc_color == null){
-                Main.LOG.warning("[warn_hike_003] Relation with id="+this.parentRelId+" has non valid tag osmc:symbol. v=\""+osmcsymbol+"\"");
-                return false;
-            }
-            
+
             //test if color is valid value of osmc color or empty
             if (!isOsmcColorValid(osmc_color)){
                 //color is not valid -> test if network tag is valid
@@ -426,7 +439,7 @@ public class Tags {
                 return true;
             }
             
-            //color is corect set mapsforge attribute
+            //color is correct set mapsforge attribute
             this.osmc = "yes";
             
             return true;
@@ -595,7 +608,7 @@ public class Tags {
         return false;
     }
     
-    private boolean  isOsmcColorValid(String color) {
+    public boolean  isOsmcColorValid(String color) {
         return Parameters.hikingColourType.contains(color);
     }
 

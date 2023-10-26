@@ -56,10 +56,10 @@ public class LandArea {
 
             // check if map has sea and it's needed to create blue sea rectangle
             if (map.hasSea()){
-                // create OSM boundary
-                createLandOsm(tmpLandPath);
                 // create sea border
                 createBoundSeaXml();
+                // create OSM boundary
+                createLandOsm(tmpLandPath);
                 // merge tmp convert shp file with border
                 mergeBoundsToCoast();
 
@@ -159,8 +159,7 @@ public class LandArea {
         sb.append(cornerSW.toXmlString());
         sb.append(cornerSE.toXmlString());
         
-        sb.append(way.toXmlString(tags, Parameters.costlineBorderId));
-        Parameters.costlineBorderId++;
+        sb.append(way.toXmlString(tags, Parameters.costlineBorderId++));
         
         sb.append("\n</osm>");
         
@@ -183,7 +182,7 @@ public class LandArea {
         FileUtils.forceMkdir(new File(map.getPathCoastline()).getParentFile());
 
         // execute merge
-        Main.LOG.info("Merge map border and coastlines into file: "+ map.getPathCoastline());
+        Main.LOG.info("Merge map border and coastlines "+ tmpLandPath +" and "+ tmpBorderPath +"into file: "+ map.getPathCoastline());
         CmdMerge cm = new CmdMerge(map);
         cm.createSeaCmd(tmpLandPath, tmpBorderPath);
         cm.execute();

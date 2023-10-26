@@ -381,6 +381,7 @@ public class GenLoMaps extends AGenerator {
         // create commands for generation contours
         CmdContour cc = new CmdContour(map);
         cc.createCmd();
+        Logger.i(TAG, "Command: " + cc.getCmdLine());
         String cmdRunLastLine = cc.execute();
 
 

@@ -5,6 +5,7 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.mapConfig.ContourUnit;
 import com.asamm.osmTools.mapConfig.ItemMap;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class CmdContour extends Cmd{
             throw new IllegalArgumentException("Polygon file: " + map.getPathPolygon() + " does not exist");
         }
 
-        // finally set parameters
+        // finally, set parameters
         addCommand(Parameters.phyghtDir);
     }
     
@@ -34,19 +35,25 @@ public class CmdContour extends Cmd{
 
         // add required commands
         addCommand("--polygon=" + getMap().getPathPolygon());
-        addCommand("--step=" + Parameters.contourStep);
+        if (getMap().getContourUnit() == ContourUnit.FEET){
+            addCommand("--feet");
+        }
+        addCommand("--step=" + getMap().getContourStep());
         addCommand("--no-zero-contour");
         addCommand("--output-prefix=" + getMap().getPathContour());
-        //addCommand("--source=view1,srtm1,view3,srtm3");
-        //addCommand("--source=view1,view3,srtm1,srtm3");
-        addCommand("--source=view3,view1");
-        addCommand("--line-cat=200,100");
+        addCommand("--source=" + getMap().getContourSource()); // addCommand("--source=view3,view1");
+        addCommand(getContourCatCmd());
         addCommand("--start-node-id=" + Parameters.contourNodeId);
         addCommand("--start-way-id=" + Parameters.contourWayId);
         addCommand("--write-timestamp");
+        // add simplification of contour lines
+        // for SRTM1 data, some value between 0.00003 and 0.00008 seems reasonable
+        addCommand("--simplifyContoursEpsilon=0.00007");
         addCommand("--max-nodes-per-tile=0");
         addCommand("--hgtdir=" + Parameters.getHgtDir());
-        addCommand("-j 7"); //number of paralel jobs (POSIX only)
+
+        int cores = Runtime.getRuntime().availableProcessors();
+        addCommand("-j " + String.valueOf(cores)); //number of paralel jobs (POSIX only)
         if (Parameters.mapOutputFormat.endsWith("pbf")){
             //
             addCommand("--pbf");
@@ -70,6 +77,16 @@ public class CmdContour extends Cmd{
             }
         }
     }
-    
-    
+
+    /**
+     * Get command for major and minor category of contour lines.
+     * Decide based on type of contour unit (meters or feet)
+     */
+    private String getContourCatCmd(){
+        if (getMap().getContourUnit() == ContourUnit.FEET){
+            return "--line-cat=400,200";
+        }
+        // for Meter and as fallback
+        return "--line-cat=100,50";
+    }
 }

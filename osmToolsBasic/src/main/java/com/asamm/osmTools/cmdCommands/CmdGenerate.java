@@ -193,7 +193,7 @@ public class CmdGenerate extends Cmd {
         }
         
         //set FileSizeLimit determined when use HD and when RAM
-        int fileSizeLimit = 550;
+        int fileSizeLimit = 650;
         // get map size
         long mapSizeMb = new File(getMap().getPathSource()).length();
         if (getMap().isMerged){

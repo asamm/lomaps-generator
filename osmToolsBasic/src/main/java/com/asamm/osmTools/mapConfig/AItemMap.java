@@ -15,91 +15,98 @@ import java.util.List;
 public class AItemMap {
 
     // parent MapPack of this object
-    private ItemMapPack mParent;
+    private ItemMapPack parent;
     // name of this object
-    private String mName;
+    private String name;
     // types (actions) that should be performed
-    private List<Parameters.Action> mActions;
+    private List<Parameters.Action> actions;
     // source for map data
-    private String mSourceId;
+    private String sourceId;
     // ID of region
-    private String mRegionId;
+    private String regionId;
     // ID of parent region
-    private String mParentRegionId;
+    private String parentRegionId;
     // directory name
-    private String mDir;
+    private String dir;
     // folder for generation
-    private String mDirGen;
+    private String dirGen;
     // address DB boundary admin level for address region boundaries
-    private String mCountryName;
+    private String countryName;
     // when extract map from planet some big areas can be outside the border and are removed. Set true to close
-    private boolean mClipIncompleteEntities;
+    private boolean clipIncompleteEntities;
     // prefered language for generating
-    private String mPrefLang;
+    private String prefLang;
     // ISO Alpha2 country code used only for creation store region DB
-    private String mRegionCode;
+    private String regionCode;
+    // type of contour lines in meters or feet
+    private ContourUnit contourUnit = ContourUnit.METER;
+    // step of contour lines in meters or feet
+    private String contourStep;
 
+    private String contourSource = Parameters.contourSource;
 
     // URL source for map file
-    private String mUrl;
-    private String mCycleNode;
-    private String mContourSep;
-    private String mForceType;
+    private String url;
+    private String cycleNode;
+    private String contourSep;
+    private String forceType;
     // define internal for map file used during generating
-    private String mForceInterval;
+    private String forceInterval;
     // parameter if we need coastline
-    private boolean mHasSea;
+    private boolean hasSea;
 
     public AItemMap(ItemMapPack parent) {
         setDefaults();
 
         // set values from parent
         if (parent != null) {
-            mParent = parent;
-            mName = parent.getName();
-            mActions = parent.getActionsCopy();
-            mSourceId = parent.getSourceId();
-            mRegionId = parent.getRegionId();
-            mParentRegionId = parent.getParentRegionId();
-            mDir = parent.getDir();
-            mDirGen = parent.getDirGen();
-            mCountryName = parent.getCountryName();
-            mPrefLang = parent.getPrefLang();
-            mRegionCode = parent.getRegionCode();
-            mUrl = parent.getUrl();
-            mCycleNode = parent.getCycleNode();
-            mContourSep = parent.getContourSep();
-            mForceType = parent.getForceType();
-            mForceInterval = parent.getForceInterval();
-            mHasSea = parent.hasSea();
+            this.parent = parent;
+            name = parent.getName();
+            actions = parent.getActionsCopy();
+            sourceId = parent.getSourceId();
+            regionId = parent.getRegionId();
+            parentRegionId = parent.getParentRegionId();
+            dir = parent.getDir();
+            dirGen = parent.getDirGen();
+            countryName = parent.getCountryName();
+            prefLang = parent.getPrefLang();
+            regionCode = parent.getRegionCode();
+            url = parent.getUrl();
+            cycleNode = parent.getCycleNode();
+            contourSep = parent.getContourSep();
+            contourUnit = parent.getContourUnit();
+            contourSource = parent.getContourSource();
+            forceType = parent.getForceType();
+            forceInterval = parent.getForceInterval();
+            hasSea = parent.hasSea();
         }
     }
 
     private void setDefaults() {
-        mParent = null;
-        mName = "";
-        mActions = new ArrayList<>();
-        mSourceId = "";
-        mRegionId = "";
-        mParentRegionId = "";
-        mDir = "";
-        mDirGen = "";
-        mCountryName = "";
-        mClipIncompleteEntities = false;
-        mPrefLang = "";
-        mRegionCode = "";
-        mUrl = "";
-        mCycleNode = "";
-        mContourSep = "";
-        mForceType = "";
-        mForceInterval = "";
-        mHasSea = false;
+        parent = null;
+        name = "";
+        actions = new ArrayList<>();
+        sourceId = "";
+        regionId = "";
+        parentRegionId = "";
+        dir = "";
+        dirGen = "";
+        countryName = "";
+        clipIncompleteEntities = false;
+        prefLang = "";
+        regionCode = "";
+        url = "";
+        cycleNode = "";
+        contourSep = "";
+        forceType = "";
+        forceInterval = "";
+        hasSea = false;
     }
 
     public void validate() {
         // check actions
-        if (mActions.size() == 0) {
-            throw new IllegalArgumentException("No defined actions for '" + mName + "'");
+        if (actions.size() == 0) {
+            throw new IllegalArgumentException("No defined actions for '" + name + "'");
         }
 
         // check name
@@ -108,28 +115,28 @@ public class AItemMap {
         }
 
         // check dir
-        if (mDir.length() == 0) {
+        if (dir.length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. " +
-                    "Invalid argument dir: " + mDir + ", name:" + mName);
+                    "Invalid argument dir: " + dir + ", name:" + name);
         }
 
         // check extract action
         if (hasAction(Parameters.Action.EXTRACT) && (getSourceId() == null)) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
-                    + getName() + " sourceId is empty, name:" + mName);
+                    + getName() + " sourceId is empty, name:" + name);
         }
 
         // check download action
         if (hasAction(Parameters.Action.DOWNLOAD) && getUrl().length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
-                    + getName() + " - url is empty, name:" + mName);
+                    + getName() + " - url is empty, name:" + name);
         }
 
         // check contour action
         if (hasAction(Parameters.Action.CONTOUR)){
             if (getContourSep().length() == 0) {
                 throw new IllegalArgumentException("Input XML is not valid - map "
-                        + getName() + " has not tag contourSep, name:" + mName);
+                        + getName() + " has not tag contourSep, name:" + name);
             }
         }
     }
@@ -137,7 +144,7 @@ public class AItemMap {
     public void fillAttributes(KXmlParser parser) {
         // parse name
         if (parser.getAttributeValue(null, "name") != null) {
-            mName = parser.getAttributeValue(null, "name");
+            name = parser.getAttributeValue(null, "name");
         }
 
         // parse type (action)
@@ -154,7 +161,7 @@ public class AItemMap {
                     startIndex = 1;
                 } else {
                     // clear parent actions
-                    mActions.clear();
+                    this.actions.clear();
                 }
             }
 
@@ -166,7 +173,7 @@ public class AItemMap {
                 Parameters.Action[] possibleActions = Parameters.Action.values();
                 for (int j = 0, n = possibleActions.length; j < n; j++) {
                     if (possibleActions[j].getLabel().equalsIgnoreCase(sepActions[i])) {
-                        mActions.add(possibleActions[j]);
+                        this.actions.add(possibleActions[j]);
                         added = true;
                         break;
                     }
@@ -181,52 +188,52 @@ public class AItemMap {
 
         // sourceId
         if (parser.getAttributeValue(null, "sourceId") != null) {
-            mSourceId = parser.getAttributeValue(null, "sourceId");
+            sourceId = parser.getAttributeValue(null, "sourceId");
         }
 
         // regionId
         if (parser.getAttributeValue(null, "regionId") != null) {
-            mRegionId = parser.getAttributeValue(null, "regionId");
+            regionId = parser.getAttributeValue(null, "regionId");
         }
 
         // parentReegionId
         if (parser.getAttributeValue(null, "parentRegionId") != null) {
-            mParentRegionId = parser.getAttributeValue(null, "parentRegionId");
+            parentRegionId = parser.getAttributeValue(null, "parentRegionId");
         }
 
         // dir
         String attrValue = parser.getAttributeValue(null, "dir");
         if (attrValue != null) {
             attrValue = Utils.changeSlash(attrValue);
-            mDir = mDir.length() > 0 ?
-                    mDir + Consts.FILE_SEP + attrValue : attrValue;
-            mDir = Consts.fixDirectoryPath(mDir);
+            dir = dir.length() > 0 ?
+                    dir + Consts.FILE_SEP + attrValue : attrValue;
+            dir = Consts.fixDirectoryPath(dir);
         }
 
         // dirGen
         attrValue = parser.getAttributeValue(null, "dirGen");
         if (attrValue != null) {
             attrValue = Utils.changeSlash(attrValue);
-            mDirGen = (mDirGen != null) ? mDirGen + Consts.FILE_SEP + attrValue : attrValue;
+            dirGen = (dirGen != null) ? dirGen + Consts.FILE_SEP + attrValue : attrValue;
         } else {
-            mDirGen = mDir;
+            dirGen = dir;
         }
-        mDirGen = Consts.fixDirectoryPath(mDirGen);
+        dirGen = Consts.fixDirectoryPath(dirGen);
 
         // addressRegionLevel
         attrValue = parser.getAttributeValue(null, "countryName");
         if (attrValue != null){
-            mCountryName = attrValue;
+            countryName = attrValue;
         }
 
         //clipIncompleteEntities
         attrValue = parser.getAttributeValue(null, "clipEntities");
         if (attrValue != null){
             if (attrValue.equals("0")){
-                mClipIncompleteEntities = false;
+                clipIncompleteEntities = false;
             }
             else if (attrValue.equals("1")){
-                mClipIncompleteEntities = true;
+                clipIncompleteEntities = true;
             }
             else {
                 throw new IllegalArgumentException("Invalid value 'clipEntities' value:" + attrValue  +
@@ -235,31 +242,41 @@ public class AItemMap {
         }
 
         if (parser.getAttributeValue(null, "prefLang") != null) {
-            mPrefLang = parser.getAttributeValue(null, "prefLang");
+            prefLang = parser.getAttributeValue(null, "prefLang");
         }
         if (parser.getAttributeValue(null, "regionCode") != null) {
-            mRegionCode = parser.getAttributeValue(null, "regionCode");
+            regionCode = parser.getAttributeValue(null, "regionCode");
         }
 
         // other basis parameters
         if (parser.getAttributeValue(null, "url") != null) {
-            mUrl = parser.getAttributeValue(null, "url");
+            url = parser.getAttributeValue(null, "url");
         }
         if (parser.getAttributeValue(null, "cyclo_node") != null) {
-            mCycleNode = parser.getAttributeValue(null, "cyclo_node");
+            cycleNode = parser.getAttributeValue(null, "cyclo_node");
         }
         if (parser.getAttributeValue(null, "coastline") != null) {
             String coastline = parser.getAttributeValue(null, "coastline");
-            mHasSea = coastline.equalsIgnoreCase("yes");
+            hasSea = coastline.equalsIgnoreCase("yes");
         }
         if (parser.getAttributeValue(null, "contourSep") != null) {
-            mContourSep = parser.getAttributeValue(null, "contourSep");
+            contourSep = parser.getAttributeValue(null, "contourSep");
         }
         if (parser.getAttributeValue(null, "forceType") != null) {
-            mForceType = parser.getAttributeValue(null, "forceType");
+            forceType = parser.getAttributeValue(null, "forceType");
         }
         if (parser.getAttributeValue(null, "forceInterval") != null) {
-            mForceInterval = parser.getAttributeValue(null, "forceInterval");
+            forceInterval = parser.getAttributeValue(null, "forceInterval");
+        }
+        // read the type of contour lines
+        if (parser.getAttributeValue(null, "contour_unit") != null) {
+            contourUnit = ContourUnit.getFromValue(parser.getAttributeValue(null, "contour_unit"));
+        }
+        if (parser.getAttributeValue(null, "contour_step") != null) {
+            contourStep = parser.getAttributeValue(null, "contour_step");
+        }
+        if (parser.getAttributeValue(null, "contour_source") != null) {
+            contourSource = parser.getAttributeValue(null, "contour_source");
         }
     }
 
@@ -268,50 +285,50 @@ public class AItemMap {
     /**************************************************/
 
     public ItemMapPack getParent() {
-        return mParent;
+        return parent;
     }
 
     public String getName() {
-        return mName;
+        return name;
     }
 
     public boolean hasAction(Parameters.Action action) {
-        return mActions.contains(action);
+        return actions.contains(action);
     }
 
     public List<Parameters.Action> getActionsCopy() {
-        return new ArrayList<>(mActions);
+        return new ArrayList<>(actions);
     }
 
     public String getSourceId() {
-        return mSourceId;
+        return sourceId;
     }
 
     public String getRegionId() {
-        return mRegionId;
+        return regionId;
     }
 
     public String getParentRegionId () {
 
-        if (mParentRegionId != null && mParentRegionId.length() > 0){
-            return mParentRegionId;
+        if (parentRegionId != null && parentRegionId.length() > 0){
+            return parentRegionId;
         }
 
         // as fallback parse parent id from region id
-        int index = mRegionId.lastIndexOf(".");
+        int index = regionId.lastIndexOf(".");
         if (index == -1){
-            return mRegionId;
+            return regionId;
         }
 
-        return mRegionId.substring(0, index);
+        return regionId.substring(0, index);
     }
 
     public String getDir() {
-        return mDir;
+        return dir;
     }
 
     public String getDirGen() {
-        return mDirGen;
+        return dirGen;
     }
 
 
@@ -321,7 +338,7 @@ public class AItemMap {
      * @return name of country
      */
     public String getCountryName() {
-        return mCountryName;
+        return countryName;
     }
 
     /**
@@ -329,41 +346,72 @@ public class AItemMap {
      * @return
      */
     public boolean getClipIncompleteEntities () {
-        return mClipIncompleteEntities;
+        return clipIncompleteEntities;
     }
 
     public void setAddressRegionLevel(String countryName) {
-        this.mCountryName = countryName;
+        this.countryName = countryName;
     }
 
-    public String getPrefLang() { return mPrefLang;   }
+    public String getPrefLang() { return prefLang;   }
 
-    public String getRegionCode() {return mRegionCode;}
+    public String getRegionCode() {return regionCode;}
 
     public String getUrl() {
-        return mUrl;
+        return url;
     }
 
     public String getCycleNode() {
-        return mCycleNode;
+        return cycleNode;
     }
 
     public String getContourSep() {
-        return mContourSep;
+        return contourSep;
     }
 
     public String getForceType() {
-        return mForceType;
+        return forceType;
     }
 
     public String getForceInterval() {
-        return mForceInterval;
+        return forceInterval;
     }
 
     public boolean hasSea() {
-        return mHasSea;
+        return hasSea;
     }
 
 
+    public ContourUnit getContourUnit() {
+        return contourUnit;
+    }
 
+    public void setContourUnit(ContourUnit contourUnit) {
+        this.contourUnit = contourUnit;
+    }
+
+    public String getContourStep() {
+        if (contourStep == null || contourStep.length() == 0){
+            // contour step isn't defined use default values
+            if (contourUnit == ContourUnit.FEET){
+                return Parameters.contourStepFeet;
+            }
+            return Parameters.contourStepMeter;
+        }
+        return contourStep;
+    }
+
+    public void setContourStep(String contourStep) {
+        this.contourStep = contourStep;
+    }
+
+    public String getContourSource() {
+        return contourSource;
+    }
+
+    public void setContourSource(String contourSource) {
+        if (contourSource != null && contourSource.length() > 0){
+            this.contourSource = contourSource;
+        }
+    }
 }

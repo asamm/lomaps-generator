@@ -68,6 +68,7 @@ public class Way {
                 Tags tags = tagsArray.get(i);
                 if (tags.type != null && tags.type.equalsIgnoreCase("superroute")
                     && !tags.isOsmSymbolDefined() && !tags.isIwnNwnRwnLwn()){
+                    // remove this superroute because it doesn't have defined osmc symbol and it isn't any hiking route
                     tagsArray.remove(i);
                     //Logger.i(TAG, "Remove superroute, ID: " + tags.parentRelId);
                 }
