@@ -202,6 +202,25 @@ public class Way {
 
             tags.tunnel = originalTags.tunnel;
             tags.bridge = originalTags.bridge;
+            tags.layer = originalTags.layer;
+
+            // copy ferry route tag to highway tag
+            ferryRouteToHighwayTag(tags, originalTags);
+        }
+    }
+
+    /**
+     * If the original way is ferry route, set the highway=ferry tag
+     * The goal is to avoid the situation when ferry route is printed as hiking route. For this reason it is necessary
+     * to create a fake 'highway=ferry' tag
+     * @param tags new tags for tourist route
+     * @param originalTags original tags from OSM way
+     */
+    private void ferryRouteToHighwayTag(Tags tags, Tags originalTags){
+        if (originalTags.highway == null || originalTags.highway.isEmpty()){
+            if (originalTags.route != null && originalTags.route.equalsIgnoreCase("ferry")){
+                tags.highway = "ferry";
+            }
         }
     }
     
