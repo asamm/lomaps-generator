@@ -17,7 +17,7 @@ def version = '0.10.0'
 
 jar {
     from { configurations.compileClasspath  .collect { it.isDirectory() ? it : zipTree(it) } }
-
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
     from('src/main/config/') {
         filter {
             line -> line.replace('${mapfile.writer.version}', version)

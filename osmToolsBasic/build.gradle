@@ -3,16 +3,16 @@ configurations { providedCompile }
 repositories {
     // Asamm private repository
     maven {
-        url "http://repository.asamm.com/repository/maven-public"
+        url = uri("https://maven.pkg.github.com/asamm/locus-api-store")
         credentials {
-            username "$asammMavenUser"
-            password "$asammMavenPassword"
+            username = System.getenv("GPR_USERNAME")
+            password = System.getenv("GPR_TOKEN")
         }
     }
 
     // Maven repo
     maven {
-        url  "http://jcenter.bintray.com"
+        url  "https://jcenter.bintray.com"
     }
     jcenter()
 }
@@ -21,7 +21,7 @@ dependencies {
     implementation project(":osmToolsCore")
     implementation project(":osmToolsDataWriter")
 
-    implementation "com.asamm.locus:api-store:1.2.9"
+    implementation "com.asamm.locus:api-store:1.2.22"
 
     implementation 'org.apache.httpcomponents:httpclient:4.3.4'
     implementation 'org.apache.httpcomponents:httpcore:4.3.2'
@@ -43,6 +43,7 @@ def versionCode = "0.6.7"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
         attributes 'Main-Class': 'com.asamm.osmTools.Main'
     }
