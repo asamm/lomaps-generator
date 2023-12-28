@@ -83,8 +83,7 @@ public class WriterPoiDefinition extends AWriterDefinition {
 
 		
 		private boolean checkTags(Collection<Tag> tags) {
-
-            for (Tag tag : tags) {
+			for (Tag tag : tags) {
 				if (key.equals(tag.getKey()) && value.equals(tag.getValue())) {
 					return checkFilterTags(tags);
 				}
@@ -120,10 +119,11 @@ public class WriterPoiDefinition extends AWriterDefinition {
                 if (fValues.contains(FILTER_TILDA) && tagForFilter == null){
                     // tilda says that any entity without such tag is valid
                     // because entity does not have tag as filter > return true
-                    return true;
+					return true;
                 }
+
                 if (tagForFilter != null){
-                    //entity contains tags that are defined in filter > check if tag value is the same as any filter value
+					//entity contains tags that are defined in filter > check if tag value is the same as any filter value
                     if (fValues.contains(tagForFilter.getValue()) || fValues.contains(FILTER_ASTERISK)){
                         return true;
                     }
@@ -223,19 +223,19 @@ public class WriterPoiDefinition extends AWriterDefinition {
             return false;
         }
 
-        if (entity.getType() == EntityType.Node){
-            // save all nodes into cache because the node ways
-            return true;
-        }
+//        if (entity.getType() == EntityType.Node){
+//            // save all nodes into cache because the node ways
+//            return true;
+//        }
 
         // check all tags
         LoMapsDbConst.EntityType type = getTypeFromEntity(entity);
         for (DbRootSubContainer nodeContainer : nodes) {
             if (nodeContainer.isValidEntity(type, entity.getTags())) {
-                return true;
+				return true;
             }
         }
-        return false;
+		return false;
     }
 
 
@@ -454,11 +454,11 @@ public class WriterPoiDefinition extends AWriterDefinition {
         String key = parser.getAttributeValue(null, "key");
         String valuesRaw = parser.getAttributeValue(null, "value");
 
-        if (key == null || valuesRaw == null){
+		if (key == null || valuesRaw == null){
             return map;
         }
 
-        String[] values = valuesRaw.split("|");
+        String[] values = valuesRaw.split("\\|");
         map.put(key, Arrays.asList(values));
 
         return map;

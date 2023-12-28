@@ -7,7 +7,7 @@ dependencies {
     // Locus API
     implementation 'com.asamm:locus-api-core:0.3.13'
 
-    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
 
     implementation group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
     implementation 'org.postgresql:postgresql:42.2.2'
@@ -25,11 +25,12 @@ sourceSets.main.compileClasspath += configurations.providedCompile
 sourceSets.test.compileClasspath += configurations.providedCompile
 sourceSets.test.runtimeClasspath += configurations.providedCompile
 
-def versionCode = "0.3.4"
+def versionCode = "0.3.5"
 def newArchiveName = "osmToolsDataWriter_${versionCode}.jar"
 
 jar {
     archiveFileName = newArchiveName;
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     from {
         configurations.compileClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
