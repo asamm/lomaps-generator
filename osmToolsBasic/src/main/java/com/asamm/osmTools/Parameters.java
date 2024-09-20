@@ -201,7 +201,7 @@ public class Parameters {
 
     // description in header of map file
     public static String MAP_COMMENT =
-            "<div><h4>Vector maps for <a href=\"http://www.locusmap.eu\">Locus</a> application</h4>"
+            "<div><h4>LoMaps - vector maps by Asamm Software</h4>"
             + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
             + "<br />"
             + " Data source OpenStreetMap community"

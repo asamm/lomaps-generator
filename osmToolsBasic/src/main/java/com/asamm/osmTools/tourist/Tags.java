@@ -257,6 +257,7 @@ public class Tags {
             }
         }
 
+        // check if state is planned, disused, etc
         if (state != null){
             return !Parameters.invalidStatesForTouristRoute.contains(state);
         }

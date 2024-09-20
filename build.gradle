@@ -13,7 +13,7 @@ allprojects {
     ext.jUnitVersion = "4.12"
 
     repositories {
-        jcenter()
+//        jcenter()
         mavenCentral()
     }
 }

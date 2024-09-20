@@ -7,6 +7,8 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.lang.reflect.Field;
 import java.text.Normalizer;
 import java.util.zip.Deflater;
 
@@ -83,8 +85,22 @@ public class Utils {
             int count = compressor.deflate(buf);
             bos.write(buf, 0, count);
         }
-        locus.api.utils.Utils.closeStream(bos);
+        closeStream(bos);
         return bos.toByteArray();
+    }
+
+    //*************************************************
+    // OTHER TOOLS
+    //*************************************************
+
+    public static void closeStream(Closeable stream) {
+        try {
+            if (stream != null) {
+                stream.close();
+            }
+        } catch (Exception e) {
+            Logger.e("UTILS", "Error closing stream: " + e.getMessage());
+        }
     }
 
     /**************************************************/
@@ -262,5 +278,46 @@ public class Utils {
             Logger.i("Utils", "Free memory: " +freeMem/1024/1024 + "MB, do GC");
             System.gc();
         }
+    }
+
+    // TO STRING
+    private static final String NEW_LINE = System.getProperty("line.separator");
+    public static String toString(Object obj, String prefix) {
+        // add base
+        StringBuilder result = new StringBuilder();
+        result.append(prefix);
+        if (obj == null) {
+            result.append(" empty object!");
+            return result.toString();
+        }
+
+        // handle existing object
+        result.append(obj.getClass().getName()).append(" [").append(NEW_LINE);
+
+        // determine fields declared in this class only (no fields of superclass)
+        Field[] fields = obj.getClass().getDeclaredFields();
+
+        // print field names paired with their values
+        for (Field field : fields) {
+            result.append(prefix).append("    ");
+            try {
+                result.append(field.getName());
+                result.append(": ");
+                // set accessible for private fields
+                field.setAccessible(true);
+                // requires access to private field:
+                result.append(field.get(obj));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            result.append(NEW_LINE);
+        }
+        result.append(prefix).append("]");
+        return result.toString();
+    }
+
+    public static String toString(Object obj) {
+        return toString(obj, "");
     }
 }
