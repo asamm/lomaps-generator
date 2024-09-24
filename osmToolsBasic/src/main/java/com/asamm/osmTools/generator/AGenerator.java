@@ -5,6 +5,7 @@ import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders;
 import com.asamm.osmTools.cmdCommands.CmdExtract;
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium;
+import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
@@ -123,7 +124,7 @@ public abstract class AGenerator {
         for (int i = 0, m = mp.getMapsCount(); i < m; i++) {
             ItemMap actualMap = mp.getMap(i);
 
-            if (actualMap.hasAction(Parameters.Action.EXTRACT)) {
+            if (actualMap.hasAction(Action.EXTRACT)) {
                 List<ItemMap> itemsToExtract = mapTableBySourceId.get(actualMap.getSourceId());
                 if (itemsToExtract == null) {
                     itemsToExtract = new ArrayList<>();
@@ -205,7 +206,7 @@ public abstract class AGenerator {
                 Logger.i(TAG, "Add map for extraction: " + map.getName());
                 ceo.addExtractMap(map);
 
-                if (map.hasAction(Parameters.Action.GENERATE)) {
+                if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
                     completeRelations = true;
                 }
 
@@ -246,7 +247,7 @@ public abstract class AGenerator {
         // add all maps
         for (ItemMap map : ar) {
             ce.addBoundingPolygon(map);
-            if (map.hasAction(Parameters.Action.GENERATE)){
+            if (map.hasAction(Action.GENERATE_MAPSFORGE)){
                 ce.addCompleteWays();
                 ce.addCompleteRelations();
             }
@@ -329,9 +330,9 @@ public abstract class AGenerator {
         for (ItemMap map : mp.getMaps()) {
 
 
-            if (!map.hasAction(Parameters.Action.GENERATE)
-                    && !map.hasAction(Parameters.Action.ADDRESS_POI_DB)
-                    && !map.hasAction(Parameters.Action.STORE_GEO_DB)) {
+            if (!map.hasAction(Action.GENERATE_MAPSFORGE)
+                    && !map.hasAction(Action.ADDRESS_POI_DB)
+                    && !map.hasAction(Action.STORE_GEO_DB)) {
                 //Logger.i(TAG, "prepareCountriesForSource, skip map: " + map.getNameReadable());
                 continue;
             }

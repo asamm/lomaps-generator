@@ -4,6 +4,7 @@
  */
 package com.asamm.osmTools;
 
+import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
@@ -57,55 +58,6 @@ public class Parameters {
         }
     }
 
-    public enum Action {
-
-        DOWNLOAD("download", 'd'),
-
-        EXTRACT("extract", 'e'),
-
-        COASTLINE("coastline", NO_SHORTCUT),
-
-        TOURIST("tourist", 't'),
-
-        TRANFORM("transform", NO_SHORTCUT),
-
-        CONTOUR("contour", 'c'),
-
-        MERGE("merge", NO_SHORTCUT),
-
-        GENERATE("generate", 'g'),
-
-        GRAPH_HOPPER("graphHopper", 'h'),
-
-        ADDRESS_POI_DB("apDb", 'a'),
-
-        COMPRESS("compress", NO_SHORTCUT),
-
-        UPLOAD("upload", 'u'),
-
-        CREATE_JSON("create_json", NO_SHORTCUT),
-
-        STORE_GEO_DB("storeGeoDb", NO_SHORTCUT);
-
-        // label of action defined in XML file
-        private String mLabel;
-        // shortcut used in command line
-        private char mShortcut;
-
-        Action(String label, char shortcut) {
-            this.mLabel = label;
-            this.mShortcut = shortcut;
-        }
-
-        public String getLabel() {
-            return mLabel;
-        }
-
-        public char getShortcut() {
-            return mShortcut;
-        }
-    }
-
     // DEFINED PARAMETERS FROM ARGUMENTS
 
     // path to base config file
@@ -126,8 +78,6 @@ public class Parameters {
 
     // flag if is generated loMaps or storegeocoding database
     private static GenType genType;
-    // list of defined actions
-    private static List<Action> mActionList;
 
     // directory where are stored static data that doesn't have to be stored on SSD disk (ContourLines, Coastline, etc)
     private static String  mDataDir;
@@ -144,7 +94,6 @@ public class Parameters {
     // set basic values
     static {
         mVersionName = "";
-        mActionList = new ArrayList<>();
         mHgtDir = "hgt"; // default location for SRTM files
         mIsMailing = false;
     }
@@ -173,7 +122,6 @@ public class Parameters {
     public static String contourSource = "view3,view1";
 
     public static String contourStepFeet = "50"; //feet;
-    public static String contourNoSRTM = "noSRTMdata";
     public static String mTouristTagMapping;
     private static String mContourTagMapping;
 
@@ -271,13 +219,13 @@ public class Parameters {
         return mSourceDataLastModifyDate;
     }
 
-    public static boolean isActionRequired(Action action) {
-        return mActionList.contains(action);
-    }
-
-    public static List<Action> getActions() {
-        return mActionList;
-    }
+//    public static boolean isActionRequired(Action action) {
+//        return mActionList.contains(action);
+//    }
+//
+//    public static List<Action> getActions() {
+//        return mActionList;
+//    }
 
     public static GenType getGenType() {
         return genType;
@@ -368,118 +316,112 @@ public class Parameters {
     }
 
 
-    /*               BASIC FUNCTIONS                   */
-
-    /**
-     * Core function that parse input arguments (defined by user) to
-     * various static variables used during generating
-     * @param args array of defined arguments
-     */
-    static void parseArgs(String[] args){
-        // do basic check
-        if (args == null || args.length < 4) {
-            String errorText = "Wrong parameter, please define parameters: "
-                   + "--version <version_name_in_format_ yyyy.MM.dd> --actions <adectgu> "
-                   + "--email <true_or_false_if_send_email> --hgtdir <pathToSrtmData>";
-            Logger.w(TAG, errorText);
-            System.exit(1);
-            return;
-        }
-
-        // iterate over all arguments
-        for (int i = 0; i < args.length; i++) {
-
-            // set version name
-            if (args[i].equals("--version") && !args[++i].startsWith("--") ){
-                mVersionName = args[i] ;
-
-                // parse version to date
-                SimpleDateFormat sdf =  new SimpleDateFormat("yyyy.MM.dd");
-                Date date;
-
-                try {
-                    date = sdf.parse(mVersionName);
-                    mSourceDataLastModifyDate = date.getTime();
-                } catch (ParseException e){
-                    Logger.w(TAG, "Wrong data format. Use yyyy.MM.dd");
-                    System.exit(1);
-                }
-            }
-
-            if (args[i].equals("--type") && !args[++i].startsWith("--") ){
-                setGeneratorType(args[i]);
-            }
-
-            if (args[i].equals("--storeUploader") && !args[++i].startsWith("--") ){
-                setStoreUploaderPath(args[i]);
-            }
-
-            if (args[i].equals("--isDev")){
-                setIsDev();
-            }
-            // set defined actions
-            if (args[i].equals("--actions") && !args[++i].startsWith("--") ){
-                setActions(args[i]);
-            }
-
-            // get directory with HGT files
-            if (args[i].equals("--hgtdir") && !args[++i].startsWith("--") ){
-                mHgtDir = args[i] ;
-
-                // check if dir exists
-                if (!new File(mHgtDir).exists()){
-                    Logger.w(TAG, "Directory for hgt cache " + mHgtDir + " doesn't exist!");
-                    System.exit(1);
-                }
-            }
-
-            // static data that are not in the same working dir as result
-            if (args[i].equals("--datadir") && !args[++i].startsWith("--") ){
-
-                mDataDir = Consts.fixDirectoryPath(new File(args[i]).getAbsolutePath());
-
-                // check if dir exists
-                if (!new File(mDataDir).exists()){
-                    Logger.w(TAG, "Directory for static data " + mDataDir + " doesn't exist!");
-                    System.exit(1);
-                }
-            }
-
-            // check email
-            if (args[i].equals("--email") && !args[++i].startsWith("--") ){
-                if (args[i].toLowerCase().equals("yes")){
-                    mIsMailing = true;
-                } else if (args[i].toLowerCase().equals("no")){
-                    mIsMailing = false;
-                } else {
-                    Logger.w(TAG, "Wrong value for argument --email. Possible values yes|no");
-                    System.exit(1);
-                }
-            }
-        }
-
-           // check parameter 'version'
-        if (mVersionName == null || mVersionName.length() == 0) {
-            Logger.w(TAG, "parseArgs(), missing argument 'version'");
-            System.exit(1);
-        }
-
-        // check parameter 'actions'
-        if (mActionList.size() < 1) {
-            Logger.w(TAG, "parseArgs(), missing argument 'actions'");
-            System.exit(1);
-        }
-
-        // check if path for to upload script is defined
-        if (getStoreUploaderPath() == null){
-            Logger.w(TAG, "Please define path to Store uploader script. Use parameter  --storeUploader <path>");
-            System.exit(1);
-        }
-        if (! new File(getStoreUploaderPath()).exists()){
-            Logger.w(TAG, "Store uploader script doesn't exist in the location: " + getStoreUploaderPath());
-            System.exit(1);
-        }
-    }
+//    /*               BASIC FUNCTIONS                   */
+//
+//    /**
+//     * Core function that parse input arguments (defined by user) to
+//     * various static variables used during generating
+//     * @param args array of defined arguments
+//     */
+//    static void parseArgs(String[] args){
+//        // do basic check
+//        if (args == null || args.length < 4) {
+//            String errorText = "Wrong parameter, please define parameters: "
+//                   + "--version <version_name_in_format_ yyyy.MM.dd> --actions <adectgu> "
+//                   + "--email <true_or_false_if_send_email> --hgtdir <pathToSrtmData>";
+//            Logger.w(TAG, errorText);
+//            System.exit(1);
+//            return;
+//        }
+//
+//        // iterate over all arguments
+//        for (int i = 0; i < args.length; i++) {
+//
+//            // set version name
+//            if (args[i].equals("--version") && !args[++i].startsWith("--") ){
+//                mVersionName = args[i] ;
+//
+//                // parse version to date
+//                SimpleDateFormat sdf =  new SimpleDateFormat("yyyy.MM.dd");
+//                Date date;
+//
+//                try {
+//                    date = sdf.parse(mVersionName);
+//                    mSourceDataLastModifyDate = date.getTime();
+//                } catch (ParseException e){
+//                    Logger.w(TAG, "Wrong data format. Use yyyy.MM.dd");
+//                    System.exit(1);
+//                }
+//            }
+//
+//            if (args[i].equals("--type") && !args[++i].startsWith("--") ){
+//                setGeneratorType(args[i]);
+//            }
+//
+//            if (args[i].equals("--storeUploader") && !args[++i].startsWith("--") ){
+//                setStoreUploaderPath(args[i]);
+//            }
+//
+//            if (args[i].equals("--isDev")){
+//                setIsDev();
+//            }
+//            // set defined actions
+//            if (args[i].equals("--actions") && !args[++i].startsWith("--") ){
+//                setActions(args[i]);
+//            }
+//
+//            // get directory with HGT files
+//            if (args[i].equals("--hgtdir") && !args[++i].startsWith("--") ){
+//                mHgtDir = args[i] ;
+//
+//                // check if dir exists
+//                if (!new File(mHgtDir).exists()){
+//                    Logger.w(TAG, "Directory for hgt cache " + mHgtDir + " doesn't exist!");
+//                    System.exit(1);
+//                }
+//            }
+//
+//            // static data that are not in the same working dir as result
+//            if (args[i].equals("--datadir") && !args[++i].startsWith("--") ){
+//
+//                mDataDir = Consts.fixDirectoryPath(new File(args[i]).getAbsolutePath());
+//
+//                // check if dir exists
+//                if (!new File(mDataDir).exists()){
+//                    Logger.w(TAG, "Directory for static data " + mDataDir + " doesn't exist!");
+//                    System.exit(1);
+//                }
+//            }
+//
+//            // check email
+//            if (args[i].equals("--email") && !args[++i].startsWith("--") ){
+//                if (args[i].toLowerCase().equals("yes")){
+//                    mIsMailing = true;
+//                } else if (args[i].toLowerCase().equals("no")){
+//                    mIsMailing = false;
+//                } else {
+//                    Logger.w(TAG, "Wrong value for argument --email. Possible values yes|no");
+//                    System.exit(1);
+//                }
+//            }
+//        }
+//
+//           // check parameter 'version'
+//        if (mVersionName == null || mVersionName.length() == 0) {
+//            Logger.w(TAG, "parseArgs(), missing argument 'version'");
+//            System.exit(1);
+//        }
+//
+//        // check if path for to upload script is defined
+//        if (getStoreUploaderPath() == null){
+//            Logger.w(TAG, "Please define path to Store uploader script. Use parameter  --storeUploader <path>");
+//            System.exit(1);
+//        }
+//        if (! new File(getStoreUploaderPath()).exists()){
+//            Logger.w(TAG, "Store uploader script doesn't exist in the location: " + getStoreUploaderPath());
+//            System.exit(1);
+//        }
+//    }
 
     /**
      * Parse cmd type parameter value to recognize if LoMaps are generated or if Store GeoCoding database is generated
@@ -503,113 +445,6 @@ public class Parameters {
         mIsDev = true;
     }
 
-    /**
-     * Define that actions will be performed based on command line definition
-     * @param cmdActions cmd argument defined the actions to performed
-     */
-    private static void setActions(String cmdActions) {
-        // firstly check parameter
-        validateActionArg(cmdActions);
-
-        // handle download action
-        if (hasArgAction(cmdActions, Action.DOWNLOAD)){
-            addAction(Action.DOWNLOAD);
-        }
-
-        // handle extract action
-        if (hasArgAction(cmdActions, Action.EXTRACT)){
-            addAction(Action.EXTRACT);
-        }
-
-        // handle graphhopper request
-        if (hasArgAction(cmdActions, Action.GRAPH_HOPPER)) {
-            addAction(Action.GRAPH_HOPPER);
-        }
-
-        // handle Address/POI db request
-        if (hasArgAction(cmdActions, Action.ADDRESS_POI_DB)) {
-            addAction(Action.ADDRESS_POI_DB);
-        }
-
-        // handle action for generating tourist tracks
-        if (hasArgAction(cmdActions, Action.TOURIST)) {
-            addAction(Action.TOURIST);
-        }
-
-        // action for generating contours
-        if (hasArgAction(cmdActions, Action.CONTOUR)){
-            addAction(Action.CONTOUR);
-        }
-
-        // handle generate action
-        if (hasArgAction(cmdActions, Action.GENERATE)){
-            // add merge and coastlines
-            addAction(Action.COASTLINE);
-            addAction(Action.TRANFORM);
-            addAction(Action.MERGE);
-
-            // finally add generate
-            addAction(Action.GENERATE);
-            addAction(Action.COMPRESS);
-            addAction(Action.CREATE_JSON);
-        }
-
-        // handle upload action
-        if (cmdActions.contains("u")){
-            //addAction(Action.CREATE_JSON);
-            addAction(Action.UPLOAD);
-        }
-    }
-
-    private static void validateActionArg(String arg) {
-        Action[] actions = Action.values();
-        for (int i = 0; i < arg.length(); i++) {
-            char argAction = arg.charAt(i);
-
-            // check validity
-            boolean valid = false;
-            for (int j = 0; j < actions.length; j++) {
-                if (actions[j].getShortcut() == argAction) {
-                    valid = true;
-                    break;
-                }
-            }
-
-            // handle result
-            if (!valid) {
-                Logger.w(TAG, "Unknown action '" + argAction + "'");
-                Logger.w(TAG, "Wrong type of actions, possibilities: \n"
-                        + "d \tfor downloading\n"
-                        + "e \texract data from donwloaded files\n"
-                        + "t \tcreate cyclo and hiking paths"
-                        + "c \tcreate pbf files with contour lines\n"
-                        + "g \tgenerate map files and also create zip archive generated files\n"
-                        + "u \tupload data to GCS server");
-                throw new IllegalArgumentException("Actions '" + arg + "', are not valid");
-            }
-        }
-    }
-
-    /**
-     * Check if defined arguments contains specific action.
-     * @param arg arguments from user that are checked
-     * @param act required action
-     * @return <code>true</code> if action is defined in arguments
-     */
-    private static boolean hasArgAction(String arg, Action act) {
-        for (int i = 0, m = arg.length(); i < m; i++) {
-            if (arg.charAt(i) == act.getShortcut()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void addAction(Action action) {
-        if (!mActionList.contains(action)) {
-            mActionList.add(action);
-        }
-    }
 
     /**
      * Function that perform finalizing variables based on
@@ -668,7 +503,7 @@ public class Parameters {
         bycicleNetworkType.put("rcn", 2);
         bycicleNetworkType.put("ncn", 3);
         bycicleNetworkType.put("icn", 4);
-            
+
         // set list of possible colour of hiking routes (guess from osmc:symbol tag
         hikingColourType = new ArrayList<String>();
         hikingColourType.add("black");
@@ -687,24 +522,24 @@ public class Parameters {
         hikingNetworkType.put("nwn", 3);
         hikingNetworkType.put("iwn", 4);
         
-        // Map COMMENT
-        MAP_COMMENT =
-            " <div><h4>Vector maps for <a href=\"http://www.locusmap.app\">Locus</a> application</h4>"
-            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
-            + "<br />"
-            + " Map data source OpenStreetMap community";
-        if ( !isLoMapsV4){
-            MAP_COMMENT = MAP_COMMENT.replace("locusmap.app", "locusmap.eu");
-        }
-        if (mActionList.contains(Action.CONTOUR)){
-            MAP_COMMENT +=
-                 "<br /> "
-                + " Contour lines source <a href=\"http://srtm.usgs.gov\">SRTM</a> and "
-                    + "<a href=\"http://www.viewfinderpanoramas.org\">Viewfinder Panoramas</a>";
-        }
-        MAP_COMMENT +=
-             "<br /><br />"
-            + "</div>";
+//        // Map COMMENT
+//        MAP_COMMENT =
+//            " <div><h4>Vector maps for <a href=\"http://www.locusmap.app\">Locus</a> application</h4>"
+//            + " Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer"
+//            + "<br />"
+//            + " Map data source OpenStreetMap community";
+//        if ( !isLoMapsV4){
+//            MAP_COMMENT = MAP_COMMENT.replace("locusmap.app", "locusmap.eu");
+//        }
+//        if (mActionList.contains(Action.CONTOUR)){
+//            MAP_COMMENT +=
+//                 "<br /> "
+//                + " Contour lines source <a href=\"http://srtm.usgs.gov\">SRTM</a> and "
+//                    + "<a href=\"http://www.viewfinderpanoramas.org\">Viewfinder Panoramas</a>";
+//        }
+//        MAP_COMMENT +=
+//             "<br /><br />"
+//            + "</div>";
 
 
         // check validity of directories on the end
@@ -718,13 +553,6 @@ public class Parameters {
             throw new IllegalArgumentException("Check of osmosis file exists:" + getOsmosisExe());
         }
 
-        // check graphHopper directory
-        if (isActionRequired(Action.GRAPH_HOPPER)) {
-            File fileGraphHopper = new File(getGraphHopperExe());
-            if (!fileGraphHopper.exists() || !fileGraphHopper.isFile()) {
-                throw new IllegalArgumentException("Invalid GraphHopper file:" + getGraphHopperExe());
-            }
-        }
 
         // check temporary directory
         File tmpDirF = new File(Consts.DIR_TMP);

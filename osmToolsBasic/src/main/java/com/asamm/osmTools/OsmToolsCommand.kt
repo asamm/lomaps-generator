@@ -1,5 +1,10 @@
 package com.asamm.osmTools
 
+import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.config.Action
+import com.asamm.osmTools.config.ConfigUtils
+import com.asamm.osmTools.config.LoMapsAction
+import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.utils.Logger
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
@@ -16,15 +21,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-/** crate enum with string codes like COLOR.code */
-enum class LoMapsAction() {
-    DOWNLOAD,
-    UPLOAD,
-    TOURIST,
-    CONTOURS,
-    GENERATE_MAPLIBRE,
-    GENERATE_MAPSFORGE,
-}
 
 enum class LocusStoreEnv() {
     DEV,
@@ -46,7 +42,17 @@ class OsmToolsCommand : CliktCommand(
         .default(LocusStoreEnv.PROD)
 
 
-    override fun run() = Unit // do nothing
+    override fun run(){
+
+        // Load the app configuration (initialize it once)
+        AppConfig.loadConfig()
+
+        // Set verbose mode
+        AppConfig.config.verbose = verbose
+
+        // Set Locus Store environment
+        AppConfig.config.locusStoreEnv = locusStoreEnv
+    }
 
 }
 
@@ -79,24 +85,37 @@ class LoMapsCommand : CliktCommand(
         }
 
     // split action by comma and convert to enum
-    val actions by option(help = "Action to perform. Possible values: ${LoMapsAction.values().joinToString(", ")}")
+    val actions by option(help = "Action to perform. Possible values: ${Action.getCliActions().joinToString(", ")}")
         .convert { input ->
             input.split(",").map {
                 try {
-                    LoMapsAction.valueOf(it.trim().uppercase())
+                    Action.getActionByLabel(it.trim().lowercase())
                 } catch (e: IllegalArgumentException) {
-                    fail("Invalid action: $it. Allowed values are ${LoMapsAction.values().joinToString(", ")}.")
+                    fail("Invalid action: $it. Allowed values are ${Action.getCliActions().joinToString(", ")}.")
                 }
-            }
+            }.toMutableSet()
         }
-        .default(emptyList())
-
-
+        .default(mutableSetOf())
 
     override fun run() {
 
+
+        // Set required actions based on the command line arguments
+        ConfigUtils.addAdditionalActions(actions)
+
+        // Set actions to the configuration
+        AppConfig.config.actions = actions
+        AppConfig.config.version = version
+
+        AppConfig.config.mapConfigXml = configFile.toPath()
+
         echo("OsmTools version: $version , path to config file ${configFile.absoluteFile}")
         echo("Actions to perform: ${actions}")
+
+        val genLoMaps = GenLoMaps();
+        genLoMaps.process();
+
+        echo("Contour sources to generate: ${AppConfig.config.contourConfig.source}")
     }
 
     /**
@@ -119,7 +138,6 @@ class StoreGeoCommand : CliktCommand(
     help = "Subcommand to generate map borders for regions in Locus Store") {
 
     override fun run() {
-        TODO("Not yet implemented")
     }
 }
 

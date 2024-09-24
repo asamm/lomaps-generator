@@ -1,6 +1,7 @@
 package com.asamm.osmTools.mapConfig;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Utils;
 import org.kxml2.io.KXmlParser;
@@ -19,7 +20,7 @@ public class AItemMap {
     // name of this object
     private String name;
     // types (actions) that should be performed
-    private List<Parameters.Action> actions;
+    private List<Action> actions;
     // source for map data
     private String sourceId;
     // ID of region
@@ -73,7 +74,6 @@ public class AItemMap {
             regionCode = parent.getRegionCode();
             url = parent.getUrl();
             cycleNode = parent.getCycleNode();
-            contourSep = parent.getContourSep();
             contourUnit = parent.getContourUnit();
             contourSource = parent.getContourSource();
             forceType = parent.getForceType();
@@ -121,23 +121,15 @@ public class AItemMap {
         }
 
         // check extract action
-        if (hasAction(Parameters.Action.EXTRACT) && (getSourceId() == null)) {
+        if (hasAction(Action.EXTRACT) && (getSourceId() == null)) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
                     + getName() + " sourceId is empty, name:" + name);
         }
 
         // check download action
-        if (hasAction(Parameters.Action.DOWNLOAD) && getUrl().length() == 0) {
+        if (hasAction(Action.DOWNLOAD) && getUrl().length() == 0) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
                     + getName() + " - url is empty, name:" + name);
-        }
-
-        // check contour action
-        if (hasAction(Parameters.Action.CONTOUR)){
-            if (getContourSep().length() == 0) {
-                throw new IllegalArgumentException("Input XML is not valid - map "
-                        + getName() + " has not tag contourSep, name:" + name);
-            }
         }
     }
 
@@ -170,7 +162,7 @@ public class AItemMap {
 
                 // search for correct action
                 boolean added = false;
-                Parameters.Action[] possibleActions = Parameters.Action.values();
+                Action[] possibleActions = Action.values();
                 for (int j = 0, n = possibleActions.length; j < n; j++) {
                     if (possibleActions[j].getLabel().equalsIgnoreCase(sepActions[i])) {
                         this.actions.add(possibleActions[j]);
@@ -292,11 +284,11 @@ public class AItemMap {
         return name;
     }
 
-    public boolean hasAction(Parameters.Action action) {
+    public boolean hasAction(Action action) {
         return actions.contains(action);
     }
 
-    public List<Parameters.Action> getActionsCopy() {
+    public List<Action> getActionsCopy() {
         return new ArrayList<>(actions);
     }
 
@@ -363,10 +355,6 @@ public class AItemMap {
 
     public String getCycleNode() {
         return cycleNode;
-    }
-
-    public String getContourSep() {
-        return contourSep;
     }
 
     public String getForceType() {

@@ -5,6 +5,7 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Logger;
@@ -24,21 +25,10 @@ public class CmdGenerate extends Cmd {
 
     public CmdGenerate(ItemMap map) {
         super(map, ExternalApp.OSMOSIS);
-        
-        if (getMap().hasAction(Parameters.Action.CONTOUR) && getMap().getContourSep().equals("yes")){
-            if (!new File (getMap().getPathContour()).exists()){
-                throw new IllegalArgumentException("Source file "+getMap().getPathContour()
-                        +" for genereation separeted contourlines maps does not exist");
-            }
-            if (!new File(Parameters.getContourTagMapping()).exists()){
-                throw new IllegalArgumentException("Map writter definition file for contour lines:  "
-                        +Parameters.getContourTagMapping() +" does not exist.");
-            }
-        }
-        
+
         // if is there action to merge test files for merge
         if (getMap().isMerged){
-            if (!new File(getMap().getPathMerge()).exists() && !new File(getMap().getPathMerge() + "."+Parameters.contourNoSRTM).exists()){
+            if (!new File(getMap().getPathMerge()).exists()){
                 throw  new IllegalArgumentException("Merged map for generation: "+
                         getMap().getPathMerge() + " does not exist!");
             }
@@ -48,7 +38,7 @@ public class CmdGenerate extends Cmd {
                         +Parameters.mTouristTagMapping +" does not exist.");
             }
             
-            if (!new File(getMap().getPathMerge()).exists() && new File(getMap().getPathMerge() + "."+Parameters.contourNoSRTM).exists()){
+            if (!new File(getMap().getPathMerge()).exists()){
                 getMap().isMerged = false;
             }
             

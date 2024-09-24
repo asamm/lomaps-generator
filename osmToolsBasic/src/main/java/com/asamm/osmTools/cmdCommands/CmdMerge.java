@@ -35,33 +35,17 @@ public class CmdMerge extends Cmd {
     public void createCmd() throws IOException {
 
 
-        boolean isContour = (Parameters.isActionRequired(Parameters.Action.CONTOUR) &&
-                getMap().hasAction(Parameters.Action.CONTOUR) && getMap().getContourSep().equals("no")); // map has set the contour will be separeted
-        boolean isTourist = Parameters.isActionRequired(Parameters.Action.TOURIST) &&
-                getMap().hasAction(Parameters.Action.TOURIST);
         boolean isCoastline = getMap().hasSea();
 
         boolean isTransformedData = true;
-
 
         addReadPbf(getMap().getPathSource());
 
         addReadPbf(getMap().getPathCoastline());
         addMerge();
 
-        if (isTourist){
-            addReadXml(getMap().getPathTourist());
-            //addBoundingPolygon(map);
-            addMerge();
-        }
-
         // try to add custom data
         addCustomData();
-
-        if (isContour){
-            addReadPbf(getMap().getPathContour());
-            addMerge();
-        }
 
         if (isTransformedData){
             addReadPbf(getMap().getPathTranform());
