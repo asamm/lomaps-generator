@@ -35,6 +35,9 @@ class OsmToolsCommand : CliktCommand(
     // verbose mode
     val verbose by option("-v", "--verbose", help = "Prints more detailed information").flag()
 
+    // verbose mode
+    val overwrite by option("-ow", "--overwrite", help = "Overwrite output file if exists").flag()
+
     // set Locus Store environment (where to upload maps)
     val locusStoreEnv by option("-e", "--ls_environment", help = "Set Locus Store environment - where to upload maps.  " +
             "Possible values: ${LocusStoreEnv.values().joinToString(", ")}")
@@ -52,6 +55,9 @@ class OsmToolsCommand : CliktCommand(
 
         // Set Locus Store environment
         AppConfig.config.locusStoreEnv = locusStoreEnv
+
+        // Set overwrite mode
+        AppConfig.config.overwrite = overwrite
     }
 
 }
@@ -88,14 +94,24 @@ class LoMapsCommand : CliktCommand(
     val actions by option(help = "Action to perform. Possible values: ${Action.getCliActions().joinToString(", ")}")
         .convert { input ->
             input.split(",").map {
-                try {
-                    Action.getActionByLabel(it.trim().lowercase())
-                } catch (e: IllegalArgumentException) {
-                    fail("Invalid action: $it. Allowed values are ${Action.getCliActions().joinToString(", ")}.")
-                }
+                var action = Action.getActionByLabel(it.trim().lowercase())
+                // if action is UNKNOWN, end program and print warning
+                require(action != Action.UNKNOWN) {
+                    // print warning and possible actions but not the UNKNOWN
+                    "Unknown action '$it'. Possible values: ${Action.getCliActions().filter{it != Action.UNKNOWN}.joinToString(", ")}"}
+                action
             }.toMutableSet()
         }
         .default(mutableSetOf())
+
+    val hgtDir: File by option("-hgt", "--hgt_dir", help = "Path to elevation hgt file").file(mustExist = true)
+        .defaultLazy {
+            val defaultConfigFile = File("hgt")
+            require(defaultConfigFile.exists()) {
+                "Default folder with elevation data: '$defaultConfigFile' doesn't exist. Please specify path to config file"
+            }
+            defaultConfigFile
+        }
 
     override fun run() {
 
@@ -107,15 +123,19 @@ class LoMapsCommand : CliktCommand(
         AppConfig.config.actions = actions
         AppConfig.config.version = version
 
+        // Set path to the configuration file
         AppConfig.config.mapConfigXml = configFile.toPath()
 
-        echo("OsmTools version: $version , path to config file ${configFile.absoluteFile}")
-        echo("Actions to perform: ${actions}")
+        // Set path to the hgt directory
+        AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()
+
+        echo("Configuration : ${AppConfig.config.toString()}")
 
         val genLoMaps = GenLoMaps();
         genLoMaps.process();
 
-        echo("Contour sources to generate: ${AppConfig.config.contourConfig.source}")
+
+        echo ("== Map generation finished ==")
     }
 
     /**

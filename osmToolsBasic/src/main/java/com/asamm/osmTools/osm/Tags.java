@@ -2,17 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.asamm.osmTools.tourist;
+package com.asamm.osmTools.osm;
 
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.utils.Logger;
 import org.apache.commons.lang3.StringEscapeUtils;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 /**
  *

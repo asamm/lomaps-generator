@@ -2,10 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.asamm.osmTools.tourist;
+package com.asamm.osmTools.osm;
 
 import com.asamm.osmTools.Parameters;
-import com.asamm.osmTools.generator.GenLoMaps;
 import com.asamm.osmTools.utils.Logger;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.kxml2.io.KXmlParser;
@@ -15,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- *
  * @author volda
  */
 public class Way {
@@ -27,32 +25,12 @@ public class Way {
     ArrayList<Node> nodes;
     ArrayList<Tags> tagsArray;
     private Tags originalTags;
-    boolean isInWayList;
 
-    public Way () {
+    public Way() {
         //define array of nodes
         nodes = new ArrayList<Node>();
 
         originalTags = new Tags();
-    }
-    
-    
-    public void inicializeTourist  (KXmlParser parser, WayList wl) {
-        // resize
-        //Main.cycloId++;
-        fillAttributes(parser);
-
-        // look for way in waylist
-        isInWayList = (wl.isWayInList(id));
-
-        // get Tags for this way from wayList
-        if (isInWayList) {
-
-            this.tagsArray = wl.wayList.get(id);
-            if (this.tagsArray == null) {
-                throw new IllegalArgumentException("Cyclo way ID= " + this.id + " has no tags");
-            }
-        }
     }
 
     /**
@@ -63,11 +41,11 @@ public class Way {
      * is printed in the map
      */
     private void removeSuperRoute() {
-        if (tagsArray != null){
-            for(int i = tagsArray.size() - 1; i >= 0; --i) {
+        if (tagsArray != null) {
+            for (int i = tagsArray.size() - 1; i >= 0; --i) {
                 Tags tags = tagsArray.get(i);
                 if (tags.type != null && tags.type.equalsIgnoreCase("superroute")
-                    && !tags.isOsmSymbolDefined() && !tags.isIwnNwnRwnLwn()){
+                        && !tags.isOsmSymbolDefined() && !tags.isIwnNwnRwnLwn()) {
                     // remove this superroute because it doesn't have defined osmc symbol and it isn't any hiking route
                     tagsArray.remove(i);
                     //Logger.i(TAG, "Remove superroute, ID: " + tags.parentRelId);
@@ -76,16 +54,16 @@ public class Way {
         }
     }
 
-    public void addNode (Node nd){
+    public void addNode(Node nd) {
         nodes.add(nd);
     }
-    
-    private void fillAttributes(KXmlParser parser){
-        if (parser.getAttributeValue(null, "id") != null){
+
+    private void fillAttributes(KXmlParser parser) {
+        if (parser.getAttributeValue(null, "id") != null) {
             String str = parser.getAttributeValue(null, "id");
             id = Long.valueOf(str);
         }
-        if (parser.getAttributeValue(null, "visible") != null){
+        if (parser.getAttributeValue(null, "visible") != null) {
             visible = parser.getAttributeValue(null, "visible");
         }
     }
@@ -95,13 +73,13 @@ public class Way {
      * The goal is to keep foreground color empty if same as background
      * The osmc symbol with missing foreground will not be displayed
      */
-    private void removeSameOsmcForegroundColor(){
+    private void removeSameOsmcForegroundColor() {
 
         for (Tags tags : tagsArray) {
             if (tags.osmc_background != null && !tags.osmc_background.isEmpty()
-                    && tags.osmc_foreground != null && !tags.osmc_foreground.isEmpty()){
+                    && tags.osmc_foreground != null && !tags.osmc_foreground.isEmpty()) {
 
-                if (tags.osmc_foreground.startsWith(tags.osmc_background)){
+                if (tags.osmc_foreground.startsWith(tags.osmc_background)) {
                     Logger.i(TAG, "Remove osmc foreground for way, ID: " + this.id);
                     tags.osmc_foreground = "";
                 }
@@ -113,7 +91,7 @@ public class Way {
      * Generate the #Tags.osmOrder value. The goal is avoid multiple lines of the same color, groups order by type of
      * route (separate order for Hiking, Cycling or Ski routes)
      */
-    private void computeOsmcOrder(){
+    private void computeOsmcOrder() {
 
         //TODO replace this ugly map with enum of tourist types and organize using groupBy stream
         Map<String, List<Tags>> tagsTypesMap = new HashMap<>();
@@ -123,13 +101,11 @@ public class Way {
 
         // organize tags by type
         tagsArray.stream().forEach(tags -> {
-            if (tags.isHiking()){
+            if (tags.isHiking()) {
                 tagsTypesMap.get("hiking").add(tags);
-            }
-            else if (tags.isRegularBycicle() || tags.isMtb()){
+            } else if (tags.isRegularBycicle() || tags.isMtb()) {
                 tagsTypesMap.get("cycling").add(tags);
-            }
-            else if (tags.isSki()){
+            } else if (tags.isSki()) {
                 tagsTypesMap.get("ski").add(tags);
             }
         });
@@ -152,15 +128,15 @@ public class Way {
                 }
             }
 
-            for (Tags tags : touristTags){
+            for (Tags tags : touristTags) {
 
-                if (tags.osmc_color != null && tags.osmc_color.length() > 0 && !colors.contains(tags.osmc_color)){
+                if (tags.osmc_color != null && tags.osmc_color.length() > 0 && !colors.contains(tags.osmc_color)) {
                     // such color isn't is list of used colors, increase the order
                     colors.add(tags.osmc_color);
                     tags.osmc_order = counter;
                     counter++;
                 }
-                if (tags.osmc_foreground != null && tags.osmc_foreground.length() > 0 && !osmc_foregrounds.contains(tags.osmc_foreground)){
+                if (tags.osmc_foreground != null && tags.osmc_foreground.length() > 0 && !osmc_foregrounds.contains(tags.osmc_foreground)) {
                     // such symbol isn't is list of used osmc foregrounds
                     osmc_foregrounds.add(tags.osmc_foreground);
                     tags.osmc_symbol_order = counter_symbol_order;
@@ -175,24 +151,23 @@ public class Way {
      */
     private void mergeRefAndName() {
 
-        for (Tags tags : this.tagsArray){
+        for (Tags tags : this.tagsArray) {
             String ref = (tags.ref == null) ? "" : tags.ref;
             String name = (tags.name == null) ? "" : tags.name;
 
-            if (name.length() > 0){
+            if (name.length() > 0) {
                 if (ref.length() > 0 && !name.contains(ref)) {
                     // append ref to the existing name
                     tags.name = name + ", " + ref;
                 }
-            }
-            else if (ref.length() > 0 && !name.contains(ref)) {
+            } else if (ref.length() > 0 && !name.contains(ref)) {
                 // name is empty replace it by ref value
                 tags.name = ref;
             }
         }
     }
 
-    private void copyOriginalTagsToNewWays(){
+    private void copyOriginalTagsToNewWays() {
 
         for (Tags tags : tagsArray) {
 
@@ -213,20 +188,21 @@ public class Way {
      * If the original way is ferry route, set the highway=ferry tag
      * The goal is to avoid the situation when ferry route is printed as hiking route. For this reason it is necessary
      * to create a fake 'highway=ferry' tag
-     * @param tags new tags for tourist route
+     *
+     * @param tags         new tags for tourist route
      * @param originalTags original tags from OSM way
      */
-    private void ferryRouteToHighwayTag(Tags tags, Tags originalTags){
-        if (originalTags.highway == null || originalTags.highway.isEmpty()){
-            if (originalTags.route != null && originalTags.route.equalsIgnoreCase("ferry")){
+    private void ferryRouteToHighwayTag(Tags tags, Tags originalTags) {
+        if (originalTags.highway == null || originalTags.highway.isEmpty()) {
+            if (originalTags.route != null && originalTags.route.equalsIgnoreCase("ferry")) {
                 tags.highway = "ferry";
             }
         }
     }
-    
-    public String toXml(){
 
-        if (id == 97541653){
+    public String toXml() {
+
+        if (id == 97541653) {
             Logger.i(TAG, "Way ID: " + id);
         }
 
@@ -244,17 +220,16 @@ public class Way {
 
         this.mergeRefAndName();
 
-        String str = "";   
-        if (Parameters.printHighestWay){
-             //find the highest TAGS ib tags array
+        String str = "";
+        if (Parameters.printHighestWay) {
+            //find the highest TAGS ib tags array
             Tags tags = this.getTheHighestTags();
             if (tags == null) {
-                return ""; 
+                return "";
             }
-            str += this.toXmlString(tags,Parameters.touristWayId);
+            str += this.toXmlString(tags, Parameters.touristWayId);
             Parameters.touristWayId++;
-        } 
-        else {  
+        } else {
             for (Tags tags : tagsArray) {
 
                 //str += this.toXmlString(tags, refsLength);
@@ -262,32 +237,33 @@ public class Way {
                 Parameters.touristWayId++;
             }
         }
-        
+
         return str;
     }
 
 
     /**
      * function write way with attributes nodes and specified tags to string
-     * @param tags 
+     *
+     * @param tags
      * @return XML string
      */
-    public String toXmlString(Tags tags, long wayId){
+    public String toXmlString(Tags tags, long wayId) {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        Date date =  new Date();
+        Date date = new Date();
 
         String str = "";
         // print way heading
         str += "\n"
-                + "  <way id=\""+wayId+"\" user=\"AsammSW\" ";
-        if (visible != null){
-            str += "visible=\""+StringEscapeUtils.escapeXml(this.visible)+"\"";
+                + "  <way id=\"" + wayId + "\" user=\"AsammSW\" ";
+        if (visible != null) {
+            str += "visible=\"" + StringEscapeUtils.escapeXml(this.visible) + "\"";
         }
-        str+=  "version=\"1\" "
-                + "timestamp=\""+df.format(date) +"\">";
+        str += "version=\"1\" "
+                + "timestamp=\"" + df.format(date) + "\">";
         // print nodes
-        for (Node node : nodes){
-            str += "\n   <nd ref=\""+node.id+"\"/>";
+        for (Node node : nodes) {
+            str += "\n   <nd ref=\"" + node.id + "\"/>";
         }
         // print tags string
         str += tags.toXml();
@@ -296,47 +272,48 @@ public class Way {
         str += "\n  </way>";
         return str;
     }
-    
-   /**
-    * Function read the array of Tags and find the highest Tags. The highest mean
-    * from type of cyclo way... Internation, regional etc.
-    * @return Tags object of specific tags inherited from parent relation
-    */
-    private Tags getTheHighestTags (){
-        
+
+    /**
+     * Function read the array of Tags and find the highest Tags. The highest mean
+     * from type of cyclo way... Internation, regional etc.
+     *
+     * @return Tags object of specific tags inherited from parent relation
+     */
+    private Tags getTheHighestTags() {
+
         Tags tags;
         Tags highestTags = null;
-        int highestNetworkNum = -9999 ;// lokal cyclo start at 1. 
+        int highestNetworkNum = -9999;// lokal cyclo start at 1.
         Integer pom;
         String net;
         // TODO vyresit kdyz budes mit dve cesty stejne urovne ktere budou nejvyssi!!!
-        for (int i = 0; i < tagsArray.size(); i++){
+        for (int i = 0; i < tagsArray.size(); i++) {
             // test if tags is bycicle
             tags = tagsArray.get(i);
-            if (tags.isRegularBycicle()){
+            if (tags.isRegularBycicle()) {
                 //now know that way is bycicle and it is able to compare based on network tag
                 net = tags.network;
                 pom = Parameters.bycicleNetworkType.get(net);
-                if (pom > highestNetworkNum){
+                if (pom > highestNetworkNum) {
                     highestTags = tags;
                     highestNetworkNum = pom;
                 }
                 continue;
             }
-            
-            if (tags.isHiking()){
+
+            if (tags.isHiking()) {
                 //now know that way is bycicle and it is able to compare based on network tag
                 net = tags.network;
                 pom = Parameters.hikingNetworkType.get(net);
 
-                if (pom > highestNetworkNum){
+                if (pom > highestNetworkNum) {
                     highestTags = tags;
                     highestNetworkNum = pom;
                 }
                 continue;
             }
         }
-        
+
         return highestTags;
     }
 

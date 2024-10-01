@@ -6,6 +6,7 @@ package com.asamm.osmTools.mapConfig;
 
 import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.config.Action;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
@@ -20,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -156,7 +158,7 @@ public class ItemMap extends AItemMap {
     }
 
     public void setPaths() {
-        String subPath = Parameters.getVersionName() + Consts.FILE_SEP + getDir() + name;
+        String subPath = Paths.get(AppConfig.config.getVersion(), getDir() , name).toString();
 
         // define extract and generation path and also create directory structure if is needed
         if (hasAction(Action.DOWNLOAD)) {
@@ -177,7 +179,7 @@ public class ItemMap extends AItemMap {
         pathContour = Parameters.getDataDir() + DIR_CONTOURS +
                 getDir() + name + ".osm.pbf";
         pathTourist = Parameters.getDataDir() + DIR_TOURIST +
-                subPath + ".osm.xml";
+                subPath + ".osm.pbf";
         pathShp = Parameters.getDataDir() + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
                 getDir() + name + ".shp";
         pathCoastline = Parameters.getDataDir() + DIR_COASTLINES + "_pbf" + Consts.FILE_SEP +
@@ -190,9 +192,9 @@ public class ItemMap extends AItemMap {
         // parameters for generating
         if (hasAction(Action.GENERATE_MAPSFORGE)) {
             pathGenerate = Consts.DIR_BASE + DIR_GENERATE +
-                    Parameters.getVersionName() + Consts.FILE_SEP + getDirGen();
+                    AppConfig.config.getVersion() + Consts.FILE_SEP + getDirGen();
             pathResult = Parameters.getDataDir() + DIR_RESULT +
-                    Parameters.getVersionName() + Consts.FILE_SEP + getDirGen();
+                    AppConfig.config.getVersion() + Consts.FILE_SEP + getDirGen();
             pathGenerateContour = Parameters.getDataDir() + DIR_CONTOURS +
                     Consts.FILE_SEP + getDir() + name + ".osm.map";
 

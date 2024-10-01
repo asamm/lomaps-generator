@@ -15,7 +15,6 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.tourist.Tourist;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import com.asamm.osmTools.utils.io.ZipUtils;
@@ -122,6 +121,12 @@ public class GenLoMaps extends AGenerator {
                 case DOWNLOAD:
                     actionDownload(map);
                     break;
+                case TOURIST:
+                    actionTourist(map);
+                    break;
+                case CONTOUR:
+                    actionContour(map);
+                    break;
                 case GRAPH_HOPPER:
                     actionGraphHopper(map);
                     break;
@@ -133,14 +138,8 @@ public class GenLoMaps extends AGenerator {
 
                     actionCoastline(map);
                     break;
-                case TOURIST:
-                    actionTourist(map);
-                    break;
                 case TRANSFORM:
                     actionTransformData(map);
-                case CONTOUR:
-                    actionContour(map);
-                    break;
                 case MERGE:
                     actionMerge(map);
                     break;
@@ -303,16 +302,15 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION TOURIST
 
-    private void actionTourist(ItemMap map) throws IOException, XmlPullParserException {
+    private void actionTourist(ItemMap map) throws IOException, XmlPullParserException, InterruptedException {
         // check if we want to do this action
         if (!map.hasAction(Action.TOURIST)) {
             return;
         }
 
         // check if file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles() && new File(map.getPathTourist()).exists()) {
-            Logger.i(TAG, "File with tourist path " + map.getPathTourist()
-                    + " already exist - skipped.");
+        if (!AppConfig.config.getOverwrite() && new File(map.getPathTourist()).exists()) {
+            Logger.i(TAG, "File with tourist path ${map.getPathTourist()} already exist - skipped.");
             return;
         }
 
@@ -321,16 +319,13 @@ public class GenLoMaps extends AGenerator {
             throw new IllegalArgumentException("Input file for creation tourist path "
                     + map.getPathSource() + " does not exist!");
         }
-
-        // start tourist
-        Tourist tourist = new Tourist(map);
-
         // write to log and start stop watch
         TimeWatch time = new TimeWatch();
         Main.mySimpleLog.print("\nTourist: " + map.getName() + " ...");
 
-        // start creating of tourist data
-        tourist.create();
+        CmdTourist cmdTourist = new CmdTourist(map);
+        cmdTourist.createCmd();
+        cmdTourist.execute();
 
         // notify about result
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
@@ -381,15 +376,13 @@ public class GenLoMaps extends AGenerator {
 
         // create commands for generation contours
         CmdContour cc = new CmdContour(map);
-        cc.createCmd();
+        cc.generate();
         Logger.i(TAG, "Command: " + cc.getCmdLine());
-        cc.execute();
-        cc.rename();
 
-        CmdSort cs = new CmdSort(map);
-        cs.createCmdSort();
-        cs.execute();
-        cs.rename();
+//        CmdSort cs = new CmdSort(map);
+//        cs.createCmdSort();
+//        cs.execute();
+//        cs.rename();
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
 
         // stop timeWatch
@@ -498,7 +491,7 @@ public class GenLoMaps extends AGenerator {
 
         // parse version into java date
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
-        Date dateVersion = sdf.parse(Parameters.getVersionName());
+        Date dateVersion = sdf.parse(AppConfig.config.getVersion());
 
         // insert version of map
         // create area coverage (it's intersection of country border and data json)
@@ -523,7 +516,7 @@ public class GenLoMaps extends AGenerator {
         dbData.insertData(LoMapsDbConst.VAL_LANGUAGES, itemMap.getPrefLang());
         dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
         dbData.insertData(LoMapsDbConst.VAL_REGION_ID, itemMap.getRegionId());
-        dbData.insertData(LoMapsDbConst.VAL_VERSION, Parameters.getVersionName());
+        dbData.insertData(LoMapsDbConst.VAL_VERSION, AppConfig.config.getVersion());
         dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
         dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
 

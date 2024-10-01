@@ -4,6 +4,7 @@ import com.asamm.locus.api.v2.server.admin.StoreAdminFile;
 import com.asamm.locus.api.v2.server.admin.StoreAdminItem;
 import com.asamm.locus.api.v2.server.admin.StoreAdminItemListing;
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
@@ -159,7 +160,7 @@ public class UploadDefinitionCreator {
         sai.setRegionDatastoreIds(Arrays.asList(map.getRegionId()));
 
         // Version
-        sai.getVersion().setName(Parameters.getVersionName());
+        sai.getVersion().setName(AppConfig.config.getVersion());
         sai.getVersion().setStoreAdminFile(createJsonFile(map));
 
         // put polygon definition into item obj.

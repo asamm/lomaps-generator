@@ -2,6 +2,7 @@ package com.asamm.osmTools.config
 
 import com.asamm.osmTools.LocusStoreEnv
 import java.nio.file.Path
+import java.nio.file.Paths
 
 
 object AppConfig {
@@ -10,7 +11,7 @@ object AppConfig {
 
     fun loadConfig(configFilePath: String = "config.yml") {
         if (!::config.isInitialized) {
-            config = Config()
+            this@AppConfig.config = Config()
             // TODO load config from file
         }
     }
@@ -25,7 +26,7 @@ object AppConfig {
 data class Config(
 
     var version: String = "1975.01.01",
-    var rewrite: Boolean = false,
+    var overwrite: Boolean = false,
     var actions: MutableSet<Action> = mutableSetOf<Action>(),
     var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,
     var verbose: Boolean = false,
@@ -36,6 +37,7 @@ data class Config(
 
     var touristConfig: TouristConfig = TouristConfig(),
     var contourConfig: ContourConfig = ContourConfig(),
+    var cmdConfig: CmdConfig = CmdConfig(),
 
     var mapDescription: String = """
         <div><h4>Vector maps for <a href="http://www.locusmap.app">Locus</a> application</h4>
@@ -51,17 +53,41 @@ data class Config(
 )
 
 data class TouristConfig(
-    var nodeId: Long = 15000000000000L,
-    var wayId: Long = 16000000000000L,
+    var nodeId: Long = 14000000000000L,
+    var wayId: Long = 14100000000000L,
+
+    //var loDmapsToolsPy: Path =  Paths.get("lomapsTools", "lomaps_tools.py")
+    var lomapsToolsPy: Path = Paths.get("d:\\asamm\\projects\\lomaps-tools\\lomaps_tools\\", "lomaps_tools.py")
 )
 
 data class ContourConfig(
-    var nodeId: Long = 17000000000000L,
-    var wayId: Long = 18000000000000L,
+
+    var hgtDir: Path = Path.of("hgt"),
+    var nodeIdMeter: Long = 15_000_000_000_000L, // nodes for meter contour lines
+    var wayIdMeter: Long = 16_000_000_000_000L, // ways for meter contour lines
+    var nodeIdFeet: Long = 17_000_000_000_000L, // nodes for feet contour lines
+    var wayIdFeet: Long = 18_000_000_000_000L, // ways for feet contour lines
+
     var stepMeter: Int = 20, // 20 meters
-    var tepFeet: Int = 50,
+    var stepFeet: Int = 50, // 50 feet
+
+    // major and minor contours
+    var stepCategoryMeter: String = "100,50",
+    var stepCategoryFeet: String = "400,200",
     var source: String = "view3,view1",
 
-    var pyghtmapFile: Path = Path.of("pyghtmap"),
+    //var polyCoverageMeter: Path = Path.of("polygons/_contours/planet_contours_meters.poly"),
+    //var polyCoverageFeet: Path = Path.of("polygons/_contours/planet_contours_feet.poly"),
+    var polyCoverageMeter: Path = Path.of("polygons/_contours/monaco_contours_meter.poly"),
+    var polyCoverageFeet: Path = Path.of("polygons/_contours/monaco_contours_feet.poly"),
+
+    var tempMetersFile: Path = Path.of("_contours/planet_meter.osm.pbf"), // temporary file for generated contours in meter
+    var tempFeetFile: Path = Path.of("_contours/planet_feet.osm.pbf"), // temporary file for generated contours in feet
 
 )
+
+class CmdConfig() {
+    val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
+
+    val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
+}

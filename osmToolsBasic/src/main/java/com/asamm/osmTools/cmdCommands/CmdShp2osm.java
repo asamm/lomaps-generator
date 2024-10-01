@@ -5,6 +5,7 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.mapConfig.ItemMap;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class CmdShp2osm extends Cmd{
     }
     
     public void createCmd(){
-        addCommand(Parameters.getPythonDir());
+        addCommand(AppConfig.config.getCmdConfig().getPythonPath());
         addCommand(Parameters.getShp2osmDir());
         addCommand("--id");
         addCommand(String.valueOf(Parameters.costlineBorderId));

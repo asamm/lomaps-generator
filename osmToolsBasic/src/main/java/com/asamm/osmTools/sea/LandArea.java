@@ -10,9 +10,9 @@ import com.asamm.osmTools.cmdCommands.CmdMerge;
 import com.asamm.osmTools.cmdCommands.CmdOgr;
 import com.asamm.osmTools.cmdCommands.CmdShp2osm;
 import com.asamm.osmTools.mapConfig.ItemMap;
-import com.asamm.osmTools.tourist.Node;
-import com.asamm.osmTools.tourist.Tags;
-import com.asamm.osmTools.tourist.Way;
+import com.asamm.osmTools.osm.Node;
+import com.asamm.osmTools.osm.Tags;
+import com.asamm.osmTools.osm.Way;
 import com.asamm.osmTools.utils.Consts;
 import org.apache.commons.io.FileUtils;
 

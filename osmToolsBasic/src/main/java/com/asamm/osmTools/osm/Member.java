@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.asamm.osmTools.tourist;
+package com.asamm.osmTools.osm;
 
 import org.kxml2.io.KXmlParser;
 

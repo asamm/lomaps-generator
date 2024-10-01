@@ -1,7 +1,6 @@
 package com.asamm.osmTools.utils
 
 import com.asamm.osmTools.config.AppConfig
-import com.asamm.osmTools.tourist.Tag
 import java.io.File
 import java.nio.file.Path
 

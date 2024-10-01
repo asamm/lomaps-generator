@@ -73,9 +73,6 @@ public class Parameters {
 
     private static final String mMapDescriptionDefinition = Consts.DIR_BASE + "config" + Consts.FILE_SEP + "map_description_definition.json";
 
-    // name of version itself (like "2014.06.10") it also set the date to the file
-    private static String mVersionName;
-
     // flag if is generated loMaps or storegeocoding database
     private static GenType genType;
 
@@ -93,7 +90,6 @@ public class Parameters {
 
     // set basic values
     static {
-        mVersionName = "";
         mHgtDir = "hgt"; // default location for SRTM files
         mIsMailing = false;
     }
@@ -133,7 +129,7 @@ public class Parameters {
     public static long touristWayId     = 16000000000000L;
     public static long contourNodeId    = 18000000000000L;
     public static long contourWayId     = 20000000000000L;
-    public static long costlineBorderId = 22000000000000L;
+    public static long costlineBorderId = 24000000000000L;
                                     
     // by this variable decide if print for all REF number for the routes or only the REF for the most important
     // (international, national, regional...) route
@@ -211,10 +207,6 @@ public class Parameters {
         return mContourTagMapping;
     }
 
-    public static String getVersionName() {
-        return mVersionName;
-    }
-
     public static long getSourceDataLastModifyDate() {
         return mSourceDataLastModifyDate;
     }
@@ -252,9 +244,9 @@ public class Parameters {
         return mOgr2ogr;
     }
 
-    public static String getPythonDir() {
-        return mPythonDir;
-    }
+//    public static String getPythonDir() {
+//        return mPythonDir;
+//    }
 
     public static String getPython2Dir() {
         return mPython2Dir;
@@ -473,8 +465,8 @@ public class Parameters {
             mOsmium = "osmium";
             phyghtDir = "/osm_tools/vectorMaps/pyhgtmap/hgt_venv/bin/pyhgtmap";
             mOgr2ogr = "ogr2ogr";
-            mPythonDir = "python3";
-            mPython2Dir = "python2";
+//            mPythonDir = "python3";
+//            mPython2Dir = "python2";
             mPreShellCommand = "";
             mPostShellCommand = "";
         } else if (Utils.isSystemWindows()){
@@ -482,8 +474,8 @@ public class Parameters {
             mOsmium = "osmium";
             phyghtDir = "C:\\Python27\\Scripts\\phyghtmap.exe";
             mOgr2ogr = "C:\\Program Files\\FWTools2.4.7\\bin\\ogr2ogr.exe";
-            mPythonDir = "python";
-            mPython2Dir = "C:\\Python27\\python.exe";
+//            mPythonDir = "python";
+//            mPython2Dir = "C:\\Python27\\python.exe";
             mPreShellCommand = "c:\\work\\cygwin64\\bin\\bash.exe -c '";
             mPostShellCommand = "'";
         } else {
@@ -491,36 +483,10 @@ public class Parameters {
             mOsmium = "osmium";
             phyghtDir = "/osm_tools/vectorMaps/pyhgtmap/hgt_venv/bin/pyhgtmap";
             mOgr2ogr = "ogr2ogr";
-            mPythonDir = "/usr/bin/python";
+//            mPythonDir = "/usr/bin/python";
             mPreShellCommand = "";
             mPostShellCommand = "";
         }
-
-        // ============= TOURIST VARIABLES ====================
-
-        // set attributes for order of cyclo routes
-        bycicleNetworkType.put("lcn", 1);
-        bycicleNetworkType.put("rcn", 2);
-        bycicleNetworkType.put("ncn", 3);
-        bycicleNetworkType.put("icn", 4);
-
-        // set list of possible colour of hiking routes (guess from osmc:symbol tag
-        hikingColourType = new ArrayList<String>();
-        hikingColourType.add("black");
-        hikingColourType.add("blue");
-        hikingColourType.add("brown");
-        hikingColourType.add("green");
-        hikingColourType.add("orange");
-        hikingColourType.add("purple");
-        hikingColourType.add("red");
-        hikingColourType.add("white");
-        hikingColourType.add("yellow");
-
-        // set order of hiking network tag
-        hikingNetworkType.put("lwn", 1);
-        hikingNetworkType.put("rwn", 2);
-        hikingNetworkType.put("nwn", 3);
-        hikingNetworkType.put("iwn", 4);
         
 //        // Map COMMENT
 //        MAP_COMMENT =
