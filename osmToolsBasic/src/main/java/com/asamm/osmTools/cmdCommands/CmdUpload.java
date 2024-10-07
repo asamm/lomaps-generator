@@ -13,7 +13,7 @@ public class CmdUpload  extends  Cmd{
     private static final String TAG = CmdUpload.class.getSimpleName();
 
     public CmdUpload() {
-        super(null, ExternalApp.STORE_UPLOAD);
+        super(ExternalApp.STORE_UPLOAD);
     }
 
     public String execute(int numRepeat) throws IOException, InterruptedException {

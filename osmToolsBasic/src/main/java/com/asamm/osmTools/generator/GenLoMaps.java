@@ -364,7 +364,7 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if file exists
-        if (new File(map.getPathContour()).exists()) {
+        if (map.getPathContour().toFile().exists() && !AppConfig.config.getOverwrite()) {
             Logger.i(TAG, "File with contours " + map.getPathContour() + ", already exists");
             return;
         }

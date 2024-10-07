@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -89,7 +90,7 @@ public class ItemMap extends AItemMap {
     // path to polygon file
     private String pathPolygon;
     // path to file with generated contours
-    private String pathContour;
+    private Path pathContour;
     // path where should be placed generated result (zipped)
     private String pathResult;
     // path to shp files
@@ -176,8 +177,7 @@ public class ItemMap extends AItemMap {
                 subPath + "-gh.zip";
         pathAddressPoiDb = Consts.DIR_BASE + DIR_ADDRESS_POI_DB +
                 subPath + ".osm.db";
-        pathContour = Parameters.getDataDir() + DIR_CONTOURS +
-                getDir() + name + ".osm.pbf";
+        pathContour = Path.of(Parameters.getDataDir(), DIR_CONTOURS , getDir() , name + ".osm.pbf");
         pathTourist = Parameters.getDataDir() + DIR_TOURIST +
                 subPath + ".osm.pbf";
         pathShp = Parameters.getDataDir() + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
@@ -283,7 +283,7 @@ public class ItemMap extends AItemMap {
         return str + "_country.geojson";
     }
 
-    public String getPathContour() {
+    public Path getPathContour() {
         return pathContour;
     }
 

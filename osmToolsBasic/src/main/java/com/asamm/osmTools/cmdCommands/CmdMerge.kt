@@ -15,10 +15,10 @@ import java.util.*
  *
  * @author volda
  */
-class CmdMerge(map: ItemMap) : Cmd(map, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdMerge(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     init {
         // check parameters
-        checkFileLocalPath()
+        checkFileLocalPath(map)
     }
 
 

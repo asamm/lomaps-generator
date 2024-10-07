@@ -18,7 +18,7 @@ import kotlin.io.path.absolute
  *
  * @author volda
  */
-class CmdContour(map: ItemMap) : Cmd(map, ExternalApp.PYHGTMAP) {
+class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
 
     private val TAG: String = GenLoMaps::class.java.simpleName
 
@@ -47,27 +47,40 @@ class CmdContour(map: ItemMap) : Cmd(map, ExternalApp.PYHGTMAP) {
         Utils.createParentDirs(tempMeter.toString())
         Utils.createParentDirs(tempFeet.toString())
 
-        // generate meters contours
-        generateContours(ContourUnit.METER, tempMeterWithFeetAreas)
-        Logger.i(TAG, "Command: " + getCmdLine())
-        execute()
-        rename(tempMeterWithFeetAreas)
+        // generate meters contours (contains also areas where are feet contours)
+        if ( !tempMeterWithFeetAreas.toFile().exists()) {
+            generateContours(ContourUnit.METER, tempMeterWithFeetAreas)
+            Logger.i(TAG, "Command: " + getCmdLine())
+            execute()
+            rename(tempMeterWithFeetAreas)
+            reset()
+        }
 
-        reset()
-
-        // generate feet contours
-        generateContours(ContourUnit.FEET, tempFeet)
-        Logger.i(TAG, "Command: " + getCmdLine())
-        execute()
-        rename(tempFeet)
+        // generate feet contours for areas where are not meters contours
+        if ( !tempFeet.toFile().exists()){
+            // generate feet contours
+            generateContours(ContourUnit.FEET, tempFeet)
+            Logger.i(TAG, "Command: " + getCmdLine())
+            execute()
+            rename(tempFeet)
+        }
 
         // extract contours meters areas from tempMeterWithFeetAreas
         // pyhgtmap contains bug and skip holes in polygon file. For this reason meters contours are generated also in
         // areas where are feet contours. We need to extract only meters contours from tempMeterWithFeetAreas
+        val cmdOsmium:CmdOsmium = CmdOsmium()
+        if ( !tempMeter.toFile().exists()) {
+            cmdOsmium.extractByPolygon(tempMeterWithFeetAreas, tempMeter, AppConfig.config.contourConfig.polyCoverageMeter)
+        }
 
+        // merge meters and feets contours to single contour world file
+        cmdOsmium.merge(mutableListOf(tempMeter, tempFeet), map.getPathContour())
 
-        // merge contours to original planet file
-        // TODO: implement this
+        // delete tmp files
+        Utils.deleteFileQuietly(tempMeterWithFeetAreas)
+        Utils.deleteFileQuietly(tempMeter)
+        Utils.deleteFileQuietly(tempFeet)
+
     }
 
     private fun generateContours(unit: ContourUnit, prefix: Path) {

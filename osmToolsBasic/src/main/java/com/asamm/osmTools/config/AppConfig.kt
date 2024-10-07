@@ -90,4 +90,6 @@ class CmdConfig() {
     val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
 
     val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
+
+    val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath()}
 }

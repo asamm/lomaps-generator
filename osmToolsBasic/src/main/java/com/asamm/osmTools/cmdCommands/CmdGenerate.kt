@@ -16,7 +16,7 @@ import java.util.*
  *
  * @author volda
  */
-class CmdGenerate(map: ItemMap) : Cmd(map, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     private var isRam = true
 
     init {

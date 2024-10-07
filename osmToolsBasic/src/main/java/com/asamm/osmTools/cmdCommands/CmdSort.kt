@@ -11,7 +11,7 @@ import java.io.File
 /**
  * @author volda
  */
-class CmdSort(map: ItemMap) : Cmd(map, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdSort(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     fun createCmdSort() {
         addReadPbf()
         //addReadXml();

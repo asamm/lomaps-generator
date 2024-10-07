@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -62,6 +63,20 @@ public class Utils {
             if (fileList[i].isFile()){
                 fileList[i].delete();
             }
+        }
+    }
+
+    /**
+     * Delete file quietly without throwing exception
+     * @param path path to file to delete
+     */
+    public static void deleteFileQuietly(Path path){
+        try {
+            if (path.toFile().exists()){
+                Files.delete(path);
+            }
+        } catch (IOException e) {
+            Logger.w(TAG, "deleteFile(), Unable to delete file", e);
         }
     }
 

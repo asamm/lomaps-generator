@@ -9,7 +9,7 @@ import java.io.IOException
  * Created by voldapet on 16/1/2017.
  * Set cdm tools to start generation of customized data - eq. city residential areas
  */
-class CmdTransformData(map: ItemMap) : Cmd(map, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdTransformData(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     /**
      * Definition where PBF file with customized OSM data will be created
      */

@@ -8,14 +8,16 @@ import com.asamm.osmTools.mapConfig.ItemMap;
  */
 public class CmdGraphHopper extends Cmd {
 
+    ItemMap map;
     public CmdGraphHopper(ItemMap map) {
-        super(map, ExternalApp.GRAPHOPPER);
+        super(ExternalApp.GRAPHOPPER);
 
+        this.map = map;
         // check parameters
-        checkFileLocalPath();
+        checkFileLocalPath(map);
 
         // add commands required for generating
         addCommand("import");
-        addCommand(getMap().getPathSource());
+        addCommand(map.getPathSource());
     }
 }

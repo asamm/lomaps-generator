@@ -9,12 +9,12 @@ import java.io.IOException
 /**
  * Created by voldapet on 2016-03-15 .
  */
-class CmdCountryBorders(sourceItem: ItemMap, var storageType: ConfigurationCountry.StorageType) :
-    Cmd(sourceItem, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdCountryBorders(val map: ItemMap, var storageType: ConfigurationCountry.StorageType) :
+    Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     /**
      * File to filter source item
      */
-    val filteredTempMap: File = File(sourceItem.pathSource + "_tmp_border")
+    val filteredTempMap: File = File(map.pathSource + "_tmp_border")
 
     /**
      * Delete tmop file where are store result of filtering of admin boundaries

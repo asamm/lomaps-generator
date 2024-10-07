@@ -9,6 +9,7 @@ import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.mapConfig.ItemMap
+import com.asamm.osmTools.utils.Logger
 import org.apache.commons.io.FileUtils
 import java.io.BufferedReader
 import java.io.File
@@ -16,7 +17,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 
 
-open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
+open class Cmd(val externalApp: ExternalApp) {
 
     enum class ExternalApp {
         NO_EXTERNAL_APP,
@@ -39,8 +40,6 @@ open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
     val cmdList: MutableList<String> = mutableListOf()
 
     init {
-        // check map
-        require(!(externalApp != ExternalApp.STORE_UPLOAD && map == null)) { "Map object not valid" }
 
         // add basic
         initializeExternApp()
@@ -49,7 +48,7 @@ open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
     private fun initializeExternApp() {
         when (externalApp) {
             ExternalApp.OSMOSIS -> addCommand(Parameters.getOsmosisExe())
-            ExternalApp.OSMIUM -> addCommand(Parameters.getOsmium())
+            ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
             ExternalApp.GRAPHOPPER -> addCommands(Parameters.getPreShellCommand(),Parameters.getGraphHopperExe())
             ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", Parameters.getStoreUploaderPath())
             ExternalApp.LOMAPS_TOOLS -> {
@@ -162,7 +161,7 @@ open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
 
             // read the output from the command
             while ((stdInput.readLine().also { line = it }) != null) {
-                println(line)
+                Logger.i(TAG,line)
                 Main.myRunTimeLog.print(line + "\n")
                 lastOutpuLine = line
             }
@@ -170,7 +169,7 @@ open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
 
             // break program when wrong exit value
             if (exitVal != 0) {
-                println("Wrong return value from sub command, exit value: " + exitVal)
+                Logger.e(TAG,"Wrong return value from sub command, exit value: " + exitVal)
 
                 val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
                 throw IllegalArgumentException(errorMsg)
@@ -190,7 +189,7 @@ open class Cmd(val map: ItemMap, val externalApp: ExternalApp) {
         }
     }
 
-    protected fun checkFileLocalPath() {
+    protected fun checkFileLocalPath(map: ItemMap) {
         require(File(map.getPathSource()).exists()) {
             "Extracted map: " +
                     map.getPathSource() + " does not exist"

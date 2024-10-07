@@ -10,5 +10,5 @@ import com.asamm.osmTools.mapConfig.MapSource
  *
  * @author volda
  */
-class CmdExtract(ms: MapSource, sourceId: String?) : Cmd(ms.getMapById(sourceId), ExternalApp.OSMOSIS),
+class CmdExtract(ms: MapSource, sourceId: String?) : Cmd(ExternalApp.OSMOSIS),
     CmdOsmosis

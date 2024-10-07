@@ -12,7 +12,7 @@ import java.io.IOException
 /**
  * Command for generation of tourist ways
  */
-class CmdTourist(map: ItemMap) : Cmd(map, ExternalApp.LOMAPS_TOOLS) {
+class CmdTourist(val map: ItemMap) : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
     @Throws(IOException::class)
     fun createCmd() {

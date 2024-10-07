@@ -26,9 +26,12 @@ public class CmdExtractOsmium extends Cmd {
     JSONObject configJ = new JSONObject();
     JSONArray extractsJ = new JSONArray();
 
-    public CmdExtractOsmium(MapSource ms, String sourceId) {
-        super(ms.getMapById(sourceId), ExternalApp.OSMIUM);
+    ItemMap map;
 
+    public CmdExtractOsmium(MapSource ms, String sourceId) {
+        super(ExternalApp.OSMIUM);
+
+        map = ms.getMapById(sourceId);
         initJsonConfig();
     }
 
@@ -92,7 +95,7 @@ public class CmdExtractOsmium extends Cmd {
             addCommand("simple");  //alternatives: simple | complete_ways | smart
         }
         addCommand("-v");
-        addCommand(getMap().getPathSource());
+        addCommand(map.getPathSource());
         addCommand("--fsync");
     }
 }

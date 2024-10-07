@@ -15,7 +15,7 @@ import java.util.*
 /**
  * Created by menion on 28.7.14.
  */
-class CmdLoMapsDbPlugin(map: ItemMap) : Cmd(map, ExternalApp.OSMOSIS), CmdOsmosis {
+class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     // set parameters
     private val mFileTempMap = File(Consts.DIR_TMP, "temp_map_simple.osm.pbf")
 
