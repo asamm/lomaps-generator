@@ -20,28 +20,17 @@ class CmdSort(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     }
 
     private fun addReadPbf() {
-        require(File(map.pathContour).exists()) {
-            "Soubor vrstevnic: " +
-                    map.pathContour + " neexistuje"
+        require(map.pathContour.toFile().exists()) {
+            "File with contour lines " + map.pathContour + " does not exist"
         }
 
         addCommand("--read-pbf")
-        addCommand(map.pathContour)
+        addCommand(map.pathContour.toString())
     }
-
-    private fun addReadXml() {
-        require(File(map.pathContour).exists()) {
-            "Soubor vrstevnic: " +
-                    map.pathContour + " neexistuje"
-        }
-        addCommand("--read-xml")
-        addCommand(map.pathContour)
-    }
-
 
     protected fun addWritePbf(omitMetadata: Boolean) {
         addCommand("--write-pbf")
-        addCommand(map.pathContour + ".sorted")
+        addCommand(map.pathContour.toString() + ".sorted")
         if (omitMetadata) {
             addCommand("omitmetadata=true")
         }
@@ -49,14 +38,14 @@ class CmdSort(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
 
     private fun addWriteXml() {
         addCommand("--wx")
-        addCommand(map.pathContour + ".sorted")
+        addCommand(map.pathContour.toString() + ".sorted")
         addCommand("compressionMethod=bzip2")
     }
 
     fun rename() {
         //ocekavam, ze probehlo sortovani a prejmenuji mapu zpet na puvodni jmeno bez postfixu sorted
-        val fSorted = File(map.pathContour + ".sorted")
-        val fUnsorted = File(map.pathContour)
+        val fSorted = File(map.pathContour.toString() + ".sorted")
+        val fUnsorted = map.pathContour.toFile()
 
         require(fSorted.exists()) {
             "Sorted contourline " +
@@ -70,7 +59,7 @@ class CmdSort(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
             "Rename contour line: " + fSorted.name +
                     " to: " + fUnsorted.name
         )
-        fSorted.renameTo(File(map.pathContour))
+        fSorted.renameTo(map.pathContour.toFile())
     }
 }
 

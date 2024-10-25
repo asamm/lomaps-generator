@@ -7,7 +7,6 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.Main
 import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
-import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import org.apache.commons.io.FileUtils
@@ -33,6 +32,8 @@ open class Cmd(val externalApp: ExternalApp) {
         LOMAPS_TOOLS,
 
         PYHGTMAP,
+
+        PLANETILER,
     }
 
 
@@ -49,7 +50,7 @@ open class Cmd(val externalApp: ExternalApp) {
         when (externalApp) {
             ExternalApp.OSMOSIS -> addCommand(Parameters.getOsmosisExe())
             ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
-            ExternalApp.GRAPHOPPER -> addCommands(Parameters.getPreShellCommand(),Parameters.getGraphHopperExe())
+            ExternalApp.GRAPHOPPER -> addCommands(Parameters.getPreShellCommand(), Parameters.getGraphHopperExe())
             ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", Parameters.getStoreUploaderPath())
             ExternalApp.LOMAPS_TOOLS -> {
                 addCommand(AppConfig.config.cmdConfig.pythonPath)
@@ -60,20 +61,21 @@ open class Cmd(val externalApp: ExternalApp) {
                 addCommand(AppConfig.config.cmdConfig.pyghtmap)
             }
 
-            ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
+            ExternalApp.PLANETILER -> {
+                addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar", AppConfig.config.cmdConfig.planetiler)
+            }
 
+            ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
         }
     }
-
 
     fun prepareDirectory(pathToWrite: String) {
         FileUtils.forceMkdir(File(pathToWrite).getParentFile())
     }
 
-
     fun addBoundingPolygon(map: ItemMap) {
         // test if polygon exist in specified path
-        require(File(map.getPathPolygon()).exists()) { "Bounding polygon: " + map.getPathPolygon() + " doesn't exists" }
+        require(map.getPathPolygon().toFile().exists()) { "Bounding polygon: " + map.getPathPolygon() + " doesn't exists" }
 
         // finally add to command list
         addCommand("--bp")
@@ -102,11 +104,14 @@ open class Cmd(val externalApp: ExternalApp) {
         }
     }
 
-    /** */ /*                      TOOLS                     */
-    /** */
-    @Throws(IOException::class, InterruptedException::class)
+    // TOOLS
+
     fun execute(): String? {
         return runCommands(createArray())
+    }
+
+    fun executeQuietly(): String? {
+        return runCommands(createArray(), false)
     }
 
     fun executePb(): ProcessBuilder {
@@ -148,7 +153,7 @@ open class Cmd(val externalApp: ExternalApp) {
     }
 
     @Throws(IOException::class, InterruptedException::class)
-    private fun runCommands(mCmdArray: Array<String>): String? {
+    private fun runCommands(mCmdArray: Array<String>, printError: Boolean = true): String? {
         var line: String?
         var lastOutpuLine: String? = null
         var stdInput: BufferedReader? = null
@@ -161,7 +166,7 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // read the output from the command
             while ((stdInput.readLine().also { line = it }) != null) {
-                Logger.i(TAG,line)
+                Logger.i(TAG, line)
                 Main.myRunTimeLog.print(line + "\n")
                 lastOutpuLine = line
             }
@@ -169,10 +174,11 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // break program when wrong exit value
             if (exitVal != 0) {
-                Logger.e(TAG,"Wrong return value from sub command, exit value: " + exitVal)
-
-                val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
-                throw IllegalArgumentException(errorMsg)
+                Logger.e(TAG, "Wrong return value from sub command, exit value: " + exitVal)
+                if (printError) {
+                    val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
+                    throw IllegalArgumentException(errorMsg)
+                }
             }
 
             // return result
@@ -190,7 +196,7 @@ open class Cmd(val externalApp: ExternalApp) {
     }
 
     protected fun checkFileLocalPath(map: ItemMap) {
-        require(File(map.getPathSource()).exists()) {
+        require(map.getPathSource().toFile().exists()) {
             "Extracted map: " +
                     map.getPathSource() + " does not exist"
         }

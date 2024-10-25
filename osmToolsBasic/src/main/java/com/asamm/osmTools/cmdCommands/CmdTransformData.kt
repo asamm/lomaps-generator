@@ -19,13 +19,13 @@ class CmdTransformData(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis 
     fun addDataTransform() {
         // read extracted pbf
 
-        addReadPbf(map.pathSource)
+        addReadPbf(map.pathSource.toString())
         // set plugin to create city residential areas
         addCommand("--" + DataPluginLoader.PLUGIN_DATA_TRANSFORM)
 
         addSort()
 
-        addWritePbf(map.pathTranform, true)
+        addWritePbf(map.pathTranform.toString(), true)
         //addWriteXml(getMap().getPathTranform(),true);
     }
 

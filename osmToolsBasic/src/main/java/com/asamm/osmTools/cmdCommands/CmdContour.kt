@@ -53,16 +53,19 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
             Logger.i(TAG, "Command: " + getCmdLine())
             execute()
             rename(tempMeterWithFeetAreas)
+            renumber(tempMeterWithFeetAreas, AppConfig.config.contourConfig.nodeIdMeter, AppConfig.config.contourConfig.wayIdMeter)
             reset()
         }
 
-        // generate feet contours for areas where are not meters contours
+        // generate feet contours only for areas where are feets
         if ( !tempFeet.toFile().exists()){
             // generate feet contours
             generateContours(ContourUnit.FEET, tempFeet)
             Logger.i(TAG, "Command: " + getCmdLine())
             execute()
             rename(tempFeet)
+            renumber(tempFeet, AppConfig.config.contourConfig.nodeIdFeet, AppConfig.config.contourConfig.wayIdFeet)
+            reset()
         }
 
         // extract contours meters areas from tempMeterWithFeetAreas
@@ -83,6 +86,18 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
 
     }
 
+    /**
+     * Pyhgtmap generates contour lines with node and way only in integer range and it may collide with existing data.
+     * This method renumbers nodes and ways to avoid collisions.
+     */
+    private fun renumber(generatedContourFile: Path, startNodeId: Long, startWayId: Long) {
+        val cmdOsmium:CmdOsmium = CmdOsmium()
+        // rename the temp meter fiel to add _renumbered before extension
+        val renumberedFile = generatedContourFile.resolveSibling(generatedContourFile.fileName.toString() + ".renumbered.pbf")
+        cmdOsmium.renumber(generatedContourFile, renumberedFile, startNodeId, startWayId)
+        Utils.renameFileQuitly(renumberedFile, generatedContourFile, true)
+    }
+
     private fun generateContours(unit: ContourUnit, prefix: Path) {
 
         // create commands based on specified unit
@@ -91,16 +106,17 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
                 addCommand("--polygon="+ AppConfig.config.contourConfig.polyCoverageMeter.toString())
                 addCommand("--step=" + AppConfig.config.contourConfig.stepMeter.toString())
                 addCommand("--line-cat=" + AppConfig.config.contourConfig.stepCategoryMeter)
-                addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdMeter.toString())
-                addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdMeter.toString())
+                // higher ids are ommited on windows > use default pyhgtmap  values > generated contour are renumbered later
+                //addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdMeter.toString())
+                //addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdMeter.toString())
                 addCommand("--output-prefix=" + prefix)
             }
             ContourUnit.FEET -> {
                 addCommand("--polygon="+  AppConfig.config.contourConfig.polyCoverageFeet.toString())
                 addCommand("--step=" + AppConfig.config.contourConfig.stepFeet.toString())
                 addCommand("--line-cat=" + AppConfig.config.contourConfig.stepCategoryFeet)
-                addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdFeet.toString())
-                addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdFeet.toString())
+                //addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdFeet.toString())
+                //addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdFeet.toString())
                 addCommand("--output-prefix=" + prefix)
                 addCommand("--feet")
             }

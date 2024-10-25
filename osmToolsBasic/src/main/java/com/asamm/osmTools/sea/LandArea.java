@@ -40,7 +40,7 @@ public class LandArea {
     
     public void create() throws IOException, InterruptedException{
         // test if shp file with land polygons exist.
-        if (!new File(map.getPathShp()).exists()){
+        if (!map.getPathShp().toFile().exists()){
             Main.LOG.info("Starting create shape file with land area: "+map.getPathShp());
             createCoastShp();
         } else {
@@ -49,7 +49,7 @@ public class LandArea {
         }
 
         // test if osm file with coastline exist
-        if (!new File(map.getPathCoastline()).exists()) {
+        if (!map.getPathCoastline().toFile().exists()) {
             Main.LOG.info("Starting convert shape file with coastlines to OSM file: " + map.getPathCoastline());
 
 
@@ -65,12 +65,11 @@ public class LandArea {
 
             }
             else {
-
                 createLandOsm(tmpLandPath);
 
                 // convert land osm xml to pbf
                 CmdMerge cm = new CmdMerge(map);
-                cm.xml2pbf(tmpLandPath, map.getPathCoastline());
+                cm.xml2pbf(tmpLandPath, map.getPathCoastline().toString());
                 cm.execute();
             }
 
@@ -83,12 +82,10 @@ public class LandArea {
 
     /**
      * Cut SHP Land to country SHP file
-     * @throws IOException
-     * @throws InterruptedException
      */
     private void createCoastShp() throws IOException, InterruptedException{
         // prepare directories
-        FileUtils.forceMkdir(new File(map.getPathShp()).getParentFile());
+        FileUtils.forceMkdir(map.getPathShp().toFile().getParentFile());
 
         // execute generating
         CmdOgr co = new CmdOgr(map);
@@ -98,11 +95,9 @@ public class LandArea {
 
     /**
      * Convert SHP land area to OSM xml
-     * @throws IOException
-     * @throws InterruptedException
      */
     private void createLandOsm(String outputFile) throws IOException, InterruptedException{
-        CmdShp2osm cs = new CmdShp2osm(map, map.getPathShp(), outputFile);
+        CmdShp2osm cs = new CmdShp2osm(map, map.getPathShp().toString(), outputFile);
         cs.createCmd();
         cs.execute();
     }
@@ -171,7 +166,7 @@ public class LandArea {
 
     private void mergeBoundsToCoast() throws IOException, InterruptedException {
         // firstly test if files for merging exists
-        if (!new File(tmpLandPath).exists()) {
+        if (! new File(tmpLandPath).exists()) {
             throw new IllegalArgumentException("Temporary coastline file " + tmpLandPath + "does not exist!");
         }
         if (!new File (tmpBorderPath).exists()){
@@ -179,7 +174,7 @@ public class LandArea {
         }
         
         // create directory for output
-        FileUtils.forceMkdir(new File(map.getPathCoastline()).getParentFile());
+        FileUtils.forceMkdir(map.getPathCoastline().getParent().toFile());
 
         // execute merge
         Main.LOG.info("Merge map border and coastlines "+ tmpLandPath +" and "+ tmpBorderPath +"into file: "+ map.getPathCoastline());

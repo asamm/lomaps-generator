@@ -129,7 +129,7 @@ abstract class AGenerator {
 
                     // test if file for extract exist. If yes don't add it into ar
                     val writeFileLocation = actualMap.pathSource
-                    if (!File(writeFileLocation).exists()) {
+                    if (!writeFileLocation.toFile().exists()) {
                         Logger.i(
                             TAG,
                             "Add map for extraction: $writeFileLocation"
@@ -168,10 +168,8 @@ abstract class AGenerator {
         // sort by availability
         sources.sortWith(Comparator<String> { source1: String?, source2: String? ->
             // get required parameters
-            val file1 = ms.getMapById(source1).pathSource
-            val ex1 = File(file1).exists()
-            val file2 = ms.getMapById(source2).pathSource
-            val ex2 = File(file2).exists()
+            val ex1 = ms.getMapByIdSafe(source1).pathSource.toFile().exists()
+            val ex2 = ms.getMapById(source2).pathSource.toFile().exists()
 
             // compare data
 
@@ -200,13 +198,7 @@ abstract class AGenerator {
 
                 val ar: List<ItemMap> = mapTableBySourceId[sourceId]!!
 
-                //            if (sourceId.equals("planet")){
-//                // ugly hack to export first level into continents using old osmosis extract because some
-//                // unknown issue in osmium tool
-//                extractToContinents(ms, ar, sourceId);
-//                continue;
-//            }
-                val sourceSize = File(ms.getMapById(sourceId).pathSource).length()
+                val sourceSize = ms.getMapById(sourceId).pathSource.toFile().length()
                 val exportSize: Long = 0
 
                 var ceo = CmdExtractOsmium(ms, sourceId)
@@ -222,7 +214,7 @@ abstract class AGenerator {
                         completeRelations = true
                     }
 
-                    // export only 5 maps in one step due to memory limitation
+                    // export only 7 maps in one step due to memory limitation
                     if (j != 0 && j % 7 == 0) {
                         ceo.createCmd(completeRelations)
 

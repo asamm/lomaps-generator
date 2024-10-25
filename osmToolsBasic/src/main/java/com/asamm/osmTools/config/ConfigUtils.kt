@@ -57,12 +57,29 @@ object ConfigUtils {
 
         val command = checkApps(pythonCommands)
 
-        if (command.isNullOrEmpty()) {
+        if (command.isEmpty()) {
             // If none of the commands succeeded, throw an exception
             throw Exception("Python not found")
         }
         return command
     }
+
+    /**
+     * Check that planetiler util is installed and available in the path
+     */
+    fun getCheckPlanetilerPath(): String {
+
+        val planetilerPaths = if (isWindows()) listOf("D:\\asamm\\projects\\planetiler-openmaptiles\\target\\planetiler-openmaptiles-3.15.1-SNAPSHOT-with-deps.jar") else listOf("planetiler/planetiler-openmaptiles.jar")
+
+        val command = checkApps(planetilerPaths)
+
+        if (command.isEmpty()) {
+            // If none of the commands succeeded, throw an exception
+            throw Exception("Planetiler not found in locatios: $planetilerPaths")
+        }
+        return command
+    }
+
 
     fun checkApps(commands: List<String>, argument: String = "--version"): String {
         for (command in commands) {

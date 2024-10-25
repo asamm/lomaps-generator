@@ -4,6 +4,8 @@
  */
 package com.asamm.osmTools.mapConfig;
 
+import com.asamm.osmTools.utils.Logger;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
  * @author volda
  */
 public class MapSource {
+
+    private static final String TAG = MapSource.class.getSimpleName();
 
     // define xml file 
     private List<ItemMapPack> mMapPackList;
@@ -49,12 +53,31 @@ public class MapSource {
         return null;
     }
 
+
+    /**
+     * Search in definitions for map specified by it's ID
+     * @param mapId ID of map we search for
+     * @return found item or throw exception if not found
+     */
+    public ItemMap getMapByIdSafe(String mapId) {
+        return getMapById(mapId, true);
+    }
+
+    /**
+     * Search in definitions for map specified by it's ID
+     * @param mapId ID of map we search for
+     * @return found item or null if not found
+     */
+    public ItemMap getMapById(String mapId) {
+        return getMapById(mapId, false);
+    }
+
     /**
      * Search in definitions for map specified by it's ID
      * @param mapId ID of map we search for
      * @return found item
      */
-    public ItemMap getMapById(String mapId) {
+    private ItemMap getMapById(String mapId, boolean throwException) {
         // search for map
         for (int i = 0, m = mMapPackList.size(); i < m; i++){
             ItemMapPack mp = mMapPackList.get(i);
@@ -64,8 +87,14 @@ public class MapSource {
             }
         }
 
-        // throw exception if maps wasn't found
-        throw new IllegalArgumentException("Map '" + mapId + "', not found");
+        if (throwException) {
+            // throw exception if maps wasn't found
+            throw new IllegalArgumentException("Map '" + mapId + "', not found");
+        }
+        else {
+            Logger.w(TAG, "Can't find map with id: " + mapId);
+            return null;
+        }
     }
 }
     

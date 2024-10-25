@@ -23,7 +23,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
      * Definition where will be poiDb created
      */
     //mFileTempDb = new File(Consts.DIR_TMP, map.getName() + ".osm.db");
-    val fileTempDb: File = File(map.pathAddressPoiDb)
+    val fileTempDb: File = map.pathAddressPoiDb.toFile()
 
 
     /**
@@ -36,7 +36,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
     fun execute(numRepeat: Int, deleteFile: Boolean): String? {
         var numRepeat = numRepeat
         try {
-            return super.execute()
+            return execute()
         } catch (e: Exception) {
             if (numRepeat > 0) {
                 numRepeat--

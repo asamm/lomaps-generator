@@ -41,7 +41,7 @@ public class CmdOgr extends Cmd{
         addCommand(Double.toString(map.getBoundary().getMinLat()));
         addCommand(Double.toString(map.getBoundary().getMaxLon()));
         addCommand(Double.toString(map.getBoundary().getMaxLat()));
-        addCommand(map.getPathShp());
+        addCommand(map.getPathShp().toString());
         addCommand(Parameters.getCoastlineShpFile());
         addCommand("-skipfailures");
     }

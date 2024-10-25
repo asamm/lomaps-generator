@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -27,25 +28,25 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
- *
  * @author volda
  */
 public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
 
-    public static String changeSlash(String name){
-        if (name.contains("/")){
+    public static String changeSlash(String name) {
+        if (name.contains("/")) {
             return name.replace("/", Consts.FILE_SEP);
         }
-        if (name.contains("\\")){
+        if (name.contains("\\")) {
             return name.replace("\\", Consts.FILE_SEP);
         }
         return name;
 
     }
-    public static String changeSlashToUnix (String name){
-        if (name.contains(Consts.FILE_SEP)){
+
+    public static String changeSlashToUnix(String name) {
+        if (name.contains(Consts.FILE_SEP)) {
             return name.replace(Consts.FILE_SEP, "/");
         }
         return name;
@@ -53,26 +54,28 @@ public class Utils {
 
     public static void deleteFilesInDir(String pathToDir) {
         // check if folder exist
-        File dir =  new File(pathToDir);
-        if (!dir.exists() && !dir.isDirectory()){
-            System.out.println("Path for deleting: "+ pathToDir+" does not exist or is not directory");
+        File dir = new File(pathToDir);
+        if (!dir.exists() && !dir.isDirectory()) {
+            System.out.println("Path for deleting: " + pathToDir + " does not exist or is not directory");
             return;
         }
         File[] fileList = dir.listFiles();
-        for (int i=0; i < fileList.length ; i++ ){
-            if (fileList[i].isFile()){
+        for (int i = 0; i < fileList.length; i++) {
+            if (fileList[i].isFile()) {
                 fileList[i].delete();
             }
         }
     }
 
+
     /**
      * Delete file quietly without throwing exception
+     *
      * @param path path to file to delete
      */
-    public static void deleteFileQuietly(Path path){
+    public static void deleteFileQuietly(Path path) {
         try {
-            if (path.toFile().exists()){
+            if (path.toFile().exists()) {
                 Files.delete(path);
             }
         } catch (IOException e) {
@@ -80,7 +83,26 @@ public class Utils {
         }
     }
 
-    public static String generateMD5hash(String pathToFile){
+    /**
+     * Rename file quietly without throwing exception.
+     *
+     * @param source          file to rename
+     * @param target          new name of file
+     * @param replaceExisting true if replace existing file
+     */
+    public static void renameFileQuitly(Path source, Path target, boolean replaceExisting) {
+        try {
+            if (replaceExisting) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.move(source, target);
+            }
+        } catch (IOException e) {
+            Logger.e(TAG, ("Error renaming file: " + e.getMessage()));
+        }
+    }
+
+    public static String generateMD5hash(String pathToFile) {
 
         File file = new File(pathToFile);
         FileInputStream fis = null;
@@ -94,7 +116,8 @@ public class Utils {
             int nread = 0;
             while ((nread = fis.read(dataBytes)) != -1) {
                 md.update(dataBytes, 0, nread);
-            };
+            }
+            ;
             byte[] mdbytes = md.digest();
 
             //convert the byte to hex format method 1
@@ -128,7 +151,6 @@ public class Utils {
     }
 
 
-
     public static void compressFile(String source, String target) throws IOException {
         List<String> files = new ArrayList<String>();
         files.add(source);
@@ -140,7 +162,7 @@ public class Utils {
         ZipOutputStream zos = null;
         try {
             File parentFolder = new File(target).getParentFile();
-            if (parentFolder != null){
+            if (parentFolder != null) {
                 FileUtils.forceMkdir(new File(target).getParentFile());
             }
             zos = new ZipOutputStream(new FileOutputStream(target));
@@ -151,7 +173,7 @@ public class Utils {
                 File fileToCompress = new File(files.get(i));
 
                 // check file
-                if (!fileToCompress.exists()){
+                if (!fileToCompress.exists()) {
                     throw new IllegalArgumentException(
                             "Fie '" + fileToCompress + "' for compress do not exists");
                 }
@@ -169,19 +191,19 @@ public class Utils {
             // end packing
             zos.flush();
             IOUtils.closeQuietly(zos);
-        } finally{
+        } finally {
             IOUtils.closeQuietly(zos);
         }
     }
 
-    public static String formatBytesToHuman(double bytes){
-        String[] units = {"B","KB","MB", "GB", "TB"};
+    public static String formatBytesToHuman(double bytes) {
+        String[] units = {"B", "KB", "MB", "GB", "TB"};
         // if is lower then zero
         bytes = Math.max(bytes, 0);
         int count = 0;
-        while (bytes >= 1024){
+        while (bytes >= 1024) {
             bytes = bytes / 1024;
-            count ++;
+            count++;
         }
         //bytes = Math.roun
         return String.format("%.2f", bytes) + " " + units[count];
@@ -190,19 +212,19 @@ public class Utils {
     public static boolean isNumeric(String str) {
         try {
             double d = Double.parseDouble(str);
-        } catch(NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             return false;
         }
         return true;
     }
 
-    public static boolean createEmptyFile(String path){
-        File file =  new File(path);
-        if (!file.exists()){
+    public static boolean createEmptyFile(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
             try {
                 FileUtils.forceMkdir(file);
                 return file.createNewFile();
-            } catch (IOException ioe){
+            } catch (IOException ioe) {
                 throw new IllegalArgumentException("Error while creating a new empty file :" + ioe);
             }
 
@@ -210,51 +232,109 @@ public class Utils {
         return false;
     }
 
-    public static boolean createParentDirs(String path){
-        File file =  new File(path);
-        if (!file.exists()){
+    public static boolean createParentDirs(Path path) {
+        return createParentDirs(path.toString());
+    }
+
+    public static boolean createParentDirs(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
             try {
                 FileUtils.forceMkdir(file.getParentFile());
-            } catch (IOException ioe){
+            } catch (IOException ioe) {
                 throw new IllegalArgumentException("Error while creating directory structure :" + ioe);
             }
         }
         return false;
     }
 
+    /**
+     * Get file name without an extension
+     * @param path path to file to get name without an extension
+     * @return name of the file without extension or empty string if the file has no extension
+     */
+    public static String getFileNamePart(Path path){
+        String fileName = path.getFileName().toString();
+        int lastDotIndex = fileName.indexOf(".");
+        if (lastDotIndex != -1) {
+            // delete file extension
+            return fileName.substring(0, lastDotIndex);
+        }
+        return "";
+    }
+
+    /**
+     * Append custom string before an extension of file
+     * @param filePath path to file to rename
+     * @param text custom string to append before an extension
+     * @return new path to file with appended text before an extension
+     */
+    public static Path appendBeforeExtension(Path filePath, String text) {
+        String fileName = filePath.getFileName().toString();
+        int dotIndex = fileName.indexOf('.');
+        if (dotIndex == -1) {
+            // if there is no extension append text to the end
+            return filePath.getParent().resolve(fileName + text);
+        }
+        String newFileName = fileName.substring(0, dotIndex) + text + fileName.substring(dotIndex);
+        return filePath.getParent().resolve(newFileName);
+    }
+
+    /**
+     * Move file from source to target path
+     * @param source path to source file
+     * @param target path to target file
+     * @param replaceExisting true if replace existing file
+     * @return true if file was moved successfully
+     */
+    public static boolean moveFile(Path source, Path target, boolean replaceExisting) {
+        try {
+            if (replaceExisting) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.move(source, target);
+            }
+            return true;
+        } catch (IOException e) {
+            Logger.e(TAG, ("Error moving file: " + e.getMessage()));
+            return false;
+        }
+    }
+
+
     public static boolean isSystemWindows() {
         String os = System.getProperty("os.name").toLowerCase();
         return os.contains("win");
     }
 
-    public static boolean  isSystemUnix() {
+    public static boolean isSystemUnix() {
         String os = System.getProperty("os.name").toLowerCase();
         return os.contains("nix") || os.contains("nux");
     }
 
-    public static String getHostname() throws UnknownHostException{
+    public static String getHostname() throws UnknownHostException {
         String hostname = null;
         // try to guess value from operating system variable
-        if (isSystemUnix()){
-            hostname = System.getenv( "hostname" );
+        if (isSystemUnix()) {
+            hostname = System.getenv("hostname");
         }
-        if (isSystemWindows()){
-            hostname = System.getenv( "computername" );
+        if (isSystemWindows()) {
+            hostname = System.getenv("computername");
         }
-        if (hostname != null){
+        if (hostname != null) {
             return hostname;
         }
         java.net.InetAddress addr = java.net.InetAddress.getLocalHost();
         return addr.getHostName();
     }
 
-    public static long getZipEntrySize (File file) throws ZipException, IOException {
+    public static long getZipEntrySize(File file) throws ZipException, IOException {
         ZipFile zipFile = new ZipFile(file);
         Enumeration e = zipFile.entries();
 
         long originalSize = 0;
-        while (e.hasMoreElements()){
-            ZipEntry entry = (ZipEntry)e.nextElement();
+        while (e.hasMoreElements()) {
+            ZipEntry entry = (ZipEntry) e.nextElement();
             originalSize += entry.getSize();
         }
 
@@ -277,8 +357,9 @@ public class Utils {
 
     /**
      * Write string into file
-     * @param file file to write text into
-     * @param text text to write
+     *
+     * @param file   file to write text into
+     * @param text   text to write
      * @param append true if append text in the end
      */
     public static void writeStringToFile(File file, String text, boolean append) {
@@ -287,12 +368,10 @@ public class Utils {
         try {
             writer = new BufferedWriter(new FileWriter(file, append));
             writer.write(text);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.err.println("writeStringToFile(), e:" + e);
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             try {
                 if (writer != null)
                     writer.close();
@@ -305,12 +384,12 @@ public class Utils {
 
     /**
      * Read file and get content as String. Be sure what you do because the memmory
-     * @param path path to file to read its content
+     *
+     * @param path     path to file to read its content
      * @param encoding encoding of string in file
-     * @return     *
+     * @return *
      */
-    public static String readFileToString(String path, Charset encoding)
-    {
+    public static String readFileToString(String path, Charset encoding) {
         byte[] encoded = new byte[0];
         try {
             encoded = Files.readAllBytes(Paths.get(path));

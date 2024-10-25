@@ -18,6 +18,6 @@ public class CmdGraphHopper extends Cmd {
 
         // add commands required for generating
         addCommand("import");
-        addCommand(map.getPathSource());
+        addCommand(map.getPathSource().toString());
     }
 }

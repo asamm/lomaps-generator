@@ -48,13 +48,14 @@ data class Config(
         Contour lines source <a href="http://srtm.usgs.gov">SRTM</a> and 
         <a href="http://www.viewfinderpanoramas.org">Viewfinder Panoramas</a>
         <br /><br />
-        </div>""".trimIndent()
+        </div>""".trimIndent(),
 
+    var planetMapId: String = "planet",
 )
 
 data class TouristConfig(
     var nodeId: Long = 14000000000000L,
-    var wayId: Long = 14100000000000L,
+    var wayId: Long = 14500000000000L,
 
     //var loDmapsToolsPy: Path =  Paths.get("lomapsTools", "lomaps_tools.py")
     var lomapsToolsPy: Path = Paths.get("d:\\asamm\\projects\\lomaps-tools\\lomaps_tools\\", "lomaps_tools.py")
@@ -63,10 +64,18 @@ data class TouristConfig(
 data class ContourConfig(
 
     var hgtDir: Path = Path.of("hgt"),
-    var nodeIdMeter: Long = 15_000_000_000_000L, // nodes for meter contour lines
-    var wayIdMeter: Long = 16_000_000_000_000L, // ways for meter contour lines
-    var nodeIdFeet: Long = 17_000_000_000_000L, // nodes for feet contour lines
-    var wayIdFeet: Long = 18_000_000_000_000L, // ways for feet contour lines
+//    var nodeIdMeter: Long = 15_000_000_000_000L, // nodes for meter contour lines
+//    var wayIdMeter: Long = 16_000_000_000_000L, // ways for meter contour lines
+//    var nodeIdFeet: Long = 17_000_000_000_000L, // nodes for feet contour lines
+//    var wayIdFeet: Long = 18_000_000_000_000L, // ways for feet contour lines
+                                //10_000_000_000
+
+
+    var nodeIdMeter: Long = 100_000_000_000L, // nodes for meter contour lines
+    var wayIdMeter: Long =  130_000_000_000L, // ways for meter contour lines
+    var nodeIdFeet: Long =  150_000_000_000L, // nodes for feet contour lines
+    var wayIdFeet: Long =   180_000_000_000L, // ways for feet contour lines
+
 
     var stepMeter: Int = 20, // 20 meters
     var stepFeet: Int = 50, // 50 feet
@@ -92,4 +101,6 @@ class CmdConfig() {
     val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
 
     val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath()}
+
+    val planetiler: String by lazy { "D:\\asamm\\projects\\planetiler-openmaptiles\\target\\planetiler-openmaptiles-3.15.1-SNAPSHOT-with-deps.jar" }
 }

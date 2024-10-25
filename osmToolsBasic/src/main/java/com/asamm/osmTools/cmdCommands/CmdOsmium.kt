@@ -3,7 +3,6 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.utils.Logger
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 /**
  * Command for running Osmium tool.
@@ -58,6 +57,44 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
         addCommands("merge")
         inputPaths.forEach {addCommand(it.toString()) }
         addCommands("-o", outputPath.toString())
+        if (AppConfig.config.overwrite){
+            addCommand("--overwrite")
+        }
+        Logger.i(TAG, "Command: " + getCmdLine())
+        execute()
+        reset()
+    }
+
+    /**
+     * Check if the OSM file contains the entity with specified id.
+     * @param input The input file to check.
+     * @param id The id to check for. The type letter is ‘n’ for nodes, ‘w’ for ways, and ‘r’ for relations.
+     *  So “n13 w22 17 r21” will match the nodes 13 and 17, the way 22 and the relation 21.
+     */
+    fun containsId(input: Path, id: String):Boolean {
+        // the goal is to run osmium getid and check if the process return 0 the id is in the file
+        addCommands("getid", "-f", "opl", input.toString(), id)
+        Logger.i(TAG, "Command: " + getCmdLine())
+
+        val lastOutputLine = executeQuietly()
+        reset()
+        // if the last line starts with the id, the id is in the file
+        return lastOutputLine?.trim()?.startsWith(id) ?: false
+    }
+
+    fun renumber(input: Path, output: Path, nodeStartId: Long = 0, wayStartId: Long = 0, relationStartId: Long = 0) {
+
+        addCommands("renumber", input.toString(), "-o", output.toString())
+
+        // merge all starts ids to the command if not 0
+        var startId = "$nodeStartId,$wayStartId,$relationStartId"
+
+        addCommands("--start-id=" + startId)
+
+        if (nodeStartId != 0L) addCommand("--object-type=node")
+        if (wayStartId != 0L)  addCommand("--object-type=way")
+        if (relationStartId != 0L)  addCommand("--object-type=relation")
+
         if (AppConfig.config.overwrite){
             addCommand("--overwrite")
         }

@@ -14,7 +14,7 @@ class CmdCountryBorders(val map: ItemMap, var storageType: ConfigurationCountry.
     /**
      * File to filter source item
      */
-    val filteredTempMap: File = File(map.pathSource + "_tmp_border")
+    val filteredTempMap: File = File(map.pathSource.toString() + "_tmp_border")
 
     /**
      * Delete tmop file where are store result of filtering of admin boundaries

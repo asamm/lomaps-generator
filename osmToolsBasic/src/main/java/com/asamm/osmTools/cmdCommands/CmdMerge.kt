@@ -32,21 +32,21 @@ class CmdMerge(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
 
         val isTransformedData = true
 
-        addReadPbf(map.pathSource)
+        addReadPbf(map.pathSource.toString())
 
-        addReadPbf(map.pathCoastline)
+        addReadPbf(map.pathCoastline.toString())
         addMerge()
 
         // try to add custom data
         addCustomData()
 
         if (isTransformedData) {
-            addReadPbf(map.pathTranform)
+            addReadPbf(map.pathTranform.toString())
             addMerge()
         }
 
         addBuffer()
-        addWritePbf(map.pathMerge, true)
+        addWritePbf(map.pathMerge.toString(), true)
     }
 
 
@@ -58,7 +58,7 @@ class CmdMerge(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         addSort()
         addBuffer()
         addMerge()
-        addWritePbf(map.pathCoastline, true)
+        addWritePbf(map.pathCoastline.toString(), true)
     }
 
     @Throws(IOException::class)

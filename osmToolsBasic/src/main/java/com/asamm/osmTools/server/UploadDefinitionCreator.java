@@ -142,7 +142,7 @@ public class UploadDefinitionCreator {
         // create copy from common definition json
         StoreAdminItem sai = new StoreAdminItem(defJson);
 
-        File resultFile = new File(map.getPathResult());
+        File resultFile = map.getPathResult().toFile();
 
         if (!resultFile.exists()){
             throw new IllegalArgumentException("Create definition upload JSON failed: File for uploading does not exist:  "+map.getPathResult());
@@ -180,7 +180,7 @@ public class UploadDefinitionCreator {
         StoreAdminFile saf = new StoreAdminFile();
         saf.setClientDeleteSource(true);
         saf.setClientFileUnpack(true);
-        saf.setLocationPath(map.getPathResult());
+        saf.setLocationPath(map.getPathResult().toString());
         saf.setClientDestination(getClientDestinationPath(map));
 
         return saf;

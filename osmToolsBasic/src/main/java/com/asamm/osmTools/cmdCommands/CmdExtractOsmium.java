@@ -31,7 +31,7 @@ public class CmdExtractOsmium extends Cmd {
     public CmdExtractOsmium(MapSource ms, String sourceId) {
         super(ExternalApp.OSMIUM);
 
-        map = ms.getMapById(sourceId);
+        map = ms.getMapByIdSafe(sourceId);
         initJsonConfig();
     }
 
@@ -53,10 +53,10 @@ public class CmdExtractOsmium extends Cmd {
         Utils.createParentDirs(map.getPathSource());
 
         JSONObject extractJ = new JSONObject();
-        extractJ.put("output", map.getPathSource() );
+        extractJ.put("output", map.getPathSource().toString() );
 
         JSONObject polygonJ = new JSONObject();
-        polygonJ.put("file_name", map.getPathPolygon());
+        polygonJ.put("file_name", map.getPathPolygon().toString());
         polygonJ.put("file_type", "poly");
         extractJ.put("polygon", polygonJ);
 
@@ -95,7 +95,7 @@ public class CmdExtractOsmium extends Cmd {
             addCommand("simple");  //alternatives: simple | complete_ways | smart
         }
         addCommand("-v");
-        addCommand(map.getPathSource());
+        addCommand(map.getPathSource().toString());
         addCommand("--fsync");
     }
 }

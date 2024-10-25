@@ -1,13 +1,15 @@
 package com.asamm.osmTools.cmdCommands
 
+import java.nio.file.Path
+
 interface CmdOsmosis {
 
     // READ OSM FILES
-    fun addReadSource(readPath: String) {
+    fun addReadSource(readPath: Path) {
         //val source = getMap().getPathSource()
         when {
-            readPath.endsWith(".pbf") -> addReadPbf(readPath)
-            readPath.endsWith(".xml") -> addReadXml(readPath)
+            readPath.endsWith(".pbf") -> addReadPbf(readPath.toString())
+            readPath.endsWith(".xml") -> addReadXml(readPath.toString())
             else -> throw IllegalArgumentException("Invalid source file: '$readPath'")
         }
     }

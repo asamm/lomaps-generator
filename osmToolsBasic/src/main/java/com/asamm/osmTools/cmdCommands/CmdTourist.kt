@@ -14,17 +14,16 @@ import java.io.IOException
  */
 class CmdTourist(val map: ItemMap) : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
-    @Throws(IOException::class)
     fun createCmd() {
         addCommand("tourist2ways")
         addCommand("-i")
-        addCommand(map.getPathSource())
+        addCommand(map.getPathSource().toString())
         addCommand("-o")
-        addCommand(map.getPathTourist())
+        addCommand(map.getPathTourist().toString())
         if (AppConfig.config.overwrite) {
             addCommand("--overwrite")
         }
         // TODO remove addCommand("--addwaynodes") for production
-        addCommand("--addwaynodes")
+        //addCommand("--addwaynodes")
     }
 }

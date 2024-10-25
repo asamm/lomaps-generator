@@ -22,7 +22,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     init {
         // if is there action to merge test files for merge
         if (map.isMerged) {
-            require(File(map.pathMerge).exists()) {
+            require(map.pathMerge.toFile().exists()) {
                 "Merged map for generation: " +
                         map.pathMerge + " does not exist!"
             }
@@ -32,13 +32,15 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
                         + Parameters.mTouristTagMapping + " does not exist.")
             }
 
-            if (!File(map.pathMerge).exists()) {
+            if (!map.pathMerge.toFile().exists()) {
                 map.isMerged = false
             }
 
 
-            // getMap().isMerged = !new File(getMap().mergePath+"."+Parameters.contourNoSRTM).exists();
-        } else require(File(map.pathSource).exists()) { "Extracted map for generation = " + map.pathSource + " does not exist." }
+            // getMap().isMerged = !new getMap().mergePath+"."+Parameters.contourNoSRTM).exists();
+        } else require(
+            map.pathSource.toFile().exists()
+        ) { "Extracted map for generation = " + map.pathSource + " does not exist." }
     }
 
 
@@ -46,11 +48,11 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     fun execute(numRepeat: Int, deleteFile: Boolean): String? {
         var numRepeat = numRepeat
         try {
-            return super.execute()
+            return execute()
         } catch (e: Exception) {
             if (numRepeat > 0) {
                 numRepeat--
-                val generatedFile = File(map.pathGenerate)
+                val generatedFile = map.pathGenerate.toFile()
 
                 if (deleteFile) {
                     Logger.w(TAG, "Delete file from previous not success execution: " + generatedFile.absolutePath)
@@ -69,7 +71,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
 
     @Throws(IOException::class)
     fun createCmdContour() {
-        addReadPbf(map.pathContour)
+        addReadPbf(map.pathContour.toString())
         addMapWriterContour()
         addType()
         addPrefLang()
@@ -89,9 +91,9 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         // if is there merged map generate map from merged. otherwise create from exported
 
         if (map.isMerged) {
-            addReadPbf(map.pathMerge)
+            addReadPbf(map.pathMerge.toString())
         } else {
-            addReadPbf(map.pathSource)
+            addReadPbf(map.pathSource.toString())
         }
 
         //addBuffer();
@@ -124,7 +126,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     @Throws(IOException::class)
     private fun addMapWriter() {
         // prepare directory
-        prepareDirectory(map.pathGenerate)
+        prepareDirectory(map.pathGenerate.toString())
 
         // add commands
         addCommand("--mapfile-writer")
@@ -134,7 +136,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     @Throws(IOException::class)
     private fun addMapWriterContour() {
         // prepare directory
-        prepareDirectory(map.pathGenerateContour)
+        prepareDirectory(map.pathGenerateContour.toString())
 
         // add commands
         addCommand("--mapfile-writer")
@@ -181,9 +183,9 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         //set FileSizeLimit determined when use HD and when RAM
         val fileSizeLimit = 650
         // get map size
-        var mapSizeMb = File(map.pathSource).length()
+        var mapSizeMb = map.pathSource.toFile().length()
         if (map.isMerged) {
-            mapSizeMb = File(map.pathMerge).length()
+            mapSizeMb = map.pathMerge.toFile().length()
         }
         mapSizeMb = mapSizeMb / 1024 / 1024
         //System.out.println("Velikost souboru "+getMap().file+" je:  "+ mapSizeMb);
