@@ -3,6 +3,8 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.utils.Logger
 import java.nio.file.Path
+import java.time.Instant
+import java.util.Date
 
 /**
  * Command for running Osmium tool.
@@ -101,5 +103,32 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
         reset()
+    }
+
+    /**
+     * Get the timestamp of the OSM file from header. If not defined use fallback to the last modified time of the file.
+     */
+    fun getTimeStamp(path: Path): Instant {
+
+        // run commads and get all lines to the list
+        addCommands("fileinfo", path.toString())
+        Logger.i(TAG, "Command: " + getCmdLine())
+
+        val outputLines = mutableListOf<String>()
+        val processBuilder = createProcessBuilder(cmdList.toTypedArray())
+        val process = processBuilder.start()
+        process.inputStream.bufferedReader().useLines { lines -> lines.forEach { outputLines.add(it) } }
+
+        reset()
+        // Process the outputLines to extract the timestamp
+        // Assuming the timestamp is in a specific format and line
+        val timestampStr = outputLines.find { it.contains("timestamp=") || it.contains("osmosis_replication_timestamp=") }
+            ?.substringAfter("=")
+
+        if (timestampStr == null) {
+            // get the last modified time of the file
+            return Date(path.toFile().lastModified()).toInstant()
+        }
+        return Instant.parse(timestampStr)
     }
 }

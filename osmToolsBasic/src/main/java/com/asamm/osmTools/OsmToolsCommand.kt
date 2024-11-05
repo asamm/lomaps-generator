@@ -5,6 +5,7 @@ import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.config.LoMapsAction
 import com.asamm.osmTools.generator.GenLoMaps
+import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
@@ -60,6 +61,16 @@ class OsmToolsCommand : CliktCommand(
         AppConfig.config.overwrite = overwrite
     }
 
+}
+
+class UpdatePlanetCommand : CliktCommand(
+    name = "update_planet",
+    help = "Subcommand to update OSM planet file") {
+
+    override fun run() {
+        val planetUpdater: PlanetUpdater = PlanetUpdater()
+        planetUpdater.update()
+    }
 }
 
 // LOMAPS SUBCOMMAND
@@ -163,6 +174,6 @@ class StoreGeoCommand : CliktCommand(
 
 fun main(args: Array<String>) {
     OsmToolsCommand()
-        .subcommands(LoMapsCommand(), StoreGeoCommand())
+        .subcommands(LoMapsCommand(), UpdatePlanetCommand(), StoreGeoCommand())
         .main(args)
 }

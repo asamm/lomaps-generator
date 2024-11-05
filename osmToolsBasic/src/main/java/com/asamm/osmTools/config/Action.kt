@@ -2,6 +2,7 @@ package com.asamm.osmTools.config
 
 enum class Action {
 
+    @Deprecated("Do not use this action")
     DOWNLOAD("download", true),
 
     EXTRACT("extract"),

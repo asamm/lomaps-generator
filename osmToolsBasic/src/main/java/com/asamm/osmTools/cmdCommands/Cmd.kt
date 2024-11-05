@@ -137,7 +137,7 @@ open class Cmd(val externalApp: ExternalApp) {
         return line
     }
 
-    private fun createProcessBuilder(mCmdArray: Array<String>): ProcessBuilder {
+    protected fun createProcessBuilder(mCmdArray: Array<String>): ProcessBuilder {
         val pb = ProcessBuilder(*mCmdArray)
         pb.redirectErrorStream(true)
 

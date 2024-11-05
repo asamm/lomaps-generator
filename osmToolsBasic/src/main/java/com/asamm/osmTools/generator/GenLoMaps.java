@@ -61,6 +61,10 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
+        // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
+        PlanetUpdater planetUpdater = new PlanetUpdater();
+        planetUpdater.update();
+
         // process action on planet level
         processPlanet(actionList, mMapSource);
 
@@ -118,14 +122,10 @@ public class GenLoMaps extends AGenerator {
 
     private void processPlanet(Set<Action> actionList, MapSource mMapSource) {
         // find ItemMap with if "planet" and process it
-        ItemMap map = mMapSource.getMapById(AppConfig.config.getPlanetMapId());
+        ItemMap map = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
         if (map != null) {
             for (Action action : actionList) {
                 switch (action) {
-                    //download
-                    case DOWNLOAD:
-                        actionDownload(map);
-                        break;
                     case TOURIST:
                         actionTourist(map);
                         break;
@@ -194,9 +194,14 @@ public class GenLoMaps extends AGenerator {
         List<ItemMap> maps;
     }
 
+    // action UPDATE PLANET
+
+    private void actionUpdatePlanet(){
+
+    }
 
     // ACTION DOWNLOAD
-
+    @Deprecated
     private void actionDownload(ItemMap map) {
         // check if we want to do this action
         if (!map.hasAction(Action.DOWNLOAD)) {
@@ -215,7 +220,7 @@ public class GenLoMaps extends AGenerator {
         printLogHeader(Action.DOWNLOAD);
 
         // try to download
-        if (UtilsHttp.downloadFile(map.getPathSource().toString(), downloadUrl)) {
+        if (UtilsHttp.downloadFile(map.getPathSource(), downloadUrl)) {
             Logger.i(TAG, "File " + map.getPathSource() + " successfully downloaded.");
         } else {
             throw new IllegalArgumentException("File " + downloadUrl + " was not downloaded.");
@@ -352,10 +357,8 @@ public class GenLoMaps extends AGenerator {
         TimeWatch time = new TimeWatch();
         Main.mySimpleLog.print("\nTourist: " + map.getName() + " ...");
 
-        CmdTourist cmdTourist = new CmdTourist(map);
-        cmdTourist.createCmd();
-        Logger.i(TAG, "Command: " + cmdTourist.getCmdLine());
-        cmdTourist.execute();
+        CmdLoMapsTools cmdTourist = new CmdLoMapsTools();
+        cmdTourist.generateTourist(map);
 
         // notify about result
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
@@ -426,10 +429,12 @@ public class GenLoMaps extends AGenerator {
         List<Path> pathsToMerge = new ArrayList<>();
 
         // check if source planet file exists
-        if (!map.getPathSource().toFile().exists()) {
-            throw new IllegalArgumentException("Extracted base map for merging: " + map.getPathSource() + " does not exist.");
+        if (!AppConfig.config.getPlanetConfig().getPlanetLatestPath().toFile().exists()) {
+            throw new IllegalArgumentException("Original planet files doesn't exist: " +
+                    AppConfig.config.getPlanetConfig().getPlanetLatestPath());
         }
-        pathsToMerge.add(map.getPathSource());
+
+        pathsToMerge.add(AppConfig.config.getPlanetConfig().getPlanetLatestPath());
 
         if (AppConfig.config.getActions().contains(Action.TOURIST) && map.hasAction(Action.TOURIST)){
             if (!map.getPathTourist().toFile().exists()){
@@ -455,16 +460,9 @@ public class GenLoMaps extends AGenerator {
             }
         }
 
-        Path outPutFileName = Utils.appendBeforeExtension(map.getPathSource(), "_merged").getFileName();
-        Path outPutPath = AppConfig.config.getTempotaryDir().resolve(outPutFileName);
-
+        // merge
         CmdOsmium cmdOsmium = new CmdOsmium();
-        cmdOsmium.merge(pathsToMerge, outPutPath);
-
-        // todo move merged file to the source location
-        Utils.moveFile(outPutPath, map.getPathSource(), true);
-
-
+        cmdOsmium.merge(pathsToMerge, map.getPathSource());
     }
 
     private void actionMerge(ItemMap map) throws IOException, InterruptedException {

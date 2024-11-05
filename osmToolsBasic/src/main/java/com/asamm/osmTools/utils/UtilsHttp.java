@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
 
 /**
  *
@@ -21,7 +22,7 @@ public class UtilsHttp {
 
     private static final String TAG = UtilsHttp.class.getSimpleName();
 
-    public static boolean downloadFile(String pathLocal, String pathUrl) {
+    public static boolean downloadFile(Path pathLocal, String pathUrl) {
         Logger.i(TAG, "downloadFile(" + pathLocal + ", " + pathUrl + ")");
 
         try {
@@ -46,7 +47,7 @@ public class UtilsHttp {
         return false;
     }
 
-    private static boolean loadUrlData(String pathLocal, URLConnection conn) {
+    private static boolean loadUrlData(Path pathLocal, URLConnection conn) {
         InputStream is = null;
         FileOutputStream fos = null;
 
@@ -99,8 +100,9 @@ public class UtilsHttp {
             // print results
             Logger.i(TAG, "  loadUrlData(), done, read:" + (total / 1024 / 1024) + "MB");
             Main.mySimpleLog.print("\t\t\tdone "+time.getElapsedTimeSec()+" sec");
-            // file downloaded correctly, set as final 
-            return file.renameTo(new File(pathLocal));
+            // file downloaded correctly, delete old file (if exists) and rename new
+            Utils.deleteFileQuietly(pathLocal);
+            return file.renameTo(pathLocal.toFile());
         } catch (Exception e) {
             Logger.e(TAG, "loadUrlData()", e);
         } finally {

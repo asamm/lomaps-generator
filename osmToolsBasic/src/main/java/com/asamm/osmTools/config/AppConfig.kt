@@ -1,6 +1,7 @@
 package com.asamm.osmTools.config
 
 import com.asamm.osmTools.LocusStoreEnv
+import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -37,6 +38,7 @@ data class Config(
 
     var touristConfig: TouristConfig = TouristConfig(),
     var contourConfig: ContourConfig = ContourConfig(),
+    var planetConfig: PlanetConfig = PlanetConfig(),
     var cmdConfig: CmdConfig = CmdConfig(),
 
     var mapDescription: String = """
@@ -50,7 +52,6 @@ data class Config(
         <br /><br />
         </div>""".trimIndent(),
 
-    var planetMapId: String = "planet",
 )
 
 data class TouristConfig(
@@ -93,6 +94,12 @@ data class ContourConfig(
     var tempMetersFile: Path = Path.of("_contours/planet_meter.osm.pbf"), // temporary file for generated contours in meter
     var tempFeetFile: Path = Path.of("_contours/planet_feet.osm.pbf"), // temporary file for generated contours in feet
 
+)
+
+class PlanetConfig(
+    var planetLatestPath: Path = Path.of("_planet", "orig", "planet-latest.osm.pbf"), // path to the original planet file
+    var planetLatestURL: URL = URL("https://download.geofabrik.de/europe/monaco-latest.osm.pbf"), // URL to the latest planet file
+    var planetExtendedId: String = "planet-extended"
 )
 
 class CmdConfig() {
