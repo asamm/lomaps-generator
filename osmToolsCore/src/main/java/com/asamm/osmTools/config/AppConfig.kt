@@ -1,0 +1,179 @@
+package com.asamm.osmTools.config
+
+
+import com.asamm.store.LocusStoreEnv
+import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import java.io.File
+import java.net.URL
+import java.nio.file.Path
+import java.nio.file.Paths
+
+
+object AppConfig {
+
+    // create variable with path to config yaml file
+    val configFilePath = "config/app_config.yaml"
+
+    lateinit var config: Config
+
+    fun loadConfig() {
+        if (!::config.isInitialized) {
+            //this@AppConfig.config = Config()
+            this@AppConfig.config = loadYamlConfig(this.configFilePath)
+        }
+    }
+
+    fun loadYamlConfig(configFilePath: String = "config.yml"): Config {
+        val yaml = Yaml.default
+        val configFile = File(configFilePath)
+        // read yaml file and initiate Config object
+        return yaml.decodeFromString(Config.serializer(), configFile.readText())
+    }
+}
+
+
+@Serializable
+data class Config(
+
+    var version: String = "",
+    var overwrite: Boolean = false,
+    var actions: MutableSet<Action> = mutableSetOf<Action>(),
+    var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,
+    var verbose: Boolean = false,
+
+    @Serializable(with = PathSerializer::class)
+    var temporaryDir: Path = Path.of("_temp"),
+
+    @Serializable(with = PathSerializer::class)
+    var mapConfigXml: Path = Path.of(""),
+
+    var mapDescription: String = """
+        <div><h4>Vector maps for <a href="http://www.locusmap.app">Locus</a> application</h4>
+        Created by <a href="http://code.google.com/p/mapsforge/">Mapsforge</a> Map-Writer
+        <br />
+        Map data source OpenStreetMap community
+        <br />
+        Contour lines source <a href="https://earthexplorer.usgs.gov">SRTM</a> and 
+        <a href="http://www.viewfinderpanoramas.org">Viewfinder Panoramas</a>
+        <br /><br />
+        </div>""".trimIndent(),
+
+    var touristConfig: TouristConfig,
+    var contourConfig: ContourConfig,
+    var planetConfig: PlanetConfig,
+    var cmdConfig: CmdConfig,
+    var maptilerCloudConfig: MaptilerCloudConfig,
+
+    )
+
+@Serializable
+data class TouristConfig(
+    var nodeId: Long,
+    var wayId: Long,
+
+    //var loDmapsToolsPy: Path =  Paths.get("lomapsTools", "lomaps_tools.py")
+    @Serializable(with = PathSerializer::class)
+    var lomapsToolsPy: Path
+)
+
+@Serializable
+data class ContourConfig(
+    @Serializable(with = PathSerializer::class)
+    var hgtDir: Path,
+
+    var nodeIdMeter: Long,
+    var nodeIdFeet: Long,
+    var wayIdMeter: Long,
+    var wayIdFeet: Long,
+
+    var stepMeter: Int,
+    var stepFeet: Int,
+
+    // major and minor contours
+    var stepCategoryMeter: String,
+    var stepCategoryFeet: String,
+    var
+    source: String,
+
+    //var polyCoverageMeter: Path = Path.of("polygons/_contours/planet_contours_meters.poly"),
+    //var polyCoverageFeet: Path = Path.of("polygons/_contours/planet_contours_feet.poly"),
+    @Serializable(with = PathSerializer::class)
+    var polyCoverageMeter: Path,
+
+    @Serializable(with = PathSerializer::class)
+    var polyCoverageFeet: Path,
+
+    @Serializable(with = PathSerializer::class)
+    var tempMetersFile: Path = Path.of("_contours/planet_meter.osm.pbf"), // temporary file for generated contours in meter
+
+    @Serializable(with = PathSerializer::class)
+    var tempFeetFile: Path = Path.of("_contours/planet_feet.osm.pbf"), // temporary file for generated contours in feet
+
+)
+
+@Serializable
+class PlanetConfig(
+    @Serializable(with = PathSerializer::class)
+    var planetLatestPath: Path, // path to the original planet file
+    @Serializable(with = URLSerializer::class)
+    var planetLatestURL: URL, // URL to the latest planet file
+    var planetExtendedId: String = "planet-extended",
+
+    var lomapsOutdoorsLayers: MutableSet<String> // set of planetiler layers that are used for LoMaps outdoor tile scheme
+)
+
+@Serializable
+class MaptilerCloudConfig(
+
+    var tilesetTitleLm: String = "LoMaps_Outdoor",
+    var tilesetAttributionLm: String,
+    var tilesetDescLm: String,
+)
+
+@Serializable
+class CmdConfig(
+    @Serializable(with = PathSerializer::class)
+    var planetiler: Path
+) {
+    val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
+
+    val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
+
+    val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath()}
+}
+
+
+// SERIALIZER FOR PATH
+
+object PathSerializer : KSerializer<Path> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Path", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Path) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): Path {
+        return Paths.get(decoder.decodeString())
+    }
+}
+
+// CUSTOM SERIALIZER FOR URL
+
+object URLSerializer : KSerializer<URL> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("URL", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: URL) {
+        encoder.encodeString(value.toString()) // Serialize the URL as a string
+    }
+
+    override fun deserialize(decoder: Decoder): URL {
+        return URL(decoder.decodeString()) // Deserialize the string back to a URL
+    }
+}

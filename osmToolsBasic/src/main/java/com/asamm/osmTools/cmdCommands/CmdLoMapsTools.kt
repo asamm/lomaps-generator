@@ -16,12 +16,12 @@ class CmdLoMapsTools() : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
     private val TAG: String = CmdLoMapsTools::class.java.simpleName
 
-    fun generateTourist(map: ItemMap) {
+    fun generateTourist(pathToSource: Path, pathToTourist: Path) {
         addCommand("tourist2ways")
         addCommand("-i")
-        addCommand(map.getPathSource().toString())
+        addCommand(pathToSource.toString())
         addCommand("-o")
-        addCommand(map.getPathTourist().toString())
+        addCommand(pathToTourist.toString())
         if (AppConfig.config.overwrite) {
             addCommand("--overwrite")
         }

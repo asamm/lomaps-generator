@@ -1,5 +1,8 @@
 package com.asamm.osmTools.generator;
 
+import com.asamm.locus.MapTilerUploader;
+import com.asamm.locus.client.model.Tileset;
+import com.asamm.locus.client.model.TilesetPage;
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
@@ -63,7 +66,8 @@ public class GenLoMaps extends AGenerator {
 
         // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
         PlanetUpdater planetUpdater = new PlanetUpdater();
-        planetUpdater.update();
+        // TODO anable for produciton
+        //planetUpdater.update();
 
         // process action on planet level
         processPlanet(actionList, mMapSource);
@@ -111,7 +115,6 @@ public class GenLoMaps extends AGenerator {
     }
 
 
-
     private void printLogHeader(Action action) {
         String line = "================ " + action.getLabel().toUpperCase() + " ================\n";
         Logger.i(TAG, line);
@@ -138,9 +141,11 @@ public class GenLoMaps extends AGenerator {
 
             // generate maplibre
             actionGenerateMapLibre(map);
+
+            // upload to maptiler
+            actionUploadPlanetToMapTiler(map);
         }
     }
-
 
 
     public void actionAllInOne(ItemMapPack mp, Action action)
@@ -196,7 +201,7 @@ public class GenLoMaps extends AGenerator {
 
     // action UPDATE PLANET
 
-    private void actionUpdatePlanet(){
+    private void actionUpdatePlanet() {
 
     }
 
@@ -342,13 +347,19 @@ public class GenLoMaps extends AGenerator {
 
         printLogHeader(Action.TOURIST);
         // check if file exits and we should overwrite it
-        if ( !AppConfig.config.getOverwrite() && map.getPathTourist().toFile().exists()) {
+        if (!AppConfig.config.getOverwrite() && map.getPathTourist().toFile().exists()) {
             Logger.i(TAG, "File with tourist path ${map.getPathTourist()} already exist - skipped.");
             return;
         }
 
+        // for planet it's needed to customize "source" path and use the orig planet file as source
+        Path pathToSource = map.getPathSource();
+        if (map.getId().equals(AppConfig.config.getPlanetConfig().getPlanetExtendedId())) {
+            pathToSource = AppConfig.config.getPlanetConfig().getPlanetLatestPath();
+        }
+
         // test if source file exist
-        if (!map.getPathSource().toFile().exists()) {
+        if (!pathToSource.toFile().exists()) {
             throw new IllegalArgumentException("Input file for creation tourist path "
                     + map.getPathSource() + " does not exist!");
         }
@@ -358,7 +369,7 @@ public class GenLoMaps extends AGenerator {
         Main.mySimpleLog.print("\nTourist: " + map.getName() + " ...");
 
         CmdLoMapsTools cmdTourist = new CmdLoMapsTools();
-        cmdTourist.generateTourist(map);
+        cmdTourist.generateTourist(pathToSource, map.getPathTourist());
 
         // notify about result
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
@@ -426,6 +437,11 @@ public class GenLoMaps extends AGenerator {
     // ACTION MERGE
     private void actionMergePlanet(ItemMap map) {
 
+        if (!AppConfig.config.getOverwrite() && map.getPathSource().toFile().exists()) {
+            Logger.i(TAG, "Merged planet file: " + map.getPathSource() + " already exist");
+            return;
+        }
+
         List<Path> pathsToMerge = new ArrayList<>();
 
         // check if source planet file exists
@@ -436,31 +452,31 @@ public class GenLoMaps extends AGenerator {
 
         pathsToMerge.add(AppConfig.config.getPlanetConfig().getPlanetLatestPath());
 
-        if (AppConfig.config.getActions().contains(Action.TOURIST) && map.hasAction(Action.TOURIST)){
-            if (!map.getPathTourist().toFile().exists()){
+        if (AppConfig.config.getActions().contains(Action.TOURIST) && map.hasAction(Action.TOURIST)) {
+            if (!map.getPathTourist().toFile().exists()) {
                 throw new IllegalArgumentException("File Tourist routes: " + map.getPathTourist() + " does not exist.");
             }
-            if ( !containsTourist(map.getPathSource())){
+
+            if ( !map.getPathSource().toFile().exists() || !containsTourist(map.getPathSource())) {
                 pathsToMerge.add(map.getPathTourist());
-            }
-            else {
+            } else {
                 Logger.i(TAG, "Source file already contains tourist paths: " + map.getPathSource());
             }
-
         }
-        if (AppConfig.config.getActions().contains(Action.CONTOUR) &&  map.hasAction(Action.CONTOUR)){
-            if (!map.getPathContour().toFile().exists()){
+        if (AppConfig.config.getActions().contains(Action.CONTOUR) && map.hasAction(Action.CONTOUR)) {
+            if (!map.getPathContour().toFile().exists()) {
                 throw new IllegalArgumentException("File Contour: " + map.getPathContour() + " does not exist.");
             }
-            if ( !containsContours(map.getPathSource())){
+
+            if (!map.getPathSource().toFile().exists() || !containsContours(map.getPathSource())) {
                 pathsToMerge.add(map.getPathContour());
-            }
-            else {
+            } else {
                 Logger.i(TAG, "Source file already contains contours: " + map.getPathSource());
             }
         }
 
         // merge
+        Utils.createParentDirs(map.getPathSource());
         CmdOsmium cmdOsmium = new CmdOsmium();
         cmdOsmium.merge(pathsToMerge, map.getPathSource());
     }
@@ -520,7 +536,7 @@ public class GenLoMaps extends AGenerator {
     private void actionGenerate(ItemMap map) throws IOException, InterruptedException {
 
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (Parameters.isRewriteFiles() || ! map.getPathGenerate().toFile().exists()) {
+            if (Parameters.isRewriteFiles() || !map.getPathGenerate().toFile().exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
                 cg.createCmd();
 
@@ -545,8 +561,8 @@ public class GenLoMaps extends AGenerator {
 
 
     private void actionGenerateMapLibre(ItemMap map) {
-        if (map.hasAction(Action.GENERATE_MAPLIBRE)){
-            if (Parameters.isRewriteFiles() || !map.getPathGenerate().toFile().exists()) {
+        if (map.hasAction(Action.GENERATE_MAPLIBRE)) {
+            if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
@@ -563,6 +579,21 @@ public class GenLoMaps extends AGenerator {
             } else {
                 Logger.i(TAG, "Generated MapLibre Outdoor map " + map.getPathGenMlOutdoor() + " already exists. Nothing to do.");
             }
+        }
+
+    }
+
+    private void actionUploadPlanetToMapTiler(ItemMap itemMap) {
+
+        if (AppConfig.config.getActions().contains(Action.UPLOAD_MAPTILER)) {
+            Logger.i(TAG, "==== UPLOAD TO MAPTILER ====");
+            if (!itemMap.getPathGenMlOutdoor().toFile().exists()) {
+                throw new IllegalArgumentException("File with generated MapLibre outdoor map: " + itemMap.getPathGenMlOutdoor() + " does not exist.");
+            }
+            Logger.i(TAG, "Prepare for upload to MapTiler, map file: " + itemMap.getPathGenMlOutdoor());
+            MapTilerUploader uploader = new MapTilerUploader();
+            uploader.uploadAndInitializeMapTiles(itemMap.getPathGenMlOutdoor().toFile());
+            Logger.i(TAG, "Tiles uploaded");
         }
     }
 
@@ -698,14 +729,14 @@ public class GenLoMaps extends AGenerator {
     }
 
     // Other TOOLS
-    public boolean containsContours(Path sourcePath){
+    public boolean containsContours(Path sourcePath) {
         CmdOsmium cmdOsmium = new CmdOsmium();
         String meterContourId = "w" + AppConfig.config.getContourConfig().getWayIdMeter();
         String feetContourId = "w" + AppConfig.config.getContourConfig().getWayIdFeet();
         return cmdOsmium.containsId(sourcePath, meterContourId) || cmdOsmium.containsId(sourcePath, feetContourId);
     }
 
-    public boolean containsTourist(Path sourcePath){
+    public boolean containsTourist(Path sourcePath) {
         CmdOsmium cmdOsmium = new CmdOsmium();
         String touristId = "w" + AppConfig.config.getTouristConfig().getWayId();
         return cmdOsmium.containsId(sourcePath, touristId);

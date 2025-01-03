@@ -1,6 +1,7 @@
 package com.asamm.osmTools.config
 
 import java.io.File
+import java.nio.file.Path
 
 object ConfigUtils {
 
@@ -53,13 +54,13 @@ object ConfigUtils {
     // Function to check if Python is installed and return its path
     fun findPythonPath(): String {
         // First try to find "python", if not found, try "python3"
-        val pythonCommands = if (isWindows()) listOf("python.exe", "python3.exe") else listOf("python", "python3")
+        val pythonCommands = if (isWindows()) listOf("python3.exe", "python.exe") else listOf("python", "python3")
 
         val command = checkApps(pythonCommands)
 
         if (command.isEmpty()) {
             // If none of the commands succeeded, throw an exception
-            throw Exception("Python not found")
+            throw Exception("Python not found. Tried commands: $pythonCommands")
         }
         return command
     }
@@ -67,17 +68,13 @@ object ConfigUtils {
     /**
      * Check that planetiler util is installed and available in the path
      */
-    fun getCheckPlanetilerPath(): String {
+    fun getCheckPlanetilerPath(): Path {
 
-        val planetilerPaths = if (isWindows()) listOf("D:\\asamm\\projects\\planetiler-openmaptiles\\target\\planetiler-openmaptiles-3.15.1-SNAPSHOT-with-deps.jar") else listOf("planetiler/planetiler-openmaptiles.jar")
-
-        val command = checkApps(planetilerPaths)
-
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception("Planetiler not found in locatios: $planetilerPaths")
+        if ( !AppConfig.config.cmdConfig.planetiler.toFile().exists()) {
+            throw Exception("Planetiler not found in location: ${AppConfig.config.cmdConfig.planetiler.toString()} ")
         }
-        return command
+
+        return AppConfig.config.cmdConfig.planetiler
     }
 
 
@@ -108,7 +105,7 @@ object ConfigUtils {
     }
 
     // Helper function to check if the system is Windows
-    private fun isWindows(): Boolean {
+    public fun isWindows(): Boolean {
         return System.getProperty("os.name").lowercase().contains("win")
     }
 

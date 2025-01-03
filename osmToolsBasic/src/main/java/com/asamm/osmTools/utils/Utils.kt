@@ -24,7 +24,7 @@ fun isScriptInSystemPath(scriptName: String): Boolean {
 
 fun deleteFilesInDir(directory: Path) {
 
-    Logger.i(TAG, "Deleting files in tmp dir: " + AppConfig.config.tempotaryDir);
+    Logger.i(TAG, "Deleting files in tmp dir: " + AppConfig.config.temporaryDir);
 
     val directory = directory.toFile()
     if (directory.exists() && directory.isDirectory) {

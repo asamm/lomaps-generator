@@ -1,0 +1,784 @@
+openapi: 3.0.2
+info:
+  title: MapTiler Cloud Admin API
+  version: '1.0'
+  termsOfService: https://www.maptiler.com/terms/
+  description: |
+    Reference for MapTiler Cloud Admin API.
+
+    You are required to authorize every request using your Credetials token in the request headers.
+
+    You need a token to use the services. Your MapTiler token is on your MapTiler [Cloud](https://cloud.maptiler.com/account/credentials/) account page or [Get your **FREE** Token in the MapTiler Cloud](https://cloud.maptiler.com/auth/widget?next=https://cloud.maptiler.com/account/credentials/).
+
+    All of the listed endpoints might return these error responses:
+
+    <table class="table table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Code</th>
+          <th scope="col">Description</th>
+          <th scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg-danger fw-bolder text-uppercase">400</span></td>
+          <td>Bad Request</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-danger fw-bolder text-uppercase">401</span></td>
+          <td>Not Authorized </td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-danger fw-bolder text-uppercase">403</span></td>
+          <td>Forbidden</td>
+          <td>Might be returned if storage limit was exceeded</td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-danger fw-bolder text-uppercase">404</span></td>
+          <td>Not Found</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><span class="badge bg-danger fw-bolder text-uppercase">410</span></td>
+          <td>Gone</td>
+          <td>The requested resource in longer available</td>
+        </tr>
+      </tbody>
+    </table>
+  contact:
+    name: Support
+    email: support@maptiler.com
+    url: https://support.maptiler.com
+servers:
+  - description: MapTiler Cloud Admin API
+    url: https://service.maptiler.com/v1/
+security:
+  - token: []
+paths:
+  /tiles:
+    get:
+      summary: List tilesets belonging to your account
+      tags:
+        - tileset
+      parameters:
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetPage'
+  /tiles/{document_id}:
+    get:
+      summary: Get tileset details
+      tags:
+        - tileset
+      parameters:
+        - $ref: '#/components/parameters/document_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/Tileset'
+    delete:
+      summary: Delete tileset
+      tags:
+        - tileset
+      parameters:
+        - $ref: '#/components/parameters/document_id'
+      responses:
+        '200':
+          description: Resource marked for deletion.
+  /tiles/{document_id}/change_metadata:
+    post:
+      summary: Change tileset metadata
+      tags:
+        - tileset
+      parameters:
+        - $ref: '#/components/parameters/document_id'
+      requestBody:
+        $ref: '#/components/requestBodies/TilesetMetadataChange'
+      responses:
+        '200':
+          $ref: '#/components/responses/Tileset'
+  /tiles/ingest:
+    post:
+      summary: Ingest tileset container into a new tileset
+      tags:
+        - tileset_ingest
+      requestBody:
+        $ref: '#/components/requestBodies/TilesetIngestCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetIngest'
+  /tiles/{document_id}/ingest:
+    post:
+      summary: Ingest tileset container into existing tileset
+      tags:
+        - tileset_ingest
+      parameters:
+        - $ref: '#/components/parameters/document_id'
+      requestBody:
+        $ref: '#/components/requestBodies/TilesetIngestCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetIngest'
+  /tiles/ingest/{ingest_id}:
+    get:
+      summary: Get tileset ingest details
+      tags:
+        - tileset_ingest
+      parameters:
+        - $ref: '#/components/parameters/ingest_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetIngest'
+  /tiles/ingest/{ingest_id}/cancel:
+    post:
+      summary: Cancel tileset ingest
+      tags:
+        - tileset_ingest
+      parameters:
+        - $ref: '#/components/parameters/ingest_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetIngest'
+  /tiles/ingest/{ingest_id}/process:
+    post:
+      tags:
+        - tileset_ingest
+      summary: Start tileset ingest processing
+      parameters:
+        - $ref: '#/components/parameters/ingest_id'
+      responses:
+        '200':
+          $ref: '#/components/responses/TilesetIngest'
+  /api_keys:
+    get:
+      summary: List API keys belonging to account
+      tags:
+        - API keys
+      parameters:
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyPage'
+    post:
+      summary: Create new key
+      tags:
+        - API keys
+      requestBody:
+        $ref: '#/components/requestBodies/APIKeySettings'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+  /api_keys/{key_id}:
+    get:
+      summary: Get key
+      tags:
+        - API keys
+      parameters:
+        - $ref: '#/components/parameters/keyId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+    delete:
+      summary: Delete given key
+      tags:
+        - API keys
+      parameters:
+        - $ref: '#/components/parameters/keyId'
+      responses:
+        '200':
+          description: Successfully deleted
+  /api_keys/{key_id}/change_settings:
+    post:
+      summary: Update given key
+      tags:
+        - API keys
+      parameters:
+        - $ref: '#/components/parameters/keyId'
+      requestBody:
+        $ref: '#/components/requestBodies/APIKeySettings'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+  /analytics/api_usage/timeline:
+    get:
+      summary: Get usage analytics timeline
+      tags:
+        - analytics
+      parameters:
+        - $ref: '#/components/parameters/analytics_period'
+        - $ref: '#/components/parameters/analytics_classifier'
+        - $ref: '#/components/parameters/analytics_group'
+        - $ref: '#/components/parameters/analytics_format'
+      responses:
+        '200':
+          $ref: '#/components/responses/TimelineResponse'
+        '400':
+          description: |
+            - `period_not_found`: Selected time period does not exist (for example last_billing_period of new account)
+            - `account_over_limit`: Account currently has too many entities (api_keys or service_credentials) to be queried.
+            - `response_too_large`: There were too much data in the result (could be historical).
+  /analytics/api_usage/top:
+    get:
+      summary: Get top usage analytics
+      tags:
+        - analytics
+      parameters:
+        - $ref: '#/components/parameters/analytics_period'
+        - $ref: '#/components/parameters/analytics_classifier'
+        - $ref: '#/components/parameters/analytics_group'
+        - $ref: '#/components/parameters/analytics_format'
+        - $ref: '#/components/parameters/analytics_limit'
+      responses:
+        '200':
+          $ref: '#/components/responses/TopResponse'
+        '400':
+          description: |
+            - `period_not_found`: Selected time period does not exist (for example last_billing_period of new account)
+components:
+  securitySchemes:
+    token:
+      description: 'Your own token from https://cloud.maptiler.com/. The token can be acquired in the "Credentials" section of your account administration. Example: "Token cd43c591d8404400a11e2fre48afedc9_f80f4be2adf86dfb6bc489229669877d6cfcad293f48ffe6e77898f25ab65607"'
+      type: http
+      in: header
+      scheme: Token
+  requestBodies:
+    TilesetMetadataChange:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TilesetMetadataChange'
+          example:
+            title: North America
+            description: Processed on 04.05.2021
+            attribution: null
+    TilesetIngestCreate:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TilesetIngestCreate'
+          example:
+            filename: north-america.mbtiles
+            size: 723000000
+    APIKeySettings:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIKeySettings'
+  schemas:
+    TilesetPage:
+      type: object
+      title: TilesetPage
+      properties:
+        cursor:
+          type: string
+          format: byte
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tileset'
+    Tileset:
+      type: object
+      title: Tileset
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        attribution:
+          type: string
+    TilesetMetadataChange:
+      type: object
+      title: TilesetMetadataChange
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        attribution:
+          type: string
+      required:
+        - title
+        - description
+        - attribution
+    TilesetIngestCreate:
+      type: object
+      title: TilesetIngestCreate
+      properties:
+        filename:
+          type: string
+        size:
+          type: integer
+          description: size in bytes
+      required:
+        - filename
+        - size
+    TilesetIngest:
+      title: TilesetIngest
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        document_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum:
+            - upload
+            - processing
+            - completed
+            - canceled
+            - failed
+        filename:
+          type: string
+        size:
+          type: number
+          description: size in bytes
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        progress:
+          type: number
+        upload_url:
+          type: string
+          format: URL
+          description: URL for the uploaded resource
+    Error:
+      type: object
+      title: Error
+      properties:
+        message:
+          type: string
+    APIKey:
+      title: APIKey
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        token:
+          type: string
+        description:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        origins:
+          type: array
+          items:
+            type: string
+        created:
+          type: string
+          format: date-time
+        changed:
+          type: string
+          format: date-time
+    APIKeyPage:
+      title: APIKeyPage
+      type: object
+      properties:
+        cursor:
+          type: string
+          format: byte
+          nullable: true
+        total_count:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKey'
+    APIKeySettings:
+      title: APIKeySettings
+      type: object
+      properties:
+        description:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        origins:
+          type: array
+          items:
+            type: string
+    TimelineData:
+      type: object
+      title: TimelineData
+      properties:
+        date:
+          type: string
+          format: date
+        value:
+          type: integer
+      required:
+        - date
+        - value
+    Legend:
+      type: object
+      title: Legend
+      properties:
+        item_id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+      required:
+        - item_id
+        - label
+        - description
+    TimelineResponseJSON:
+      description: contains also estimated data for entire current period (except for last_billing_period).
+      title: TimelineResponseJSON
+      type: object
+      properties:
+        since:
+          type: string
+          format: date
+        until:
+          type: string
+          format: date
+        datasets:
+          type: array
+          items:
+            type: object
+            title: Timeline dataset
+            properties:
+              group_id:
+                type: string
+                enum:
+                  - request
+                  - export
+                  - session
+              item_id:
+                type: string
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineData'
+              estimated_data:
+                $ref: '#/components/schemas/TimelineData'
+            required:
+              - group_id
+              - item_id
+              - data
+        legend:
+          type: array
+          items:
+            $ref: '#/components/schemas/Legend'
+      required:
+        - since
+        - until
+        - datasets
+        - legend
+    TimelineResponseCSV:
+      description: CSV header row is `date,item,count`
+      title: TimelineResponseCSV
+      type: string
+      format: csv
+    TopData:
+      type: object
+      title: TopData
+      properties:
+        item_id:
+          type: string
+        value:
+          type: integer
+      required:
+        - item_id
+        - value
+    TopResponseJSON:
+      type: object
+      title: TopResponseJSON
+      properties:
+        since:
+          type: string
+          format: date
+        until:
+          type: string
+          format: date
+        datasets:
+          type: array
+          items:
+            type: object
+            title: Top dataset
+            properties:
+              group_id:
+                type: string
+                enum:
+                  - request
+                  - export
+                  - session
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopData'
+            required:
+              - group_id
+              - data
+        legend:
+          type: array
+          items:
+            $ref: '#/components/schemas/Legend'
+      required:
+        - since
+        - until
+        - datasets
+        - legend
+    TopResponseCSV:
+      description: CSV header row is `item,count`
+      title: TopResponseCSV
+      type: string
+      format: csv
+  responses:
+    TilesetPage:
+      description: Page of tilesets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TilesetPage'
+          example:
+            cursor: aWQ9ImRlNzY0ZjE0LTRhMzktNGRhMS1iM2QxLTlhYmM5NzQyMzEzYSI=
+            items:
+              - id: de764f14-4a39-4da1-b3d1-9abc9742313a
+                title: North America
+                description: Processed on 04.05.2021
+                attribution: null
+              - id: b9d06d13-23e6-46ef-a54f-9279965d5761
+                title: South America
+                description: ''
+                attribution: null
+    Tileset:
+      description: Tileset
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tileset'
+          example:
+            id: de764f14-4a39-4da1-b3d1-9abc9742313a
+            title: North America
+            description: Processed on 04.05.2021
+            attribution: null
+    TilesetIngest:
+      description: Tileset ingest
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TilesetIngest'
+          examples:
+            upload:
+              value:
+                id: e3a507c3-f9dd-4786-8af3-b21f4ca2d9c8
+                document_id: null
+                state: upload
+                filename: north-america.mbtiles
+                size: 723000000
+                errors: null
+                progress: 0
+                upload_url: https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable&supportsTeamDrives=true&upload_id=ABg5-UzOoBea-789qB46gXPK7gGIOoTt5rvcGfzdJSxf_iCJ98ysr0WT9asddb-CpBPWFiR_u0DnCWj3oiD9UErtTdVj3w
+            processing:
+              value:
+                id: e3a507c3-f9dd-4786-8af3-b21f4ca2d9c8
+                document_id: null
+                state: processing
+                filename: north-america.mbtiles
+                size: 723000000
+                errors: null
+                progress: 12.5
+                upload_url: https://www.googleapis.com/upload/drive/v3/files/?uploadType=resumable&supportsTeamDrives=true&upload_id=ABg5-UzOoBea-789qB46gXPK7gGIOoTt5rvcGfzdJSxf_iCJ98ysr0WT9asddb-CpBPWFiR_u0DnCWj3oiD9UErtTdVj3w
+            completed:
+              value:
+                id: e3a507c3-f9dd-4786-8af3-b21f4ca2d9c8
+                document_id: de764f14-4a39-4da1-b3d1-9abc9742313a
+                state: completed
+                filename: north-america.mbtiles
+                size: 723000000
+                errors: null
+                progress: 100
+                upload_url: null
+            canceled:
+              value:
+                id: 96482341-f04e-459c-90f6-234664ca56cd
+                document_id: null
+                state: canceled
+                filename: north-america.mbtiles
+                size: 723000000
+                errors: null
+                progress: 0
+                upload_url: null
+            failed:
+              value:
+                id: 96482341-f04e-459c-90f6-234664ca56cd
+                document_id: null
+                state: failed
+                filename: north-america.mbtiles
+                size: 723000000
+                errors:
+                  messsage: invalid max_x
+                progress: 0
+                upload_url: null
+    TimelineResponse:
+      description: Usage analytics timeline response, further description is within each media type schema.
+      title: TimelineResponse
+      headers:
+        Content-Disposition:
+          description: only for CSV format - contains filename `timeline_{classifier}_{group}_{since}_{until}.csv`
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TimelineResponseJSON'
+        text/csv:
+          schema:
+            $ref: '#/components/schemas/TimelineResponseCSV'
+          example: |-
+            date,item,count
+            2023-05-01,Tiles,5399
+            2023-06-01,Tiles,7510
+            2023-07-01,Tiles,7831
+            2023-06-01,Rendered maps (256px),678
+            2023-07-01,Rendered maps (256px),1001
+            2023-06-01,Datasets,65
+            2023-07-01,Datasets,19
+    TopResponse:
+      description: Usage analytics top response, further description is within each media type schema.
+      title: TopResponse
+      headers:
+        Content-Disposition:
+          description: only for CSV format - contains filename `top{limit}_{classifier}_{group}_{since}_{until}.csv`
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopResponseJSON'
+        text/csv:
+          schema:
+            $ref: '#/components/schemas/TopResponseCSV'
+          example: |-
+            item,count
+            Tiles,13608483
+            Datasets,51546
+            Rendered maps (256px),10302
+  parameters:
+    cursor:
+      name: cursor
+      in: query
+      description: Page cursor
+      required: false
+      schema:
+        type: string
+        format: byte
+    limit:
+      name: limit
+      in: query
+      description: Page limit
+      required: false
+      schema:
+        type: integer
+        minimum: 10
+        maximum: 100
+        default: 50
+    ingest_id:
+      in: path
+      name: ingest_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    document_id:
+      in: path
+      name: document_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    keyId:
+      in: path
+      description: Identifier of API Key.
+      name: keyId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    analytics_period:
+      name: period
+      in: query
+      required: true
+      description: |
+        - billing periods are based on account subscription
+        - for classifiers api_keys and service_credentials are **supported only daily periods**:
+        current_billing_period, last_billing_period, past_30_days, past_90_days
+      schema:
+        type: string
+        enum:
+          - current_billing_period
+          - last_billing_period
+          - past_30_days
+          - past_90_days
+          - past_12_billing_periods
+          - past_12_months
+          - all
+    analytics_classifier:
+      name: classifier
+      in: query
+      required: true
+      description: classifies datasets
+      schema:
+        type: string
+        enum:
+          - services
+          - api_keys
+          - service_credentials
+    analytics_group:
+      name: group
+      in: query
+      description: group ID filter, **mandatory for CSV format**
+      schema:
+        type: string
+        enum:
+          - request
+          - session
+          - export
+    analytics_format:
+      name: format
+      in: query
+      description: response media type
+      schema:
+        type: string
+        enum:
+          - json
+          - csv
+        default: json
+    analytics_limit:
+      name: limit
+      in: query
+      description: number of top items within response group
+      schema:
+        type: integer
+        default: 10

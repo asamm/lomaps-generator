@@ -2,6 +2,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'org.jetbrains.kotlin.plugin.lombok' version '2.0.10'
     id 'io.freefair.lombok' version '5.3.0'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.20'
 }
 configurations { providedCompile }
 
@@ -25,12 +26,11 @@ repositories {
 dependencies {
     implementation project(":osmToolsCore")
     implementation project(":osmToolsDataWriter")
+    implementation project(":maptiler-api")
 
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
 
     implementation "com.asamm.locus:api-store:1.2.22"
-
-
 
     implementation 'org.apache.httpcomponents:httpclient:4.5'
     implementation 'org.apache.httpcomponents:httpcore:4.3.2'
@@ -49,20 +49,18 @@ dependencies {
 
 }
 
-def versionCode = "0.6.7"
+def versionCode = "0.7.0"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
-        attributes 'Main-Class': 'com.asamm.osmTools.Main'
+        attributes 'Main-Class': 'com.asamm.osmTools.OsmToolsCommandKt'
     }
 
     archiveFileName = newArchiveName;
     from {
-        configurations.compileClasspath.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     from('src/main/config/') {
         include 'plugin.xml'

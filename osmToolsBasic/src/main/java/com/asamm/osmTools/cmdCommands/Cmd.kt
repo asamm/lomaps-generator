@@ -7,6 +7,7 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.Main
 import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import org.apache.commons.io.FileUtils
@@ -62,7 +63,12 @@ open class Cmd(val externalApp: ExternalApp) {
             }
 
             ExternalApp.PLANETILER -> {
-                addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar", AppConfig.config.cmdConfig.planetiler)
+                if(ConfigUtils.isWindows()){
+                    addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar", ConfigUtils.getCheckPlanetilerPath().toString())
+                }
+                else {
+                    addCommands("java", "-jar", ConfigUtils.getCheckPlanetilerPath().toString())
+                }
             }
 
             ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing

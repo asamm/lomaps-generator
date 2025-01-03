@@ -1,9 +1,26 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.20'
+}
 configurations { providedCompile }
 
 dependencies {
+
     implementation 'commons-io:commons-io:2.4'
     //compile 'org.apache.commons:commons-lang3:3.1'
     //compile 'org.apache.commons:commons-lang3:jar:3.5-SNAPSHOT'
     implementation 'org.apache.commons:commons-lang3:3.4'
     implementation 'net.sf.kxml:kxml2:2.2.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    // for reading YAML configuration file
+    implementation("com.charleskorn.kaml:kaml:0.66.0")
+}
+repositories {
+    mavenCentral()
+}
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }

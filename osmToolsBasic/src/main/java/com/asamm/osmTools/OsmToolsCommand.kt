@@ -1,20 +1,16 @@
 package com.asamm.osmTools
 
-import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.Action
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
-import com.asamm.osmTools.config.LoMapsAction
 import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
+import com.asamm.store.LocusStoreEnv
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.defaultLazy
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
@@ -22,11 +18,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-
-enum class LocusStoreEnv() {
-    DEV,
-    PROD,
-}
 
 class OsmToolsCommand : CliktCommand(
     name = "OsmTools",
@@ -40,13 +31,15 @@ class OsmToolsCommand : CliktCommand(
     val overwrite by option("-ow", "--overwrite", help = "Overwrite output file if exists").flag()
 
     // set Locus Store environment (where to upload maps)
-    val locusStoreEnv by option("-e", "--ls_environment", help = "Set Locus Store environment - where to upload maps.  " +
-            "Possible values: ${LocusStoreEnv.values().joinToString(", ")}")
+    val locusStoreEnv by option(
+        "-e", "--ls_environment", help = "Set Locus Store environment - where to upload maps.  " +
+                "Possible values: ${LocusStoreEnv.values().joinToString(", ")}"
+    )
         .enum<LocusStoreEnv>()
         .default(LocusStoreEnv.PROD)
 
 
-    override fun run(){
+    override fun run() {
 
         // Load the app configuration (initialize it once)
         AppConfig.loadConfig()
@@ -65,7 +58,8 @@ class OsmToolsCommand : CliktCommand(
 
 class UpdatePlanetCommand : CliktCommand(
     name = "update_planet",
-    help = "Subcommand to update OSM planet file") {
+    help = "Subcommand to update OSM planet file"
+) {
 
     override fun run() {
         val planetUpdater: PlanetUpdater = PlanetUpdater()
@@ -77,7 +71,8 @@ class UpdatePlanetCommand : CliktCommand(
 
 class LoMapsCommand : CliktCommand(
     name = "lomaps",
-    help = "Subcommand to generate maps for Locus Store") {
+    help = "Subcommand to generate maps for Locus Store"
+) {
 
     // version of the map
     val version: String by option(
@@ -109,7 +104,10 @@ class LoMapsCommand : CliktCommand(
                 // if action is UNKNOWN, end program and print warning
                 require(action != Action.UNKNOWN) {
                     // print warning and possible actions but not the UNKNOWN
-                    "Unknown action '$it'. Possible values: ${Action.getCliActions().filter{it != Action.UNKNOWN}.joinToString(", ")}"}
+                    "Unknown action '$it'. Possible values: ${
+                        Action.getCliActions().filter { it != Action.UNKNOWN }.joinToString(", ")
+                    }"
+                }
                 action
             }.toMutableSet()
         }
@@ -146,7 +144,7 @@ class LoMapsCommand : CliktCommand(
         genLoMaps.process();
 
 
-        echo ("== Map generation finished ==")
+        echo("== Map generation finished ==")
     }
 
     /**
@@ -166,7 +164,8 @@ class LoMapsCommand : CliktCommand(
 
 class StoreGeoCommand : CliktCommand(
     name = "storegeo",
-    help = "Subcommand to generate map borders for regions in Locus Store") {
+    help = "Subcommand to generate map borders for regions in Locus Store"
+) {
 
     override fun run() {
     }

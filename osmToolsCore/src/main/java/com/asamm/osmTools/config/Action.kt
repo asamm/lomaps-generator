@@ -19,6 +19,8 @@ enum class Action {
 
     GENERATE_MAPLIBRE("generate_maplibre"),
 
+    UPLOAD_MAPTILER("upload_maptiler"),
+
     GENERATE_MAPSFORGE("generate_mapsforge"),
 
     GRAPH_HOPPER("graphHopper"),

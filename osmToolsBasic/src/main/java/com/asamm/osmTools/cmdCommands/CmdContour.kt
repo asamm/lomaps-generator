@@ -22,16 +22,16 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
 
     private val TAG: String = GenLoMaps::class.java.simpleName
 
-    private val tempMeter: Path = AppConfig.config.tempotaryDir.resolve(AppConfig.config.contourConfig.tempMetersFile)
+    private val tempMeter: Path = AppConfig.config.temporaryDir.resolve(AppConfig.config.contourConfig.tempMetersFile)
 
-    private val tempFeet: Path = AppConfig.config.tempotaryDir.resolve(AppConfig.config.contourConfig.tempFeetFile)
+    private val tempFeet: Path = AppConfig.config.temporaryDir.resolve(AppConfig.config.contourConfig.tempFeetFile)
 
     private val tempMeterWithFeetAreas: Path = tempMeter.parent.resolve(Path.of("planet_meter_all.osm.pbf"))
 
     init {
 
         // check the id of map only "planet" is supported at this moment for generation of contour lines
-        require(map.getId() == "planet") {
+        require(map.getId() == AppConfig.config.planetConfig.planetExtendedId) {
             "Only planet map (id=planet) is supported for generation of contour lines" }
 
         // check the location of polygon for contour lines
@@ -47,15 +47,6 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
         Utils.createParentDirs(tempMeter.toString())
         Utils.createParentDirs(tempFeet.toString())
 
-        // generate meters contours (contains also areas where are feet contours)
-        if ( !tempMeterWithFeetAreas.toFile().exists()) {
-            generateContours(ContourUnit.METER, tempMeterWithFeetAreas)
-            Logger.i(TAG, "Command: " + getCmdLine())
-            execute()
-            rename(tempMeterWithFeetAreas)
-            renumber(tempMeterWithFeetAreas, AppConfig.config.contourConfig.nodeIdMeter, AppConfig.config.contourConfig.wayIdMeter)
-            reset()
-        }
 
         // generate feet contours only for areas where are feets
         if ( !tempFeet.toFile().exists()){
@@ -64,7 +55,17 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
             Logger.i(TAG, "Command: " + getCmdLine())
             execute()
             rename(tempFeet)
-            renumber(tempFeet, AppConfig.config.contourConfig.nodeIdFeet, AppConfig.config.contourConfig.wayIdFeet)
+            //renumber(tempFeet, AppConfig.config.contourConfig.nodeIdFeet, AppConfig.config.contourConfig.wayIdFeet)
+            reset()
+        }
+
+        // generate meters contours (contains also areas where are feet contours)
+        if ( !tempMeterWithFeetAreas.toFile().exists()) {
+            generateContours(ContourUnit.METER, tempMeterWithFeetAreas)
+            Logger.i(TAG, "Command: " + getCmdLine())
+            execute()
+            rename(tempMeterWithFeetAreas)
+            //renumber(tempMeterWithFeetAreas, AppConfig.config.contourConfig.nodeIdMeter, AppConfig.config.contourConfig.wayIdMeter)
             reset()
         }
 
@@ -77,6 +78,7 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
         }
 
         // merge meters and feets contours to single contour world file
+        Utils.createParentDirs(map.getPathContour())
         cmdOsmium.merge(mutableListOf(tempMeter, tempFeet), map.getPathContour())
 
         // delete tmp files
@@ -107,16 +109,16 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
                 addCommand("--step=" + AppConfig.config.contourConfig.stepMeter.toString())
                 addCommand("--line-cat=" + AppConfig.config.contourConfig.stepCategoryMeter)
                 // higher ids are ommited on windows > use default pyhgtmap  values > generated contour are renumbered later
-                //addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdMeter.toString())
-                //addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdMeter.toString())
+                addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdMeter.toString())
+                addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdMeter.toString())
                 addCommand("--output-prefix=" + prefix)
             }
             ContourUnit.FEET -> {
                 addCommand("--polygon="+  AppConfig.config.contourConfig.polyCoverageFeet.toString())
                 addCommand("--step=" + AppConfig.config.contourConfig.stepFeet.toString())
                 addCommand("--line-cat=" + AppConfig.config.contourConfig.stepCategoryFeet)
-                //addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdFeet.toString())
-                //addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdFeet.toString())
+                addCommand("--start-node-id=" + AppConfig.config.contourConfig.nodeIdFeet.toString())
+                addCommand("--start-way-id=" + AppConfig.config.contourConfig.wayIdFeet.toString())
                 addCommand("--output-prefix=" + prefix)
                 addCommand("--feet")
             }
