@@ -9,7 +9,6 @@ import java.net.URL
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 class PlanetUpdater {
 
@@ -30,18 +29,18 @@ class PlanetUpdater {
             )
         } else if (timestamp.isBefore(Instant.now().minus(Duration.ofDays(1)))) {
             Logger.i(TAG, "Planet file is older than 1 day. Start OSM Update.")
-            val cmdLoMapsTools: CmdLoMapsTools = CmdLoMapsTools()
+            val cmdLoMapsTools = CmdLoMapsTools()
             cmdLoMapsTools.osmUpdate(AppConfig.config.planetConfig.planetLatestPath)
-        }
-        else{
+        } else {
             Logger.i(TAG, "Planet file is up to date.")
         }
     }
 
-
+    /**
+     * Download planet file from given URL to a destination path
+     */
     fun downloadPlanetFile(downloadUrl: URL, destinationPath: Path) {
         // download planet file
-        // try to download
         if (UtilsHttp.downloadFile(destinationPath, downloadUrl.toString())) {
             Logger.i(TAG, "File $destinationPath successfully downloaded.")
         } else {

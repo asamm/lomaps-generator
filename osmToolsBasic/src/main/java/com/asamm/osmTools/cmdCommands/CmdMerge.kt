@@ -28,9 +28,6 @@ class CmdMerge(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
      */
     @Throws(IOException::class)
     fun createCmd() {
-        val isCoastline = map.hasSea()
-
-        val isTransformedData = true
 
         addReadPbf(map.pathSource.toString())
 
@@ -40,10 +37,8 @@ class CmdMerge(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         // try to add custom data
         addCustomData()
 
-        if (isTransformedData) {
-            addReadPbf(map.pathTranform.toString())
-            addMerge()
-        }
+        addReadPbf(map.pathTranform.toString())
+        addMerge()
 
         addBuffer()
         addWritePbf(map.pathMerge.toString(), true)

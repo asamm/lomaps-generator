@@ -2,6 +2,7 @@ package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.utils.Logger
+import org.apache.commons.io.FileUtils
 import java.nio.file.Path
 import java.time.Instant
 import java.util.Date
@@ -56,6 +57,10 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
     }
 
     fun merge(inputPaths: MutableList<Path>, outputPath: Path) {
+
+        // create folders for output
+        FileUtils.forceMkdir(outputPath.parent.toFile())
+
         addCommands("merge")
         inputPaths.forEach {addCommand(it.toString()) }
         addCommands("-o", outputPath.toString())

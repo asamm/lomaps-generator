@@ -7,27 +7,28 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
+import com.asamm.osmTools.utils.Logger
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 /**
  *
  * @author volda
  */
-class CmdShp2osm(val map: ItemMap, var input: String, var output: String) : Cmd(ExternalApp.NO_EXTERNAL_APP) {
+class CmdShp2osm() : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
+    private val TAG = CmdShp2osm::class.java.simpleName
 
-    init {
-        //test if shp2osm.py scripot exist
-        require(File(Parameters.getShp2osmDir()).exists()) { "Shp2Osm script in location" + Parameters.getShp2osmDir() + "  does not exist!" }
-    }
+    fun shp2osm(input: Path, output: Path){
 
-    fun createCmd() {
-        addCommand(AppConfig.config.cmdConfig.pythonPath)
-        addCommand(Parameters.getShp2osmDir())
-        addCommand("--id")
-        addCommand(Parameters.costlineBorderId.toString())
-        addCommand("--output")
-        addCommand(output)
-        addCommand(input)
+        addCommands("shp2osm")
+        addCommands("--id", AppConfig.config.coastlineConfig.nodeBorderId++.toString())
+        addCommands("--input", input.absolutePathString())
+        addCommands("--output",output.absolutePathString())
+        Logger.i(TAG, "Command: " + getCmdLine())
+
+        execute()
+        reset()
     }
 }

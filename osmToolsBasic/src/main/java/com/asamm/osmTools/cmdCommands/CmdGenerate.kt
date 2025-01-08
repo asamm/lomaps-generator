@@ -5,11 +5,13 @@
 package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.Parameters
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.sea.Boundaries
 import com.asamm.osmTools.utils.Logger
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.util.*
 
 /**
@@ -27,20 +29,18 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
                         map.pathMerge + " does not exist!"
             }
 
-            require(File(Parameters.mTouristTagMapping).exists()) {
-                ("Map writter definition file:  "
-                        + Parameters.mTouristTagMapping + " does not exist.")
+            require(AppConfig.config.mapsforgeTagMapping.toFile().exists()) {
+                ("Map writter definition file:  ${AppConfig.config.mapsforgeTagMapping} does not exist.")
             }
 
             if (!map.pathMerge.toFile().exists()) {
                 map.isMerged = false
             }
-
-
-            // getMap().isMerged = !new getMap().mergePath+"."+Parameters.contourNoSRTM).exists();
-        } else require(
-            map.pathSource.toFile().exists()
-        ) { "Extracted map for generation = " + map.pathSource + " does not exist." }
+        } else {
+            require(map.pathSource.toFile().exists()) {
+                "Extracted map for generation = " + map.pathSource + " does not exist."
+            }
+        }
     }
 
 
@@ -70,20 +70,6 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     }
 
     @Throws(IOException::class)
-    fun createCmdContour() {
-        addReadPbf(map.pathContour.toString())
-        addMapWriterContour()
-        addType()
-        addPrefLang()
-        addBbox(map.boundary)
-        addTagConf(Parameters.getContourTagMapping())
-        addZoomIntervalContour()
-        addBboxEnlargement(1)
-        //ddWayClipping();
-        //addMapComment();
-    }
-
-    @Throws(IOException::class)
     fun createCmd() {
         //TODO remove
         //addCommand("-v");
@@ -101,7 +87,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         addType()
         addPrefLang()
         addBbox(map.boundary)
-        addTagConf(Parameters.mTouristTagMapping)
+        addTagConf(AppConfig.config.mapsforgeTagMapping.toAbsolutePath())
         //addDebugFile();
         addZoomInterval()
 
@@ -131,16 +117,6 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         // add commands
         addCommand("--mapfile-writer")
         addCommand("file=" + map.pathGenerate)
-    }
-
-    @Throws(IOException::class)
-    private fun addMapWriterContour() {
-        // prepare directory
-        prepareDirectory(map.pathGenerateContour.toString())
-
-        // add commands
-        addCommand("--mapfile-writer")
-        addCommand("file=" + map.pathGenerateContour)
     }
 
     private fun addPrefLang() {
@@ -239,7 +215,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         addCommand("debug-file=true")
     }
 
-    private fun addTagConf(path: String) {
+    private fun addTagConf(path: Path) {
         addCommand("tag-conf-file=$path")
     }
 

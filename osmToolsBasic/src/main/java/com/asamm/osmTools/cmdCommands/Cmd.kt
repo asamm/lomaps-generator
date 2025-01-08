@@ -32,6 +32,8 @@ open class Cmd(val externalApp: ExternalApp) {
 
         LOMAPS_TOOLS,
 
+        OGR2OGR,
+
         PYHGTMAP,
 
         PLANETILER,
@@ -49,7 +51,6 @@ open class Cmd(val externalApp: ExternalApp) {
 
     private fun initializeExternApp() {
         when (externalApp) {
-            ExternalApp.OSMOSIS -> addCommand(Parameters.getOsmosisExe())
             ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
             ExternalApp.GRAPHOPPER -> addCommands(Parameters.getPreShellCommand(), Parameters.getGraphHopperExe())
             ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", Parameters.getStoreUploaderPath())
@@ -64,12 +65,18 @@ open class Cmd(val externalApp: ExternalApp) {
 
             ExternalApp.PLANETILER -> {
                 if(ConfigUtils.isWindows()){
-                    addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar", ConfigUtils.getCheckPlanetilerPath().toString())
+                    addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString())
                 }
                 else {
-                    addCommands("java", "-jar", ConfigUtils.getCheckPlanetilerPath().toString())
+                    addCommands("java", "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString())
                 }
             }
+
+            ExternalApp.OSMOSIS -> addCommand(ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.osmosis.toAbsolutePath()).toString())
+
+            ExternalApp.OGR2OGR -> addCommand(ConfigUtils.findOgr2ogrPath())
 
             ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
         }
@@ -147,13 +154,10 @@ open class Cmd(val externalApp: ExternalApp) {
         val pb = ProcessBuilder(*mCmdArray)
         pb.redirectErrorStream(true)
 
-        // set working directory based on external software
+        // set custom working directory based on external software
         if (externalApp == ExternalApp.OSMOSIS) {
-            pb.directory(File(Parameters.getOsmosisExe()).getParentFile().getParentFile())
-        } else if (externalApp == ExternalApp.GRAPHOPPER) {
-            pb.directory(File(Parameters.getGraphHopperExe()).getParentFile())
+            pb.directory(AppConfig.config.cmdConfig.osmosis.toFile().getParentFile().getParentFile())
         }
-
         // return builder
         return pb
     }

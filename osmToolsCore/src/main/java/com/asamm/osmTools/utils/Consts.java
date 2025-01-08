@@ -13,8 +13,6 @@ public class Consts {
             File.separator;
     public static final String DIR_BASE =
             fixDirectoryPath(new File("").getAbsolutePath());
-    public static final String DIR_TMP =
-            fixDirectoryPath(DIR_BASE + "_tmp");
     public static final String DIR_LOGS =
             fixDirectoryPath(DIR_BASE + "_logs");
 

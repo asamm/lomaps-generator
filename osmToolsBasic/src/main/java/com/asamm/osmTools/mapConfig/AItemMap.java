@@ -30,6 +30,7 @@ public class AItemMap {
     // directory name
     private String dir;
     // folder for generation
+    @Deprecated
     private String dirGen;
     // address DB boundary admin level for address region boundaries
     private String countryName;

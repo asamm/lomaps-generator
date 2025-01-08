@@ -4,6 +4,7 @@ import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.generator.GenLoMaps
+import com.asamm.osmTools.generator.GenStoreRegionDB
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
 import com.asamm.store.LocusStoreEnv
@@ -20,7 +21,7 @@ import java.time.format.DateTimeParseException
 
 
 class OsmToolsCommand : CliktCommand(
-    name = "OsmTools",
+    name = "OsmToolsBasic",
     help = "Tool for processing OSM data and generating maps"
 ) {
 
@@ -55,6 +56,8 @@ class OsmToolsCommand : CliktCommand(
     }
 
 }
+
+// UPDATE PLANET SUBCOMMAND
 
 class UpdatePlanetCommand : CliktCommand(
     name = "update_planet",
@@ -109,9 +112,9 @@ class LoMapsCommand : CliktCommand(
                     }"
                 }
                 action
-            }.toMutableSet()
+            }.toMutableList()
         }
-        .default(mutableSetOf())
+        .default(mutableListOf())
 
     val hgtDir: File by option("-hgt", "--hgt_dir", help = "Path to elevation hgt file").file(mustExist = true)
         .defaultLazy {
@@ -122,6 +125,10 @@ class LoMapsCommand : CliktCommand(
             defaultConfigFile
         }
 
+    val dataDir: File by option("-d", "--data_dir", help = "Path to folder where data for generation are stored").file()
+        .defaultLazy {
+            AppConfig.config.dataDir.toFile() }
+
     override fun run() {
 
 
@@ -131,6 +138,7 @@ class LoMapsCommand : CliktCommand(
         // Set actions to the configuration
         AppConfig.config.actions = actions
         AppConfig.config.version = version
+        AppConfig.config.dataDir = dataDir.toPath()
 
         // Set path to the configuration file
         AppConfig.config.mapConfigXml = configFile.toPath()
@@ -168,6 +176,8 @@ class StoreGeoCommand : CliktCommand(
 ) {
 
     override fun run() {
+        val genStoreGeo = GenStoreRegionDB();
+        genStoreGeo.process();
     }
 }
 

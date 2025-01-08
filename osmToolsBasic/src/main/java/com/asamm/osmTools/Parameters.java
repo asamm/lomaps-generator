@@ -5,6 +5,7 @@
 package com.asamm.osmTools;
 
 import com.asamm.osmTools.config.Action;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
@@ -180,12 +181,12 @@ public class Parameters {
         return mConfigStoreGeoPath;
     }
 
-    public static String getCoastlineShpFile() {
-
-        // set path to land polygon shape file
-        return getDataDir() + "coastlines" +
-                Consts.FILE_SEP + "land-polygons" + Consts.FILE_SEP + "land_polygons.shp";
-    }
+//    public static String getCoastlineShpFile() {
+//
+//        // set path to land polygon shape file
+//        return getDataDir() + "coastlines" +
+//                Consts.FILE_SEP + "land-polygons" + Consts.FILE_SEP + "land_polygons.shp";
+//    }
 
     public static String getConfigApDbPath() {
         return mConfigApDbPath;
@@ -521,7 +522,7 @@ public class Parameters {
 
 
         // check temporary directory
-        File tmpDirF = new File(Consts.DIR_TMP);
+        File tmpDirF = AppConfig.config.getTemporaryDir().toFile();
         if (!tmpDirF.exists()) {
             Logger.d(TAG, "creating dir " + tmpDirF.getAbsolutePath());
             tmpDirF.mkdirs();

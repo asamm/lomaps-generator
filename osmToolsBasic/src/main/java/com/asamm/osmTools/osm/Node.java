@@ -9,6 +9,7 @@ import org.kxml2.io.KXmlParser;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -162,7 +163,7 @@ public class Node {
         Date date =  new Date();
         
                 //format for numver of digits
-        DecimalFormat decimf = new DecimalFormat("#.00000");
+        DecimalFormat decimf = new DecimalFormat("#.0000000", new DecimalFormatSymbols(java.util.Locale.US));
         
         if (visible == null){
             visible = "";

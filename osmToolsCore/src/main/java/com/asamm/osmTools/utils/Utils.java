@@ -22,10 +22,7 @@ import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.*;
 
 /**
  * @author volda
@@ -33,6 +30,14 @@ import java.util.zip.ZipOutputStream;
 public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
+
+    public static boolean isLocalDEV() {
+        String env = System.getenv("ENV");
+        if (env == null) {
+            return false;
+        }
+        return System.getenv("ENV").equals("DEV");
+    }
 
     public static String changeSlash(String name) {
         if (name.contains("/")) {
@@ -53,8 +58,12 @@ public class Utils {
     }
 
     public static void deleteFilesInDir(String pathToDir) {
+        deleteFilesInDir(Path.of(pathToDir));
+    }
+
+    public static void deleteFilesInDir(Path pathToDir) {
         // check if folder exist
-        File dir = new File(pathToDir);
+        File dir = pathToDir.toFile();
         if (!dir.exists() && !dir.isDirectory()) {
             System.out.println("Path for deleting: " + pathToDir + " does not exist or is not directory");
             return;
@@ -98,8 +107,28 @@ public class Utils {
                 Files.move(source, target);
             }
         } catch (IOException e) {
-            Logger.e(TAG, ("Error renaming file: " + e.getMessage()));
+            Logger.e(TAG, "Error renaming file: " +source + " to file: "+target+" Error: "+ e.getMessage());
+            throw new IllegalArgumentException("Error renaming file:  "+ e.getMessage());
         }
+    }
+
+    /**
+     * Method change file extension. If file has no extension, new extension is added.
+     * The original path is not changed only extension is changed
+     *
+     * @param pathToFile   path to file to change extension
+     * @param newExtension new extension to set. Define extenstion also with dot (e.g. ".txt")
+     * @return
+     */
+    public static Path changeFileExtension(Path pathToFile, String newExtension) {
+
+        String fileName = pathToFile.getFileName().toString();
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex != -1) {
+            // delete file extension
+            fileName = fileName.substring(0, lastDotIndex);
+        }
+        return pathToFile.getParent().resolve(fileName + newExtension);
     }
 
     public static String generateMD5hash(String pathToFile) {
@@ -150,6 +179,51 @@ public class Utils {
         }
     }
 
+    /**
+     * Method unzip file to target directory
+     *
+     * @param zipFile         file to unzip
+     * @param targetDirectory directory to unzip file
+     * @throws IOException
+     */
+    public static void unzipFile(Path zipFile, Path targetDirectory) {
+        File targetDir = targetDirectory.toFile();
+
+        // Ensure the target directory exists
+        if (!targetDir.exists()) {
+            targetDir.mkdirs();
+        }
+
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile.toFile()))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File newFile = new File(targetDir, entry.getName());
+
+                // Prevent Zip Slip vulnerability
+                String canonicalPath = newFile.getCanonicalPath();
+                if (!canonicalPath.startsWith(targetDir.getCanonicalPath())) {
+                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+                }
+
+                if (entry.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    // Ensure parent directories exist
+                    new File(newFile.getParent()).mkdirs();
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, length);
+                        }
+                    }
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error occurred while unzipping file: " + e.getMessage());
+        }
+    }
 
     public static void compressFile(String source, String target) throws IOException {
         List<String> files = new ArrayList<String>();
@@ -250,10 +324,11 @@ public class Utils {
 
     /**
      * Get file name without an extension
+     *
      * @param path path to file to get name without an extension
      * @return name of the file without extension or empty string if the file has no extension
      */
-    public static String getFileNamePart(Path path){
+    public static String getFileNamePart(Path path) {
         String fileName = path.getFileName().toString();
         int lastDotIndex = fileName.indexOf(".");
         if (lastDotIndex != -1) {
@@ -265,8 +340,9 @@ public class Utils {
 
     /**
      * Append custom string before an extension of file
+     *
      * @param filePath path to file to rename
-     * @param text custom string to append before an extension
+     * @param text     custom string to append before an extension
      * @return new path to file with appended text before an extension
      */
     public static Path appendBeforeExtension(Path filePath, String text) {
@@ -282,8 +358,9 @@ public class Utils {
 
     /**
      * Move file from source to target path
-     * @param source path to source file
-     * @param target path to target file
+     *
+     * @param source          path to source file
+     * @param target          path to target file
      * @param replaceExisting true if replace existing file
      * @return true if file was moved successfully
      */

@@ -56,7 +56,7 @@ public class GenLoMaps extends AGenerator {
 
     public void process() throws Exception {
 
-        Set<Action> actionList = AppConfig.config.getActions();
+        List<Action> actionList = AppConfig.config.getActions();
 
         // are there any data in mappack?
         if (!mMapSource.hasData()) {
@@ -123,7 +123,7 @@ public class GenLoMaps extends AGenerator {
 
     //               PERFORM ACTIONS
 
-    private void processPlanet(Set<Action> actionList, MapSource mMapSource) {
+    private void processPlanet(List<Action> actionList, MapSource mMapSource) {
         // find ItemMap with if "planet" and process it
         ItemMap map = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
         if (map != null) {
@@ -139,7 +139,7 @@ public class GenLoMaps extends AGenerator {
             }
             actionMergePlanet(map);
 
-            // generate maplibre
+            // generate maplibre planet tiles
             actionGenerateMapLibre(map);
 
             // upload to maptiler
@@ -156,20 +156,20 @@ public class GenLoMaps extends AGenerator {
             ItemMap map = mp.getMap(i);
 
             switch (action) {
-                //download, tourist and contour are processed reparetly for whole planet
+                //download, tourist and contour are already processed for whole planet
                 case GRAPH_HOPPER:
-                    actionGraphHopper(map);
+//                    actionGraphHopper(map);
                     break;
                 case ADDRESS_POI_DB:
                     actionAddressPoiDatabase(map);
                     actionInsertMetaData(map);
                     break;
                 case COASTLINE:
-
                     actionCoastline(map);
                     break;
                 case TRANSFORM:
                     actionTransformData(map);
+                    break;
                 case MERGE:
                     actionMerge(map);
                     break;
@@ -234,39 +234,39 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION GRAPHHOPPER
 
-    private void actionGraphHopper(ItemMap map) throws IOException, InterruptedException {
-        // check if we want to generate GraphHopper data
-        if (!map.hasAction(Action.GRAPH_HOPPER)) {
-            return;
-        }
-
-        // check if file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles() && map.getPathGraphHopper().toFile().exists()) {
-//            Logger.i(TAG, "File with GraphHopper '" + map.getPathGraphHopper()
-//                    + "' already exist - skipped." );
-            return;
-        }
-
-        // clear working directory
-        File fileSource = map.getPathSource().toFile();
-        File ghDir = new File(fileSource.getParentFile(),
-                FilenameUtils.getBaseName(map.getPathSource().toString()) + "-gh");
-        FileUtils.deleteDirectory(ghDir);
-
-        // execute graphHopper
-        CmdGraphHopper cmd = new CmdGraphHopper(map);
-        cmd.execute();
-
-        // check result and move it to correct directory
-        Collection<File> files = FileUtils.listFiles(ghDir, null, false);
-        if (files.size() == 0) {
-            throw new UnknownError("Generating of GraphHopper wasn't successful");
-        }
-
-        // move (pack) files
-        ZipUtils.pack(ghDir, map.getPathGraphHopper().toFile(), true);
-        FileUtils.deleteDirectory(ghDir);
-    }
+//    private void actionGraphHopper(ItemMap map) throws IOException, InterruptedException {
+//        // check if we want to generate GraphHopper data
+//        if (!map.hasAction(Action.GRAPH_HOPPER)) {
+//            return;
+//        }
+//
+//        // check if file exits and we should overwrite it
+//        if (!Parameters.isRewriteFiles() && map.getPathGraphHopper().toFile().exists()) {
+////            Logger.i(TAG, "File with GraphHopper '" + map.getPathGraphHopper()
+////                    + "' already exist - skipped." );
+//            return;
+//        }
+//
+//        // clear working directory
+//        File fileSource = map.getPathSource().toFile();
+//        File ghDir = new File(fileSource.getParentFile(),
+//                FilenameUtils.getBaseName(map.getPathSource().toString()) + "-gh");
+//        FileUtils.deleteDirectory(ghDir);
+//
+//        // execute graphHopper
+//        CmdGraphHopper cmd = new CmdGraphHopper(map);
+//        cmd.execute();
+//
+//        // check result and move it to correct directory
+//        Collection<File> files = FileUtils.listFiles(ghDir, null, false);
+//        if (files.size() == 0) {
+//            throw new UnknownError("Generating of GraphHopper wasn't successful");
+//        }
+//
+//        // move (pack) files
+//        ZipUtils.pack(ghDir, map.getPathGraphHopper().toFile(), true);
+//        FileUtils.deleteDirectory(ghDir);
+//    }
 
     // ACTION ADDRESS/POI DATABASE
 
@@ -348,7 +348,7 @@ public class GenLoMaps extends AGenerator {
         printLogHeader(Action.TOURIST);
         // check if file exits and we should overwrite it
         if (!AppConfig.config.getOverwrite() && map.getPathTourist().toFile().exists()) {
-            Logger.i(TAG, "File with tourist path ${map.getPathTourist()} already exist - skipped.");
+            Logger.i(TAG, "File with tourist path " + map.getPathTourist() + " already exist - skipped.");
             return;
         }
 
@@ -487,48 +487,54 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        boolean isCoastline = map.hasSea();
-        if (!map.hasAction(Action.CONTOUR) &&
-                !map.hasAction(Action.TOURIST) &&
-                !isCoastline) {
-            //Nothing for merginf map will be skipped
-            //System.out.println("Nic pro "+map.name);
-            return;
-        }
-
         // test if merged file already exist
-        if (!Parameters.isRewriteFiles() && map.getPathMerge().toFile().exists()) {
+        if ( !AppConfig.config.getOverwrite() && map.getPathMerge().toFile().exists()) {
             // nothing to do file already exist
             Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist");
-            //set information that map is merged
-            map.isMerged = true;
+            map.setMerged(true);
             return;
         }
 
-        if (isCoastline && !map.getPathCoastline().toFile().exists()) {
-            throw new IllegalArgumentException("Coastlines path: " + map.getPathCoastline() + " does not exist.");
-        }
+        List<Path> pathsToMerge = new ArrayList<>();
 
-        // test if extracted map exist
+        // test if extracted map from planet exist
         if (!map.getPathSource().toFile().exists()) {
             throw new IllegalArgumentException("Extracted base map for merging: " +
                     map.getPathSource() + " does not exist.");
+        }
+        pathsToMerge.add(map.getPathSource());
+
+        if ( map.hasSea()) {
+            if (!map.getPathCoastline().toFile().exists()) {
+                throw new IllegalArgumentException("Coastlines path: " + map.getPathCoastline() + " does not exist.");
+            }
+            pathsToMerge.add(map.getPathCoastline());
+        }
+
+        if (AppConfig.config.getActions().contains(Action.TRANSFORM)){
+            if (!map.getPathTranform().toFile().exists()) {
+                throw new IllegalArgumentException("Transformed data path: " + map.getPathTranform() + " does not exist.");
+            }
+            pathsToMerge.add(map.getPathTranform());
+        }
+
+        if (pathsToMerge.size() == 1){
+            Logger.i(TAG, "Only one file to merge: " + map.getPathSource() + ". Nothing to do.");
+            return;
         }
 
         TimeWatch time = new TimeWatch();
         // prepare cmd line and string for log
         String logStr = "Merging maps: " + map.getPathSource() + " and ";
-        CmdMerge cm = new CmdMerge(map);
-        cm.createCmd();
 
         Main.mySimpleLog.print("\nMarging: " + map.getName() + " ...");
-        Logger.i(TAG, "Merge map parts, command: " + cm.getCmdLine());
-        cm.execute();
+        CmdOsmium cmdOsmium = new CmdOsmium();
+        cmdOsmium.merge(pathsToMerge, map.getPathMerge());
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
         time.stopCount();
 
         //set information about margin
-        map.isMerged = true;
+        map.setMerged(true);
     }
 
     // ACTION GENERATE
@@ -549,8 +555,8 @@ public class GenLoMaps extends AGenerator {
                 cg.execute(2, true);
 
                 // clean tmp
-                Logger.i(TAG, "Deleting files in tmp dir: " + Consts.DIR_TMP);
-                Utils.deleteFilesInDir(Consts.DIR_TMP);
+                Logger.i(TAG, "Deleting files in tmp dir: " + AppConfig.config.getTemporaryDir());
+                Utils.deleteFilesInDir(AppConfig.config.getTemporaryDir());
 
                 Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
             } else {
@@ -624,7 +630,7 @@ public class GenLoMaps extends AGenerator {
         // insert version of map
         // create area coverage (it's intersection of country border and data json)
         Geometry geom = WriterAddressDefinition.createDbGeom(
-                itemMap.getPathJsonPolygon(), itemMap.getPathCountryBoundaryGeoJson());
+                itemMap.getPathJsonPolygon().toString(), itemMap.getPathCountryBoundaryGeoJson().toString());
 
         if (!geom.isValid()) {
             geom = GeomUtils.fixInvalidGeom(geom);

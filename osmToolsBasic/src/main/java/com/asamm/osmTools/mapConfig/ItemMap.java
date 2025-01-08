@@ -4,11 +4,8 @@
  */
 package com.asamm.osmTools.mapConfig;
 
-import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.config.Action;
-import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.sea.Boundaries;
-import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
 import lombok.Getter;
@@ -24,7 +21,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -34,36 +30,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ItemMap extends AItemMap {
 
     private static final String TAG = ItemMap.class.getSimpleName();
-
-
-    // CONSTANTS
-
-    private static final String DIR_COASTLINES =
-            Consts.fixDirectoryPath("coastlines");
-    private static final String DIR_CONTOURS =
-            Consts.fixDirectoryPath("_contours");
-    private static final String DIR_DOWNLOAD =
-            Consts.fixDirectoryPath("_download");
-    private static final String DIR_EXTRACT =
-            Consts.fixDirectoryPath("_extract");
-    private static final String DIR_GRAPHHOPPER =
-            Consts.fixDirectoryPath("_graphHopper");
-    private static final String DIR_ADDRESS_POI_DB =
-            Consts.fixDirectoryPath("_address_poi_db");
-    private static final String DIR_GENERATE =
-            Consts.fixDirectoryPath("_generate");
-    private static final String DIR_GENERATE_MAPLIBRE =
-            Consts.fixDirectoryPath("_gen_maplibre");
-    private static final String DIR_MERGE =
-            Consts.fixDirectoryPath("_merge");
-    private static final String DIR_POLYGONS =
-            Consts.fixDirectoryPath("polygons");
-    private static final String DIR_RESULT =
-            Consts.fixDirectoryPath("_result");
-    private static final String DIR_TOURIST =
-            Consts.fixDirectoryPath("_tourist");
-    /* folder where to store customized or transformed original OSM data (e.q. city residential areas */
-    private static final String DIR_TRANSFORM = Consts.fixDirectoryPath("_transform");
 
     // BASIC PARAMETERS
 
@@ -76,82 +42,43 @@ public class ItemMap extends AItemMap {
     // how will item called in the store
     @Getter
     private String nameReadable;
+
     // name of item for generating (useful for separating languages)
     private String nameGen;
 
-
     // PATH PARAMETERS
-
-    // path to local source file
-    @Getter
-    private Path pathSource;
-    // path where map will be generated
-    @Getter
-    private Path pathGenerate;
-    // path where will be generated contours
-    @Getter
-    private Path pathGenerateContour;
-
-    // path where the generated maplibre outdoor section is stored
-    @Getter
-    private Path pathGenMlOutdoor;
-    // path to generated maplibre openmaptiles data file
-    private Path pathGenMlOpenMapTiles;
-    // path where results from GraphHopper should be placed
-    @Getter
-    private Path pathGraphHopper;
-    // path to store unzipped generated Address/POI databases
-    @Getter
-    private Path pathAddressPoiDb;
-    // path where generated pdf files should be merged
-    @Getter
-    private Path pathMerge;
-    // path to polygon file
-    @Getter
-    private Path pathPolygon;
-    // path to file with generated contours
-    @Getter
-    private Path pathContour;
-    // path where should be placed generated result (zipped)
-    @Getter
-    private Path pathResult;
-    // path to shp files
-    @Getter
-    private Path pathShp;
-    // path to file with coastlines
-    @Getter
-    private Path pathCoastline;
-    // path for tourist data
-    @Getter
-    private Path pathTourist;
-    // path for transformed or customized data file
-    @Getter
-    private Path pathTranform;
-
+    private final PathResolver pathResolver;
 
     @Setter
     private String resultMD5hash;
+
     // bounds of this map generated from polygon file
-    private Boundaries boundaries;
-    public boolean isMerged;
+    @Getter
+    private Boundaries boundary;
+
+    @Getter
+    @Setter
+    private boolean isMerged = false;
 
     // MAIN PART
 
     public ItemMap(ItemMapPack mpParent) {
         super(mpParent);
-        isMerged = false;
-    }
 
-    public String getRelativeResultsPath() {
-        if (pathResult != null) {
-            int lastIndex = (Consts.DIR_BASE + "_result").length();
-            if (lastIndex == -1) {
-                return null;
-            }
-            return pathResult.toString().substring(lastIndex + 1);
-        }
-        return null;
+         pathResolver = new PathResolver(this);
+
     }
+//
+//    public String getRelativeResultsPath() {
+//        if (pathResult != null) {
+//            int lastIndex = (Consts.DIR_BASE + "_result").length();
+//            if (lastIndex == -1) {
+//                return null;
+//            }
+//            return pathResult.toString().substring(lastIndex + 1);
+//        }
+//        return null;
+//    }
 
     @Override
     public void validate() {
@@ -159,77 +86,87 @@ public class ItemMap extends AItemMap {
         super.validate();
 
         // check base parameters
-        if (name == null || name.length() == 0) {
+        if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Input XML is not valid. " +
                     "Invalid argument file: " + name);
         }
 
-
         // check country name
         if (hasAction(Action.ADDRESS_POI_DB) || hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (getCountryName() == null || getCountryName().length() == 0) {
+            if (getCountryName() == null || getCountryName().isEmpty()) {
                 throw new IllegalArgumentException("Input XML is not valid. " +
                         "Nor readable name nor country name is not defined for map or it's parent - name:" + name);
             }
         }
     }
 
-    public void setPaths() {
-        String subPath = Paths.get(AppConfig.config.getVersion(), getDir(), name).toString();
+    // GETTERS & SETTERS
 
-        // define extract and generation path and also create directory structure if is needed
-        if (hasAction(Action.DOWNLOAD)) {
-            pathSource = Path.of(Parameters.getDataDir() + DIR_DOWNLOAD +
-                    subPath + "." + Parameters.mapOutputFormat);
-        } else {
-            pathSource = Path.of(Parameters.getDataDir() + DIR_EXTRACT +
-                    subPath + "." + Parameters.mapOutputFormat);
-        }
-
-        // base paths
-        pathPolygon = Path.of(Consts.DIR_BASE + DIR_POLYGONS + getDir() + name + ".poly");
-        pathGraphHopper = Path.of(Consts.DIR_BASE + DIR_GRAPHHOPPER + subPath + "-gh.zip");
-        pathAddressPoiDb = Path.of(Consts.DIR_BASE + DIR_ADDRESS_POI_DB +  subPath + ".osm.db");
-        pathContour = Path.of(Parameters.getDataDir(), DIR_CONTOURS, getDir(), name + ".osm.pbf");
-        pathTourist = Path.of(Parameters.getDataDir() + DIR_TOURIST + subPath + ".osm.pbf");
-        pathShp = Path.of(Parameters.getDataDir() + DIR_COASTLINES + "_shp" + Consts.FILE_SEP +
-                getDir() + name + ".shp");
-        pathCoastline = Path.of(Parameters.getDataDir() + DIR_COASTLINES + "_pbf" + Consts.FILE_SEP +
-                getDir() + name + ".osm.pbf");
-        pathMerge = Path.of(Parameters.getDataDir() + DIR_MERGE +
-                subPath + "." + Parameters.mapOutputFormat);
-        pathTranform = Path.of(Parameters.getDataDir() + DIR_TRANSFORM + Consts.FILE_SEP +
-                getDir() + name + ".osm.pbf");
-        pathGenMlOutdoor = Path.of(Parameters.getDataDir() + DIR_GENERATE_MAPLIBRE +
-                subPath + "_outdoor" +".mbtiles");
-
-        pathGenMlOpenMapTiles = Path.of(Parameters.getDataDir() + DIR_GENERATE_MAPLIBRE +
-                subPath + "_openmaptiles" + ".mbtiles");
-
-        // parameters for generating
-        if (hasAction(Action.GENERATE_MAPSFORGE)) {
-            pathGenerate = Path.of(Consts.DIR_BASE + DIR_GENERATE +
-                    AppConfig.config.getVersion() + Consts.FILE_SEP + getDirGen());
-            pathResult = Path.of(Parameters.getDataDir() + DIR_RESULT +
-                    AppConfig.config.getVersion() + Consts.FILE_SEP + getDirGen());
-            pathGenerateContour = Path.of(Parameters.getDataDir() + DIR_CONTOURS +
-                    Consts.FILE_SEP + getDir() + name + ".osm.map");
-
-            // improve names
-            if (nameGen != null && !nameGen.isEmpty()) {
-                //
-
-                pathGenerate.resolve(nameGen + ".osm.map");
-                pathResult.resolve(nameGen + ".zip");
-            } else {
-                pathGenerate.resolve(name + ".osm.map");
-                pathResult.resolve(name + ".zip");
-            }
-        }
+    public Path getPathSource() {
+        return pathResolver.getPath(PathType.EXTRACT, name + ".osm.pbf");
     }
 
+    public Path getPathGenerate() {
+        if (nameGen != null && !nameGen.isEmpty()) {
+            return pathResolver.getPath(PathType.MAPSFORGE_GENERATE, nameGen + ".osm.map");
+        }
+        return pathResolver.getPath(PathType.MAPSFORGE_GENERATE, name + ".osm.map");
+    }
 
-    // GETTERS & SETTERS
+    public Path getPathGenMlOutdoor() {
+        return pathResolver.getPath(PathType.MAPLIBRE_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
+    }
+
+    public Path getPathGenMlOpenMapTiles() {
+        return pathResolver.getPath(PathType.MAPLIBRE_ONLINE_OPENMAPTILES, name + "_openmaptiles.mbtiles");
+    }
+
+    public Path getPathAddressPoiDb() {
+        return pathResolver.getPath(PathType.ADDRESS_POI_DB, name + ".osm.db");
+    }
+
+    public Path getPathMerge() {
+        return pathResolver.getPath(PathType.MERGE, name + ".osm.pbf");
+    }
+
+    public Path getPathPolygon() {
+        return pathResolver.getPath(PathType.POLYGON, name + ".poly");
+    }
+
+    public Path getPathJsonPolygon() {
+        return Utils.changeFileExtension(getPathPolygon(), ".json");
+    }
+
+    public Path getPathCountryBoundaryGeoJson() {
+        return Utils.changeFileExtension(getPathPolygon(), "_country.geojson");
+    }
+
+    public Path getPathContour() {
+        return pathResolver.getPath(PathType.CONTOUR, name + ".osm.pbf");
+    }
+
+    public Path getPathResult() {
+        if (nameGen != null && !nameGen.isEmpty()) {
+            return pathResolver.getPath(PathType.MAPSFORGE_RESULT, nameGen + ".zip");
+        }
+        return pathResolver.getPath(PathType.MAPSFORGE_RESULT, name + ".zip");
+    }
+
+    public Path getPathShp() {
+        return pathResolver.getPath(PathType.SHP, name + ".shp");
+    }
+
+    public Path getPathCoastline() {
+        return pathResolver.getPath(PathType.COASTLINE, name + ".osm.pbf");
+    }
+
+    public Path getPathTourist() {
+        return pathResolver.getPath(PathType.TOURIST, name + ".osm.pbf");
+    }
+
+    public Path getPathTranform() {
+        return pathResolver.getPath(PathType.TRANSFORM, name + ".osm.pbf");
+    }
 
     // BASIC PARAMETERS
 
@@ -249,22 +186,6 @@ public class ItemMap extends AItemMap {
         }
     }
 
-    // PATH PARAMETERS
-
-    public String getPathJsonPolygon() {
-        String str = pathPolygon.toString().substring(0, pathPolygon.toString().lastIndexOf("."));
-        return str + ".json";
-    }
-
-    public String getPathCountryBoundaryGeoJson() {
-        String str = pathPolygon.toString().substring(0, pathPolygon.toString().lastIndexOf("."));
-        return str + "_country.geojson";
-    }
-
-    public Boundaries getBoundary() {
-        return boundaries;
-    }
-
     //  PARSE FUNCTIONS
 
     public void fillAttributes(KXmlParser parser) {
@@ -280,7 +201,7 @@ public class ItemMap extends AItemMap {
         }
         if (parser.getAttributeValue(null, "name") != null) {
             nameReadable = Utils.changeSlash(parser.getAttributeValue(null, "name"));
-            if (nameReadable.length() == 0) {
+            if (nameReadable.isEmpty()) {
                 Logger.w(TAG, "Config.xml not valid: Missing attribute name on line : " + parser.getLineNumber());
             }
         }
@@ -296,13 +217,9 @@ public class ItemMap extends AItemMap {
 
     public void setBoundsFromPolygon() throws IOException {
 
-        if (pathPolygon == null) {
-            boundaries = null;
-            return;
-        }
-        File polyFile = pathPolygon.toFile();
+        File polyFile = getPathPolygon().toFile();
         if (!polyFile.exists()) {
-            boundaries = null;
+            boundary = null;
             return;
         }
 
@@ -334,12 +251,7 @@ public class ItemMap extends AItemMap {
                     minLatitude = Math.min(lat, minLatitude);
                 }
             }
-            boundaries = new Boundaries();
-            boundaries.setMinLon(minLongitude);
-            boundaries.setMinLat(minLatitude);
-            boundaries.setMaxLon(maxLongitude);
-            boundaries.setMaxLat(maxLatitude);
-
+            boundary = new Boundaries(minLongitude, maxLongitude, minLatitude, maxLatitude);
         } finally {
             if (br != null) {
                 br.close();
@@ -353,7 +265,7 @@ public class ItemMap extends AItemMap {
     public JSONObject getItemAreaGeoJson() {
 
         // read json file with area definition
-        File fileJsonPolyg = new File(getPathJsonPolygon());
+        File fileJsonPolyg = getPathJsonPolygon().toFile();
         if (!fileJsonPolyg.exists()) {
             throw new IllegalArgumentException("JSON polygon file doesn't exist " + fileJsonPolyg.getAbsolutePath());
         }
@@ -377,30 +289,15 @@ public class ItemMap extends AItemMap {
         return obj;
     }
 
-
     @Override
     public String toString() {
         return "ItemMap{" +
                 "mId='" + id + '\'' +
                 ", mName='" + name + '\'' +
                 ", mNameGen='" + nameGen + '\'' +
-                ", mPathSource='" + pathSource + '\'' +
-                ", mPathGenerate='" + pathGenerate + '\'' +
-                ", mPathGenerateContour='" + pathGenerateContour + '\'' +
-                ", mPathGraphHopper='" + pathGraphHopper + '\'' +
-                ", mPathAddressPoiDb='" + pathAddressPoiDb + '\'' +
-                ", mPathMerge='" + pathMerge + '\'' +
-                ", mPathPolygon='" + pathPolygon + '\'' +
-                ", mPathContour='" + pathContour + '\'' +
-                ", mPathResult='" + pathResult + '\'' +
-                ", mPathTourist='" + pathTourist + '\'' +
-                ", mPathShp='" + pathShp + '\'' +
-                ", mPathCoastline='" + pathCoastline + '\'' +
                 ", mResultMD5hash='" + resultMD5hash + '\'' +
-                ", mBounds=" + boundaries +
+                ", mBounds=" + boundary +
                 ", isMerged=" + isMerged +
                 '}';
     }
-
-
 }

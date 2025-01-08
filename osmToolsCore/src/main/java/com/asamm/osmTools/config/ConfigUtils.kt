@@ -10,15 +10,18 @@ object ConfigUtils {
      * Define that actions will be performed based on command line definition of actions in[cliActions]
      * For specific CLI actions, additional actions are added
      */
-    fun addAdditionalActions(cliActions: MutableSet<Action>) {
+    fun addAdditionalActions(cliActions: MutableList<Action>) {
 
         // for MapsForge generation add Coastline action, transform and merge
         when {
             cliActions.contains(Action.GENERATE_MAPSFORGE) -> {
-                cliActions.add(Action.COASTLINE)
-                cliActions.add(Action.TRANSFORM)
-                cliActions.add(Action.MERGE)
 
+                val index = cliActions.indexOf(Action.GENERATE_MAPSFORGE)
+
+                // Add additional actions before Action.GENERATE_MAPSFORGE
+                cliActions.addAll(index, listOf(Action.EXTRACT,Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
+
+                // Additional actions after Action.GENERATE_MAPSFORGE
                 cliActions.add(Action.COMPRESS)
                 cliActions.add(Action.CREATE_JSON)
             }
@@ -65,20 +68,34 @@ object ConfigUtils {
         return command
     }
 
+    // Function to check if ogr2ogr is installed and return its path
+    fun findOgr2ogrPath(): String {
+        // First try to find "python", if not found, try "python3"
+        val ogrCommands = if (isWindows()) listOf("ogr2ogr.exe", "ogr2ogr") else listOf("ogr2ogr")
+
+        val command = checkApps(ogrCommands, "--version", "GDAL")
+
+        if (command.isEmpty()) {
+            // If none of the commands succeeded, throw an exception
+            throw Exception("Ogr2ogr not found. Tried commands: $ogrCommands . Please install ogr2ogr")
+        }
+        return command
+    }
+
     /**
      * Check that planetiler util is installed and available in the path
      */
-    fun getCheckPlanetilerPath(): Path {
+    fun getCheckPath(pathToCheck: Path): Path {
 
-        if ( !AppConfig.config.cmdConfig.planetiler.toFile().exists()) {
-            throw Exception("Planetiler not found in location: ${AppConfig.config.cmdConfig.planetiler.toString()} ")
+        if ( !pathToCheck.toFile().exists()) {
+            throw Exception("File not found in location: ${pathToCheck} ")
         }
 
-        return AppConfig.config.cmdConfig.planetiler
+        return pathToCheck
     }
 
 
-    fun checkApps(commands: List<String>, argument: String = "--version"): String {
+    fun checkApps(commands: List<String>, argument: String = "--version", expectedOutput:String = ""): String {
         for (command in commands) {
             try {
                 // Use ProcessBuilder to run the "python --version" or "python3 --version" command
@@ -93,7 +110,8 @@ object ConfigUtils {
                 val fileNameWithExtension = command.substringAfterLast(File.separator)
                 val fileNameWithoutExtension = fileNameWithExtension.substringBeforeLast(".")
 
-                if (output.contains(fileNameWithoutExtension, ignoreCase = true)) {
+                if (output.contains(fileNameWithoutExtension, ignoreCase = true) ||
+                        (expectedOutput.isNotEmpty() && output.contains(expectedOutput)))  {
                     // If Python is found, return the path of the executable
                     return command
                 }

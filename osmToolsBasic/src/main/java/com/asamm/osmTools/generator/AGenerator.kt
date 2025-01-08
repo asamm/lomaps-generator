@@ -67,12 +67,9 @@ abstract class AGenerator {
                         val map = ItemMap(mapPack)
                         // set variables from xml to map object
                         map.fillAttributes(parser)
-                        // set variables with path to files
-                        map.setPaths()
 
                         // set boundaries from polygons
                         map.setBoundsFromPolygon()
-
 
                         // finally add map to container
                         mapPack!!.addMap(map)
@@ -312,7 +309,7 @@ abstract class AGenerator {
                 continue
             }
 
-            if (storageType == ConfigurationCountry.StorageType.GEOJSON && File(map.pathCountryBoundaryGeoJson).exists()) {
+            if (storageType == ConfigurationCountry.StorageType.GEOJSON && map.pathCountryBoundaryGeoJson.toFile().exists()) {
                 // boundary geom for this map exists > skip it
                 Logger.i(TAG, "Country boundaries exits for map: " + map.nameReadable)
                 continue

@@ -18,14 +18,17 @@ class CmdLoMapsTools() : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
     fun generateTourist(pathToSource: Path, pathToTourist: Path) {
         addCommand("tourist2ways")
-        addCommand("-i")
-        addCommand(pathToSource.toString())
-        addCommand("-o")
-        addCommand(pathToTourist.toString())
         if (AppConfig.config.overwrite) {
             addCommand("--overwrite")
         }
-        // TODO remove addCommand("--addwaynodes") for production
+        addCommands("-i", pathToSource.toString())
+        addCommands("-o", pathToTourist.toString())
+
+        addCommands("--nodeid", AppConfig.config.touristConfig.nodeId.toString())
+        addCommands("--wayid", AppConfig.config.touristConfig.wayId.toString())
+
+        // Do not use it for production commands add nodes of way into the output file. In normal case way nodes are not
+        // needed because they are part of original way of original OSM planet file
         //addCommand("--addwaynodes")
 
         Logger.i(TAG, "Command: " + getCmdLine())

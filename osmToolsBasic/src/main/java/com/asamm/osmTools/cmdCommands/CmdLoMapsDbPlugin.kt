@@ -2,6 +2,7 @@ package com.asamm.osmTools.cmdCommands
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst
 import com.asamm.osmTools.Parameters
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader
 import com.asamm.osmTools.mapConfig.ItemMap
@@ -17,7 +18,7 @@ import java.util.*
  */
 class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     // set parameters
-    private val mFileTempMap = File(Consts.DIR_TMP, "temp_map_simple.osm.pbf")
+    private val mFileTempMap = AppConfig.config.temporaryDir.resolve("temp_map_simple.osm.pbf").toFile()
 
     /**
      * Definition where will be poiDb created

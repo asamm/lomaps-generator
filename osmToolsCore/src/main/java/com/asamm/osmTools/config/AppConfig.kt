@@ -4,6 +4,7 @@ package com.asamm.osmTools.config
 import com.asamm.store.LocusStoreEnv
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -44,7 +45,7 @@ data class Config(
 
     var version: String = "",
     var overwrite: Boolean = false,
-    var actions: MutableSet<Action> = mutableSetOf<Action>(),
+    var actions: MutableList<Action> = mutableListOf<Action>(),
     var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,
     var verbose: Boolean = false,
 
@@ -52,7 +53,13 @@ data class Config(
     var temporaryDir: Path = Path.of("_temp"),
 
     @Serializable(with = PathSerializer::class)
+    var dataDir: Path = Path.of("./"),
+
+    @Serializable(with = PathSerializer::class)
     var mapConfigXml: Path = Path.of(""),
+
+    @Serializable(with = PathSerializer::class)
+    var mapsforgeTagMapping: Path,
 
     var mapDescription: String = """
         <div><h4>Vector maps for <a href="http://www.locusmap.app">Locus</a> application</h4>
@@ -70,6 +77,7 @@ data class Config(
     var planetConfig: PlanetConfig,
     var cmdConfig: CmdConfig,
     var maptilerCloudConfig: MaptilerCloudConfig,
+    var coastlineConfig: CoastlineConfig,
 
     )
 
@@ -119,12 +127,32 @@ data class ContourConfig(
 )
 
 @Serializable
+class CoastlineConfig(
+    var nodeBorderId: Long,
+
+    @Serializable(with = PathSerializer::class)
+    @SerialName("landPolygonShp")
+    val _landPolygonShp: Path = Path.of("coastlines/land_polygons/land_polygons.shp"),
+
+    val landPolygonUrl: String = "https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip"
+){
+    val landPolygonShp: Path
+        get() = AppConfig.config.dataDir.resolve(_landPolygonShp)
+}
+
+
+
+@Serializable
 class PlanetConfig(
     @Serializable(with = PathSerializer::class)
     var planetLatestPath: Path, // path to the original planet file
     @Serializable(with = URLSerializer::class)
-    var planetLatestURL: URL, // URL to the latest planet file
-    var planetExtendedId: String = "planet-extended",
+    var planetLatestURL: URL, // URL where to download the latest planet file
+
+    @Serializable(with = PathSerializer::class)
+    var planetilerDownloadDir: Path, // path to the planetiler data folder
+
+    var planetExtendedId: String, // id of the extended planet file (extended is planet file with contours and tourit)
 
     var lomapsOutdoorsLayers: MutableSet<String> // set of planetiler layers that are used for LoMaps outdoor tile scheme
 )
@@ -140,7 +168,10 @@ class MaptilerCloudConfig(
 @Serializable
 class CmdConfig(
     @Serializable(with = PathSerializer::class)
-    var planetiler: Path
+    var planetiler: Path,
+
+    @Serializable(with = PathSerializer::class)
+    var osmosis: Path
 ) {
     val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
 
