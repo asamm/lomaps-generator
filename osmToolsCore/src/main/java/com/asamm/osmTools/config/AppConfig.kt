@@ -56,28 +56,20 @@ data class Config(
     var dataDir: Path = Path.of("./"),
 
     @Serializable(with = PathSerializer::class)
-    var mapConfigXml: Path = Path.of(""),
+    var storeUploaderPath: Path,
 
-    @Serializable(with = PathSerializer::class)
-    var mapsforgeTagMapping: Path,
+    @Transient
+    var storeUploadDefinitionJson: Path = Path.of("storeUploadeDefinition.json"),
 
-    var mapDescription: String = """
-        <div><h4>Vector maps for <a href="http://www.locusmap.app">Locus</a> application</h4>
-        Created by <a href="http://code.google.com/p/mapsforge/">Mapsforge</a> Map-Writer
-        <br />
-        Map data source OpenStreetMap community
-        <br />
-        Contour lines source <a href="https://earthexplorer.usgs.gov">SRTM</a> and 
-        <a href="http://www.viewfinderpanoramas.org">Viewfinder Panoramas</a>
-        <br /><br />
-        </div>""".trimIndent(),
 
     var touristConfig: TouristConfig,
     var contourConfig: ContourConfig,
     var planetConfig: PlanetConfig,
     var cmdConfig: CmdConfig,
     var maptilerCloudConfig: MaptilerCloudConfig,
+    var mapsforgeConfig: MapsforgeConfig,
     var coastlineConfig: CoastlineConfig,
+    var poiAddressConfig: PoiAddressConfig,
 
     )
 
@@ -163,6 +155,35 @@ class MaptilerCloudConfig(
     var tilesetTitleLm: String = "LoMaps_Outdoor",
     var tilesetAttributionLm: String,
     var tilesetDescLm: String,
+)
+
+@Serializable
+data class PoiAddressConfig(
+    @Transient
+    var dbPoiVersion: Int = 2,
+
+    @Transient
+    var dbAddressVersion: Int = 2,
+
+    @Serializable(with = PathSerializer::class)
+    var poiDbXml: Path,
+
+    @Serializable(with = PathSerializer::class)
+    var addressDbXml: Path
+)
+
+@Serializable
+class MapsforgeConfig(
+
+    @Serializable(with = PathSerializer::class)
+    var mapConfigXml: Path = Path.of(""),
+
+    @Serializable(with = PathSerializer::class)
+    var tagMapping: Path,
+
+    var mapDescription: String,
+
+    var mapMetaDataDescription: String,
 )
 
 @Serializable

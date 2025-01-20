@@ -6,6 +6,7 @@ import com.asamm.osmTools.cmdCommands.CmdCountryBorders
 import com.asamm.osmTools.cmdCommands.CmdExtract
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium
 import com.asamm.osmTools.config.Action
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.ItemMapPack
@@ -57,7 +58,7 @@ abstract class AGenerator {
                     tagName = parser.name
                     if (tagName.equals("maps", ignoreCase = true)) {
                         val rewriteFiles = parser.getAttributeValue(null, "rewriteFiles")
-                        Parameters.setRewriteFiles(
+                        AppConfig.config.overwrite = (
                             rewriteFiles != null && rewriteFiles.equals("yes", ignoreCase = true)
                         )
                     } else if (tagName.equals("mapPack", ignoreCase = true)) {

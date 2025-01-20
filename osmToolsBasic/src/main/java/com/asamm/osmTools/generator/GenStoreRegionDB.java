@@ -9,6 +9,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 /**
@@ -21,8 +22,8 @@ public class GenStoreRegionDB extends AGenerator {
     // parsed configuration of maps
     private MapSource mMapSource;
 
-    public GenStoreRegionDB() throws IOException, XmlPullParserException {
-        mMapSource = parseConfigXml(new File(Parameters.getConfigStoreGeoPath()));
+    public GenStoreRegionDB(Path configXmlPath) throws IOException, XmlPullParserException {
+        mMapSource = parseConfigXml(configXmlPath.toFile());
     }
 
     public void process() throws IOException, InterruptedException {

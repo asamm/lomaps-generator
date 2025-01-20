@@ -102,7 +102,7 @@ public class UploadDefinitionCreator {
 
         String defString  =  getDefinitionJsonString();
         //Logger.i(TAG, defString);
-        File defFile = new File(Parameters.getUploadDefinitionJsonPath());
+        File defFile = AppConfig.config.getStoreUploadDefinitionJson().toFile();
 
         try {
             FileUtils.writeStringToFile(defFile, defString, UTF_8);

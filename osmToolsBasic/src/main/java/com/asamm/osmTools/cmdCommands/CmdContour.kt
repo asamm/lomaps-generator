@@ -155,16 +155,4 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
             }
         }
     }
-
-    /**
-     * Get command for major and minor category of contour lines.
-     * Decide based on type of contour unit (meters or feet)
-     */
-    private fun getContourCatCmd(): String {
-        if (map.getContourUnit() == ContourUnit.FEET) {
-            return "--line-cat=400,200"
-        }
-        // for Meter and as fallback
-        return "--line-cat=100,50"
-    }
 }

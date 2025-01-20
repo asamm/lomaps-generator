@@ -1,7 +1,9 @@
 package com.asamm.osmTools.cmdCommands;
 
 import com.asamm.osmTools.Parameters;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.utils.Logger;
+import com.asamm.store.LocusStoreEnv;
 
 import java.io.IOException;
 
@@ -36,7 +38,7 @@ public class CmdUpload  extends  Cmd{
 
     public void  createCmd (){
 
-        if (Parameters.getIsDev()){
+        if (AppConfig.config.getLocusStoreEnv() == LocusStoreEnv.DEV){
             addCommand("--isDev");
         }
 
@@ -45,7 +47,7 @@ public class CmdUpload  extends  Cmd{
 
         // set definition file
         addCommand("--uploadDef");
-        addCommand(Parameters.getUploadDefinitionJsonPath());
+        addCommand(AppConfig.config.getStoreUploadDefinitionJson().toString());
     }
 
 }

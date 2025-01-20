@@ -1,8 +1,6 @@
 package com.asamm.osmTools.generator;
 
 import com.asamm.locus.MapTilerUploader;
-import com.asamm.locus.client.model.Tileset;
-import com.asamm.locus.client.model.TilesetPage;
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.Parameters;
@@ -20,11 +18,8 @@ import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
-import com.asamm.osmTools.utils.io.ZipUtils;
 import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
 import org.xmlpull.v1.XmlPullParserException;
@@ -51,7 +46,7 @@ public class GenLoMaps extends AGenerator {
     public GenLoMaps() throws IOException, XmlPullParserException {
 
         // parse definition xml
-        mMapSource = parseConfigXml(AppConfig.config.getMapConfigXml().toFile());
+        mMapSource = parseConfigXml(AppConfig.config.getMapsforgeConfig().getMapConfigXml().toFile());
     }
 
     public void process() throws Exception {
@@ -278,7 +273,7 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if DB file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles() && map.getPathAddressPoiDb().toFile().exists()) {
+        if (!AppConfig.config.getOverwrite() && map.getPathAddressPoiDb().toFile().exists()) {
             Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
                     "' already exist - skipped.");
             return;
@@ -286,7 +281,7 @@ public class GenLoMaps extends AGenerator {
 
         // load definitions
 
-        File defFile = new File(Parameters.getConfigApDbPath());
+        File defFile = AppConfig.config.getPoiAddressConfig().getPoiDbXml().toAbsolutePath().toFile();
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
         // firstly simplify source file
@@ -327,7 +322,7 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if file exits and we should overwrite it
-        if (!Parameters.isRewriteFiles() && map.getPathCoastline().toFile().exists()) {
+        if (!AppConfig.config.getOverwrite() && map.getPathCoastline().toFile().exists()) {
             Logger.i(TAG, "File with land area " + map.getPathCoastline()
                     + " already exist - skipped.");
             return;
@@ -542,7 +537,7 @@ public class GenLoMaps extends AGenerator {
     private void actionGenerate(ItemMap map) throws IOException, InterruptedException {
 
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (Parameters.isRewriteFiles() || !map.getPathGenerate().toFile().exists()) {
+            if (AppConfig.config.getOverwrite()|| !map.getPathGenerate().toFile().exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
                 cg.createCmd();
 
@@ -619,9 +614,9 @@ public class GenLoMaps extends AGenerator {
         DatabaseData dbData = new DatabaseData(dbAddressPoiFile);
 
         // read description from definition json
-        JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
-        JSONArray descriptionJson = (JSONArray) parser.parse(
-                new FileReader(Parameters.getMapDescriptionDefinitionJsonPath()));
+//        JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
+//        JSONArray descriptionJson = (JSONArray) parser.parse(
+//                new FileReader(Parameters.getMapDescriptionDefinitionJsonPath()));
 
         // parse version into java date
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
@@ -645,13 +640,13 @@ public class GenLoMaps extends AGenerator {
 
         dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
         dbData.insertData(LoMapsDbConst.VAL_COUNTRY, itemMap.getCountryName());
-        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, descriptionJson.toJSONString());
+        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, AppConfig.config.getMapsforgeConfig().getMapMetaDataDescription());
         dbData.insertData(LoMapsDbConst.VAL_LANGUAGES, itemMap.getPrefLang());
         dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
         dbData.insertData(LoMapsDbConst.VAL_REGION_ID, itemMap.getRegionId());
         dbData.insertData(LoMapsDbConst.VAL_VERSION, AppConfig.config.getVersion());
-        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(Parameters.getDbDataPoiVersion()));
-        dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(Parameters.getDbDataAddressVersion()));
+        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbPoiVersion()));
+        dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbAddressVersion()));
 
         dbData.destroy();
 
@@ -666,7 +661,7 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        if (!Parameters.isRewriteFiles() && map.getPathResult().toFile().exists()) {
+        if (!AppConfig.config.getOverwrite() && map.getPathResult().toFile().exists()) {
             Logger.d(TAG, "File with compressed result '" + map.getPathResult() +
                     "' already exist - skipped.");
             return;

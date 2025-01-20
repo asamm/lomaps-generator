@@ -40,12 +40,8 @@ public class AItemMap {
     private String prefLang;
     // ISO Alpha2 country code used only for creation store region DB
     private String regionCode;
-    // type of contour lines in meters or feet
-    private ContourUnit contourUnit = ContourUnit.METER;
     // step of contour lines in meters or feet
     private String contourStep;
-
-    private String contourSource = Parameters.contourSource;
 
     // URL source for map file
     private String url;
@@ -75,8 +71,6 @@ public class AItemMap {
             regionCode = parent.getRegionCode();
             url = parent.getUrl();
             cycleNode = parent.getCycleNode();
-            contourUnit = parent.getContourUnit();
-            contourSource = parent.getContourSource();
             forceType = parent.getForceType();
             forceInterval = parent.getForceInterval();
             hasSea = parent.hasSea();
@@ -261,15 +255,8 @@ public class AItemMap {
         if (parser.getAttributeValue(null, "forceInterval") != null) {
             forceInterval = parser.getAttributeValue(null, "forceInterval");
         }
-        // read the type of contour lines
-        if (parser.getAttributeValue(null, "contour_unit") != null) {
-            contourUnit = ContourUnit.getFromValue(parser.getAttributeValue(null, "contour_unit"));
-        }
         if (parser.getAttributeValue(null, "contour_step") != null) {
             contourStep = parser.getAttributeValue(null, "contour_step");
-        }
-        if (parser.getAttributeValue(null, "contour_source") != null) {
-            contourSource = parser.getAttributeValue(null, "contour_source");
         }
     }
 
@@ -368,39 +355,5 @@ public class AItemMap {
 
     public boolean hasSea() {
         return hasSea;
-    }
-
-
-    public ContourUnit getContourUnit() {
-        return contourUnit;
-    }
-
-    public void setContourUnit(ContourUnit contourUnit) {
-        this.contourUnit = contourUnit;
-    }
-
-    public String getContourStep() {
-        if (contourStep == null || contourStep.length() == 0){
-            // contour step isn't defined use default values
-            if (contourUnit == ContourUnit.FEET){
-                return Parameters.contourStepFeet;
-            }
-            return Parameters.contourStepMeter;
-        }
-        return contourStep;
-    }
-
-    public void setContourStep(String contourStep) {
-        this.contourStep = contourStep;
-    }
-
-    public String getContourSource() {
-        return contourSource;
-    }
-
-    public void setContourSource(String contourSource) {
-        if (contourSource != null && contourSource.length() > 0){
-            this.contourSource = contourSource;
-        }
     }
 }

@@ -1,12 +1,10 @@
 package com.asamm.osmTools.cmdCommands
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst
-import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader
 import com.asamm.osmTools.mapConfig.ItemMap
-import com.asamm.osmTools.utils.Consts
 import com.asamm.osmTools.utils.Logger
 import org.apache.commons.io.FileUtils
 import java.io.File
@@ -185,7 +183,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
         addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB)
         addCommand("-type=poi")
         addCommand("-fileDb=" + fileTempDb)
-        addCommand("-fileConfig=" + Parameters.getConfigApDbPath())
+        addCommand("-fileConfig=" + AppConfig.config.poiAddressConfig.poiDbXml.toAbsolutePath())
     }
 
     /**
@@ -216,7 +214,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
         }
         //addCommand("-countryName=" + getMap().getCountryName());
         addCommand("-fileDb=" + fileTempDb)
-        addCommand("-fileConfig=" + Parameters.getConfigAddressPath())
+        addCommand("-fileConfig=" + AppConfig.config.poiAddressConfig.addressDbXml.toAbsolutePath())
         addCommand("-fileDataGeom=" + map.pathJsonPolygon)
         addCommand("-fileCountryGeom=" + map.pathCountryBoundaryGeoJson)
 

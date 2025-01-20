@@ -4,12 +4,10 @@
  */
 package com.asamm.osmTools.cmdCommands
 
-import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.sea.Boundaries
 import com.asamm.osmTools.utils.Logger
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -29,8 +27,8 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
                         map.pathMerge + " does not exist!"
             }
 
-            require(AppConfig.config.mapsforgeTagMapping.toFile().exists()) {
-                ("Map writter definition file:  ${AppConfig.config.mapsforgeTagMapping} does not exist.")
+            require(AppConfig.config.mapsforgeConfig.tagMapping.toFile().exists()) {
+                ("Map writter definition file:  ${AppConfig.config.mapsforgeConfig.tagMapping} does not exist.")
             }
 
             if (!map.pathMerge.toFile().exists()) {
@@ -87,7 +85,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
         addType()
         addPrefLang()
         addBbox(map.boundary)
-        addTagConf(AppConfig.config.mapsforgeTagMapping.toAbsolutePath())
+        addTagConf(AppConfig.config.mapsforgeConfig.tagMapping.toAbsolutePath())
         //addDebugFile();
         addZoomInterval()
 
@@ -126,7 +124,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     }
 
     private fun addMapComment() {
-        addCommand("comment=" + Parameters.MAP_COMMENT)
+        addCommand("comment=" + AppConfig.config.mapsforgeConfig.mapDescription)
     }
 
     private fun addLabelPosition() {

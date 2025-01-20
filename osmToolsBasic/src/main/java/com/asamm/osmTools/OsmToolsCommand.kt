@@ -129,6 +129,11 @@ class LoMapsCommand : CliktCommand(
         .defaultLazy {
             AppConfig.config.dataDir.toFile() }
 
+    // path to a locus store uploader
+    val storeUploaderFile: File by option("-su", "--store_uploader", help = "Path to java .jar file script for LoMaps store uploader")
+        .file(mustExist = true)
+        .defaultLazy { AppConfig.config.storeUploaderPath.toFile() }
+
     override fun run() {
 
 
@@ -141,13 +146,16 @@ class LoMapsCommand : CliktCommand(
         AppConfig.config.dataDir = dataDir.toPath()
 
         // Set path to the configuration file
-        AppConfig.config.mapConfigXml = configFile.toPath()
+        AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
+
+        // Set path to the store uploader
+        AppConfig.config.storeUploaderPath = storeUploaderFile.toPath()
 
         // Set path to the hgt directory
         AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()
 
         echo("Configuration : ${AppConfig.config.toString()}")
-
+        echo(AppConfig.config.mapsforgeConfig.mapDescription)
         val genLoMaps = GenLoMaps();
         genLoMaps.process();
 
@@ -170,13 +178,26 @@ class LoMapsCommand : CliktCommand(
     }
 }
 
+// GENERATE COUNTRY BORDERS
+
 class StoreGeoCommand : CliktCommand(
     name = "storegeo",
     help = "Subcommand to generate map borders for regions in Locus Store"
 ) {
 
+    // path to a configuration file where are defined maps for generation
+    val configFile: File by option("-cf", "--config_file", help = "Path to configuration XML for generation of country boundaries").file(mustExist = true)
+        .defaultLazy {
+            val defaultConfigFile = File("config/config_store_geodb.xml")
+            require(defaultConfigFile.exists()) {
+                "Default config file '$defaultConfigFile' doesn't exist. Please specify path to config file"
+            }
+            defaultConfigFile
+        }
+
+
     override fun run() {
-        val genStoreGeo = GenStoreRegionDB();
+        val genStoreGeo = GenStoreRegionDB(configFile.toPath());
         genStoreGeo.process();
     }
 }

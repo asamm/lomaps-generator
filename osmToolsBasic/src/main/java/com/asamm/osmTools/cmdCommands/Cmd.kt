@@ -24,8 +24,6 @@ open class Cmd(val externalApp: ExternalApp) {
 
         OSMOSIS,
 
-        GRAPHOPPER,
-
         STORE_UPLOAD,
 
         OSMIUM,
@@ -52,8 +50,7 @@ open class Cmd(val externalApp: ExternalApp) {
     private fun initializeExternApp() {
         when (externalApp) {
             ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
-            ExternalApp.GRAPHOPPER -> addCommands(Parameters.getPreShellCommand(), Parameters.getGraphHopperExe())
-            ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", Parameters.getStoreUploaderPath())
+            ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", ConfigUtils.getCheckPath(AppConfig.config.storeUploaderPath).toString())
             ExternalApp.LOMAPS_TOOLS -> {
                 addCommand(AppConfig.config.cmdConfig.pythonPath)
                 addCommand(AppConfig.config.touristConfig.lomapsToolsPy.toString())
@@ -132,11 +129,6 @@ open class Cmd(val externalApp: ExternalApp) {
     }
 
     private fun createArray(): Array<String> {
-        // add ending command
-        if (externalApp == ExternalApp.GRAPHOPPER) {
-            addCommand(Parameters.getPostShellCommand())
-        }
-
         // create array
         var cmdArray = cmdList.toTypedArray()
         return cmdArray
