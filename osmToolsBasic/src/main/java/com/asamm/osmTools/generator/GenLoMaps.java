@@ -16,21 +16,24 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.utils.*;
+import com.asamm.osmTools.utils.Logger;
+import com.asamm.osmTools.utils.TimeWatch;
+import com.asamm.osmTools.utils.Utils;
+import com.asamm.osmTools.utils.UtilsHttp;
 import com.asamm.osmTools.utils.db.DatabaseData;
-import net.minidev.json.JSONArray;
-import net.minidev.json.parser.JSONParser;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by voldapet on 2016-09-16 .
@@ -120,6 +123,7 @@ public class GenLoMaps extends AGenerator {
 
     private void processPlanet(List<Action> actionList, MapSource mMapSource) {
         // find ItemMap with if "planet" and process it
+        Logger.i(TAG, "================ PROCESS PLANET MAP ================");
         ItemMap map = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
         if (map != null) {
             for (Action action : actionList) {
@@ -237,8 +241,9 @@ public class GenLoMaps extends AGenerator {
 //
 //        // check if file exits and we should overwrite it
 //        if (!Parameters.isRewriteFiles() && map.getPathGraphHopper().toFile().exists()) {
-////            Logger.i(TAG, "File with GraphHopper '" + map.getPathGraphHopper()
-////                    + "' already exist - skipped." );
+
+    /// /            Logger.i(TAG, "File with GraphHopper '" + map.getPathGraphHopper()
+    /// /                    + "' already exist - skipped." );
 //            return;
 //        }
 //
@@ -264,7 +269,6 @@ public class GenLoMaps extends AGenerator {
 //    }
 
     // ACTION ADDRESS/POI DATABASE
-
     private void actionAddressPoiDatabase(ItemMap map) throws Exception {
 
         // check if map has defined generation of addresses
@@ -279,37 +283,28 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        // load definitions
-
+        // load POI DB definitions
         File defFile = AppConfig.config.getPoiAddressConfig().getPoiDbXml().toAbsolutePath().toFile();
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
         // firstly simplify source file
-        CmdLoMapsDbPlugin cmdPoiFilter = new CmdLoMapsDbPlugin(map);
-        cmdPoiFilter.addTaskSimplifyForPoi(definition);
-        Logger.i(TAG, "Filter data for POI DB, command: " + cmdPoiFilter.getCmdLine());
-        cmdPoiFilter.execute(0, true);
+        Logger.i(TAG, "Filter data for POI DB");
+        CmdLoMapsDbPlugin cmdLoMapsDbPlugin = new CmdLoMapsDbPlugin(map);
+        cmdLoMapsDbPlugin.simplifyForPoi(definition);
 
         // now execute db poi generating
-        CmdLoMapsDbPlugin cmdPoi = new CmdLoMapsDbPlugin(map);
-        cmdPoi.addGeneratorPoiDb();
-        Logger.i(TAG, "Generate POI DB, command: " + cmdPoi.getCmdLine());
-        cmdPoi.execute(0, true);
+        Logger.i(TAG, "Generate POI DB, command: ");
+        cmdLoMapsDbPlugin.generatePoiDb();
 
         //Address generation
-        CmdLoMapsDbPlugin cmdAddressFilter = new CmdLoMapsDbPlugin(map);
-        cmdAddressFilter.addTaskSimplifyForAddress();
-        Logger.i(TAG, "Filter data for Address DB, command: " + cmdAddressFilter.getCmdLine());
-        cmdAddressFilter.execute(0, false);
+        Logger.i(TAG, "Filter data for Address DB, command: ");
+        cmdLoMapsDbPlugin.simplifyForAddress();
 
-        CmdLoMapsDbPlugin cmdAddres = new CmdLoMapsDbPlugin(map);
-        cmdAddres.addGeneratorAddress();
-        Logger.i(TAG, "Generate Adrress DB, command: " + cmdAddres.getCmdLine());
-        cmdAddres.execute(0, false);
+        Logger.i(TAG, "Generate Adrress DB, command: ");
+        cmdLoMapsDbPlugin.generateAddressDb();
 
         // delete tmp file
-        cmdAddres.deleteTmpFile();
-
+        cmdLoMapsDbPlugin.deleteTmpFile();
     }
 
     // ACTION COASTLINE
@@ -432,6 +427,7 @@ public class GenLoMaps extends AGenerator {
     // ACTION MERGE
     private void actionMergePlanet(ItemMap map) {
 
+        Logger.i(TAG, "================ MERGE PLANET MAP ================");
         if (!AppConfig.config.getOverwrite() && map.getPathSource().toFile().exists()) {
             Logger.i(TAG, "Merged planet file: " + map.getPathSource() + " already exist");
             return;
@@ -452,7 +448,7 @@ public class GenLoMaps extends AGenerator {
                 throw new IllegalArgumentException("File Tourist routes: " + map.getPathTourist() + " does not exist.");
             }
 
-            if ( !map.getPathSource().toFile().exists() || !containsTourist(map.getPathSource())) {
+            if (!map.getPathSource().toFile().exists() || !containsTourist(map.getPathSource())) {
                 pathsToMerge.add(map.getPathTourist());
             } else {
                 Logger.i(TAG, "Source file already contains tourist paths: " + map.getPathSource());
@@ -483,7 +479,7 @@ public class GenLoMaps extends AGenerator {
         }
 
         // test if merged file already exist
-        if ( !AppConfig.config.getOverwrite() && map.getPathMerge().toFile().exists()) {
+        if (!AppConfig.config.getOverwrite() && map.getPathMerge().toFile().exists()) {
             // nothing to do file already exist
             Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist");
             map.setMerged(true);
@@ -499,21 +495,21 @@ public class GenLoMaps extends AGenerator {
         }
         pathsToMerge.add(map.getPathSource());
 
-        if ( map.hasSea()) {
+        if (map.hasSea()) {
             if (!map.getPathCoastline().toFile().exists()) {
                 throw new IllegalArgumentException("Coastlines path: " + map.getPathCoastline() + " does not exist.");
             }
             pathsToMerge.add(map.getPathCoastline());
         }
 
-        if (AppConfig.config.getActions().contains(Action.TRANSFORM)){
+        if (AppConfig.config.getActions().contains(Action.TRANSFORM)) {
             if (!map.getPathTranform().toFile().exists()) {
                 throw new IllegalArgumentException("Transformed data path: " + map.getPathTranform() + " does not exist.");
             }
             pathsToMerge.add(map.getPathTranform());
         }
 
-        if (pathsToMerge.size() == 1){
+        if (pathsToMerge.size() == 1) {
             Logger.i(TAG, "Only one file to merge: " + map.getPathSource() + ". Nothing to do.");
             return;
         }
@@ -537,7 +533,7 @@ public class GenLoMaps extends AGenerator {
     private void actionGenerate(ItemMap map) throws IOException, InterruptedException {
 
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (AppConfig.config.getOverwrite()|| !map.getPathGenerate().toFile().exists()) {
+            if (AppConfig.config.getOverwrite() || !map.getPathGenerate().toFile().exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
                 cg.createCmd();
 
@@ -562,6 +558,7 @@ public class GenLoMaps extends AGenerator {
 
 
     private void actionGenerateMapLibre(ItemMap map) {
+        Logger.i(TAG, "================ GENERATE MAPLIBRE MAP "+map.getName()+" ================");
         if (map.hasAction(Action.GENERATE_MAPLIBRE)) {
             if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 

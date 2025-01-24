@@ -8,8 +8,8 @@ interface CmdOsmosis {
     fun addReadSource(readPath: Path) {
         //val source = getMap().getPathSource()
         when {
-            readPath.endsWith(".pbf") -> addReadPbf(readPath.toString())
-            readPath.endsWith(".xml") -> addReadXml(readPath.toString())
+            readPath.toString().endsWith(".pbf") -> addReadPbf(readPath.toString())
+            readPath.toString().endsWith(".xml") -> addReadXml(readPath.toString())
             else -> throw IllegalArgumentException("Invalid source file: '$readPath'")
         }
     }

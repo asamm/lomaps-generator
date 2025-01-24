@@ -111,6 +111,27 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
     }
 
     /**
+     * Filter the OSM file by tags.
+     * @param input The input file to filter.
+     * @param output The output file to save the filtered data.
+     * @param filters The list of filters when the filter is a string with the format "nw/highway" "r/type=restriction"
+     *                  according to https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html
+     */
+    fun tagFilter(input: Path, output: Path, filters: List<String>) {
+
+        addCommands("tags-filter", input.toString(), "-o", output.toString())
+
+        filters.forEach { addCommand(it) }
+
+        if (AppConfig.config.overwrite){
+            addCommand("--overwrite")
+        }
+        Logger.i(TAG, "Command: " + getCmdLine())
+        execute()
+        reset()
+    }
+
+    /**
      * Get the timestamp of the OSM file from header. If not defined use fallback to the last modified time of the file.
      */
     fun getTimeStamp(path: Path): Instant {

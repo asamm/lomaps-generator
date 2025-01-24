@@ -1,203 +1,113 @@
 package com.asamm.osmTools.cmdCommands
 
-import com.asamm.locus.features.loMaps.LoMapsDbConst
+import com.asamm.locus.features.loMaps.LoMapsDbConst.EntityType
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
+import com.asamm.osmTools.utils.Utils
 import org.apache.commons.io.FileUtils
 import java.io.File
-import java.io.IOException
 import java.util.*
 
 /**
  * Created by menion on 28.7.14.
  */
 class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
+
+    private val TAG: String = CmdLoMapsDbPlugin::class.java.simpleName
+
     // set parameters
-    private val mFileTempMap = AppConfig.config.temporaryDir.resolve("temp_map_simple.osm.pbf").toFile()
+    private val tempFilteredMapPath = AppConfig.config.temporaryDir.resolve("temp_map_simple.osm.pbf")
 
     /**
      * Definition where will be poiDb created
      */
-    //mFileTempDb = new File(Consts.DIR_TMP, map.getName() + ".osm.db");
-    val fileTempDb: File = map.pathAddressPoiDb.toFile()
+    val fileDb: File = map.pathAddressPoiDb.toAbsolutePath().toFile()
 
 
     /**
      * Used for repeated run of the command when is needed to delete file create in previous run
      */
-    private val mFileToCreate = fileTempDb
-
-
-    @Throws(IOException::class, InterruptedException::class)
-    fun execute(numRepeat: Int, deleteFile: Boolean): String? {
-        var numRepeat = numRepeat
-        try {
-            return execute()
-        } catch (e: Exception) {
-            if (numRepeat > 0) {
-                numRepeat--
-
-                if (deleteFile) {
-                    Logger.w(TAG, "Delete file from previous not success execution: " + mFileToCreate.absolutePath)
-                    mFileToCreate.delete()
-                }
-                Logger.w(TAG, "Re-execute data plugin run: " + getCmdLine())
-                execute(numRepeat, deleteFile)
-            } else {
-                throw e
-            }
-        }
-        return null
-    }
+    private val mFileToCreate = fileDb
 
     /**
      * Delete tmop file where are store result of filtering for pois or address
      */
     fun deleteTmpFile() {
-        mFileTempMap.delete()
+        Utils.deleteFileQuietly(tempFilteredMapPath)
     }
 
-    @Throws(IOException::class)
-    fun addTaskSimplifyForPoi(definition: WriterPoiDefinition) {
-        //FileUtils.deleteQuietly(mFilePoiDb);
+    fun simplifyForPoi(definition: WriterPoiDefinition) {
+        // delete temp file if exists
+        Utils.deleteFileQuietly(tempFilteredMapPath.toAbsolutePath())
 
-        addReadSource(map.pathSource)
-        addCommand("--tf")
-        addCommand("reject-relations")
-        addCommand("--tf")
-        addCommand("accept-nodes")
-        addListOfTags(definition, LoMapsDbConst.EntityType.POIS)
-        addCommand("--tf")
-        addCommand("reject-ways")
-        addCommand("outPipe.0=Nodes")
+        // prepare filters for osmium filter tag
+        var filters = getPoiDbFilters(definition, EntityType.POIS)
+        filters.addAll(getPoiDbFilters(definition, EntityType.WAYS))
 
-        // add second task
-        addReadSource(map.pathSource)
-        addCommand("--tf")
-        addCommand("reject-relations")
-        addCommand("--tf")
-        addCommand("accept-ways")
-        addListOfTags(definition, LoMapsDbConst.EntityType.WAYS)
-        addCommand("--used-node")
-        //        addCommand("idTrackerType=Dynamic");
-        addCommand("outPipe.0=Ways")
-
-        // add merge task
-        addCommand("--merge")
-        addCommand("inPipe.0=Nodes")
-        addCommand("inPipe.1=Ways")
-
-        // add export path
-        addWritePbf(mFileTempMap.absolutePath, true)
+        CmdOsmium().tagFilter(
+            map.pathSource,
+            tempFilteredMapPath.toAbsolutePath(),
+            filters
+        )
     }
 
-    @Throws(IOException::class)
-    fun addTaskSimplifyForAddress() {
-        addReadSource(map.pathSource)
-        addCommand("--tf")
-        addCommand("reject-relations")
-        addCommand("--tf")
-        addCommand("reject-ways")
-        addCommand("--tf")
-        addCommand("accept-nodes")
-        addCommand("place=*")
-        addCommand("addr:housenumber=*")
-        addCommand("addr:housename=*")
-        addCommand("addr:street=*")
-        addCommand("addr:street2=*")
-        addCommand("address:house=*")
+    fun simplifyForAddress() {
 
-        addCommand("outPipe.0=Nodes")
+        var filters = mutableListOf<String>(
+            "wr/type=associatedStreet,street",
+            "addr:housename",
+            "addr:housenumber",
+            "wr/addr:interpolation",
+            "addr:street2",
+            "addr:street",
+            "address:house",
+            "wr/address:type",
+            "wr/boundary",
+            "wr/highway",
+            "highway=*",
+            "place",
+        )
 
-        // add second task
-        addReadSource(map.pathSource)
-        addCommand("--tf")
-        addCommand("reject-relations")
-        addCommand("--tf")
-        addCommand("accept-ways")
-        addCommand("highway=*")
-        addCommand("boundary=*")
-        addCommand("place=*")
-        addCommand("*=street")
-        addCommand("*=associatedStreet")
-        addCommand("addr:housenumber=*")
-        addCommand("addr:housename=*")
-        addCommand("addr:street=*")
-        addCommand("addr:street2=*")
-        addCommand("address:house=*")
-        addCommand("addr:interpolation=*")
-        addCommand("address:type=*")
+        // delete temp file if exists
+        Utils.deleteFileQuietly(tempFilteredMapPath.toAbsolutePath())
 
-
-        //        addCommand("landuse=residential");
-//        addCommand("building=*");
-        addCommand("--used-node")
-
-        // addCommand("idTrackerType=Dynamic");
-        addCommand("outPipe.0=Ways")
-
-        // add third task
-        addReadSource(map.pathSource)
-        addCommand("--tf")
-        addCommand("accept-relations")
-        addCommand("highway=*")
-        addCommand("boundary=*")
-        addCommand("place=*")
-        addCommand("type=street")
-        addCommand("type=associatedStreet")
-        addCommand("addr:housenumber=*")
-        addCommand("addr:housename=*")
-        addCommand("addr:street=*")
-        addCommand("addr:street2=*")
-        addCommand("address:house=*")
-        addCommand("addr:interpolation=*")
-        addCommand("address:type=*")
-
-        //        addCommand("landuse=residential");
-//        addCommand("building=*");
-        addCommand("--used-way")
-        addCommand("--used-node")
-        //        addCommand("idTrackerType=Dynamic");
-        addCommand("outPipe.0=Relations")
-
-        // add merge task
-        addCommand("--merge")
-        addCommand("inPipe.0=Nodes")
-        addCommand("inPipe.1=Ways")
-        addCommand("outPipe.0=NodesWays")
-        addCommand("--merge")
-        addCommand("inPipe.0=Relations")
-        addCommand("inPipe.1=NodesWays")
-
-        // add export path
-        addWritePbf(mFileTempMap.absolutePath, true)
+        // filter source osm file
+        CmdOsmium().tagFilter(
+            map.pathSource,
+            tempFilteredMapPath.toAbsolutePath(),
+            filters
+        )
     }
 
-    fun addGeneratorPoiDb() {
-        FileUtils.deleteQuietly(fileTempDb)
 
-        addReadPbf(mFileTempMap.absolutePath)
+    fun generatePoiDb() {
+        FileUtils.deleteQuietly(fileDb)
+
+        addReadPbf(tempFilteredMapPath.toAbsolutePath().toString())
         addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB)
         addCommand("-type=poi")
-        addCommand("-fileDb=" + fileTempDb)
+        addCommand("-fileDb=" + fileDb)
         addCommand("-fileConfig=" + AppConfig.config.poiAddressConfig.poiDbXml.toAbsolutePath())
+
+        Logger.i(TAG, "Command: " + getCmdLine())
+        execute()
+        reset()
     }
 
     /**
      * Prepare cmd line to run osmosis for generation post address database
      */
-    fun addGeneratorAddress() {
-        //addReadPbf(getMap().getPathSource());
+    fun generateAddressDb() {
 
-        addReadPbf(mFileTempMap.absolutePath)
+        addReadPbf(tempFilteredMapPath.toAbsolutePath().toString())
 
         addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB)
         addCommand("-type=address")
 
-        val size = (mFileTempMap.length() / 1024L / 1024L).toInt()
+        val size = (tempFilteredMapPath.toAbsolutePath().toFile().length() / 1024L / 1024L).toInt()
         if (size <= 250) {
             addCommand("-dataContainerType=ram")
         } else {
@@ -213,20 +123,22 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
             addCommand("-mapId=$mapId")
         }
         //addCommand("-countryName=" + getMap().getCountryName());
-        addCommand("-fileDb=" + fileTempDb)
+        addCommand("-fileDb=" + fileDb)
         addCommand("-fileConfig=" + AppConfig.config.poiAddressConfig.addressDbXml.toAbsolutePath())
-        addCommand("-fileDataGeom=" + map.pathJsonPolygon)
-        addCommand("-fileCountryGeom=" + map.pathCountryBoundaryGeoJson)
+        addCommand("-fileDataGeom=" + map.pathJsonPolygon.toAbsolutePath())
+        addCommand("-fileCountryGeom=" + map.pathCountryBoundaryGeoJson.toAbsolutePath())
 
-        //        try {
-//            addWriteXml("./exportplugin.osm", true);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        Logger.i(TAG, "Command: " + getCmdLine())
+        execute()
+        reset()
     }
 
-    private fun addListOfTags(definition: WriterPoiDefinition, type: LoMapsDbConst.EntityType) {
-        // prepare list of tags
+
+    /**
+     * Get list of filters to filter OSM file to contains only data for POI DB
+     */
+    fun getPoiDbFilters(definition: WriterPoiDefinition, type: EntityType) : MutableList<String> {
+
         val nodes = definition.rootSubContainers
         val nodesPrep = Hashtable<String, String>()
         for (dbDef in nodes) {
@@ -236,25 +148,22 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
             }
 
             // add to data
-            val value = nodesPrep[dbDef.key]
-            if (value == null) {
-                nodesPrep[dbDef.key] = dbDef.value
+            if ( !nodesPrep.containsKey(dbDef.key)) {
+                nodesPrep[dbDef.key] = dbDef.value.replace("|", ",")
             } else {
-                nodesPrep[dbDef.key] = value + "," + dbDef.value
+                nodesPrep[dbDef.key] = nodesPrep[dbDef.key] + "," + dbDef.value.replace("|", ",")
             }
         }
 
-        // finally add all key/value pairs
-        val nodesKeys = nodesPrep.keys()
-        while (nodesKeys.hasMoreElements()) {
-            val key = nodesKeys.nextElement()
-            val value = nodesPrep[key]
-            addCommand("$key=$value")
+        val typePrefix = when (type) {
+            EntityType.POIS -> "n/"
+            EntityType.WAYS -> "w/"
+            EntityType.RELATION -> "r/"
+            EntityType.UNKNOWN -> ""
         }
-    }
 
+        val filters = nodesPrep.map { (key, value) -> "$typePrefix$key=$value" }.toMutableList()
 
-    companion object {
-        private val TAG: String = CmdLoMapsDbPlugin::class.java.simpleName
+        return filters
     }
 }

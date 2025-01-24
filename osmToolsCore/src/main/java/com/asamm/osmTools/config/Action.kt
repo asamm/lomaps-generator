@@ -25,7 +25,7 @@ enum class Action {
 
     GRAPH_HOPPER("graphHopper"),
 
-    ADDRESS_POI_DB("apDb"),
+    ADDRESS_POI_DB("address_poi_db", true),
 
     COMPRESS("compress"),
 
