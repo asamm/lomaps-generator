@@ -5,7 +5,6 @@
 package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.Main
-import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.mapConfig.ItemMap
@@ -50,7 +49,12 @@ open class Cmd(val externalApp: ExternalApp) {
     private fun initializeExternApp() {
         when (externalApp) {
             ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
-            ExternalApp.STORE_UPLOAD -> addCommands("java", "-jar", ConfigUtils.getCheckPath(AppConfig.config.storeUploaderPath).toString())
+            ExternalApp.STORE_UPLOAD -> addCommands(
+                "java",
+                "-jar",
+                ConfigUtils.getCheckPath(AppConfig.config.storeUploaderPath).toString()
+            )
+
             ExternalApp.LOMAPS_TOOLS -> {
                 addCommand(AppConfig.config.cmdConfig.pythonPath)
                 addCommand(AppConfig.config.touristConfig.lomapsToolsPy.toString())
@@ -61,17 +65,22 @@ open class Cmd(val externalApp: ExternalApp) {
             }
 
             ExternalApp.PLANETILER -> {
-                if(ConfigUtils.isWindows()){
-                    addCommands("c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
-                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString())
-                }
-                else {
-                    addCommands("java", "-jar",
-                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString())
+                if (ConfigUtils.isWindows()) {
+                    addCommands(
+                        "c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
+                    )
+                } else {
+                    addCommands(
+                        "java", "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
+                    )
                 }
             }
 
-            ExternalApp.OSMOSIS -> addCommand(ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.osmosis.toAbsolutePath()).toString())
+            ExternalApp.OSMOSIS -> addCommand(
+                ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.osmosis.toAbsolutePath()).toString()
+            )
 
             ExternalApp.OGR2OGR -> addCommand(ConfigUtils.findOgr2ogrPath())
 
@@ -85,7 +94,9 @@ open class Cmd(val externalApp: ExternalApp) {
 
     fun addBoundingPolygon(map: ItemMap) {
         // test if polygon exist in specified path
-        require(map.getPathPolygon().toFile().exists()) { "Bounding polygon: " + map.getPathPolygon() + " doesn't exists" }
+        require(
+            map.getPathPolygon().toFile().exists()
+        ) { "Bounding polygon: " + map.getPathPolygon() + " doesn't exists" }
 
         // finally add to command list
         addCommand("--bp")

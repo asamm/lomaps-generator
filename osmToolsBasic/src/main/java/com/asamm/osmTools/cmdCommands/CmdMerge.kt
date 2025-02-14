@@ -4,10 +4,7 @@
  */
 package com.asamm.osmTools.cmdCommands
 
-import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.mapConfig.ItemMap
-import com.asamm.osmTools.utils.Consts
-import java.io.File
 import java.io.IOException
 import java.util.*
 

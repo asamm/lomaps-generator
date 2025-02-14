@@ -1,9 +1,7 @@
 package com.asamm.osmTools.generator
 
 import com.asamm.osmTools.Main
-import com.asamm.osmTools.Parameters
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders
-import com.asamm.osmTools.cmdCommands.CmdExtract
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
@@ -59,8 +57,8 @@ abstract class AGenerator {
                     if (tagName.equals("maps", ignoreCase = true)) {
                         val rewriteFiles = parser.getAttributeValue(null, "rewriteFiles")
                         AppConfig.config.overwrite = (
-                            rewriteFiles != null && rewriteFiles.equals("yes", ignoreCase = true)
-                        )
+                                rewriteFiles != null && rewriteFiles.equals("yes", ignoreCase = true)
+                                )
                     } else if (tagName.equals("mapPack", ignoreCase = true)) {
                         mapPack = ItemMapPack(mapPack)
                         mapPack.fillAttributes(parser)
@@ -310,7 +308,9 @@ abstract class AGenerator {
                 continue
             }
 
-            if (storageType == ConfigurationCountry.StorageType.GEOJSON && map.pathCountryBoundaryGeoJson.toFile().exists()) {
+            if (storageType == ConfigurationCountry.StorageType.GEOJSON && map.pathCountryBoundaryGeoJson.toFile()
+                    .exists()
+            ) {
                 // boundary geom for this map exists > skip it
                 Logger.i(TAG, "Country boundaries exits for map: " + map.nameReadable)
                 continue

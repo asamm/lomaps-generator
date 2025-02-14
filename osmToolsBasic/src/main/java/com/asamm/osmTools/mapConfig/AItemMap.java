@@ -1,6 +1,5 @@
 package com.asamm.osmTools.mapConfig;
 
-import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.utils.Consts;
 import com.asamm.osmTools.utils.Utils;
@@ -209,21 +208,19 @@ public class AItemMap {
 
         // addressRegionLevel
         attrValue = parser.getAttributeValue(null, "countryName");
-        if (attrValue != null){
+        if (attrValue != null) {
             countryName = attrValue;
         }
 
         //clipIncompleteEntities
         attrValue = parser.getAttributeValue(null, "clipEntities");
-        if (attrValue != null){
-            if (attrValue.equals("0")){
+        if (attrValue != null) {
+            if (attrValue.equals("0")) {
                 clipIncompleteEntities = false;
-            }
-            else if (attrValue.equals("1")){
+            } else if (attrValue.equals("1")) {
                 clipIncompleteEntities = true;
-            }
-            else {
-                throw new IllegalArgumentException("Invalid value 'clipEntities' value:" + attrValue  +
+            } else {
+                throw new IllegalArgumentException("Invalid value 'clipEntities' value:" + attrValue +
                         " Set '0' for not clipping or '1' for clip the incomplete elements");
             }
         }
@@ -262,6 +259,7 @@ public class AItemMap {
 
     /**************************************************/
     /*               GETTERS & SETTERS                */
+
     /**************************************************/
 
     public ItemMapPack getParent() {
@@ -288,15 +286,15 @@ public class AItemMap {
         return regionId;
     }
 
-    public String getParentRegionId () {
+    public String getParentRegionId() {
 
-        if (parentRegionId != null && parentRegionId.length() > 0){
+        if (parentRegionId != null && parentRegionId.length() > 0) {
             return parentRegionId;
         }
 
         // as fallback parse parent id from region id
         int index = regionId.lastIndexOf(".");
-        if (index == -1){
+        if (index == -1) {
             return regionId;
         }
 
@@ -323,9 +321,10 @@ public class AItemMap {
 
     /**
      * Define if during extraction should osmosis clip the areas that can be partialy outside the border poly
+     *
      * @return
      */
-    public boolean getClipIncompleteEntities () {
+    public boolean getClipIncompleteEntities() {
         return clipIncompleteEntities;
     }
 
@@ -333,9 +332,13 @@ public class AItemMap {
         this.countryName = countryName;
     }
 
-    public String getPrefLang() { return prefLang;   }
+    public String getPrefLang() {
+        return prefLang;
+    }
 
-    public String getRegionCode() {return regionCode;}
+    public String getRegionCode() {
+        return regionCode;
+    }
 
     public String getUrl() {
         return url;
