@@ -191,11 +191,6 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
     private fun addZoomInterval() {
         //default
         // addCommand(" zoom-interval-conf=5,0,7,10,8,11,14,12,21"); default
-        // kech 5,0,6,8,7,9,11,10,12,15,13,21
-        // muj novy
-        //addCommand("zoom-interval-conf=6,0,7,9,8,9,12,10,12,15,13,21");
-        // new intervals
-        //addCommand("zoom-interval-conf=5,0,6,8,7,9,11,10,12,15,13,21");
 
         if (map.forceInterval != null && !map.forceInterval.isEmpty()) {
             addCommand("zoom-interval-conf=" + map.forceInterval)
