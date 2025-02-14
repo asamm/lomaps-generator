@@ -100,7 +100,7 @@ class LoMapsCommand : CliktCommand(
         }
 
     // split action by comma and convert to enum
-    val actions by option(help = "Action to perform. Possible values: ${Action.getCliActions().joinToString(", ")}")
+    val actions by option(help = "Action to perform. Possible values: ${Action.getCliActions().map { it.getLabel() }.joinToString(", ")}")
         .convert { input ->
             input.split(",").map {
                 var action = Action.getActionByLabel(it.trim().lowercase())
@@ -108,7 +108,7 @@ class LoMapsCommand : CliktCommand(
                 require(action != Action.UNKNOWN) {
                     // print warning and possible actions but not the UNKNOWN
                     "Unknown action '$it'. Possible values: ${
-                        Action.getCliActions().filter { it != Action.UNKNOWN }.joinToString(", ")
+                        Action.getCliActions().filter { it != Action.UNKNOWN }.map { it.getLabel() }.joinToString(", ")
                     }"
                 }
                 action

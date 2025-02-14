@@ -559,7 +559,7 @@ public class GenLoMaps extends AGenerator {
 
     private void actionGenerateMapLibre(ItemMap map) {
         Logger.i(TAG, "================ GENERATE MAPLIBRE MAP "+map.getName()+" ================");
-        if (map.hasAction(Action.GENERATE_MAPLIBRE)) {
+        if (map.hasAction(Action.GENERATE_MAPLIBRE) && AppConfig.config.getActions().contains(Action.GENERATE_MAPLIBRE)) {
             if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 
                 // write to log and start stop watch

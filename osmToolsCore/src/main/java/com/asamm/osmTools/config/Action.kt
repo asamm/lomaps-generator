@@ -17,11 +17,11 @@ enum class Action {
 
     MERGE("merge"),
 
-    GENERATE_MAPLIBRE("generate_maplibre"),
+    GENERATE_MAPLIBRE("generate_maplibre", true),
 
-    UPLOAD_MAPTILER("upload_maptiler"),
+    UPLOAD_MAPTILER("upload_maptiler", true),
 
-    GENERATE_MAPSFORGE("generate_mapsforge"),
+    GENERATE_MAPSFORGE("generate_mapsforge",true),
 
     GRAPH_HOPPER("graphHopper"),
 
@@ -60,7 +60,8 @@ enum class Action {
     companion object {
         @JvmStatic
         fun getCliActions(): List<Action> {
-            return Action.entries.filter { it.cli }
+            return Action.entries
+                .filter { it.cli }
         }
 
         @JvmStatic
