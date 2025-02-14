@@ -43,7 +43,10 @@ object AppConfig {
 @Serializable
 data class Config(
 
+    @Transient
     var version: String = "",
+
+
     var overwrite: Boolean = false,
     var actions: MutableList<Action> = mutableListOf<Action>(),
     var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,

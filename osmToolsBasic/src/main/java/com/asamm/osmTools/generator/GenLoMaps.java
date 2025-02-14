@@ -3,7 +3,6 @@ package com.asamm.osmTools.generator;
 import com.asamm.locus.MapTilerUploader;
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
-import com.asamm.osmTools.Parameters;
 import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
@@ -16,10 +15,7 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.TimeWatch;
-import com.asamm.osmTools.utils.Utils;
-import com.asamm.osmTools.utils.UtilsHttp;
+import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -65,7 +61,7 @@ public class GenLoMaps extends AGenerator {
         // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
         PlanetUpdater planetUpdater = new PlanetUpdater();
         // TODO anable for produciton
-        //planetUpdater.update();
+        planetUpdater.update();
 
         // process action on planet level
         processPlanet(actionList, mMapSource);
@@ -676,10 +672,12 @@ public class GenLoMaps extends AGenerator {
             if (!mapFile.exists()) {
                 throw new IllegalArgumentException("Map file for compression: " + map.getPathGenerate() + " does not exist.");
             }
+
+            long versionDate = UtilsKt.versionToDate(AppConfig.config.getVersion()).getTime();
             // rewrite bytes in header to set new creation date
             RandomAccessFile raf = new RandomAccessFile(mapFile, "rw");
             raf.seek(36);
-            raf.writeLong(Parameters.getSourceDataLastModifyDate());
+            raf.writeLong(versionDate);
             raf.close();
 
             filesToCompress.add(map.getPathGenerate().toString());

@@ -3,6 +3,9 @@ package com.asamm.osmTools.utils
 import com.asamm.osmTools.config.AppConfig
 import java.io.File
 import java.nio.file.Path
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeParseException
+import java.util.*
 
 
 val TAG = "Utils"
@@ -21,7 +24,6 @@ fun isScriptInSystemPath(scriptName: String): Boolean {
     }
 }
 
-
 fun deleteFilesInDir(directory: Path) {
 
     Logger.i(TAG, "Deleting files in tmp dir: " + AppConfig.config.temporaryDir);
@@ -31,5 +33,17 @@ fun deleteFilesInDir(directory: Path) {
         directory.listFiles()?.forEach { file ->
             file.deleteRecursively()
         }
+    }
+}
+
+/**
+ * Convert date string to date object
+ */
+fun versionToDate(dateStr: String): Date {
+    try {
+        val sdf = SimpleDateFormat("yyyy.MM.dd");
+        return sdf.parse(dateStr)
+    } catch (e: DateTimeParseException) {
+        throw IllegalArgumentException("Invalid date format $dateStr. Use yyyy.MM.dd");
     }
 }

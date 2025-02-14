@@ -49,27 +49,6 @@ public class Relation {
             visible = parser.getAttributeValue(null, "visible");
         }
     }
-    
-
-    /**
-     * Iterates relation members and find relation that is parent of specified way.
-     * If such relation is found and if has valid tags (defined osmc symbol or network) then @code{true} is returned
-     * @param wayId id of way that is tested
-     */
-    private boolean isWayMemberOfValidChildrenRelation(long wayId){
-
-        if (childRelations == null){
-            return false;
-        }
-        for (Relation relation : childRelations){
-            // find any member of relation with ref equal to wayId
-            if (relation.getMembers().stream().anyMatch(mbr -> mbr.ref == wayId)) {
-                // if relation has valid tags then return true
-                return (tags.osmc_color != null && tags.osmc_color.length() > 0) || this.tags.isIwnNwnRwnLwn();
-            }
-        }
-        return false;
-    }
 
     /**
      * Iterate member of this relation, find all children relations and add them to list of children relations
