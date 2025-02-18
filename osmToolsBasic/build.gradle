@@ -76,3 +76,20 @@ compileTestKotlin {
         jvmTarget = "17"
     }
 }
+
+
+tasks.register('createPlanetUpdateShScript') {
+    dependsOn jar
+    doLast {
+        def jarFile = new File(buildDir, "libs/${newArchiveName}")
+        def scriptFile = new File(buildDir, "libs/update_planet_file.sh")
+        scriptFile.text = """#!/bin/bash
+        java -jar "${jarFile.name}" update_planet
+        """.stripIndent()
+        scriptFile.setExecutable(true)
+    }
+}
+
+tasks.register('buildWithPlanetUpdateShScript') {
+    dependsOn jar, createPlanetUpdateShScript
+}
