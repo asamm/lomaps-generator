@@ -27,7 +27,9 @@ class PlanetUpdater {
                 AppConfig.config.planetConfig.planetLatestURL,
                 AppConfig.config.planetConfig.planetLatestPath
             )
-        } else if (timestamp.isBefore(Instant.now().minus(Duration.ofDays(1)))) {
+        }
+
+        if (timestamp.isBefore(Instant.now().minus(Duration.ofDays(1)))) {
             Logger.i(TAG, "Planet file is older than 1 day. Start OSM Update.")
             val cmdLoMapsTools = CmdLoMapsTools()
             cmdLoMapsTools.osmUpdate(AppConfig.config.planetConfig.planetLatestPath)
