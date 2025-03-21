@@ -62,7 +62,12 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
         FileUtils.forceMkdir(outputPath.parent.toFile())
 
         addCommands("merge")
-        inputPaths.forEach {addCommand(it.toString()) }
+        inputPaths.forEach {
+            if (it.toFile().length() > 128) {
+                // skip small files because they are probably empty and osmium will throw an error when merging them
+                addCommand(it.toString())
+            }
+        }
         addCommands("-o", outputPath.toString())
         if (AppConfig.config.overwrite){
             addCommand("--overwrite")
@@ -70,6 +75,17 @@ class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
         reset()
+    }
+
+    fun containsData(input: Path): Boolean {
+        // the goal is to run osmium fileinfo and check if the process return 0 the file contains some data
+        addCommands("fileinfo", input.toString())
+        Logger.i(TAG, "Command: " + getCmdLine())
+
+        val lastOutputLine = executeQuietly()
+        reset()
+        // if the last line starts with the id, the id is in the file
+        return lastOutputLine?.trim()?.startsWith("osmfile") ?: false
     }
 
     /**

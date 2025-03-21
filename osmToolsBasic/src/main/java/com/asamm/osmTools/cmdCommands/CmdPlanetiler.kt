@@ -44,7 +44,7 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
             "--osm-path", input.toString(), "--output", output.toString(),
             "--force", "--threads=$cores", "--process_threads=1"
         )
-        addCommands("--exclude-layers=" + AppConfig.config.planetConfig.lomapsOutdoorsLayers.joinToString(","))
+        //addCommands("--exclude-layers=" + AppConfig.config.planetConfig.lomapsOutdoorsLayers.joinToString(","))
         // TODO for production
         // addCommands("--area=planet", "--bounds=planet")
         // addCommands("--fetch-wikidata")
