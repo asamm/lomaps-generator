@@ -58,10 +58,12 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
-        PlanetUpdater planetUpdater = new PlanetUpdater();
-        // TODO anable for produciton
-        planetUpdater.update();
+
+        if ( !Utils.isLocalDEV()){
+            // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
+            PlanetUpdater planetUpdater = new PlanetUpdater();
+            planetUpdater.update();
+        }
 
         // process action on planet level
         processPlanet(actionList, mMapSource);
@@ -97,7 +99,8 @@ public class GenLoMaps extends AGenerator {
 
             // needs to write definition JSON to file (in case that map was generated)
             if (action == Action.CREATE_JSON) {
-                UploadDefinitionCreator.getInstace().writeToJsonDefFile();
+                UploadDefinitionCreator uploadDefinitionCreator = new UploadDefinitionCreator();
+                uploadDefinitionCreator.generateJsonUploadDefinition(mMapSource);
             }
 
             // perform remaining actions
@@ -174,9 +177,6 @@ public class GenLoMaps extends AGenerator {
                     break;
                 case COMPRESS:
                     actionCompress(map);
-                    break;
-                case CREATE_JSON:
-                    actionCreateJSON(map);
                     break;
             }
         }
@@ -711,17 +711,6 @@ public class GenLoMaps extends AGenerator {
         cmdUpload.execute(1);
 
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-    }
-
-    // ACTION CREATE JSON UPLOAD DEFINITION
-
-    public void actionCreateJSON(ItemMap map) throws IOException {
-        UploadDefinitionCreator dc = UploadDefinitionCreator.getInstace();
-
-        if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            dc.addMap(map);
-        }
-
     }
 
     // Other TOOLS

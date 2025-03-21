@@ -64,6 +64,8 @@ data class Config(
     @Transient
     var storeUploadDefinitionJson: Path = Path.of("storeUploadeDefinition.json"),
 
+    var defaultStoreItemDefinitionPath: Path = Path.of("config/default_store_item_definition.json"),
+
 
     var touristConfig: TouristConfig,
     var contourConfig: ContourConfig,
