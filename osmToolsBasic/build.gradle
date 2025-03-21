@@ -84,7 +84,13 @@ tasks.register('createPlanetUpdateShScript') {
         def jarFile = new File(buildDir, "libs/${newArchiveName}")
         def scriptFile = new File(buildDir, "libs/update_planet_file.sh")
         scriptFile.text = """#!/bin/bash
-        java -jar "${jarFile.name}" update_planet
+        # Export paths to find pyosmium-up-to-date script
+        export PATH=\$PATH:/home/osmtools/.local/bin
+        # Get the absolute path of the directory where the script is located
+        SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+        # Change the current working directory to the script's directory
+        cd "\$SCRIPT_DIR" || exit 1
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" update_planet
         """.stripIndent()
         scriptFile.setExecutable(true)
     }
