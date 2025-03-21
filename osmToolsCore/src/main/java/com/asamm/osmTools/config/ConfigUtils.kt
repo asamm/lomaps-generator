@@ -16,14 +16,19 @@ object ConfigUtils {
         when {
             cliActions.contains(Action.GENERATE_MAPSFORGE) -> {
 
-                val index = cliActions.indexOf(Action.GENERATE_MAPSFORGE)
+                var index = cliActions.indexOf(Action.GENERATE_MAPSFORGE)
 
                 // Add additional actions before Action.GENERATE_MAPSFORGE
                 cliActions.addAll(index, listOf(Action.EXTRACT,Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
 
-                // Additional actions after Action.GENERATE_MAPSFORGE
-                cliActions.add(Action.COMPRESS)
-                cliActions.add(Action.CREATE_JSON)
+                // Additional actions after Action.GENERATE_MAPSFORGE but before Action.UPLOAD
+                index = cliActions.indexOf(Action.UPLOAD)
+                if (index != -1) {
+                    cliActions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
+                }
+                else{
+                    cliActions.addAll(listOf(Action.COMPRESS, Action.CREATE_JSON))
+                }
             }
         }
     }
