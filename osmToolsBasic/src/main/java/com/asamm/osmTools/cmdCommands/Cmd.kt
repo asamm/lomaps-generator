@@ -65,14 +65,18 @@ open class Cmd(val externalApp: ExternalApp) {
             }
 
             ExternalApp.PLANETILER -> {
+                // get amount RAM in system in GB
+                val ram = Runtime.getRuntime().totalMemory() / (1024 * 1024 * 1024) - 6
+
                 if (ConfigUtils.isWindows()) {
                     addCommands(
                         "c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 } else {
+
                     addCommands(
-                        "java", "-jar",
+                        "java", "-Xmx${ram}G", "-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 }

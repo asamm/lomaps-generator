@@ -13,6 +13,7 @@ import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
+import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.*;
@@ -138,10 +139,13 @@ public class GenLoMaps extends AGenerator {
             actionMergePlanet(map);
 
             // generate maplibre planet tiles
-            actionGenerateMapLibre(map);
+            actionGenerateMbtilesOnline(map);
 
             // upload to maptiler
             actionUploadPlanetToMapTiler(map);
+
+            // generate planet PMtiles for further generation of mbtiles
+            // actionGeneratePlanetMbtiles(map); planet mbtiles created before particular mbtiles map
         }
     }
 
@@ -171,6 +175,9 @@ public class GenLoMaps extends AGenerator {
                 case MERGE:
                     actionMerge(map);
                     break;
+                case GENERATE_MBTILES:
+                    actionGenerateMbtiles(map);
+                    break;
                 case GENERATE_MAPSFORGE:
                     actionGenerate(map);
                     actionInsertMetaData(map);
@@ -186,6 +193,7 @@ public class GenLoMaps extends AGenerator {
             actionAllInOne(mp.getMapPack(i), action);
         }
     }
+
 
 
     private class PackForExtract {
@@ -340,7 +348,7 @@ public class GenLoMaps extends AGenerator {
 
         // for planet it's needed to customize "source" path and use the orig planet file as source
         Path pathToSource = map.getPathSource();
-        if (map.getId().equals(AppConfig.config.getPlanetConfig().getPlanetExtendedId())) {
+        if (map.isPlanet()) {
             pathToSource = AppConfig.config.getPlanetConfig().getPlanetLatestPath();
         }
 
@@ -524,6 +532,61 @@ public class GenLoMaps extends AGenerator {
         map.setMerged(true);
     }
 
+    private void actionGenerateMbtiles(ItemMap map) {
+
+        if (!map.hasAction(Action.GENERATE_MBTILES)) {
+            return;
+        }
+
+        // check if file exits and we should overwrite it
+        if (!AppConfig.config.getOverwrite() && map.getPathMbtiles().toFile().exists()) {
+            Logger.i(TAG, "File with mbtiles " + map.getPathMbtiles() + " already exist - skipped.");
+            return;
+        }
+
+        ItemMap planetMbtilesMap = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
+        if (planetMbtilesMap == null) {
+            throw new IllegalArgumentException("Planet Mbtiles map not found in configuration. Edit config.xml file " +
+                    "and set add action " + Action.GENERATE_MBTILES.getLabel() + " to planet map.");
+        }
+
+        // check if source planet file exist
+        if (!planetMbtilesMap.getPathMbtiles().toFile().exists()) {
+
+            TimeWatch time = new TimeWatch();
+            Logger.i(TAG, "Generating Planet MbTiles: " + planetMbtilesMap.getPathMbtiles());
+            Main.mySimpleLog.print("\nGenerate Planet: " + planetMbtilesMap.getName() + " ...");
+
+            CmdPlanetiler cmdPlanetiler = new CmdPlanetiler();
+            cmdPlanetiler.generateLoMapsOpenMapTiles(
+                    planetMbtilesMap.getPathSource(),
+                    planetMbtilesMap.getPathMbtiles(),
+                    planetMbtilesMap.getPathPolygon());
+
+            // clean tmp
+            Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        } else {
+            Logger.i(TAG, "Planet MBtiles map " + map.getPathGenerate() + " already exists. Nothing to do.");
+        }
+
+        // Generate particular MBTILES
+        TimeWatch time = new TimeWatch();
+        Logger.i(TAG, "Generate mbtiles: " + map.getName());
+        Main.mySimpleLog.print("\nGenerate mbtiles: " + map.getName() + " ...");
+
+        MbtilesCreator mbtilesCreator = new MbtilesCreator();
+        mbtilesCreator.createMbtiles(
+                planetMbtilesMap.getPathMbtiles(),
+                map.getPathMbtiles(),
+                map.getPathPolygon(),
+                map.getName(),
+                0, 14   );
+
+        // notify about result
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        time.stopCount();
+    }
+
     // ACTION GENERATE
 
     private void actionGenerate(ItemMap map) throws IOException, InterruptedException {
@@ -552,10 +615,33 @@ public class GenLoMaps extends AGenerator {
         }
     }
 
+    // ACTION PLANET PMTILES
+//    private void actionGeneratePlanetMbtiles(ItemMap map){
+//
+//        if (map.hasAction(Action.GENERATE_MBTILES )) {
+//
+//            if (AppConfig.config.getOverwrite() || !map.getPathMbtiles().toFile().exists()) {
+//
+//                TimeWatch time = new TimeWatch();
+//                Logger.i(TAG, "Generating MbTiles: " + map.getPathMbtiles());
+//                Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
+//
+//                CmdPlanetiler cmdPlanetiler = new CmdPlanetiler();
+//
+//                cmdPlanetiler.generateLoMapsOpenMapTiles(map.getPathSource(), map.getPathMbtiles(), map.getPathPolygon(), map.getId());
+//
+//                // clean tmp
+//                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+//            } else {
+//                Logger.i(TAG, "MBtiles map " + map.getPathGenerate() + " already exists. Nothing to do.");
+//            }
+//        }
+//    }
 
-    private void actionGenerateMapLibre(ItemMap map) {
-        Logger.i(TAG, "================ GENERATE MAPLIBRE MAP "+map.getName()+" ================");
-        if (map.hasAction(Action.GENERATE_MAPLIBRE) && AppConfig.config.getActions().contains(Action.GENERATE_MAPLIBRE)) {
+
+    private void actionGenerateMbtilesOnline(ItemMap map) {
+        Logger.i(TAG, "================ GENERATE MBTILES ONLINE "+map.getName()+" ================");
+        if (map.hasAction(Action.GENERATE_MBTILES_ONLINE) && AppConfig.config.getActions().contains(Action.GENERATE_MBTILES_ONLINE)) {
             if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 
                 // write to log and start stop watch
@@ -565,8 +651,6 @@ public class GenLoMaps extends AGenerator {
 
                 CmdPlanetiler cmdPlanetiler = new CmdPlanetiler();
                 cmdPlanetiler.generateOutdoorTiles(map.getPathSource(), map.getPathGenMlOutdoor(), map.getPathPolygon());
-
-                //cmdPlanetiler.generateOpenMapTiles(map.getPathSource(), map.getPathGenMlOutdoor(), map.getPathPolygon());
 
                 // clean tmp
                 Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");

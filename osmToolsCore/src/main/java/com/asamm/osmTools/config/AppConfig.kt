@@ -2,6 +2,7 @@ package com.asamm.osmTools.config
 
 
 import com.asamm.store.LocusStoreEnv
+import com.charleskorn.kaml.AnchorsAndAliases
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -32,7 +33,8 @@ object AppConfig {
     }
 
     fun loadYamlConfig(configFilePath: String = "config.yml"): Config {
-        val yaml = Yaml.default
+        //val yaml = Yaml.default
+        val yaml = Yaml(configuration = Yaml.default.configuration.copy( anchorsAndAliases = AnchorsAndAliases.Permitted()))
         val configFile = File(configFilePath)
         // read yaml file and initiate Config object
         return yaml.decodeFromString(Config.serializer(), configFile.readText())
@@ -56,14 +58,21 @@ data class Config(
     var temporaryDir: Path = Path.of("_temp"),
 
     @Serializable(with = PathSerializer::class)
-    var dataDir: Path = Path.of("./"),
+    var mapsForgeDir: Path = Path.of("./_mapsforge"),
+
+    @Serializable(with = PathSerializer::class)
+    var mbtilesDir: Path = Path.of("./_mbtiles"),
+
+    @Serializable(with = PathSerializer::class)
+    var planetDir: Path = Path.of("./_planet"),
 
     @Serializable(with = PathSerializer::class)
     var storeUploaderPath: Path,
 
-    @Transient
+    @Transient @Serializable(with = PathSerializer::class)
     var storeUploadDefinitionJson: Path = Path.of("storeUploadeDefinition.json"),
 
+    @Serializable(with = PathSerializer::class)
     var defaultStoreItemDefinitionPath: Path = Path.of("config/default_store_item_definition.json"),
 
 
@@ -72,11 +81,18 @@ data class Config(
     var planetConfig: PlanetConfig,
     var cmdConfig: CmdConfig,
     var maptilerCloudConfig: MaptilerCloudConfig,
+    var mbtilesConfig: MbtilesConfig,
     var mapsforgeConfig: MapsforgeConfig,
     var coastlineConfig: CoastlineConfig,
     var poiAddressConfig: PoiAddressConfig,
 
     )
+{
+    fun toYaml(): String {
+        val yaml = Yaml.default
+        return yaml.encodeToString(Config.serializer(), this)
+    }
+}
 
 @Serializable
 data class TouristConfig(
@@ -133,8 +149,9 @@ class CoastlineConfig(
 
     val landPolygonUrl: String = "https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip"
 ){
+    @Serializable(with = PathSerializer::class)
     val landPolygonShp: Path
-        get() = AppConfig.config.dataDir.resolve(_landPolygonShp)
+        get() = AppConfig.config.mapsForgeDir.resolve(_landPolygonShp)
 }
 
 
@@ -175,6 +192,13 @@ data class PoiAddressConfig(
 
     @Serializable(with = PathSerializer::class)
     var addressDbXml: Path
+)
+
+@Serializable
+class MbtilesConfig(
+    var mapDescription: String,
+
+    var mapAttribution: String
 )
 
 @Serializable

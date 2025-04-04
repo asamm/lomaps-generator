@@ -17,11 +17,13 @@ enum class Action {
 
     MERGE("merge"),
 
-    GENERATE_MAPLIBRE("generate_maplibre", true),
+    GENERATE_MBTILES_ONLINE("generate_mbtiles_online", true),
 
     UPLOAD_MAPTILER("upload_maptiler", true),
 
     GENERATE_MAPSFORGE("generate_mapsforge",true),
+
+    GENERATE_MBTILES("generate_mbtiles",true),
 
     GRAPH_HOPPER("graphHopper"),
 

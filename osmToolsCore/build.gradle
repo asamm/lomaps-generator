@@ -7,8 +7,7 @@ configurations { providedCompile }
 dependencies {
 
     implementation 'commons-io:commons-io:2.4'
-    //compile 'org.apache.commons:commons-lang3:3.1'
-    //compile 'org.apache.commons:commons-lang3:jar:3.5-SNAPSHOT'
+    implementation("org.locationtech.jts:jts-core:1.20.0")
     implementation 'org.apache.commons:commons-lang3:3.4'
     implementation 'net.sf.kxml:kxml2:2.2.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"

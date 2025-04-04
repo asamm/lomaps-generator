@@ -29,7 +29,7 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
     init {
 
         // check the id of map only "planet" is supported at this moment for generation of contour lines
-        require(map.getId() == AppConfig.config.planetConfig.planetExtendedId) {
+        require(map.isPlanet) {
             "Only planet map (id=planet) is supported for generation of contour lines" }
 
         // check the location of polygon for contour lines

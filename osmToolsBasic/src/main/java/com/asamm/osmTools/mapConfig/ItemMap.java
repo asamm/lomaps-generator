@@ -5,6 +5,7 @@
 package com.asamm.osmTools.mapConfig;
 
 import com.asamm.osmTools.config.Action;
+import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
@@ -68,17 +69,10 @@ public class ItemMap extends AItemMap {
          pathResolver = new PathResolver(this);
 
     }
-//
-//    public String getRelativeResultsPath() {
-//        if (pathResult != null) {
-//            int lastIndex = (Consts.DIR_BASE + "_result").length();
-//            if (lastIndex == -1) {
-//                return null;
-//            }
-//            return pathResult.toString().substring(lastIndex + 1);
-//        }
-//        return null;
-//    }
+
+    public boolean isPlanet(){
+        return getId() != null && AppConfig.INSTANCE.getConfig().getPlanetConfig().equals(getId());
+    }
 
     @Override
     public void validate() {
@@ -113,12 +107,15 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.MAPSFORGE_GENERATE, name + ".osm.map");
     }
 
-    public Path getPathGenMlOutdoor() {
-        return pathResolver.getPath(PathType.MAPLIBRE_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
+    public Path getPathMbtiles() {
+        if (nameGen != null && !nameGen.isEmpty()) {
+            return pathResolver.getPath(PathType.MBTILES_GENERATE, nameGen + ".mbtiles");
+        }
+        return pathResolver.getPath(PathType.MBTILES_GENERATE, name + ".mbtiles");
     }
 
-    public Path getPathGenMlOpenMapTiles() {
-        return pathResolver.getPath(PathType.MAPLIBRE_ONLINE_OPENMAPTILES, name + "_openmaptiles.mbtiles");
+    public Path getPathGenMlOutdoor() {
+        return pathResolver.getPath(PathType.MBTILES_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
     }
 
     public Path getPathAddressPoiDb() {

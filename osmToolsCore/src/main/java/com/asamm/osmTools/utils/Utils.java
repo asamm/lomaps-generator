@@ -50,6 +50,18 @@ public class Utils {
 
     }
 
+    /**
+     * Returns the size of {@code path} as a file, or 0 if missing/inaccessible.
+     * @param path the file to get the size
+     */
+    public static long fileSize(Path path) {
+        try {
+            return Files.size(path);
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
     public static String changeSlashToUnix(String name) {
         if (name.contains(Consts.FILE_SEP)) {
             return name.replace(Consts.FILE_SEP, "/");

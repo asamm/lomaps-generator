@@ -11,7 +11,6 @@ import com.asamm.store.LocusStoreEnv
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.*
-import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import java.io.File
@@ -76,6 +75,9 @@ class LoMapsCommand : CliktCommand(
     name = "lomaps",
     help = "Subcommand to generate maps for Locus Store"
 ) {
+    companion object {
+        const val TAG: String = "OsmToolsCommand"
+    }
 
     // version of the map
     val version: String by option(
@@ -100,7 +102,11 @@ class LoMapsCommand : CliktCommand(
         }
 
     // split action by comma and convert to enum
-    val actions by option(help = "Action to perform. Possible values: ${Action.getCliActions().map { it.getLabel() }.joinToString(", ")}")
+    val actions by option(
+        help = "Action to perform. Possible values: ${
+            Action.getCliActions().map { it.getLabel() }.joinToString(", ")
+        }"
+    )
         .convert { input ->
             input.split(",").map {
                 var action = Action.getActionByLabel(it.trim().lowercase())
@@ -125,17 +131,35 @@ class LoMapsCommand : CliktCommand(
             defaultConfigFile
         }
 
-    val dataDir: File by option("-d", "--data_dir", help = "Path to folder where data for generation are stored").file()
-        .defaultLazy {
-            AppConfig.config.dataDir.toFile() }
+    val mapsforgeDir: File by option(
+        "-mf", "--mapsforge_dir",
+        help = "Path to folder where data for generation of MapsForge maps are stored"
+    ).file()
+        .defaultLazy { AppConfig.config.mapsForgeDir.toFile() }
+
+    val mbtilesDir: File by option(
+        "-mb", "--mbtiles_dir",
+        help = "Path to folder where data for generation of Mbtiles maps are stored"
+    ).file()
+        .defaultLazy { AppConfig.config.mbtilesDir.toFile() }
+
+    val planetDir: File by option(
+        "-pd", "--planet_dir",
+        help = "Path to folder where data for generation of planet data are stored"
+    ).file()
+        .defaultLazy { AppConfig.config.planetDir.toFile() }
+
 
     // path to a locus store uploader
-    val storeUploaderFile: File by option("-su", "--store_uploader", help = "Path to java .jar file script for LoMaps store uploader")
+    val storeUploaderFile: File by option(
+        "-su",
+        "--store_uploader",
+        help = "Path to java .jar file script for LoMaps store uploader"
+    )
         .file(mustExist = true)
         .defaultLazy { AppConfig.config.storeUploaderPath.toFile() }
 
     override fun run() {
-
 
         // Set required actions based on the command line arguments
         ConfigUtils.addAdditionalActions(actions)
@@ -143,7 +167,7 @@ class LoMapsCommand : CliktCommand(
         // Set actions to the configuration
         AppConfig.config.actions = actions
         AppConfig.config.version = version
-        AppConfig.config.dataDir = dataDir.toPath()
+        AppConfig.config.mapsForgeDir = mapsforgeDir.toPath()
 
         // Set path to the configuration file
         AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
@@ -154,13 +178,13 @@ class LoMapsCommand : CliktCommand(
         // Set path to the hgt directory
         AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()
 
-        echo("Configuration : ${AppConfig.config.toString()}")
-        echo(AppConfig.config.mapsforgeConfig.mapDescription)
+        Logger.i(TAG, "Configuration : ${AppConfig.config.toYaml()}")
+
         val genLoMaps = GenLoMaps();
         genLoMaps.process();
 
 
-        echo("== Map generation finished ==")
+        Logger.i(TAG, "== Map generation finished ==")
     }
 
     /**
@@ -186,7 +210,11 @@ class StoreGeoCommand : CliktCommand(
 ) {
 
     // path to a configuration file where are defined maps for generation
-    val configFile: File by option("-cf", "--config_file", help = "Path to configuration XML for generation of country boundaries").file(mustExist = true)
+    val configFile: File by option(
+        "-cf",
+        "--config_file",
+        help = "Path to configuration XML for generation of country boundaries"
+    ).file(mustExist = true)
         .defaultLazy {
             val defaultConfigFile = File("config/config_store_geodb.xml")
             require(defaultConfigFile.exists()) {
