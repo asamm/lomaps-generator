@@ -2,6 +2,7 @@ package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.utils.Logger
+import com.asamm.osmTools.utils.Utils
 import com.asamm.store.LocusStoreEnv
 
 /**
@@ -29,7 +30,7 @@ class CmdUpload : Cmd(ExternalApp.STORE_UPLOAD) {
     }
 
     fun createCmd() {
-        if (AppConfig.config.locusStoreEnv == LocusStoreEnv.DEV) {
+        if (Utils.isLocalDEV()) {
             addCommand("--isDev")
         }
 

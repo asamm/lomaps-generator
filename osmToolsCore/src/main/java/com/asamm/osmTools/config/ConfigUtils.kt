@@ -1,5 +1,6 @@
 package com.asamm.osmTools.config
 
+import com.asamm.osmTools.utils.Utils
 import java.io.File
 import java.nio.file.Path
 
@@ -12,7 +13,7 @@ object ConfigUtils {
      */
     fun addAdditionalActions(cliActions: MutableList<Action>) {
 
-        // for MapsForge generation add Coastline action, transform and merge
+        // for MapsForge generation, add Coastline action, transform and merge
         when {
             cliActions.contains(Action.GENERATE_MAPSFORGE) -> {
 
@@ -20,16 +21,23 @@ object ConfigUtils {
 
                 // Add additional actions before Action.GENERATE_MAPSFORGE
                 cliActions.addAll(index, listOf(Action.EXTRACT,Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
+            }
+            // for mbtiles generation, add automatically the POI DB V2 action
+            cliActions.contains(Action.GENERATE_MBTILES) -> {
+                var index = cliActions.indexOf(Action.GENERATE_MBTILES)
+                // Add preparation of POI DB  before Action.GENERATE_MAPSFORGE but not on local dev
+                if ( !Utils.isLocalDEV()){
+                    cliActions.addAll(index, listOf(Action.POI_DB_V2))
+                }
+            }
 
-                // Additional actions after Action.GENERATE_MAPSFORGE but before Action.UPLOAD
-                index = cliActions.indexOf(Action.UPLOAD)
+            cliActions.contains(Action.UPLOAD) -> {
+                var index = cliActions.indexOf(Action.UPLOAD)
                 if (index != -1) {
                     cliActions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
                 }
-                else{
-                    cliActions.addAll(listOf(Action.COMPRESS, Action.CREATE_JSON))
-                }
             }
+
         }
     }
 

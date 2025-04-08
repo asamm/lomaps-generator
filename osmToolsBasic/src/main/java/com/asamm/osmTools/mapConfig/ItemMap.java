@@ -122,6 +122,10 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.ADDRESS_POI_DB, name + ".osm.db");
     }
 
+    public Path getPathPoiDbV2() {
+        return pathResolver.getPath(PathType.POI_DB_V2, name + ".osm.db2");
+    }
+
     public Path getPathMerge() {
         return pathResolver.getPath(PathType.MERGE, name + ".osm.pbf");
     }
@@ -142,11 +146,16 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.CONTOUR, name + ".osm.pbf");
     }
 
-    public Path getPathResult() {
+    public Path getPathResultMapsforge() {
         if (nameGen != null && !nameGen.isEmpty()) {
             return pathResolver.getPath(PathType.MAPSFORGE_RESULT, nameGen + ".zip");
         }
         return pathResolver.getPath(PathType.MAPSFORGE_RESULT, name + ".zip");
+    }
+
+    public Path getPathResultMbtiles(){
+        // rename mapsforge result and add mbtiles postfix
+        return Path.of(getPathResultMapsforge().toString().replace(".zip", "_mbtiles.zip"));
     }
 
     public Path getPathShp() {

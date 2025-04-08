@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.MatchResult;
@@ -238,39 +239,37 @@ public class Utils {
     }
 
     public static void compressFile(String source, String target) throws IOException {
-        List<String> files = new ArrayList<String>();
-        files.add(source);
-        compressFiles(files, target);
+        List<File> files = Arrays.asList(new File(source));
+        compressFiles(files, new File(target));
     }
 
 
-    public static void compressFiles(List<String> files, String target) throws IOException {
+    public static void compressFiles(List<File> files, File target) throws IOException {
         ZipOutputStream zos = null;
         try {
-            File parentFolder = new File(target).getParentFile();
+            File parentFolder = target.getParentFile();
             if (parentFolder != null) {
-                FileUtils.forceMkdir(new File(target).getParentFile());
+                FileUtils.forceMkdir(target.getParentFile());
             }
             zos = new ZipOutputStream(new FileOutputStream(target));
             zos.setLevel(9);
 
             // insert entry
-            for (int i = 0, m = files.size(); i < m; i++) {
-                File fileToCompress = new File(files.get(i));
+            for (File file : files){
 
                 // check file
-                if (!fileToCompress.exists()) {
+                if (!file.exists()) {
                     throw new IllegalArgumentException(
-                            "Fie '" + fileToCompress + "' for compress do not exists");
+                            "Fie '" + file + "' for compress do not exists");
                 }
 
                 // write data
 
-                ZipEntry entry = new ZipEntry(fileToCompress.getName());
+                ZipEntry entry = new ZipEntry(file.getName());
                 // set the same last change value for entry as source file
-                entry.setTime(fileToCompress.lastModified());
+                entry.setTime(file.lastModified());
                 zos.putNextEntry(entry);
-                FileUtils.copyFile(fileToCompress, zos);
+                FileUtils.copyFile(file, zos);
                 zos.closeEntry();
             }
 

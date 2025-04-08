@@ -3,6 +3,7 @@ package com.asamm.osmTools.mbtilesextract.mbtiles
 import com.asamm.osmTools.mbtilesextract.tiles.Tile
 import com.asamm.osmTools.mbtilesextract.tiles.TileCoord
 import com.asamm.osmTools.utils.Logger
+import com.asamm.osmTools.utils.Utils
 import org.sqlite.SQLiteConfig
 import java.nio.file.Path
 import java.sql.*
@@ -14,7 +15,7 @@ class Mbtiles private constructor(
     private val vacuumAnalyze: Boolean = false
 ) : AutoCloseable {
 
-    val TAG: String = Mbtiles::class.java.simpleName
+
 
     private var getTileStatement: PreparedStatement? = null
 
@@ -32,12 +33,11 @@ class Mbtiles private constructor(
         //this.connection = connection
         if (skipIndexCreation) Logger.i(TAG, "Skip adding index to sqlite DB")
         if (vacuumAnalyze) Logger.i(TAG, "Vacuum analyze sqlite DB after writing")
-
-        loadDriver()
     }
 
 
     companion object {
+        val TAG: String = Mbtiles::class.java.simpleName
 
         // https://www.sqlite.org/src/artifact?ci=trunk&filename=magic.txt
         private const val MBTILES_APPLICATION_ID = 0x4d504258
@@ -69,6 +69,7 @@ class Mbtiles private constructor(
             sqliteConfig.setTempStore(SQLiteConfig.TempStore.MEMORY)
             sqliteConfig.setApplicationId(MBTILES_APPLICATION_ID)
 
+            Utils.createParentDirs(path)
 
             val connection: Connection = newConnection(
                 "jdbc:sqlite:" + path.toAbsolutePath(),
@@ -106,11 +107,27 @@ class Mbtiles private constructor(
 
         private fun newConnection(url: String, defaults: SQLiteConfig): Connection {
             try {
+                loadDriver()
+
                 val config = SQLiteConfig(defaults.toProperties())
 
                 return DriverManager.getConnection(url, config.toProperties())
             } catch (e: SQLException) {
-                throw IllegalArgumentException("Unable to open $url", e)
+                Logger.e(TAG, "Error in opening SQLite connection: $url, Error: ${e.message}")
+                throw IllegalArgumentException("Unable to create connection to DB $url", e)
+            }
+        }
+
+
+        /**
+         * Loads the SQLite JDBC driver.
+         */
+        private fun loadDriver() {
+            try {
+                Class.forName("org.sqlite.JDBC")
+            } catch (e: ClassNotFoundException) {
+                Logger.e(TAG, "Error: SQLite JDBC Driver not found!")
+                throw IllegalStateException("Can not load JDBC driver", e)
             }
         }
     }
@@ -234,18 +251,6 @@ class Mbtiles private constructor(
 
     private fun execute(vararg sql: String): Mbtiles {
         return execute(listOf(*sql))
-    }
-
-    /**
-     * Loads the SQLite JDBC driver.
-     */
-    private fun loadDriver() {
-        try {
-            Class.forName("org.sqlite.JDBC")
-        } catch (e: ClassNotFoundException) {
-            Logger.e(TAG, "Error: SQLite JDBC Driver not found!")
-            throw IllegalStateException("Can not load JDBC driver", e)
-        }
     }
 
     // INIT TABLES

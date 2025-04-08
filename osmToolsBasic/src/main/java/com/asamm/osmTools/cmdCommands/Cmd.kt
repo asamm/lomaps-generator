@@ -9,6 +9,7 @@ import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
+import com.asamm.osmTools.utils.Utils
 import org.apache.commons.io.FileUtils
 import java.io.BufferedReader
 import java.io.File
@@ -34,6 +35,8 @@ open class Cmd(val externalApp: ExternalApp) {
         PYHGTMAP,
 
         PLANETILER,
+
+        POI_V2_TOOL
     }
 
 
@@ -87,6 +90,15 @@ open class Cmd(val externalApp: ExternalApp) {
             )
 
             ExternalApp.OGR2OGR -> addCommand(ConfigUtils.findOgr2ogrPath())
+
+            ExternalApp.POI_V2_TOOL -> {
+                // not commands is added, only check if the path is correct
+                if ( !Utils.isLocalDEV()){
+                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Init).toString()
+
+                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Generator).toString()
+                }
+            }
 
             ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
         }
@@ -206,6 +218,8 @@ open class Cmd(val externalApp: ExternalApp) {
                 if (stdInput != null) {
                     stdInput.close()
                 }
+
+                reset() // reset command list
             } catch (ex: IOException) {
                 throw IOException(ex.toString())
             }

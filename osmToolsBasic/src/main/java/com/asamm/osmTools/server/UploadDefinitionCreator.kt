@@ -61,12 +61,31 @@ class UploadDefinitionCreator {
         // load mappack and do actions for mappack items
         for (mapPack in mapSource.getMapPacksIterator()) {
             for (map in mapPack.maps) {
-                if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-                    addMap(map)
-                }
+                if ( !hasValidActionsForUpload(map)) continue
+
+                addMap(map)
             }
         }
         writeToJsonDefFile();
+    }
+
+    /**
+     * Map has to have action for GENERATE_MAPSFORGE and GENERATE_MBTILES
+     *
+     * @param map map to check
+     * @return true if map has action for upload to store
+     */
+    private fun hasValidActionsForUpload(map: ItemMap): Boolean {
+        if (map.hasAction(Action.GENERATE_MAPSFORGE) || map.hasAction(Action.GENERATE_MBTILES)) {
+
+            // it's needed to upload mapsforge and mbtiles to the locus store
+            require (map.hasAction(Action.GENERATE_MAPSFORGE) && map.hasAction(Action.GENERATE_MBTILES) , {
+                "Map ${map.name} does not have valid actions for upload. " +
+                        "Edit config.xml and define ${Action.GENERATE_MBTILES.getLabel()} and ${Action.GENERATE_MAPSFORGE.getLabel()}" })
+            return true
+        }
+
+        return false;
     }
 
     /**
@@ -122,18 +141,14 @@ class UploadDefinitionCreator {
 
         val sai = StoreAdminItem(defJson)
 
-        val resultFile = map.pathResult.toFile()
-
-        require(resultFile.exists()) { "Create definition upload JSON failed: File for uploading does not exist:  " + map.pathResult }
-
         // set map name to listing
         val name = map.nameReadable + ITEM_NAME_VECTOR_POSTFIX
         for (sail in sai.listings) {
             sail.setName(name)
         }
 
-        // compute loCoins
-        sai.setLoCoins(computeLocoins(resultFile))
+        // compute loCoins based on mapsforge file size
+        sai.setLoCoins(computeLocoins(map.pathResultMapsforge.toFile()))
 
         sai.setRegionDatastoreIds(Arrays.asList(map.regionId))
 
@@ -167,9 +182,18 @@ class UploadDefinitionCreator {
         val saf = StoreAdminFile()
         saf.setClientDeleteSource(true)
         saf.setClientFileUnpack(true)
-        saf.setLocationPath(map.pathResult.toString())
+
         saf.setClientDestination(getClientDestinationPath(map))
         saf.setAppVariantCodes(getAppVariantsFromSupportedApks(supportedApks, platform))
+
+        saf.setLocationPath(
+            when (platform) {
+                Platform.ANDROID -> map.pathResultMapsforge.toAbsolutePath().toString()
+                Platform.IOS -> map.pathResultMbtiles.toAbsolutePath().toString()
+            }
+        )
+
+        // validate
 
         return saf
     }

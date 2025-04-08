@@ -1,9 +1,12 @@
 package com.asamm.osmTools.config
 
 
+import com.asamm.osmTools.utils.Logger
 import com.asamm.store.LocusStoreEnv
 import com.charleskorn.kaml.AnchorsAndAliases
 import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
+import com.charleskorn.kaml.YamlMap
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -33,6 +36,7 @@ object AppConfig {
     }
 
     fun loadYamlConfig(configFilePath: String = "config.yml"): Config {
+
         //val yaml = Yaml.default
         val yaml = Yaml(configuration = Yaml.default.configuration.copy( anchorsAndAliases = AnchorsAndAliases.Permitted()))
         val configFile = File(configFilePath)
@@ -47,7 +51,6 @@ data class Config(
 
     @Transient
     var version: String = "",
-
 
     var overwrite: Boolean = false,
     var actions: MutableList<Action> = mutableListOf<Action>(),
@@ -221,7 +224,14 @@ class CmdConfig(
     var planetiler: Path,
 
     @Serializable(with = PathSerializer::class)
-    var osmosis: Path
+    var osmosis: Path,
+
+    // POI V2
+    @Serializable(with = PathSerializer::class)
+    val poiDbV2Init: Path,
+
+    @Serializable(with = PathSerializer::class)
+    val poiDbV2Generator: Path
 ) {
     val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
 

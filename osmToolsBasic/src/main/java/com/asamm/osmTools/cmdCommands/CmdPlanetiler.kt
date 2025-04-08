@@ -39,7 +39,6 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
 
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
-        reset()
     }
 
     fun generateLoMapsOpenMapTiles(input: Path, output: Path, poly: Path) {
@@ -65,7 +64,6 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
 
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
-        reset()
     }
 
 }

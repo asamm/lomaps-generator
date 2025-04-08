@@ -1,14 +1,28 @@
 package com.asamm.osmTools.mbtilesextract.tiles
 
+import com.asamm.geoutils.PolyReader
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.operation.union.CascadedPolygonUnion
+import java.io.File
 
 class TileCalculator {
 
     private val geometryFactory: GeometryFactory = GeometryFactory()
+
+    /**
+     * Computes the list of map tiles (x, y, z) that cover the area defined by the polygon in the given file.
+     *
+     * @param polyFile The file containing the polygon geometry.
+     * @param maxZoom The maximum zoom level to compute tiles for (default is 14).
+     * @return A list of map tiles represented as triples (x, y, z).
+     */
+    fun computeTiles(polyFile: File, maxZoom: Int = 14): List<Triple<Int, Int, Int>> {
+        val polyGeom = PolyReader().read(polyFile)
+        return computeTiles(polyGeom, maxZoom)
+    }
 
     /**
      * Computes the list of map tiles (x, y, z) that cover the given geometry from zoom level 0 to the specified zoom level.
@@ -39,7 +53,6 @@ class TileCalculator {
 
         return tiles
     }
-
 
     /**
      * Creates a JTS geometry that exactly covers the list of tiles.

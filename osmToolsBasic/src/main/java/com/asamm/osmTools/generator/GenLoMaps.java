@@ -4,6 +4,7 @@ import com.asamm.locus.MapTilerUploader;
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
 import com.asamm.osmTools.cmdCommands.*;
+import com.asamm.osmTools.compress.MapCompress;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
@@ -24,7 +25,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -104,6 +104,10 @@ public class GenLoMaps extends AGenerator {
                 uploadDefinitionCreator.generateJsonUploadDefinition(mMapSource);
             }
 
+            if (action == Action.COMPRESS){
+                new MapCompress().compressAllMaps(mMapSource);
+            }
+
             // perform remaining actions
             if (action == Action.UPLOAD) {
 
@@ -124,28 +128,27 @@ public class GenLoMaps extends AGenerator {
     private void processPlanet(List<Action> actionList, MapSource mMapSource) {
         // find ItemMap with if "planet" and process it
         Logger.i(TAG, "================ PROCESS PLANET MAP ================");
-        ItemMap map = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
-        if (map != null) {
+        ItemMap mapPlanet = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
+        if (mapPlanet != null) {
             for (Action action : actionList) {
                 switch (action) {
                     case TOURIST:
-                        actionTourist(map);
+                        actionTourist(mapPlanet);
                         break;
                     case CONTOUR:
-                        actionContour(map);
+                        actionContour(mapPlanet);
                         break;
                 }
             }
-            actionMergePlanet(map);
+            actionMergePlanet(mapPlanet);
 
-            // generate maplibre planet tiles
-            actionGenerateMbtilesOnline(map);
+            // generate lomaps outdoor planet tiles
+            actionGenerateMbtilesOnline(mapPlanet);
 
             // upload to maptiler
-            actionUploadPlanetToMapTiler(map);
+            actionUploadPlanetToMapTiler(mapPlanet);
 
-            // generate planet PMtiles for further generation of mbtiles
-            // actionGeneratePlanetMbtiles(map); planet mbtiles created before particular mbtiles map
+
         }
     }
 
@@ -178,12 +181,12 @@ public class GenLoMaps extends AGenerator {
                 case GENERATE_MBTILES:
                     actionGenerateMbtiles(map);
                     break;
+                case POI_DB_V2:
+                    actionPoiV2Database(map);
+                    break;
                 case GENERATE_MAPSFORGE:
                     actionGenerate(map);
                     actionInsertMetaData(map);
-                    break;
-                case COMPRESS:
-                    actionCompress(map);
                     break;
             }
         }
@@ -309,6 +312,25 @@ public class GenLoMaps extends AGenerator {
 
         // delete tmp file
         cmdLoMapsDbPlugin.deleteTmpFile();
+    }
+
+    private void actionPoiV2Database(ItemMap map) {
+
+        // check if map has defined generation of mbtiles
+        if (!map.hasAction(Action.POI_DB_V2) || Utils.isLocalDEV()) {
+            return;
+        }
+
+        // check if DB file exits and we should overwrite it
+        if (!AppConfig.config.getOverwrite() && map.getPathPoiDbV2().toFile().exists()) {
+            Logger.d(TAG, "File with POI V2 database '" + map.getPathPoiDbV2() +
+                    "' already exist - skipped.");
+            return;
+        }
+
+        //generete POI V2
+        Logger.i(TAG, "Generate POI V2 Database: " + map.getPathPoiDbV2());
+        new CmdPoiV2().generatePoiV2(map);
     }
 
     // ACTION COASTLINE
@@ -565,8 +587,11 @@ public class GenLoMaps extends AGenerator {
 
             // clean tmp
             Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-        } else {
-            Logger.i(TAG, "Planet MBtiles map " + map.getPathGenerate() + " already exists. Nothing to do.");
+
+            // Initialize POI Database
+            Logger.i(TAG, "Initialize POI V2 Database");
+            new CmdPoiV2().initPoiGeneratorDB();
+
         }
 
         // Generate particular MBTILES
@@ -727,59 +752,6 @@ public class GenLoMaps extends AGenerator {
 
         dbData.destroy();
 
-    }
-
-    // ACTION COMPRESS
-
-    private void actionCompress(ItemMap map) throws IOException {
-
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE) && !map.hasAction(Action.ADDRESS_POI_DB)) {
-            // map hasn't any result file for compress
-            return;
-        }
-
-        if (!AppConfig.config.getOverwrite() && map.getPathResult().toFile().exists()) {
-            Logger.d(TAG, "File with compressed result '" + map.getPathResult() +
-                    "' already exist - skipped.");
-            return;
-        }
-
-        Logger.i(TAG, "Compressing: " + map.getPathResult());
-        TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nCompress: " + map.getName() + " ...");
-
-        // change lastChange attribute of generated file
-        // this workaround how to set date of map file in Locus
-        List<String> filesToCompress = new ArrayList<>();
-        if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            File mapFile = map.getPathGenerate().toFile();
-            if (!mapFile.exists()) {
-                throw new IllegalArgumentException("Map file for compression: " + map.getPathGenerate() + " does not exist.");
-            }
-
-            long versionDate = UtilsKt.versionToDate(AppConfig.config.getVersion()).getTime();
-            // rewrite bytes in header to set new creation date
-            RandomAccessFile raf = new RandomAccessFile(mapFile, "rw");
-            raf.seek(36);
-            raf.writeLong(versionDate);
-            raf.close();
-
-            filesToCompress.add(map.getPathGenerate().toString());
-        }
-
-        if (map.hasAction(Action.ADDRESS_POI_DB)) {
-
-            File poiDbFile = map.getPathAddressPoiDb().toFile();
-            if (!poiDbFile.exists()) {
-                throw new IllegalArgumentException("POI DB file for compression: " + map.getPathAddressPoiDb() + " does not exist.");
-            }
-            filesToCompress.add(poiDbFile.getAbsolutePath());
-        }
-
-        // compress file
-        Utils.compressFiles(filesToCompress, map.getPathResult().toString());
-
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }
 
     // ACTION UPLOAD
