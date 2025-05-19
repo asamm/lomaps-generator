@@ -105,12 +105,13 @@ public class GenLoMaps extends AGenerator {
             }
 
             if (action == Action.COMPRESS){
+                printLogHeader(Action.COMPRESS);
                 new MapCompress().compressAllMaps(mMapSource);
             }
 
             // perform remaining actions
             if (action == Action.UPLOAD) {
-
+                printLogHeader(Action.UPLOAD);
                 actionUpload();
             }
         }
@@ -142,13 +143,12 @@ public class GenLoMaps extends AGenerator {
             }
             actionMergePlanet(mapPlanet);
 
+
             // generate lomaps outdoor planet tiles
             actionGenerateMbtilesOnline(mapPlanet);
 
             // upload to maptiler
             actionUploadPlanetToMapTiler(mapPlanet);
-
-
         }
     }
 
@@ -322,14 +322,18 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if DB file exits and we should overwrite it
-        if (!AppConfig.config.getOverwrite() && map.getPathPoiDbV2().toFile().exists()) {
-            Logger.d(TAG, "File with POI V2 database '" + map.getPathPoiDbV2() +
+        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db().toFile().exists()) {
+            Logger.d(TAG, "File with POI V2 database '" + map.getPathPoiV2Db() +
                     "' already exist - skipped.");
             return;
         }
 
+        // Initialize POI Database
+        Logger.i(TAG, "Initialize POI V2 Database");
+        new CmdPoiV2().initPoiGeneratorDB();
+
         //generete POI V2
-        Logger.i(TAG, "Generate POI V2 Database: " + map.getPathPoiDbV2());
+        Logger.i(TAG, "Generate POI V2 Database: " + map.getPathPoiV2Db());
         new CmdPoiV2().generatePoiV2(map);
     }
 
@@ -588,10 +592,7 @@ public class GenLoMaps extends AGenerator {
             // clean tmp
             Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
 
-            // Initialize POI Database
-            Logger.i(TAG, "Initialize POI V2 Database");
-            new CmdPoiV2().initPoiGeneratorDB();
-
+            return;
         }
 
         // Generate particular MBTILES
@@ -605,7 +606,7 @@ public class GenLoMaps extends AGenerator {
                 map.getPathMbtiles(),
                 map.getPathPolygon(),
                 map.getName(),
-                0, 14   );
+                1, 14   );
 
         // notify about result
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
@@ -763,8 +764,7 @@ public class GenLoMaps extends AGenerator {
         Main.mySimpleLog.print("Uplad data....");
 
         CmdUpload cmdUpload = new CmdUpload();
-        cmdUpload.createCmd();
-        cmdUpload.execute(1);
+        cmdUpload.upload(1);
 
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }

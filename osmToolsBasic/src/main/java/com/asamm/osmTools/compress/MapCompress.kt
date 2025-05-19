@@ -122,9 +122,9 @@ class MapCompress {
         }
 
         if (map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
-            require(map.pathPoiDbV2.toFile().exists()) {
-                "POI DB V2 file for compression: ${map.pathPoiDbV2} does not exist." }
-            fileToCompress.add(map.pathPoiDbV2.toFile())
+            require(map.pathPoiV2Db.toFile().exists()) {
+                "POI DB V2 file for compression: ${map.pathPoiV2Db} does not exist." }
+            fileToCompress.add(map.pathPoiV2Db.toFile())
         }
 
         val time = TimeWatch()

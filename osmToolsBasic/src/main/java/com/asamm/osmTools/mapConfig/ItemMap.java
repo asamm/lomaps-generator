@@ -71,7 +71,7 @@ public class ItemMap extends AItemMap {
     }
 
     public boolean isPlanet(){
-        return getId() != null && AppConfig.INSTANCE.getConfig().getPlanetConfig().equals(getId());
+        return getId() != null && AppConfig.INSTANCE.getConfig().getPlanetConfig().getPlanetExtendedId().equals(getId());
     }
 
     @Override
@@ -122,8 +122,8 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.ADDRESS_POI_DB, name + ".osm.db");
     }
 
-    public Path getPathPoiDbV2() {
-        return pathResolver.getPath(PathType.POI_DB_V2, name + ".osm.db2");
+    public Path getPathPoiV2Db() {
+        return pathResolver.getPath(PathType.POI_V2_DB, name + ".poiv2.db");
     }
 
     public Path getPathMerge() {

@@ -28,10 +28,10 @@ class CmdPoiV2: Cmd(ExternalApp.POI_V2_TOOL)  {
 
         addCommand(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
         addCommands(tempGeoJsonFile.toAbsolutePath().toString())
-        addCommands(map.pathPoiDbV2.toAbsolutePath().toString())
+        addCommands(map.pathPoiV2Db.toAbsolutePath().toString())
 
         // create folder structure for poi db
-        Utils.createParentDirs(map.pathPoiDbV2.toAbsolutePath())
+        Utils.createParentDirs(map.pathPoiV2Db.toAbsolutePath())
 
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()

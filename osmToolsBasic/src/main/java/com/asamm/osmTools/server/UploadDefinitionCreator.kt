@@ -77,11 +77,6 @@ class UploadDefinitionCreator {
      */
     private fun hasValidActionsForUpload(map: ItemMap): Boolean {
         if (map.hasAction(Action.GENERATE_MAPSFORGE) || map.hasAction(Action.GENERATE_MBTILES)) {
-
-            // it's needed to upload mapsforge and mbtiles to the locus store
-            require (map.hasAction(Action.GENERATE_MAPSFORGE) && map.hasAction(Action.GENERATE_MBTILES) , {
-                "Map ${map.name} does not have valid actions for upload. " +
-                        "Edit config.xml and define ${Action.GENERATE_MBTILES.getLabel()} and ${Action.GENERATE_MAPSFORGE.getLabel()}" })
             return true
         }
 

@@ -221,7 +221,9 @@ class MapsforgeConfig(
 @Serializable
 class CmdConfig(
     @Serializable(with = PathSerializer::class)
-    var planetiler: Path,
+    val planetiler: Path,
+
+    val planetilerRam: String = "16G",
 
     @Serializable(with = PathSerializer::class)
     var osmosis: Path,

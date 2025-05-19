@@ -77,9 +77,8 @@ open class Cmd(val externalApp: ExternalApp) {
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 } else {
-
                     addCommands(
-                        "java", "-Xmx${ram}G", "-jar",
+                        "java", "-Xmx${AppConfig.config.cmdConfig.planetilerRam}", "-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 }

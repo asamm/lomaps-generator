@@ -19,7 +19,7 @@ enum class PathType {
 
     MBTILES_GENERATE,
     MBTILES_RESULT,
-    POI_DB_V2,
+    POI_V2_DB,
 
     MBTILES_ONLINE_OUTDOOR,
 
@@ -88,10 +88,10 @@ class PathResolver(val map: ItemMap) {
             PathType.MBTILES_RESULT -> mapsForgeDir.resolve("_result_mbtiles").resolve(versionPath).resolve(fileName)
 
             // online lomaps outdoor
-            PathType.MBTILES_ONLINE_OUTDOOR -> mapsForgeDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
+            PathType.MBTILES_ONLINE_OUTDOOR -> planetDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
 
             // POI V2
-            PathType.POI_DB_V2 -> mbtilesDir.resolve("_poi_db_v2").resolve(versionPath).resolve(fileName)
+            PathType.POI_V2_DB -> mbtilesDir.resolve("_poi_v2_db").resolve(versionPath).resolve(fileName)
         }
     }
 

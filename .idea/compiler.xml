@@ -20,4 +20,11 @@
     </annotationProcessing>
     <bytecodeTargetLevel target="17" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="OsmTools.osmToolsBasic" options="-Xlint:-processing" />
+      <module name="OsmTools.osmToolsBasic.main" options="-Xlint:-processing" />
+      <module name="OsmTools.osmToolsBasic.test" options="-Xlint:-processing" />
+    </option>
+  </component>
 </project>

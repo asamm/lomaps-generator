@@ -149,7 +149,6 @@ class LoMapsCommand : CliktCommand(
     ).file()
         .defaultLazy { AppConfig.config.planetDir.toFile() }
 
-
     // path to a locus store uploader
     val storeUploaderFile: File by option(
         "-su",

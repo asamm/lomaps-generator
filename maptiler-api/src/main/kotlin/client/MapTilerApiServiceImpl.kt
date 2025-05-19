@@ -3,6 +3,7 @@ package com.asamm.locus.client
 
 import com.asamm.locus.client.api.TilesetApi
 import com.asamm.locus.client.api.TilesetIngestApi
+import com.asamm.osmTools.utils.Utils
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -15,8 +16,7 @@ object MapTilerClient {
 
     private const val BASE_URL = "https://service.maptiler.com/v1/"
 
-    private val SERVICE_TOKEN: String =
-        "5fc611130dc44366a91c7d3a451c1fa4_e45828cb1fd56b5a70ec025bd4d49c0238f6cd6e340fbc5837a05491a37c70d1"
+    private val SERVICE_TOKEN: String = Utils.getEnvVariable("MAPTILER_SERVICE_TOKEN")
 
 //    private val loggingInterceptor = HttpLoggingInterceptor().apply {
 //        level = HttpLoggingInterceptor.Level.BODY

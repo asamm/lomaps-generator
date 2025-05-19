@@ -487,4 +487,12 @@ public class Utils {
         }
         return new String(encoded, encoding);
     }
+
+    public static String getEnvVariable(String name) {
+        String value = System.getenv(name);
+        if (value == null) {
+            throw new IllegalArgumentException("Environment variable " + name + " is not set.");
+        }
+        return value;
+    }
 }

@@ -12,7 +12,15 @@ class CmdUpload : Cmd(ExternalApp.STORE_UPLOAD) {
 
     private val TAG: String = CmdUpload::class.java.simpleName
 
-    fun execute(numRepeat: Int): String? {
+    fun upload(numRepeat: Int = 1){
+
+        // create command
+        createCmd()
+        // execute command
+        execute(numRepeat)
+    }
+
+    private fun execute(numRepeat: Int): String? {
         var localNumRepeat = numRepeat
         try {
             return super.execute()
@@ -29,8 +37,8 @@ class CmdUpload : Cmd(ExternalApp.STORE_UPLOAD) {
         return null
     }
 
-    fun createCmd() {
-        if (Utils.isLocalDEV()) {
+    private fun createCmd() {
+        if (AppConfig.config.locusStoreEnv == LocusStoreEnv.DEV) {
             addCommand("--isDev")
         }
 
@@ -40,5 +48,8 @@ class CmdUpload : Cmd(ExternalApp.STORE_UPLOAD) {
         // set definition file
         addCommand("--uploadDef")
         addCommand(AppConfig.config.storeUploadDefinitionJson.toString())
+
+        // log cmd line
+        Logger.i(TAG, "Command line: " + getCmdLine())
     }
 }
