@@ -63,7 +63,7 @@ class PathResolver(val map: ItemMap) {
 
             // temporary planet data generated with every version located in data directory
             PathType.TOURIST -> {
-                if (isPlanet(map)) {
+                if (map.isPlanet) {
                     planetDir.resolve("_tourist").resolve(versionPath).resolve(fileName)
                 }
                     else {
@@ -71,31 +71,22 @@ class PathResolver(val map: ItemMap) {
                 }
             }
             PathType.EXTRACT -> {
-                if (isPlanet(map)) {
+                if (map.isPlanet) {
                     planetDir.resolve("_extract").resolve(versionPath).resolve(fileName)
                 } else {
                     mapsForgeDir.resolve("_extract").resolve(versionPath).resolve(fileName)
                 }
             }
 
-            PathType.MBTILES_GENERATE -> {
-                if (isPlanet(map)) {
-                    planetDir.resolve("mbtiles_lomaps_openmaptiles").resolve(versionPath).resolve(fileName)
-                } else {
-                    mbtilesDir.resolve("mbtiles").resolve(versionPath).resolve(fileName)
-                }
-            }
+            PathType.MBTILES_GENERATE -> {mbtilesDir.resolve("mbtiles").resolve(versionPath).resolve(fileName)}
+
             PathType.MBTILES_RESULT -> mapsForgeDir.resolve("_result_mbtiles").resolve(versionPath).resolve(fileName)
 
             // online lomaps outdoor
-            PathType.MBTILES_ONLINE_OUTDOOR -> planetDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
+            PathType.MBTILES_ONLINE_OUTDOOR -> mbtilesDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
 
             // POI V2
             PathType.POI_V2_DB -> mbtilesDir.resolve("_poi_v2_db").resolve(versionPath).resolve(fileName)
         }
-    }
-
-    private fun isPlanet(map: ItemMap): Boolean {
-        return map.id?.let{it.equals(AppConfig.config.planetConfig.planetExtendedId)} ?: false
     }
 }

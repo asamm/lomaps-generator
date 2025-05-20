@@ -1,10 +1,7 @@
 package com.asamm.locus
 
 import com.asamm.locus.client.MapTilerClient
-import com.asamm.locus.client.model.Tileset
-import com.asamm.locus.client.model.TilesetIngest
-import com.asamm.locus.client.model.TilesetIngestCreate
-import com.asamm.locus.client.model.TilesetPage
+import com.asamm.locus.client.model.*
 import com.asamm.locus.gdrive.GDriveClient
 import com.asamm.locus.gdrive.uploadToGoogleDrive
 import com.asamm.osmTools.config.AppConfig
@@ -64,8 +61,22 @@ class MapTilerUploader {
                 if (System.currentTimeMillis() - startTime > maxDuration) {
                     throw Exception("Processing of Tileset exceeded 6 hours.")
                 }
-                Thread.sleep(5000) // Polling interval
+                // pooling by DEV
+                if (Utils.isLocalDEV()) {
+                    Thread.sleep(5000) // Polling interval
+                }
+                else {
+                    Thread.sleep(30000)
+                }
+
             }
+
+            // Step 6: update metedata
+            api.tilesChangeMetadataPost(
+                tilesetLoMap?.id as UUID,  TilesetMetadataChange(
+                AppConfig.config.maptilerCloudConfig.tilesetTitleLm,
+                AppConfig.config.maptilerCloudConfig.tilesetDescLm,
+                AppConfig.config.maptilerCloudConfig.tilesetAttributionLm))
 
             println("Processing of uploaded tileset is complete")
         } catch (e: Exception) {

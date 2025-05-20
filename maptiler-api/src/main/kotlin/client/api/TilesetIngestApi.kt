@@ -1,5 +1,6 @@
 package com.asamm.locus.client.api
 
+import com.asamm.locus.client.model.Tileset
 import retrofit2.http.*
 import retrofit2.Response
 import okhttp3.RequestBody
@@ -8,6 +9,7 @@ import kotlinx.serialization.Serializable
 
 import com.asamm.locus.client.model.TilesetIngest
 import com.asamm.locus.client.model.TilesetIngestCreate
+import com.asamm.locus.client.model.TilesetMetadataChange
 
 interface TilesetIngestApi {
     /**
@@ -70,5 +72,17 @@ interface TilesetIngestApi {
      */
     @POST("tiles/ingest")
     suspend fun tilesIngestPost(@Body tilesetIngestCreate: TilesetIngestCreate? = null): Response<TilesetIngest>
+
+    /**
+     * Change tileset metadata
+     *
+     * Responses:
+     *  - 200: Tileset
+     *
+     * @param tilesetMetadataChange  (optional)
+     * @return [Tileset]
+     */
+    @POST("tiles/{document_id}/change_metadata")
+    suspend fun tilesChangeMetadataPost(@Path("document_id") documentId: java.util.UUID, @Body tilesetMetadataChange: TilesetMetadataChange? = null): Response<Tileset>
 
 }

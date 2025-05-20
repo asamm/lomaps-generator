@@ -108,6 +108,7 @@ public class ItemMap extends AItemMap {
     }
 
     public Path getPathMbtiles() {
+
         if (nameGen != null && !nameGen.isEmpty()) {
             return pathResolver.getPath(PathType.MBTILES_GENERATE, nameGen + ".mbtiles");
         }
@@ -115,6 +116,10 @@ public class ItemMap extends AItemMap {
     }
 
     public Path getPathGenMlOutdoor() {
+        if (isPlanet()){
+            // customize the name of file for planet
+            return pathResolver.getPath(PathType.MBTILES_ONLINE_OUTDOOR, "planet" + "_lm_outdoor.mbtiles");
+        }
         return pathResolver.getPath(PathType.MBTILES_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
     }
 
