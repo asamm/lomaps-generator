@@ -1,12 +1,9 @@
 package com.asamm.osmTools.config
 
 
-import com.asamm.osmTools.utils.Logger
 import com.asamm.store.LocusStoreEnv
 import com.charleskorn.kaml.AnchorsAndAliases
 import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
-import com.charleskorn.kaml.YamlMap
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -223,7 +220,9 @@ class CmdConfig(
     @Serializable(with = PathSerializer::class)
     val planetiler: Path,
 
-    val planetilerRam: String = "16G",
+    val planetilerRamXmx: String = "16G",
+
+    val planetilerRamXmn: String = "8G",
 
     @Serializable(with = PathSerializer::class)
     var osmosis: Path,
