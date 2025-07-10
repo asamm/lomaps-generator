@@ -1,5 +1,6 @@
 package com.asamm.osmTools
 
+import com.asamm.osmTools.LoMapsCommand.Companion.TAG
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils

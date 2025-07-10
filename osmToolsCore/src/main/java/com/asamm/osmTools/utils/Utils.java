@@ -105,6 +105,26 @@ public class Utils {
         }
     }
 
+    public static void copyFile(Path source, Path target, boolean replaceExisting) {
+
+
+        try {
+            // create parent directories if not exists
+            if (target.getParent() != null) {
+                Files.createDirectories(target.getParent());
+            }
+
+            if (replaceExisting) {
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.copy(source, target);
+            }
+        } catch (IOException e) {
+            Logger.e(TAG, "Error copying file: " + source + " to file: " + target + " Error: " + e.getMessage());
+            throw new IllegalArgumentException("Error copying file:  " + e.getMessage());
+        }
+    }
+
     /**
      * Rename file quietly without throwing exception.
      *

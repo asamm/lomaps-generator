@@ -66,7 +66,7 @@ class MapTilerUploader {
                     Thread.sleep(5000) // Polling interval
                 }
                 else {
-                    Thread.sleep(30000)
+                    Thread.sleep(60000)
                 }
 
             }

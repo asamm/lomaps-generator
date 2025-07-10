@@ -13,13 +13,17 @@ enum class PathType {
     TRANSFORM,
     SHP,
     MERGE,
-    ADDRESS_POI_DB,
+    ADDRESS_DB,
     MAPSFORGE_GENERATE,
     MAPSFORGE_RESULT,
 
+    MAPSFORGE_RESULT_CLASSIC,
+    ADDRESS_POI_DB_CLASSIC,
+
     MBTILES_GENERATE,
     MBTILES_RESULT,
-    POI_V2_DB,
+    POI_V2_DB_MAPSFORGE,
+    POI_V2_DB_MBTILES,
 
     MBTILES_ONLINE_OUTDOOR,
 
@@ -57,9 +61,13 @@ class PathResolver(val map: ItemMap) {
             PathType.CONTOUR -> mapsForgeDir.resolve("contours").resolve(map.dir).resolve(fileName)
             // temporary data generated with every version located in data directory
             PathType.MERGE -> mapsForgeDir.resolve("_merge").resolve(versionPath).resolve(fileName).toAbsolutePath()
-            PathType.ADDRESS_POI_DB -> mapsForgeDir.resolve("_address_poi_db").resolve(versionPath).resolve(fileName)
+            PathType.ADDRESS_DB -> mapsForgeDir.resolve("_address_db").resolve(versionPath).resolve(fileName)
             PathType.MAPSFORGE_GENERATE -> mapsForgeDir.resolve("_generate").resolve(versionPath).resolve(fileName).toAbsolutePath()
+
             PathType.MAPSFORGE_RESULT -> mapsForgeDir.resolve("_result").resolve(versionPath).resolve(fileName)
+            // custom result for classic locus with old POI DB
+            PathType.MAPSFORGE_RESULT_CLASSIC -> mapsForgeDir.resolve("_result_classic").resolve(versionPath).resolve(fileName)
+            PathType.ADDRESS_POI_DB_CLASSIC -> mapsForgeDir.resolve("_address_poi_db").resolve(versionPath).resolve(fileName)
 
             // temporary planet data generated with every version located in data directory
             PathType.TOURIST -> {
@@ -86,7 +94,8 @@ class PathResolver(val map: ItemMap) {
             PathType.MBTILES_ONLINE_OUTDOOR -> mbtilesDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
 
             // POI V2
-            PathType.POI_V2_DB -> mbtilesDir.resolve("_poi_v2_db").resolve(versionPath).resolve(fileName)
+            PathType.POI_V2_DB_MBTILES -> mbtilesDir.resolve("_poi_v2_db_mbtiles").resolve(versionPath).resolve(fileName)
+            PathType.POI_V2_DB_MAPSFORGE -> mbtilesDir.resolve("_poi_v2_db_mapsforge").resolve(versionPath).resolve(fileName)
         }
     }
 }

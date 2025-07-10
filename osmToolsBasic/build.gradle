@@ -50,7 +50,7 @@ dependencies {
 
 }
 
-def versionCode = "0.7.4"
+def versionCode = "0.7.7"
 def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
 
 jar {

@@ -22,20 +22,36 @@ class CmdPoiV2: Cmd(ExternalApp.POI_V2_TOOL)  {
         execute()
     }
 
-    fun generatePoiV2(map: ItemMap) {
+    fun generatePoiV2ForMbtiles(map: ItemMap) {
 
         prepareGeoJsonFileWithCoverage(map);
 
         addCommand(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
         addCommands(tempGeoJsonFile.toAbsolutePath().toString())
-        addCommands(map.pathPoiV2Db.toAbsolutePath().toString())
+        addCommands(map.getPathPoiV2Db(true).toAbsolutePath().toString())
 
         // create folder structure for poi db
-        Utils.createParentDirs(map.pathPoiV2Db.toAbsolutePath())
+        Utils.createParentDirs(map.getPathPoiV2Db(true).toAbsolutePath())
 
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
         Utils.deleteFileQuietly(tempGeoJsonFile)
+    }
+
+    /**
+     * Android use original map coverage not mbtiles coverage
+     */
+    fun generatePoiV2ForMapsforge(map: ItemMap) {
+
+        addCommand(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
+        addCommands(map.pathJsonPolygon.toAbsolutePath().toString())
+        addCommands(map.getPathPoiV2Db(false).toAbsolutePath().toString())
+
+        // create folder structure for poi db
+        Utils.createParentDirs(map.getPathPoiV2Db(false).toAbsolutePath())
+
+        Logger.i(TAG, "Command: " + getCmdLine())
+        execute()
     }
 
     private fun prepareGeoJsonFileWithCoverage(map: ItemMap) {

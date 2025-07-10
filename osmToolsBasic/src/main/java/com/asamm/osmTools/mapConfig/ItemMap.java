@@ -123,12 +123,27 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.MBTILES_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
     }
 
-    public Path getPathAddressPoiDb() {
-        return pathResolver.getPath(PathType.ADDRESS_POI_DB, name + ".osm.db");
+    public Path getPathAddressDb() {
+        return pathResolver.getPath(PathType.ADDRESS_DB, name + ".osm.db");
     }
 
-    public Path getPathPoiV2Db() {
-        return pathResolver.getPath(PathType.POI_V2_DB, name + ".poiv2.db");
+    /**
+     * Get path to old address POI database for LM Classic
+     */
+    public Path getPathAddressPoiDb() {
+        return pathResolver.getPath(PathType.ADDRESS_POI_DB_CLASSIC, name + ".osm.db");
+    }
+
+    /**
+     * Get path to POI V2 database
+     * @param isForMbtiles true if file is generated for mbtiles with coverage defined by mbtiles coverage
+     * @return
+     */
+    public Path getPathPoiV2Db(boolean isForMbtiles) {
+        if (isForMbtiles){
+            return pathResolver.getPath(PathType.POI_V2_DB_MBTILES, name + ".poiv2.db");
+        }
+        return pathResolver.getPath(PathType.POI_V2_DB_MAPSFORGE, name + ".poiv2.db");
     }
 
     public Path getPathMerge() {
@@ -156,6 +171,10 @@ public class ItemMap extends AItemMap {
             return pathResolver.getPath(PathType.MAPSFORGE_RESULT, nameGen + ".zip");
         }
         return pathResolver.getPath(PathType.MAPSFORGE_RESULT, name + ".zip");
+    }
+
+    public Path getPathResultMapsforgeClassic() {
+        return Path.of(getPathResultMapsforge().toString().replace(".zip", "_lmclassic.zip"));
     }
 
     public Path getPathResultMbtiles(){

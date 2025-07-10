@@ -62,6 +62,9 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
             )
         }
 
+        // for offline mbtiles lomaps limit contour lines to zl 13 because memory problems
+        addCommands("lomaps_contour_minzoom=13")
+
         Logger.i(TAG, "Command: " + getCmdLine())
         execute()
     }

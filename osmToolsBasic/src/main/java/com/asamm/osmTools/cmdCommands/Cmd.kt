@@ -78,7 +78,9 @@ open class Cmd(val externalApp: ExternalApp) {
                     )
                 } else {
                     addCommands(
-                        "java", "-Xmx${AppConfig.config.cmdConfig.planetilerRam}", "-jar",
+                        "java",
+                        "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
+                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}","-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 }
@@ -92,7 +94,7 @@ open class Cmd(val externalApp: ExternalApp) {
 
             ExternalApp.POI_V2_TOOL -> {
                 // not commands is added, only check if the path is correct
-                if ( !Utils.isLocalDEV()){
+                if (!Utils.isLocalDEV()) {
                     ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Init).toString()
 
                     ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Generator).toString()
@@ -202,10 +204,17 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // break program when wrong exit value
             if (exitVal != 0) {
-                Logger.e(TAG, "Wrong return value from sub command, exit value: " + exitVal)
-                if (printError) {
-                    val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
-                    throw IllegalArgumentException(errorMsg)
+                // on windows accept also exit value 15
+                if (ConfigUtils.isWindows() && externalApp == ExternalApp.LOMAPS_TOOLS && exitVal == 15) {
+                    // Python Osmium on Windows is not correctly ended and it's needed to kill the process for this reason
+                    // accept exit value 15 https://github.com/osmcode/pyosmium/issues/280
+                    Logger.w(TAG, "Due to osmium issue accept Exit value 15 on Windows")
+                } else {
+                    Logger.e(TAG, "Wrong return value from sub command, exit value: " + exitVal)
+                    if (printError) {
+                        val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
+                        throw IllegalArgumentException(errorMsg)
+                    }
                 }
             }
 

@@ -5,6 +5,7 @@ import com.asamm.locus.api.v2.server.admin.StoreAdminItem
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
+import com.asamm.osmTools.mapConfig.ItemMapPack
 import com.asamm.osmTools.mapConfig.MapSource
 import com.asamm.osmTools.mapConfig.Platform
 import com.asamm.osmTools.utils.Logger
@@ -57,16 +58,27 @@ class UploadDefinitionCreator {
     }
 
     fun generateJsonUploadDefinition(mapSource: MapSource) {
+        mapSource.getMapPacksIterator().forEach { mapPack ->
+            processMapPack(mapPack)
+        }
+        writeToJsonDefFile()
+    }
 
-        // load mappack and do actions for mappack items
-        for (mapPack in mapSource.getMapPacksIterator()) {
-            for (map in mapPack.maps) {
-                if ( !hasValidActionsForUpload(map)) continue
-
+    /**
+     * Recursively process a mapPack and all its nested mapPacks
+     */
+    private fun processMapPack(mapPack: ItemMapPack) {
+        // Process maps in current mapPack
+        mapPack.maps.forEach { map ->
+            if (hasValidActionsForUpload(map)) {
                 addMap(map)
             }
         }
-        writeToJsonDefFile();
+
+        // Process nested mapPacks recursively
+        mapPack.mapPacks.forEach { nestedMapPack ->
+            processMapPack(nestedMapPack)
+        }
     }
 
     /**
@@ -76,6 +88,8 @@ class UploadDefinitionCreator {
      * @return true if map has action for upload to store
      */
     private fun hasValidActionsForUpload(map: ItemMap): Boolean {
+
+        if (map.isPlanet) return false
         if (map.hasAction(Action.GENERATE_MAPSFORGE) || map.hasAction(Action.GENERATE_MBTILES)) {
             return true
         }
@@ -143,7 +157,7 @@ class UploadDefinitionCreator {
         }
 
         // compute loCoins based on mapsforge file size
-        sai.setLoCoins(computeLocoins(map.pathResultMapsforge.toFile()))
+        sai.setLoCoins(computeLocoins(map.pathGenerate.toFile()))
 
         sai.setRegionDatastoreIds(Arrays.asList(map.regionId))
 
@@ -184,6 +198,7 @@ class UploadDefinitionCreator {
         saf.setLocationPath(
             when (platform) {
                 Platform.ANDROID -> map.pathResultMapsforge.toAbsolutePath().toString()
+                Platform.ANDROID_LMCLASSIC -> map.pathResultMapsforgeClassic.toAbsolutePath().toString()
                 Platform.IOS -> map.pathResultMbtiles.toAbsolutePath().toString()
             }
         )
@@ -201,8 +216,12 @@ class UploadDefinitionCreator {
         val supportedApkVariantCodes = supportedApks.keys
         // for platform android return all keys lower than 10000 and for ios keys between 10000 and 10010
         return if (platform == Platform.ANDROID) {
-            supportedApkVariantCodes.filter { it < 10000 }
-        } else {
+            supportedApkVariantCodes.filter { it < 10000 && it != 1 }
+        }
+        else if (platform == Platform.ANDROID_LMCLASSIC) {
+            supportedApkVariantCodes.filter { it == 1 }
+        }
+        else {
             supportedApkVariantCodes.filter { it >= 10000 && it < 10010 }
         }
     }
@@ -210,15 +229,18 @@ class UploadDefinitionCreator {
     /**
      * Define the price for map based on the size of result file
      *
-     * @param resultFile
+     * @param mapsgorgeGenFile mapsforge generated file
      * @return the amounth of Locoins that will be set for item in store
      */
-    private fun computeLocoins(resultFile: File): Float {
+    private fun computeLocoins(mapsgorgeGenFile: File): Float {
         // compute value of loCoins
-        val fileSize = resultFile.length()
-        val loCoins =
+        val fileSize = mapsgorgeGenFile.length()
+        var loCoins =
             fileSize / 1024.0 / 1024.0 / 8 // 8 it is because 1MB costed about 0.1 Locoin but we increase price
 
+        // from 2025.06 is the price computed from the size of mapsforge map file not from .zip result.
+        // To keep the price similar we multiply the price by 0.8 (to lower the price)
+        loCoins *= 0.83
         val locoinsRounded = ceil(loCoins / 5).toFloat() * 5 // round up to number multiply by 5
 
 

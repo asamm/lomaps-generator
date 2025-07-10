@@ -24,7 +24,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
     /**
      * Definition where will be poiDb created
      */
-    val fileDb: File = map.pathAddressPoiDb.toAbsolutePath().toFile()
+    val fileDb: File = map.pathAddressDb.toAbsolutePath().toFile()
 
 
     /**
@@ -84,12 +84,11 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
 
 
     fun generatePoiDb() {
-        FileUtils.deleteQuietly(fileDb)
 
         addReadPbf(tempFilteredMapPath.toAbsolutePath().toString())
         addCommand("--" + DataPluginLoader.PLUGIN_LOMAPS_DB)
         addCommand("-type=poi")
-        addCommand("-fileDb=" + fileDb)
+        addCommand("-fileDb=" + map.pathAddressPoiDb.toAbsolutePath())
         addCommand("-fileConfig=" + AppConfig.config.poiAddressConfig.poiDbXml.toAbsolutePath())
 
         Logger.i(TAG, "Command: " + getCmdLine())

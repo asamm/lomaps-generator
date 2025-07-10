@@ -17,7 +17,10 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.utils.*;
+import com.asamm.osmTools.utils.Logger;
+import com.asamm.osmTools.utils.TimeWatch;
+import com.asamm.osmTools.utils.Utils;
+import com.asamm.osmTools.utils.UtilsHttp;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -60,7 +63,7 @@ public class GenLoMaps extends AGenerator {
         }
 
 
-        if ( !Utils.isLocalDEV()){
+        if (!Utils.isLocalDEV()) {
             // run OSM update of planet file (update starts only if needed). Updater downloads planet file if it doesn't exist
             PlanetUpdater planetUpdater = new PlanetUpdater();
             planetUpdater.update();
@@ -104,7 +107,7 @@ public class GenLoMaps extends AGenerator {
                 uploadDefinitionCreator.generateJsonUploadDefinition(mMapSource);
             }
 
-            if (action == Action.COMPRESS){
+            if (action == Action.COMPRESS) {
                 printLogHeader(Action.COMPRESS);
                 new MapCompress().compressAllMaps(mMapSource);
             }
@@ -198,7 +201,6 @@ public class GenLoMaps extends AGenerator {
     }
 
 
-
     private class PackForExtract {
 
         String sourceId;
@@ -284,13 +286,45 @@ public class GenLoMaps extends AGenerator {
         }
 
         // check if DB file exits and we should overwrite it
-        if (!AppConfig.config.getOverwrite() && map.getPathAddressPoiDb().toFile().exists()) {
-            Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressPoiDb() +
+        if (!AppConfig.config.getOverwrite() && map.getPathAddressDb().toFile().exists() && map.getPathAddressPoiDb().toFile().exists()) {
+            Logger.d(TAG, "File with Address/POI database '" + map.getPathAddressDb() +
                     "' already exist - skipped.");
             return;
         }
 
         // load POI DB definitions
+        // Generation of POI DB removed in 2025.06.30, because we use POI V2
+//        File defFile = AppConfig.config.getPoiAddressConfig().getPoiDbXml().toAbsolutePath().toFile();
+//        WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
+//
+//        // firstly simplify source file
+//        Logger.i(TAG, "Filter data for POI DB");
+//        CmdLoMapsDbPlugin cmdLoMapsDbPlugin = new CmdLoMapsDbPlugin(map);
+//        cmdLoMapsDbPlugin.simplifyForPoi(definition);
+//
+//        // now execute db poi generating
+//        Logger.i(TAG, "Generate POI DB, command: ");
+//        cmdLoMapsDbPlugin.generatePoiDb();
+
+
+        //Utils.deleteFileQuietly(map.getPathAddressDb());
+        //Address generation
+        if ( !map.getPathAddressDb().toFile().exists()) {
+            CmdLoMapsDbPlugin cmdLoMapsDbPlugin = new CmdLoMapsDbPlugin(map);
+            Logger.i(TAG, "Filter data for Address DB, command: ");
+            cmdLoMapsDbPlugin.simplifyForAddress();
+
+            Logger.i(TAG, "Generate Adrress DB, command: ");
+            cmdLoMapsDbPlugin.generateAddressDb();
+            cmdLoMapsDbPlugin.deleteTmpFile();
+        }
+
+
+        // Address and old POI generation for LM Classsic
+        Logger.i(TAG, "Generate Address and POI DB for LoMaps Classic, command: ");
+        // copy address db to the LoMaps Classic path
+        Utils.copyFile(map.getPathAddressDb(), map.getPathAddressPoiDb(), true);
+
         File defFile = AppConfig.config.getPoiAddressConfig().getPoiDbXml().toAbsolutePath().toFile();
         WriterPoiDefinition definition = new WriterPoiDefinition(defFile);
 
@@ -303,13 +337,6 @@ public class GenLoMaps extends AGenerator {
         Logger.i(TAG, "Generate POI DB, command: ");
         cmdLoMapsDbPlugin.generatePoiDb();
 
-        //Address generation
-        Logger.i(TAG, "Filter data for Address DB, command: ");
-        cmdLoMapsDbPlugin.simplifyForAddress();
-
-        Logger.i(TAG, "Generate Adrress DB, command: ");
-        cmdLoMapsDbPlugin.generateAddressDb();
-
         // delete tmp file
         cmdLoMapsDbPlugin.deleteTmpFile();
     }
@@ -321,20 +348,34 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        // check if DB file exits and we should overwrite it
-        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db().toFile().exists()) {
-            Logger.d(TAG, "File with POI V2 database '" + map.getPathPoiV2Db() +
-                    "' already exist - skipped.");
-            return;
+        if (AppConfig.config.getOverwrite() ||
+                !map.getPathPoiV2Db(true).toFile().exists() ||
+                !map.getPathPoiV2Db(false).toFile().exists()) {
+
+            // Initialize POI Database (refresh postgres)
+            Logger.i(TAG, "Initialize POI V2 Database");
+            new CmdPoiV2().initPoiGeneratorDB();
         }
 
-        // Initialize POI Database
-        Logger.i(TAG, "Initialize POI V2 Database");
-        new CmdPoiV2().initPoiGeneratorDB();
+        // check if DB file exits and we should overwrite it
+        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db(true).toFile().exists()) {
+            Logger.d(TAG, "File with POI V2 database for Mbtiles '" + map.getPathPoiV2Db(true) +
+                    "' already exist - skipped.");
+        } else {
+            //generete POI V2
+            Logger.i(TAG, "Generate POI V2 Database for mbtiles: " + map.getPathPoiV2Db(true));
+            new CmdPoiV2().generatePoiV2ForMbtiles(map);
+        }
 
-        //generete POI V2
-        Logger.i(TAG, "Generate POI V2 Database: " + map.getPathPoiV2Db());
-        new CmdPoiV2().generatePoiV2(map);
+        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db(false).toFile().exists()) {
+            Logger.d(TAG, "File with POI V2 database for Mapsforge '" + map.getPathPoiV2Db(false) +
+                    "' already exist - skipped.");
+        } else {
+            //generete POI V2
+            Logger.i(TAG, "Generate POI V2 Database for Mapsforge: " + map.getPathPoiV2Db(false));
+            new CmdPoiV2().generatePoiV2ForMapsforge(map);
+        }
+
     }
 
     // ACTION COASTLINE
@@ -429,7 +470,7 @@ public class GenLoMaps extends AGenerator {
 
         printLogHeader(Action.CONTOUR);
         // check if file exists
-        if (map.getPathContour().toFile().exists() && !AppConfig.config.getOverwrite()) {
+        if (map.getPathContour().toFile().exists()) {
             Logger.i(TAG, "File with contours " + map.getPathContour() + ", already exists");
             return;
         }
@@ -509,11 +550,13 @@ public class GenLoMaps extends AGenerator {
         }
 
         // test if merged file already exist
-        if (!AppConfig.config.getOverwrite() && map.getPathMerge().toFile().exists()) {
-            // nothing to do file already exist
-            Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist");
-            map.setMerged(true);
-            return;
+        if (!AppConfig.config.getOverwrite()) {
+            if (map.getPathMerge().toFile().exists() || (map.hasAction(Action.GENERATE_MAPSFORGE) && map.getPathGenerate().toFile().exists())) {
+                // nothing to do file already exist
+                Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist. Or generated file exist: " + map.getPathGenerate());
+                map.setMerged(true);
+                return;
+            }
         }
 
         List<Path> pathsToMerge = new ArrayList<>();
@@ -606,7 +649,7 @@ public class GenLoMaps extends AGenerator {
                 map.getPathMbtiles(),
                 map.getPathPolygon(),
                 map.getName(),
-                1, 14   );
+                1, 14);
 
         // notify about result
         Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
@@ -666,7 +709,7 @@ public class GenLoMaps extends AGenerator {
 
 
     private void actionGenerateMbtilesOnline(ItemMap map) {
-        Logger.i(TAG, "================ GENERATE MBTILES ONLINE "+map.getName()+" ================");
+        Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + map.getName() + " ================");
         if (map.hasAction(Action.GENERATE_MBTILES_ONLINE) && AppConfig.config.getActions().contains(Action.GENERATE_MBTILES_ONLINE)) {
             if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 
@@ -709,7 +752,7 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        File dbAddressPoiFile = itemMap.getPathAddressPoiDb().toFile();
+        File dbAddressPoiFile = itemMap.getPathAddressDb().toFile();
         if (dbAddressPoiFile.getParentFile() != null) {
             dbAddressPoiFile.getParentFile().mkdirs();
         }

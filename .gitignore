@@ -11,6 +11,7 @@ out/
 # Intellij
 *.iml
 .idea/
+.kotlin/
 
 gradle/
 goauth_secrets/

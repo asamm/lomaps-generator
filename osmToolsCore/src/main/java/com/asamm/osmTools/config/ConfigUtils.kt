@@ -17,17 +17,28 @@ object ConfigUtils {
             when (cliActions[index]) {
                 Action.GENERATE_MAPSFORGE -> {
                     cliActions.addAll(index, listOf(Action.EXTRACT, Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
-                }
-                Action.GENERATE_MBTILES -> {
-                    if (!Utils.isLocalDEV()) {
+                    if (!cliActions.contains(Action.POI_DB_V2)) {
                         cliActions.addAll(index, listOf(Action.POI_DB_V2))
                     }
                 }
+
+                Action.GENERATE_MBTILES -> {
+                    if (!Utils.isLocalDEV() && !cliActions.contains(Action.POI_DB_V2)) {
+                        cliActions.addAll(index, listOf(Action.POI_DB_V2))
+                    }
+                }
+
                 Action.UPLOAD -> {
                     cliActions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
                 }
+
                 else -> {}
             }
+        }
+
+        // if actions contains compress and not create_json add it
+        if (cliActions.contains(Action.COMPRESS) && !cliActions.contains(Action.CREATE_JSON)) {
+            cliActions.add(Action.CREATE_JSON)
         }
     }
 
@@ -45,8 +56,11 @@ object ConfigUtils {
         return command
     }
 
-    fun getCheckOsmiumPath() :String {
-        val osmiumPaths = if (isWindows()) listOf("osmium.exe", "c:\\Users\\petrv\\miniconda3\\Library\\bin\\osmium.exe") else listOf("osmium")
+    fun getCheckOsmiumPath(): String {
+        val osmiumPaths =
+            if (isWindows()) listOf("osmium.exe", "c:\\Users\\petrv\\miniconda3\\Library\\bin\\osmium.exe") else listOf(
+                "osmium"
+            )
 
         val command = checkApps(osmiumPaths)
 
@@ -60,7 +74,8 @@ object ConfigUtils {
     // Function to check if Python is installed and return its path
     fun findPythonPath(): String {
         // First try to find "python", if not found, try "python3"
-        val pythonCommands = if (isWindows()) listOf("python3.exe", "python.exe") else listOf("python", "python3")
+        val pythonCommands =
+            if (isWindows()) listOf("python3.exe", "python.exe", "python") else listOf("python", "python3")
 
         val command = checkApps(pythonCommands)
 
@@ -90,7 +105,7 @@ object ConfigUtils {
      */
     fun getCheckPath(pathToCheck: Path): Path {
 
-        if ( !pathToCheck.toFile().exists()) {
+        if (!pathToCheck.toFile().exists()) {
             throw Exception("File not found in location: ${pathToCheck} ")
         }
 
@@ -98,7 +113,7 @@ object ConfigUtils {
     }
 
 
-    fun checkApps(commands: List<String>, argument: String = "--version", expectedOutput:String = ""): String {
+    fun checkApps(commands: List<String>, argument: String = "--version", expectedOutput: String = ""): String {
         for (command in commands) {
             try {
                 // Use ProcessBuilder to run the "python --version" or "python3 --version" command
@@ -114,7 +129,8 @@ object ConfigUtils {
                 val fileNameWithoutExtension = fileNameWithExtension.substringBeforeLast(".")
 
                 if (output.contains(fileNameWithoutExtension, ignoreCase = true) ||
-                        (expectedOutput.isNotEmpty() && output.contains(expectedOutput)))  {
+                    (expectedOutput.isNotEmpty() && output.contains(expectedOutput))
+                ) {
                     // If Python is found, return the path of the executable
                     return command
                 }
