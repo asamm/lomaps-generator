@@ -1,0 +1,65 @@
+{
+	"itemVisibility": 1,
+	"canBeWelcomePresent": true,
+	"itemType": 1,
+	"preferedLang": null,
+	"version":
+	{
+		"setActive": true,
+		"code": 213,
+		"supportedApk":
+		{
+			"0": 1186,
+			"1": 600,
+			"3001": 6,
+			"10000": 810
+		}
+	},
+	"labelIds": [11, 13, 14, 15, 18, 20],
+	"usageIds": ["maps.universal.locus_vector"],
+	"listings": [
+		{
+			"langCode": "en",
+			"description": "<p>LoMaps are offline vector maps optimized for hiking, biking, and other outdoor adventures. Based on OpenStreetMap data, they provide detailed terrain information including contour lines, elevation shading, hiking and cycling trails, and outdoor-specific points of interest such as shelters, water sources, campsites, and scenic viewpoints.</p><p>LoMaps are designed to work seamlessly and offering:</p><ul><li>Rich trail networks (hiking, MTB, cycling, walking)</li><li>Tourist information, natural features, and local amenities</li></ul><p>Whether you're exploring remote trails, planning a bikepacking route, or navigating a mountain hut trek, LoMaps deliver the detailed, reliable map data needed for your outdoor journeys.</p>",
+			"terms": " <p>Purchased version of a LoMap can be <b>downloaded repeatedly for period of its availability in the Store</b>. When the particular version is not available any longer, it is possible to download next oldest available version of the LoMap for free.</p><p>Any newer update of the LoMap is subject of a new purchase.</p><p> LoMaps created by <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Map data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Contour lines data <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> and <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a></p> "
+		},
+		{
+			"langCode": "de",
+			"description": "<p>LoMaps sind Offline-Vektorkarten, die für Wanderungen, Radtouren und andere Outdoor-Abenteuer optimiert sind. Sie basieren auf OpenStreetMap-Daten und bieten detaillierte Geländeinformationen einschließlich Höhenlinien, Schattierungen, Wander- und Radwege sowie spezielle Outdoor-Punkte wie Unterstände, Wasserquellen, Campingplätze und Aussichtspunkte.</p><p>LoMaps funktionieren nahtlos und bieten:</p><ul><li>Umfangreiches Wegenetz (Wandern, MTB, Radfahren, Spazieren)</li><li>Touristische Informationen, Naturmerkmale und lokale Einrichtungen</li></ul><p>Egal ob du abgelegene Wege erkundest, eine Bikepacking-Route planst oder eine Berghüttentour machst – LoMaps liefern die detaillierten, zuverlässigen Kartendaten für deine Outdoor-Abenteuer.</p>",
+			"terms": "<p>Eine gekaufte LoMap im Versionsstand zum Zeitpunkt des Kaufes kann <b>beliebig oft aus dem Store heruntergeladen werden, solange diese Version verfügbar ist</b>. Wenn diese Version nicht mehr verfügbar ist kann die nächst ältere Version dieser LoMap kostenlos heruntergeladen werden.</p><p> Jegliches neuere Update dieser LoMap muss jedoch neu erworben werden.</p>  <p> LoMaps erstellt von <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>.  Kartendaten © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Konturlinien-Daten <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> und <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a></p> "
+		},
+		{
+			"langCode": "cs",
+			"description": "<p>LoMaps jsou offline vektorové mapy optimalizované pro pěší turistiku, cyklistiku a další outdoorová dobrodružství. Na základě dat z OpenStreetMap poskytují podrobné informace o terénu, včetně vrstevnic, stínování, nadmořské výšky, turistických a cyklistických tras a outdoorových bodů zájmu jako jsou přístřešky, prameny, tábořiště nebo vyhlídky.</p><p>LoMaps jsou navrženy tak, aby fungovaly bezproblémově a nabízely:</p><ul><li>Bohatou síť tras (turistika, MTB, cyklistika, pěší)</li><li>Turistické informace, přírodní prvky a místní vybavenost</li></ul><p>Ať už objevujete odlehlé stezky, plánujete bikepackingovou trasu nebo se vydáváte na túru mezi horskými chatami, LoMaps poskytují podrobné a spolehlivé mapové podklady pro vaše outdoorové výpravy.</p>",
+			"terms": "<p>Zakoupená verze LoMapy může být <b> stažena opakovaně po dobu její dostupnosti v Obchodě </b>. Není-li konkrétní verze již k dispozici, je možné zdarma stáhnout další nejstarší dostupnou verzi LoMapy. </p> <p> Jakákoli novější aktualizace LoMapy je předmětem nového nákupu.</p> <p> LoMapy jsou vytvořeny pomocí <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>.  Mapová data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Vrstevnice <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> a <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a> </p> "
+		},		
+		{
+			"langCode": "fr",
+			"description": "<p>LoMaps sont des cartes vectorielles hors ligne optimisées pour la randonnée, le vélo et d'autres aventures en plein air. Basées sur les données OpenStreetMap, elles fournissent des informations détaillées sur le terrain, y compris les courbes de niveau, l’ombrage de l’altitude, les sentiers de randonnée et de vélo, ainsi que des points d’intérêt spécifiques comme des abris, sources d’eau, campings et points de vue.</p><p>LoMaps sont conçues pour fonctionner sans accroc et offrir :</p><ul><li>Des réseaux de sentiers riches (randonnée, VTT, vélo, marche)</li><li>Informations touristiques, éléments naturels et commodités locales</li></ul><p>Que vous exploriez des sentiers isolés, planifiez une route de bikepacking ou naviguiez entre des refuges de montagne, LoMaps vous fournit les données cartographiques détaillées et fiables nécessaires à vos aventures en plein air.</p>",
+			"terms":"<p>La version payante d'un LoMap peut être téléchargée à plusieurs reprises pendant la période où elle est disponible dans la boutique. Lorsque la version particulière n'est plus disponible, il est possible de télécharger la version la plus ancienne du LoMap gratuitement. Toute nouvelle mise à jour du LoMap doit faire l'objet d'un nouvel achat.</p> <p> Les LoMaps sont créés en utilisant <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Données cartographiques © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>. Courbes de niveau <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> a <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a> </p> "
+		},
+		{
+			"langCode": "pl",
+			"description": "<p>LoMapy to offline'owe mapy wektorowe zoptymalizowane pod kątem pieszych wędrówek, jazdy na rowerze i innych przygód na świeżym powietrzu. Oparte na danych z OpenStreetMap, oferują szczegółowe informacje o terenie, w tym linie konturowe, cieniowanie wysokości, szlaki piesze i rowerowe oraz miejsca charakterystyczne dla aktywności outdoorowej, takie jak schronienia, źródła wody, pola namiotowe i punkty widokowe.</p><p>LoMapy zostały zaprojektowane tak, by działały płynnie i oferowały:</p><ul><li>Bogate sieci szlaków (piesze, MTB, rowerowe, spacerowe)</li><li>Informacje turystyczne, elementy przyrody i lokalna infrastruktura</li></ul><p>Niezależnie od tego, czy odkrywasz odległe szlaki, planujesz trasę na bikepacking, czy wędrujesz między schroniskami górskimi – LoMapy dostarczą szczegółowe i wiarygodne dane kartograficzne potrzebne do Twoich przygód na łonie natury.</p>",
+			"terms": "<p>Zakupioną wersję LoMapy można <b>pobierać wielokrotnie przez okres jej dostępności w Sklepie</b>. W przypadku gdy dana wersja nie jest już dostępna, istnieje możliwość darmowego pobrania kolejnej najstarszej dostępnej wersji LoMap.</p><p>Każda nowsza aktualizacja LoMap jest przedmiotem nowego zakupu.</p><p> LoMapy stworzone przez <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Map data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Dane linii konturowych<a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a>, <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a></p> "
+		},
+		{
+			"langCode": "hu",
+			"description": "<p>A LoMapok offline vektortérképek, amelyeket túrázáshoz, kerékpározáshoz és más szabadtéri kalandokhoz optimalizáltak. Az OpenStreetMap adataira épülnek, és részletes domborzati információkat nyújtanak, például szintvonalakat, magassági árnyékolást, túra- és kerékpárutakat, valamint kültéri specifikus érdekes pontokat, mint menedékhelyek, vízforrások, táborhelyek és kilátók.</p><p>A LoMapokat úgy tervezték, hogy zökkenőmentesen működjenek és az alábbiakat kínálják:</p><ul><li>Gazdag útvonalhálózatok (túra, MTB, kerékpár, séta)</li><li>Turisztikai információk, természeti jellemzők és helyi szolgáltatások</li></ul><p>Akár távoli ösvényeket fedezel fel, bikepacking túrát tervezel, vagy hegyi menedékházak között navigálsz – a LoMapok megbízható, részletes térképadatokat nyújtanak szabadtéri utazásaidhoz.</p>",
+			"terms": " <p>A LoMap megvásárolt verziója <b>többször letölthető az Áruházban való elérhetőség időtartamára</b>. Ha az adott verzió már nem elérhető, ingyenesen letöltheti a következő legrégebbi elérhető LoMap verziót.</p><p>A LoMap minden újabb frissítése új vásárlás tárgyát képezi.</p><p> LoMaps készítette <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Map data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Kontúrvonalak adatai <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> and <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a></p>"
+		},
+		{
+			"langCode": "it",
+			"description": "<p>Le LoMaps sono mappe vettoriali offline ottimizzate per escursioni, ciclismo e altre avventure all’aperto. Basate sui dati di OpenStreetMap, forniscono informazioni dettagliate sul terreno, incluse curve di livello, ombreggiatura dell’altitudine, sentieri escursionistici e ciclabili, oltre a punti di interesse specifici per l’outdoor come rifugi, sorgenti d’acqua, aree di campeggio e punti panoramici.</p><p>Le LoMaps sono progettate per funzionare in modo fluido e offrono:</p><ul><li>Reti di sentieri complete (escursionismo, MTB, ciclismo, camminate)</li><li>Informazioni turistiche, elementi naturali e servizi locali</li></ul><p>Che tu stia esplorando sentieri remoti, pianificando un percorso di bikepacking o navigando tra rifugi di montagna, le LoMaps forniscono i dati cartografici dettagliati e affidabili di cui hai bisogno per le tue avventure all’aperto.</p>",
+			"terms": " <p>La versione acquistata di una LoMap può essere <b>scaricata ripetutamente per il periodo della sua disponibilità nello Store</b>. Quando la versione specifica non è più disponibile, è possibile scaricare gratuitamente la successiva versione disponibile più vecchia di LoMap.</p><p>Qualsiasi aggiornamento più recente di LoMap è soggetto a un nuovo acquisto.</p><p>LoMaps creato da<a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Map data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>. Dati delle curve di livello<a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> and <a href=\"https://sonny.4lima.de\" >Sonny's European LiDAR DTMs</a></p> "
+		}
+		
+	],
+	"availableFor": 0,
+	"iconId": 6030562942779392,
+	"providerId": "asammsw",
+	"imageIds": [6580774953287680, 4751187604668416, 6442980272504832,5788569711935488, 5310790352502784, 5876696937922560],
+	"featuredImageId": 5990240229523456,
+	"promoVideoUrl": "https://www.youtube.com/watch?v=2gPc1jeKsiA"
+
+}

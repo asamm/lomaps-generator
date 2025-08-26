@@ -17,15 +17,10 @@ The steps described below expect installation on Ubuntu
     ```
   sudo apt update
   sudo apt install python3 python3-pip python3-venv
-  #navigate to the vector maps forlder
-  cd vectorMaps
-  mkdir pyhgtmap
-
-  python3 -m venv hgt_venv
-  # Switch to venv
-  . ./hgt_venv/bin/activate
-  # Install pyhgtmap with dependencies from PyPi
-  pip install pyhgtmap		
+  sudo apt install pipx
+  #Install pyhgtmap in local env
+  pipx install pyhgtmap
+   ~/.local/bin/pipx ensurepath
      ```
 	
 - install [ogr2ogr](https://gdal.org/programs/ogr2ogr.html) set of tools. Generator uses ogr2ogr to cut global SHP files with coastlines into states areas
@@ -38,12 +33,19 @@ The steps described below expect installation on Ubuntu
     sudo apt-get install libsqlite3-mod-spatialite
     ``` 
 
-- install python and [ogr2osm](https://wiki.openstreetmap.org/wiki/Ogr2osm) script required when convert SHP Land Polygons
-  to the OSM format
+- install python lomaps tools script required for OSM update of planet file, extract marked trails or convert 
+  SHP Land Polygons to the OSM format
   ```
-  pip install ogr2osm
+  git clone https://github.com/asamm/lomaps-generator.git
+  cd lomaps-generator
+  # lomaps-generator-tools to any folder - the project folder is expected
+  cd lomaps-generator-tools
+  # init python env
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install .
   ``` 
-
+- install Asamm Fork of `planetiler-openmaptiles` available at https://github.com/asamm/planetiler-openmaptiles
 
 ### Static data
 
@@ -62,6 +64,16 @@ To correctly handle sea areas and coastlines are during generation created land 
 - download land polygons in Shapefile format, Projection: WGS84 https://osmdata.openstreetmap.de/info/formats.html# (choose "Large polygons are split" option) 
 - unpack data and copy .shp files to the `coastlines\land-polygons\` -> replace `land_polygons.shp` file
 
+### Configuration
+LoMaps generator requires several configuration files. These are available in the `config` folder of LoMaps generator.
+- `app_config.yaml` - main configuration file of LoMaps generator - defines paths to data, tools, etc.
+- `config.xml` - configuration of LoMaps generator - defines which maps are generated
+- `default_store_item_definition.json` - configuration of Locus Store item - defines LoMaps
+
+#### Edit app_config.yaml
+- edit paths where planet file is stored and URL to download planet file
+- set path to `planetiler-openmaptiles`
+
 
 ## Generation
 
@@ -74,23 +86,29 @@ For every generation is requited to increase a Locus Store version of generated 
 To start generation run:
 
 ```
-java -jar OsmToolsBasic_0.5.2.jar --actions dectag --email no --version 2021.09.24 --hgtdir ./hgt/ --type lomaps --storeUploader ./locusStoreUploader/locucStoreUploader_0.2.3.jar 
+java -jar OsmToolsBasic_0.5.2.jar --actions dectag --email no --version 2021.09.24 --hgtdir ./hgt/ --type lomaps --storeUploader ./locusStoreUploader/locucStoreUploader_0.2.3.jar  
 ```
 
 ##### Parameters
-- actions: generation of LoMaps has several phases and generator can perform only specific ones. The letter defines action to perform during generation, when:
-	- d - downloads planet file
-	- e - extracts planet files into regions and countries
-	- c - contour lines (create map with contour lines)
-	- t - marked trails - crate map with the marked trails
-	- g - generate - do generation itself
-	- u - upload maps to the Locus Store
-- version - used date in format yyyy.mm.dd (it's name of version in Locus Store and reflect how old are data used for generation
-- hgtdir - path to folder with elevation data
-- storeUploader - path to the .jar file of locus store uploader
-- type - possible values 
-	- `lomaps` - generate lomaps
-	- `storegeo` - used for generation country boundaries for Locus Store regions definition. It's very likely obsolete now
+- `--config_file` path to `config.xml` file - if not set, the generator will search for `config.xml` in current folder
+- `--actions`: generation of LoMaps has several phases and generator can perform only specific ones. The letter defines action to perform during generation, when:
+	- `extract` - extracts planet files into regions and countries
+	- `contour` - contour lines (create map with contour lines)
+	- `tourist` - marked trails - crate map with the marked trails
+    - `address_poi_db` - create address database (and also POI V1 database for LM Classic)
+    - `poi_db` - create POI database
+	- `generate_mapsforge` - generate mapsforge maps for android
+    - `generate_mbtiles` - generate mbtiles maps for iOS
+    - `generate_mbtiles_online` - generate tourist, contours as additional source for standard openmaptiles 
+    - `upload_maptiler` - upload generated online mbtiles to maptiler cloud
+	- `upload` - upload maps to the Locus Store
+- `--version` - used date in format yyyy.mm.dd (it's name of version in Locus Store and reflect how old are data used for generation
+- `--hgt_dir` - path to folder with elevation data
+- `--store_uploader` - path to the .jar file of locus store uploader
+
+Sub command `type` - possible values
+  - `lomaps` - generate lomaps
+  - `storegeo` - used for generation country boundaries for Locus Store regions definition. It's very likely obsolete now
 
 
   

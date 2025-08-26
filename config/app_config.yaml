@@ -1,0 +1,90 @@
+temporaryDir: "_temp"
+mapsForgeDir: "/mnt/work/vectorMaps"
+mbtilesDir: "/mnt/data/vectorMaps" 
+storeUploaderPath: ""
+
+touristConfig:
+  nodeId:       1200000000000
+  wayId:        1300000000000
+  lomapsToolsPy: "/osm_tools/lomaps_tools/lomaps_tools.py"
+
+contourConfig:
+  hgtDir: "/mnt/work/hgt/vectorMaps"
+  nodeIdMeter:  1800000000000
+  wayIdMeter:   1700000000000
+  nodeIdFeet:   1500000000000
+  wayIdFeet:    1400000000000
+  stepMeter: 20
+  stepFeet: 50
+  stepCategoryMeter: "100,50"
+  stepCategoryFeet: "400,200"
+  source: "view1,view3"
+  polyCoverageMeter: "polygons/_contours/planet_contours_meters.poly"
+  polyCoverageFeet: "polygons/_contours/planet_contours_feets.poly"
+  tempMetersFile: "_contours/planet_meter.osm.pbf"
+  tempFeetFile: "_contours/planet_feet.osm.pbf"
+    
+
+coastlineConfig:
+  nodeBorderId: 2000000000000
+
+planetConfig:
+  planetLatestPath: "/osm_tools/vectorMaps/_planet/orig/planet-latest.osm.pbf"
+  planetLatestURL: "http://ftp.snt.utwente.nl/pub/misc/openstreetmap/planet-latest.osm.pbf"
+  planetExtendedId: "planet-extended"  
+  planetilerDownloadDir: "data_planetiler"
+  lomapsOutdoorsLayers: ["lm_transportation","contour","cycling","hiking","ski","outdoor_poi","barrier","power"]
+
+cmdConfig:
+  planetiler: "/osm_tools/planetiler-openmaptiles/planetiler-openmaptiles-3.15.1-SNAPSHOT-with-deps.jar"
+  planetilerRamXmx: "36G"
+  planetilerRamXmn: "16G"
+  osmosis: "osmosis/bin/osmosis"
+  poiDbV2Init: "/home/lopoints-offline/init_procedure.sh"
+  poiDbV2Generator: "/home/lopoints-offline/generate_procedure.sh"
+
+maptilerCloudConfig:
+  tilesetTitleLm: "LoMaps_Outdoor" #Do not change, it is used as identification of the tileset
+  tilesetAttributionLm: &lomaps_attribution |
+    <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a>
+    <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>
+    Contour lines source <a href="https://earthexplorer.usgs.gov">SRTM</a>,
+    <a href="http://www.viewfinderpanoramas.org">Viewfinder Panoramas</a>,
+    <a href="https://sonny.4lima.de/">Sonny</a>
+  tilesetDescLm: &lomaps_short_desc "LoMaps is a terrain map with marked hiking and biking trails, signposts, accommodation, and other tourist facilities."
+
+poiAddressConfig:
+  poiDbXml: "config/config_apDb.xml"
+  addressDbXml: "config/config_address.xml"
+
+mbtilesConfig:
+  mapDescription: *lomaps_short_desc
+  mapAttribution: *lomaps_attribution
+
+mapsforgeConfig:
+  mapConfigXml: "config/config.xml"
+  tagMapping: "config/tag-mapping-tourist.xml"
+  mapDescription: "'<div><h4>Vector maps for <a href=\"http://www.locusmap.app\">Locus</a> application</h4> Created by <a href=\"http://code.google.com/p/mapsforge/\">Mapsforge</a> Map-Writer<br /> Map data source OpenStreetMap community<br />  Contour lines source <a href=\"http://srtm.usgs.gov\">SRTM</a> and <a href=\"http://www.viewfinderpanoramas.org\">Viewfinder Panoramas</a><br /><br /></div>'"
+  mapMetaDataDescription: |
+    [
+      {
+        "lngCode": "en",
+        "description": " <p>LoMaps are optimized exclusively for Locus Map. They are very memory-effective and offer lots of layers of information. Besides the map there are also offline addresses and dynamic points of interest.<br> <b>LoMaps can be switched to 4 themes:</b></p><ul><li><b>Hike & bike</b> theme displays a terrain map with marked hiking and biking trails, signposts, accommodation and other tourist facilities.</li> <li><b>Ski</b> theme offers cross-country skiing routes and downhill runs</li> <li><b>City</b> theme focuses on city tourism and monuments</li> <li><b>Road </b> theme offers simple and clear style suitable for car navigation</li></ul> <p>To change the map theme, tap the blue button in the lower left corner of the map window > Map themes and select a different theme.</p>",
+        "terms": " <p>Purchased version of a LoMap can be <b>downloaded repeatedly for period of its availability in the Store</b>. When the particular version is not available any longer, it is possible to download next oldest available version of the LoMap for free.</p><p>Any newer update of the LoMap is subject of a new purchase.</p><p> LoMaps created by <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Map data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Contour lines data <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> and <a href=\"mailto:sonnyy7@gmail.com\" >sonnyy</a> <a href=\"http://data.opendataportal.at/dataset/dtm-germany\" >Open Data Portal</a></p> "
+      },
+      {
+        "lngCode": "de",
+        "description": "<p>Die LoMaps wurden exklusiv für Locus Map optimiert. Sie sind äußerst speicherschonend und bieten viele Informationsebenen. Abgesehen von den üblichen Karteninhalten enthalten sie auch Offline-Adressen und dynamische POIs.<br><b>Die Darstellung der LoMaps kann in 4 verschiedenen Ansichten bzw. Themen erfolgen:</b></p><ul><li><b>Wandern &amp; Radfahren</b> Thema: Geländekarte mit markierten Wander-und Radwege, Wegweiser, Unterkünfte und andere touristische Einrichtungen.</li><li><b>Ski</b> Thema: Zeigt sowohl Tourenskirouten im freien Gelände als auch Pistenabfahrten</li><li><b>Stadt</b> Thema: Der Kernpunkt liegt hier auf Städtetourismus und Sehenswürdigkeiten</li><li><b>Straße</b> Thema: Einfache und übersichtliche Darstellung für die Auto-Navigation</li></ul><p>Wenn Sie das Kartenthema wechseln möchten so tippen Sie auf die blaue Schaltfläche am linken, unteren Rand des Kartenbildschirms &gt; Thema der Karte &gt; und wählen Sie eine passendes Kartenthema.</p> ",
+        "terms": "<p>Eine gekaufte LoMap im Versionsstand zum Zeitpunkt des Kaufes kann <b>beliebig oft aus dem Store heruntergeladen werden, solange diese Version verfügbar ist</b>. Wenn diese Version nicht mehr verfügbar ist kann die nächst ältere Version dieser LoMap kostenlos heruntergeladen werden.</p><p> Jegliches neuere Update dieser LoMap muss jedoch neu erworben werden.</p>  <p> LoMaps erstellt von <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>.  Kartendaten © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Konturlinien-Daten <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> und <a href=\"mailto:sonnyy7@gmail.com\" >sonnyy</a> <a href=\"http://data.opendataportal.at/dataset/dtm-germany\" >Open Data Portal</a></p> "
+      },
+      {
+        "lngCode": "cs",
+        "description": "<p>LoMapy jsou optimalizované exkluzivně pro aplikaci Locus Map. Zabírají málo prostoru v paměti, přitom obsahují mnoho vrstev informací. Kromě mapové kresby jsou to také offline adresy a dynamické mapové symboly (body zájmu - POI).<br><b>LoMapy lze přepínat do 4 témat:</b></p><ul><li>Téma <b>Turistika a kolo</b> zobrazuje terénní mapu s vyznačenými turistickými a cyklistickými stezkami, rozcestníky, ubytováním a dalším vybavením pro turisty.</li><li>Téma <b>Lyže</b> nabízí běžkařské trasy a sjezdové tratě</li> <li>Téma <b>Město</b> se zaměřuje na městskou turistiku a památky</li> <li><b>Silniční</b> téma nabízí jednoduchý, ale přehledný styl vhodný pro autonavigaci</li></ul> <p>Pro změnu tématu mapy klikněte na modré tlačítko v levém dolním rohu mapového okna > Mapová témata a vyberte jiné téma.</p> ",
+        "terms": "<p>Zakoupená verze LoMapy může být <b> stažena opakovaně po dobu její dostupnosti v Obchodě </b>. Není-li konkrétní verze již k dispozici, je možné zdarma stáhnout další nejstarší dostupnou verzi LoMapy. </p> <p> Jakákoli novější aktualizace LoMapy je předmětem nového nákupu.</p> <p> LoMapy jsou vytvořeny pomocí <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>.  Mapová data © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>.  Vrstevnice <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> a <a href=\"mailto:sonnyy7@gmail.com\" >sonnyy</a> <a href=\"http://data.opendataportal.at/dataset/dtm-germany\" >Open Data Portal</a> </p> "
+      },
+      {
+        "lngCode": "fr",
+        "description": "<p>Les cartes LoMaps sont optimisées uniquement pour l'application de Locus Map. Elles prennent peu de place dans la mémoire, en contenant nombreuses couches d'information. En dehors des cartes affichées, il y a également des adresses hors-ligne et des symboles cartographiques dynamiques (les points d'intérêt - POI) .<br><b>Vous pouvez changer le contenu des LoMaps en 4 thèmes : </b></p> <ul><li> Le thème <b>Randonnée pédestre et vélo</b> affiche un contenu topographique riche, des sentiers pédestres marqués, et des pistes cyclables</li> <li>Le thème <b>Ski</b> propose des pistes de ski de fond, et des pistes de ski alpin</li> <li>Le thème <b>Ville</b> attire l’attention sur un tourisme urbain, et des monuments</li><li>Le thème <b>Voiture</b> offre un style simple mais clair, adapté pour la navigation automobile</li></ul><p>Pour changer le thème, il vous suffit de cliquer sur le bouton bleu dans le coin inférieur gauche de la fenêtre de carte > Thèmes de la carte et sélectionner un autre thème.</p>",
+        "terms":"<p>La version payante d'un LoMap peut être téléchargée à plusieurs reprises pendant la période où elle est disponible dans la boutique. Lorsque la version particulière n'est plus disponible, il est possible de télécharger la version la plus ancienne du LoMap gratuitement. Toute nouvelle mise à jour du LoMap doit faire l'objet d'un nouvel achat.</p> <p> Les LoMaps sont créés en utilisant <a href=\"https://github.com/mapsforge/mapsforge\" >Mapsforge Map-writer</a>. Données cartographiques © <a href=\"http://www.openstreetmap.org/copyright\" >OpenStreetMap contributors</a>. Courbes de niveau <a href=\"https://lta.cr.usgs.gov/SRTM\" >SRTM</a>, <a href=\"http://viewfinderpanoramas.org/\" >Viewfinder-Panoramas</a> a <a href=\"mailto:sonnyy7@gmail.com\" >sonnyy</a> <a href=\"http://data.opendataportal.at/dataset/dtm-germany\" >Open Data Portal</a> </p> "
+      }
+    ]
