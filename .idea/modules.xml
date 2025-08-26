@@ -3,12 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/OsmTools.iml" filepath="$PROJECT_DIR$/.idea/modules/OsmTools.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-core/OsmTools.mapsforge-core.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mapsforge-map-writer/OsmTools.mapsforge-map-writer.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.iml" filepath="$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.main.iml" filepath="$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.test.iml" filepath="$PROJECT_DIR$/.idea/modules/maptiler-api/OsmTools.maptiler-api.test.iml" />

@@ -20,9 +20,7 @@ allprojects {
 
 // Configuration for all plain Java projects
 
-project.ext.javaprojects = ["mapsforge-core",
-                            "mapsforge-map-writer",
-                            "osmToolsCore",
+project.ext.javaprojects = ["osmToolsCore",
                             "osmToolsBasic",
                             "osmToolsDataWriter"]
 

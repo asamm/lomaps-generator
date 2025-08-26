@@ -5,10 +5,7 @@ pluginManagement {
 }
 rootProject.name = 'OsmTools'
 
-include ':mapsforge-core'
-include ':mapsforge-map-writer'
 include ':osmToolsBasic'
 include ':osmToolsCore'
 include ':osmToolsDataWriter'
 include 'maptiler-api'
-
