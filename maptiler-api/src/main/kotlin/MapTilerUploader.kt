@@ -68,7 +68,6 @@ class MapTilerUploader {
                 else {
                     Thread.sleep(60000)
                 }
-
             }
 
             // Step 6: update metedata

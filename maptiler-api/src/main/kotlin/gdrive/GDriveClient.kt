@@ -36,9 +36,8 @@ suspend fun uploadToGoogleDrive(file: File, uploadUrl: String) {
 
     val api = GDriveClient.getApi()
 
-    //minimal chunk size
-    val minChunkSize = 262144 //
-    val chunkSize = minChunkSize * 64 // 16MB
+    // chunk size 128 MB
+    val chunkSize = 128 * 1024 * 1024 // 128 MB
     val fileSize = file.length()
     var offset = 0L
     var retries = 0
