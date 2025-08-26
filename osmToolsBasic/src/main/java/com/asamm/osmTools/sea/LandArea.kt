@@ -178,7 +178,7 @@ class LandArea(var map: ItemMap) {
 
         // write to the file
         Main.LOG.info("Writing sea(map) borders into file: $tmpBorderPath")
-        FileUtils.writeStringToFile(tmpBorderPath.toFile(), sb.toString(), false)
+        FileUtils.writeStringToFile(tmpBorderPath.toFile(), sb.toString(), Charsets.UTF_8, false)
     }
 
     @Throws(IOException::class, InterruptedException::class)
