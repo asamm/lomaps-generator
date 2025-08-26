@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lomaps-tools"
+version = "0.1.0"
+description = "Custom tools for generation of Mapsforge and MVT LoMaps"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "Pet Volda", email = "petr.voldan@asamm.com"}
+]
+dependencies = [
+    "argparse>=1.4.0",
+    "psutil>=7.0.0",
+    "osmium>=4.0.2",
+    "ogr2osm>=1.2.0"
+]
+
+[project.scripts]
+lomaps-tools = "lomaps_tools:main"
+
+[tool.setuptools]
+packages = ["lomaps_tools"]

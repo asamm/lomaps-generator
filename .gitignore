@@ -22,3 +22,7 @@ _logs/
 
 # Tools
 _tools/
+
+# Python tools
+__pycache__/
+*.pyc
