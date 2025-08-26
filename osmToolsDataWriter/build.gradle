@@ -19,13 +19,14 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.15.0'
     implementation 'net.sf.kxml:kxml2:2.2.2'
     implementation 'org.locationtech.jts:jts-core:1.16.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.10"
 }
 
 sourceSets.main.compileClasspath += configurations.providedCompile
 sourceSets.test.compileClasspath += configurations.providedCompile
 sourceSets.test.runtimeClasspath += configurations.providedCompile
 
-def versionCode = "0.3.5"
+def versionCode = "0.3.6"
 def newArchiveName = "osmToolsDataWriter_${versionCode}.jar"
 
 jar {
