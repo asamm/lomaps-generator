@@ -84,7 +84,6 @@ public abstract class AConfiguration {
 	
 	/**
 	 * Set data type, that will be generated
-     * @deprecated
 	 * @param type
 	 */
 	public void setGenerateType(String type) {

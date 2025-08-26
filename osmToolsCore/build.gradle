@@ -1,6 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.20'
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 configurations { providedCompile }
 
@@ -20,6 +20,11 @@ repositories {
 }
 compileKotlin {
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }

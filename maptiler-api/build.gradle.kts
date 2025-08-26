@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm")
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("plugin.serialization")
 
     id("org.openapi.generator") version "6.6.0"
 }
@@ -23,6 +23,10 @@ dependencies {
 
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 tasks.test {
     useJUnitPlatform()
 }
@@ -35,7 +39,7 @@ tasks {
     openApiGenerate {
         generatorName.set("kotlin")
         inputSpec.set(file("src/main/resources/maptiler_openapi.yml").absolutePath)
-        outputDir.set(file("${buildDir.path}/maptilerapi").absolutePath)
+        outputDir.set(layout.buildDirectory.dir("maptilerapi").get().asFile.absolutePath)
         ignoreFileOverride.set(file("src/main/resources/openapi-generator-ignore").absolutePath)
         apiPackage.set("com.asamm.locus.client.api")
         modelPackage.set("com.asamm.locus.client.model")
