@@ -38,7 +38,7 @@ public class DatabasePoi extends ADatabaseHandler {
 	private Hashtable<String, Long> tagValues;
 	
 	public DatabasePoi(File file, WriterPoiDefinition poiDefinition) throws Exception {
-		super(file, true);
+		super(file, false);
 
 
         this.writerPoiDefinition = poiDefinition;
