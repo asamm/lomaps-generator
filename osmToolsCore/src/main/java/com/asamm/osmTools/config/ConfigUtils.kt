@@ -71,9 +71,21 @@ object ConfigUtils {
         return command
     }
 
-    // Function to check if Python is installed and return its path
-    fun findPythonPath(): String {
-        // First try to find "python", if not found, try "python3"
+    // Function to check if Python VENV is installed "near" the script location
+    fun findPythonPath(scriptPath: Path): String {
+        // try to find python in venv near the script
+        val venvPython = if (isWindows()) {
+            scriptPath.parent.parent.resolve("venv").resolve("Scripts").resolve("python.exe").toString()
+        } else {
+            scriptPath.parent.parent.resolve("venv").resolve("bin").resolve("python").toString()
+        }
+
+        // verify that the venvPython path exists
+        if (File(venvPython).exists()) {
+            return venvPython
+        }
+
+        // as fallback try to find python in system
         val pythonCommands =
             if (isWindows()) listOf("python3.exe", "python.exe", "python") else listOf("python", "python3")
 

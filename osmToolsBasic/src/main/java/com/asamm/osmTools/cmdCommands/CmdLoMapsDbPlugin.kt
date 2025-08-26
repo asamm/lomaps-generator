@@ -107,7 +107,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis
         addCommand("-type=address")
 
         val size = (tempFilteredMapPath.toAbsolutePath().toFile().length() / 1024L / 1024L).toInt()
-        if (size <= 250) {
+        if (size <= 450) {
             addCommand("-dataContainerType=ram")
         } else {
             addCommand("-dataContainerType=hdd")

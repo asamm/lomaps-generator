@@ -234,8 +234,6 @@ class CmdConfig(
     @Serializable(with = PathSerializer::class)
     val poiDbV2Generator: Path
 ) {
-    val pythonPath: String by lazy { ConfigUtils.findPythonPath() }
-
     val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
 
     val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath()}

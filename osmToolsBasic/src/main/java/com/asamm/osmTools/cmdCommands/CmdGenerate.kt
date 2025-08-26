@@ -155,7 +155,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
 
 
         //set FileSizeLimit determined when use HD and when RAM
-        val fileSizeLimit = 650
+        val fileSizeLimit = 1100
         // get map size
         var mapSizeMb = map.pathSource.toFile().length()
         if (map.isMerged) {

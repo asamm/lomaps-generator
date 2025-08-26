@@ -59,7 +59,7 @@ open class Cmd(val externalApp: ExternalApp) {
             )
 
             ExternalApp.LOMAPS_TOOLS -> {
-                addCommand(AppConfig.config.cmdConfig.pythonPath)
+                addCommand(ConfigUtils.findPythonPath(AppConfig.config.touristConfig.lomapsToolsPy))
                 addCommand(AppConfig.config.touristConfig.lomapsToolsPy.toString())
             }
 
