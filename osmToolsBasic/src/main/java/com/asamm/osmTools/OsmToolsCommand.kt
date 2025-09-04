@@ -18,15 +18,19 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Properties
 
 
 class OsmToolsCommand : CliktCommand(
     name = "OsmToolsBasic",
     help = "Tool for processing OSM data and generating maps"
 ) {
+    init {
+        versionOption(loadVersionFromProperties())
+    }
 
     // verbose mode
-    val verbose by option("-v", "--verbose", help = "Prints more detailed information").flag()
+    val verbose by option("-d", "--debug", help = "Prints more detailed information").flag()
 
     // verbose mode
     val overwrite by option("-ow", "--overwrite", help = "Overwrite output file if exists").flag()
@@ -53,6 +57,19 @@ class OsmToolsCommand : CliktCommand(
 
         // Set overwrite mode
         AppConfig.config.overwrite = overwrite
+    }
+
+    /**
+     * Load version from properties file
+     */
+    private fun loadVersionFromProperties(): String {
+        return try {
+            val props = Properties()
+            javaClass.classLoader.getResourceAsStream("version.properties")?.use { props.load(it) }
+            props.getProperty("version") ?: "unknown"
+        } catch (e: Exception) {
+            "unknown"
+        }
     }
 
 }

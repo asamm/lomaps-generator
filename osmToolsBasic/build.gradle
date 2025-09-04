@@ -49,7 +49,18 @@ dependencies {
 }
 
 def versionCode = "0.7.8"
-def newArchiveName = "OsmToolsBasic_${versionCode}.jar"
+def newArchiveName = "OsmToolsBasic.jar"
+
+// Generate version.properties file with current version
+tasks.register('generateVersionProperties') {
+    doLast {
+        def file = file("src/main/resources/version.properties")
+        file.parentFile.mkdirs()
+        file.text = "version=${versionCode}\n"
+    }
+}
+
+processResources.dependsOn(generateVersionProperties)
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE

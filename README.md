@@ -86,7 +86,7 @@ For every generation is requited to increase a Locus Store version of generated 
 To start generation run:
 
 ```
-java -jar OsmToolsBasic_0.5.2.jar --actions dectag --email no --version 2021.09.24 --hgtdir ./hgt/ --type lomaps --storeUploader ./locusStoreUploader/locucStoreUploader_0.2.3.jar  
+java -jar OsmToolsBasic_0.7.6.jar lomaps --version 2025.06.16 --config_file config/config_2025.xml --hgt_dir /mnt/backup/hgt/vectorMaps/hgt/  --actions contour,tourist,extract,generate_mbtiles_online   --store_uploader /osm_tools/locusStoreUploader/locusStoreUploader_0.3.1.jar  
 ```
 
 ##### Parameters
