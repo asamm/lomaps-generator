@@ -7,6 +7,8 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.Main
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
+import com.asamm.osmTools.generator.AGenerator
+import com.asamm.osmTools.generator.AGenerator.Companion
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
@@ -188,7 +190,7 @@ open class Cmd(val externalApp: ExternalApp) {
         var lastOutpuLine: String? = null
         var stdInput: BufferedReader? = null
         try {
-            Main.myRunTimeLog.print(getCmdLine() + "\n")
+            Logger.i(TAG, getCmdLine() + "\n")
             val pb = createProcessBuilder(mCmdArray)
 
             val runTime = pb.start()
@@ -196,8 +198,7 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // read the output from the command
             while ((stdInput.readLine().also { line = it }) != null) {
-                Logger.i(TAG, line)
-                Main.myRunTimeLog.print(line + "\n")
+                Logger.i(TAG, line + "\n")
                 lastOutpuLine = line
             }
             val exitVal = runTime.waitFor()

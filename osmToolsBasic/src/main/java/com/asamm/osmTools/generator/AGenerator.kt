@@ -228,7 +228,7 @@ abstract class AGenerator {
                     ceo.execute()
                 }
 
-                Main.mySimpleLog.print("\t\t\tdone " + time.elapsedTimeSec + " sec")
+                Logger.i(TAG, "\t\t\tdone " + time.elapsedTimeSec + " sec")
                 i++
             }
         }
