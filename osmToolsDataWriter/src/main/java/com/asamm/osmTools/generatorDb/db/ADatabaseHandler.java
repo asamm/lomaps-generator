@@ -10,7 +10,10 @@ import org.sqlite.SQLiteConfig;
 
 import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 
 public abstract class ADatabaseHandler {
@@ -74,19 +77,28 @@ public abstract class ADatabaseHandler {
         stmt.setQueryTimeout(30);
 
         // load spatialite extension
-        executeStatement("SELECT load_extension('mod_spatialite')");
-        // older linux required full path
-        //executeStatement("SELECT load_extension('/usr/local/lib/mod_spatialite')");
-
-        // enabling Spatial Metadata using v.2.4.0 this automatically
-        // initializes SPATIAL_REF_SYS and GEOMETRY_COLUMNS
-        executeStatement("SELECT InitSpatialMetadata(1)");
+        loadSpatialite();
 
         // be ready for transactions
         conn.setAutoCommit(false);
 
         // set ready flag
         ready = true;
+    }
+
+    public void loadSpatialite() throws SQLException, IOException {
+
+        try {
+            executeStatement("SELECT load_extension('mod_spatialite')");
+        } catch (SQLException e) {
+            Logger.e(TAG,"Primary load failed: " + e.getMessage());
+            // try windows dll
+            executeStatement("SELECT load_extension('mod_spatialite.dll')");
+        }
+
+        // initializing Spatial Metadata
+        executeStatement("SELECT InitSpatialMetadata(1)");
+
     }
 
     protected abstract void cleanTables();
