@@ -198,7 +198,7 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // read the output from the command
             while ((stdInput.readLine().also { line = it }) != null) {
-                Logger.i(TAG, line + "\n")
+                Logger.i(TAG, line )
                 lastOutpuLine = line
             }
             val exitVal = runTime.waitFor()
