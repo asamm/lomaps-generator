@@ -9,7 +9,6 @@ import com.asamm.osmTools.utils.Logger;
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.THashMap;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 import org.openstreetmap.osmosis.core.domain.v0_6.Relation;
 import org.openstreetmap.osmosis.core.domain.v0_6.Way;
@@ -18,70 +17,89 @@ import java.util.*;
 
 public abstract class ADataContainer {
 
-	private static final String TAG = ADataContainer.class.getSimpleName();
-	
-	// handle for tags
-	private AWriterDefinition writerDefinition;
+    private static final String TAG = ADataContainer.class.getSimpleName();
+
+    // handle for tags
+    private AWriterDefinition writerDefinition;
 
 
-    /** OSM ids of cached nodes*/
-	private TLongList nodeIds;
+    /**
+     * OSM ids of cached nodes
+     */
+    private TLongList nodeIds;
 
-    /** OSM ids of cached ways*/
+    /**
+     * OSM ids of cached ways
+     */
     private TLongList wayIds;
 
-    /** OSM ids of cached relations*/
+    /**
+     * OSM ids of cached relations
+     */
     private TLongList relationIds;
 
-    /** hash for serialized streetways in cache */
+    /**
+     * hash for serialized streetways in cache
+     */
     protected Set<Integer> streetHashSet;
 
 
-
-    /** Storage for city, key is city id */
+    /**
+     * Storage for city, key is city id
+     */
     private THashMap<Long, City> citiesMap;
 
-    /** Storage for created city or region boundaries */
+    /**
+     * Storage for created city or region boundaries
+     */
     private List<Boundary> boundaries;
 
 
-    /** Center city and the best boundary for it*/
+    /**
+     * Center city and the best boundary for it
+     */
     private BiDiHashMap<City, Boundary> centerCityBoundaryMap;
 
-    /** List of cities that are in the boundary*/
+    /**
+     * List of cities that are in the boundary
+     */
     private THashMap<Boundary, List<City>> citiesInBoundaryMap;
 
 
-    /** Storage for created regions */
+    /**
+     * Storage for created regions
+     */
     private List<Region> regions;
 
 
-    /** Ids of relation that contains information about street and houses*/
+    /**
+     * Ids of relation that contains information about street and houses
+     */
     private TLongList streetRelations;
 
 
     /**
      * Map for houses that have defined the street name or place name but was not possible to find street for them
      * Key for map is the streetName or placeName
-     * */
+     */
     private THashMap<String, List<House>> housesWithoutStreet;
 
 
     // counters
-	private int amountOfNodesTested = 0;
-	private int amountOfNodesUsed = 0;
-	private int amountOfWaysTested = 0;
-	private int amountOfWaysUsed = 0;
-	private int amountOfRelationsTested = 0;
-	private int amountOfRelationsUsed = 0;
+    private int amountOfNodesTested = 0;
+    private int amountOfNodesUsed = 0;
+    private int amountOfWaysTested = 0;
+    private int amountOfWaysUsed = 0;
+    private int amountOfRelationsTested = 0;
+    private int amountOfRelationsUsed = 0;
     protected int amountOfWayStreetUsed = 0;
     protected int amountOfWayStreetCached = 0;
-	
-	public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
-		this.writerDefinition = writerDefinition;
 
-		this.nodeIds = new TLongArrayList();
-		this.wayIds = new TLongArrayList();
+    public ADataContainer(AWriterDefinition writerDefinition) throws Exception {
+        this.writerDefinition = writerDefinition;
+
+        this.nodeIds = new TLongArrayList();
+        this.wayIds = new TLongArrayList();
         this.relationIds = new TLongArrayList();
         this.streetHashSet = new HashSet<>();
 
@@ -94,13 +112,13 @@ public abstract class ADataContainer {
         this.streetRelations = new TLongArrayList();
 
         this.housesWithoutStreet = new THashMap<>();
-	}
+    }
 
 
     /**
      * IMPORTANT delete all object be sure what you do
      */
-    public void clearAll (){
+    public void clearAll() {
 
         this.nodeIds = null;
         this.wayIds = null;
@@ -113,11 +131,11 @@ public abstract class ADataContainer {
         this.streetRelations = null;
     }
 
-	public abstract void insertNodeToCache(Node node);
-	
-	public abstract void insertWayToCache(Way way);
+    public abstract void insertNodeToCache(Node node);
 
-    public abstract void insertRelationToCache (Relation relation);
+    public abstract void insertWayToCache(Way way);
+
+    public abstract void insertRelationToCache(Relation relation);
 
     public abstract void finalizeWayStreetCaching();
 
@@ -126,10 +144,10 @@ public abstract class ADataContainer {
     public abstract Node getNodeFromCache(long id);
 
     public abstract List<Node> getNodesFromCache(long[] ids);
-	
-	public abstract Way getWayFromCache(long id);
 
-    public abstract Relation getRelationFromCache (long id);
+    public abstract Way getWayFromCache(long id);
+
+    public abstract Relation getRelationFromCache(long id);
 
     public abstract void finalizeCaching();
 
@@ -143,43 +161,43 @@ public abstract class ADataContainer {
 
 
     public void addNode(Node node) {
-		amountOfNodesTested++;
+        amountOfNodesTested++;
 
-		// store valid ID's for later
-		if (writerDefinition.isValidEntity(node)) {
+        // store valid ID's for later
+        if (writerDefinition.isValidEntity(node)) {
             // insert into database
             insertNodeToCache(node);
-			nodeIds.add(node.getId());
-		}
-	}
-	
-	public void addWay(Way way) {
-		amountOfWaysTested++;
+            nodeIds.add(node.getId());
+        }
+    }
 
-		// store way for later if valid
-		if (writerDefinition.isValidEntity(way)) {
-			insertWayToCache(way);
-			wayIds.add(way.getId());
-		}
-	}
+    public void addWay(Way way) {
+        amountOfWaysTested++;
 
-    public void addRelation (Relation relation){
-        if (writerDefinition.isValidEntity(relation)){
+        // store way for later if valid
+        if (writerDefinition.isValidEntity(way)) {
+            insertWayToCache(way);
+            wayIds.add(way.getId());
+        }
+    }
+
+    public void addRelation(Relation relation) {
+        if (writerDefinition.isValidEntity(relation)) {
             insertRelationToCache(relation);
             relationIds.add(relation.getId());
         }
     }
 
-    public void addWayStreetHashName(Street street){
+    public void addWayStreetHashName(Street street) {
         amountOfWayStreetUsed++;
 
-        int hash = new HashCodeBuilder().append(street.getName()).toHashCode();
+        int hash = street.getName().hashCode();
         // put street into tmp cache
         insertWayStreetToCache(hash, street);
         streetHashSet.add(hash);
     }
 
-    public void addWayStreetByOsmId(Street street){
+    public void addWayStreetByOsmId(Street street) {
         amountOfWayStreetCached++;
         insertWayStreetByOsmIdToCache(street);
     }
@@ -189,18 +207,18 @@ public abstract class ADataContainer {
         //Logger.i(TAG, "addHouseWithoutStreet (): " + house.toString());
 
         String key = (house.getStreetName().length() > 0) ? house.getStreetName() : house.getPlace();
-        if (key.length() <= 0){
+        if (key.length() <= 0) {
             // no key no record
             return;
         }
 
         List<House> houses = housesWithoutStreet.get(key);
-        if (houses == null){
+        if (houses == null) {
             houses = new ArrayList<>();
         }
         houses.add(house);
 
-        if (house.getOsmId() == 1297105299){
+        if (house.getOsmId() == 1297105299) {
             Logger.i(TAG, "addHouseWithoutStreet() : key: " + key + " , house: " + house.toString());
         }
         housesWithoutStreet.put(key, houses);
@@ -208,45 +226,43 @@ public abstract class ADataContainer {
     }
 
 
-
-
     public void destroy() {
-		// print results
+        // print results
         Logger.i(TAG, "finished...");
-		Logger.i(TAG, "total processed nodes: " + amountOfNodesUsed + " / " + amountOfNodesTested);
-		Logger.i(TAG, "total processed ways: " + amountOfWaysUsed + " / " + amountOfWaysTested);
-		Logger.i(TAG, "total processed relations: " + amountOfRelationsUsed + " / " + amountOfRelationsTested);
-        Logger.i(TAG, "total processed ways to streets with name: " + amountOfWayStreetUsed );
+        Logger.i(TAG, "total processed nodes: " + amountOfNodesUsed + " / " + amountOfNodesTested);
+        Logger.i(TAG, "total processed ways: " + amountOfWaysUsed + " / " + amountOfWaysTested);
+        Logger.i(TAG, "total processed relations: " + amountOfRelationsUsed + " / " + amountOfRelationsTested);
+        Logger.i(TAG, "total processed ways to streets with name: " + amountOfWayStreetUsed);
         Logger.i(TAG, "total processed ways: " + amountOfWayStreetCached);
-	}
+    }
 
-    public Node getNode (long nodeId){
+    public Node getNode(long nodeId) {
         return getNodeFromCache(nodeId);
     }
 
-	public List<Node> getNodes() {
+    public List<Node> getNodes() {
         List<Node> validNodes = new ArrayList<Node>();
-		for (int i=0, size = nodeIds.size(); i < size; i++) {
+        for (int i = 0, size = nodeIds.size(); i < size; i++) {
             Node node = getNode(nodeIds.get(i));
             if (node != null && writerDefinition.isValidEntity(node)) {
                 amountOfNodesUsed++;
                 validNodes.add(node);
             }
-		}
-		return validNodes;
-	}
+        }
+        return validNodes;
+    }
 
- //   public abstract Iterator<Node> getNodes ();
+    //   public abstract Iterator<Node> getNodes ();
 
-    public WayEx getWay (long wayId){
+    public WayEx getWay(long wayId) {
 
         Way way = getWayFromCache(wayId);
         return getWay(way);
     }
 
-    public WayEx getWay (Way way){
+    public WayEx getWay(Way way) {
 
-        if (way == null){
+        if (way == null) {
             //Logger.e(TAG, "getWays(), cannot load way from cache. Id:" + way.getId());
             return null;
         }
@@ -259,23 +275,23 @@ public abstract class ADataContainer {
         return null;
     }
 
-	public List<WayEx> getWays() {
+    public List<WayEx> getWays() {
         List<WayEx> validWays = new ArrayList<WayEx>();
 
-        for (int i=0, size = wayIds.size(); i < size; i++) {
-        	WayEx we = getWay(wayIds.get(i));
-            if (we != null){
+        for (int i = 0, size = wayIds.size(); i < size; i++) {
+            WayEx we = getWay(wayIds.get(i));
+            if (we != null) {
                 validWays.add(we);
             }
-		}
-		return validWays;
-	}
+        }
+        return validWays;
+    }
 
 
-    public RelationEx getRelation (long relationId){
+    public RelationEx getRelation(long relationId) {
 
         Relation relation = getRelationFromCache(relationId);
-        if (relation == null){
+        if (relation == null) {
             return null;
         }
         RelationEx re = new RelationEx(relation);
@@ -283,17 +299,16 @@ public abstract class ADataContainer {
         return re;
     }
 
-    public List<RelationEx> getRelations (){
+    public List<RelationEx> getRelations() {
         List<RelationEx> relations = new ArrayList<>();
-        for (int i=0, size = relationIds.size(); i < size; i++) {
+        for (int i = 0, size = relationIds.size(); i < size; i++) {
             RelationEx re = getRelation(relationIds.get(i));
-            if (re != null){
+            if (re != null) {
                 relations.add(re);
             }
         }
         return relations;
     }
-
 
 
     public TLongList getNodeIds() {
@@ -327,27 +342,27 @@ public abstract class ADataContainer {
 
     // CITIES
 
-    public City getCity (long cityId){
+    public City getCity(long cityId) {
         return citiesMap.get(cityId);
     }
 
-    public Collection<City> getCities (){
+    public Collection<City> getCities() {
         return citiesMap.values();
     }
 
-    public void addCity (City city){
+    public void addCity(City city) {
         citiesMap.put(city.getOsmId(), city);
     }
 
-    public List<Boundary> getBoundaries (){
+    public List<Boundary> getBoundaries() {
         return boundaries;
     }
 
-    public void addBoundary (Boundary boundary){
+    public void addBoundary(Boundary boundary) {
         boundaries.add(boundary);
     }
 
-    public void addRegion (Region region){
+    public void addRegion(Region region) {
         regions.add(region);
     }
 
