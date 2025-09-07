@@ -309,7 +309,7 @@ public class GenLoMaps extends AGenerator {
 
         //Utils.deleteFileQuietly(map.getPathAddressDb());
         //Address generation
-        if ( !map.getPathAddressDb().toFile().exists()) {
+        if ( !map.getPathAddressDb().toFile().exists() || AppConfig.config.getOverwrite()) {
             CmdLoMapsDbPlugin cmdLoMapsDbPlugin = new CmdLoMapsDbPlugin(map);
             Logger.i(TAG, "Filter data for Address DB, command: ");
             cmdLoMapsDbPlugin.simplifyForAddress();
