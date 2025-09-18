@@ -3,30 +3,27 @@ package com.asamm.osmTools.mapConfig
 import com.asamm.osmTools.config.AppConfig
 import java.nio.file.Path
 
-enum class PathType {
-    TOURIST,
-    CONTOUR,
+enum class PathType(val baseDir: String) {
+    // static files
+    POLYGON("polygons"),
 
-    EXTRACT,
-    COASTLINE,
-    POLYGON,
-    TRANSFORM,
-    SHP,
-    MERGE,
-    ADDRESS_DB,
-    MAPSFORGE_GENERATE,
-    MAPSFORGE_RESULT,
+    // data files
+    TRANSFORM("transform"),
+    COASTLINE("coastlines/_pbf"),
+    SHP("coastlines/_shp"),
+    CONTOUR("contours"),
 
-    MAPSFORGE_RESULT_CLASSIC,
-    ADDRESS_POI_DB_CLASSIC,
-
-    MBTILES_GENERATE,
-    MBTILES_RESULT,
-    POI_V2_DB_MAPSFORGE,
-    POI_V2_DB_MBTILES,
-
-    MBTILES_ONLINE_OUTDOOR,
-
+    TOURIST("_tourist"),
+    MERGE("_merge"),
+    EXTRACT("_extract"),
+    ADDRESS_DB("_address_db"),
+    POI_V2_DB_MBTILES("_poi_v2_db_mbtiles"),
+    POI_V2_DB_MAPSFORGE("_poi_v2_db_mapsforge"),
+    MAPSFORGE_GENERATE("_generate"),
+    MBTILES_GENERATE("_mbtiles"),
+    MAPSFORGE_RESULT("_result"),
+    ADDRESS_POI_DB_CLASSIC("_address_poi_db"),
+    MBTILES_ONLINE_OUTDOOR("_mbtiles_online_outdoor");
 }
 
 class PathResolver(val map: ItemMap) {
@@ -43,59 +40,73 @@ class PathResolver(val map: ItemMap) {
     // Path to planet directory
     private val planetDir = AppConfig.config.planetDir.toAbsolutePath()
 
-
-
     // Version name (date e.q. 2021.01.01/europe/....) as syubfolder
     val versionPath: Path = Path.of(AppConfig.config.version, map.dir)
 
-    fun getPath(type: PathType,fileName: String): Path {
+    fun getPath(type: PathType, fileName: String): Path {
 
         return when (type) {
             // completely static located in working directory
-            PathType.POLYGON -> workingDirectory.resolve("polygons").resolve(map.dir).resolve(fileName)
+            PathType.POLYGON -> getBaseDir(PathType.POLYGON).resolve(map.dir).resolve(fileName)
 
             // located in data directory not generated with every version
-            PathType.TRANSFORM -> mapsForgeDir.resolve("transform").resolve(map.dir).resolve(fileName)
-            PathType.COASTLINE -> mapsForgeDir.resolve("coastlines").resolve("_pbf").resolve(map.dir).resolve(fileName)
-            PathType.SHP -> mapsForgeDir.resolve("coastlines").resolve("_shp").resolve(map.dir).resolve(fileName)
-            PathType.CONTOUR -> mapsForgeDir.resolve("contours").resolve(map.dir).resolve(fileName)
-            // temporary data generated with every version located in data directory
-            PathType.MERGE -> mapsForgeDir.resolve("_merge").resolve(versionPath).resolve(fileName).toAbsolutePath()
-            PathType.ADDRESS_DB -> mapsForgeDir.resolve("_address_db").resolve(versionPath).resolve(fileName)
-            PathType.MAPSFORGE_GENERATE -> mapsForgeDir.resolve("_generate").resolve(versionPath).resolve(fileName).toAbsolutePath()
-
-            PathType.MAPSFORGE_RESULT -> mapsForgeDir.resolve("_result").resolve(versionPath).resolve(fileName)
-            // custom result for classic locus with old POI DB
-            PathType.MAPSFORGE_RESULT_CLASSIC -> mapsForgeDir.resolve("_result_classic").resolve(versionPath).resolve(fileName)
-            PathType.ADDRESS_POI_DB_CLASSIC -> mapsForgeDir.resolve("_address_poi_db").resolve(versionPath).resolve(fileName)
+            PathType.TRANSFORM -> getBaseDir(PathType.TRANSFORM).resolve(map.dir).resolve(fileName)
+            PathType.COASTLINE -> getBaseDir(PathType.COASTLINE).resolve(map.dir).resolve(fileName)
+            PathType.SHP -> getBaseDir(PathType.SHP).resolve(map.dir).resolve(fileName)
+            PathType.CONTOUR -> getBaseDir(PathType.CONTOUR).resolve(map.dir).resolve(fileName)
 
             // temporary planet data generated with every version located in data directory
-            PathType.TOURIST -> {
-                if (map.isPlanet) {
-                    planetDir.resolve("_tourist").resolve(versionPath).resolve(fileName)
-                }
-                    else {
-                    mapsForgeDir.resolve("_tourist").resolve(versionPath).resolve(fileName)
-                }
-            }
-            PathType.EXTRACT -> {
-                if (map.isPlanet) {
-                    planetDir.resolve("_extract").resolve(versionPath).resolve(fileName)
-                } else {
-                    mapsForgeDir.resolve("_extract").resolve(versionPath).resolve(fileName)
-                }
-            }
+            PathType.TOURIST -> getBaseDir(PathType.TOURIST).resolve(versionPath).resolve(fileName)
+            PathType.EXTRACT -> getBaseDir(PathType.EXTRACT).resolve(versionPath).resolve(fileName)
 
-            PathType.MBTILES_GENERATE -> {mbtilesDir.resolve("mbtiles").resolve(versionPath).resolve(fileName)}
+            // temporary data generated with every version located in data directory
+            PathType.MERGE -> getBaseDir(PathType.MERGE).resolve(versionPath).resolve(fileName).toAbsolutePath()
+            PathType.ADDRESS_DB -> getBaseDir(PathType.ADDRESS_DB).resolve(versionPath).resolve(fileName)
+            // POI V2
+            PathType.POI_V2_DB_MBTILES -> getBaseDir(PathType.POI_V2_DB_MBTILES).resolve(versionPath).resolve(fileName)
+            PathType.POI_V2_DB_MAPSFORGE -> getBaseDir(PathType.POI_V2_DB_MAPSFORGE).resolve(versionPath).resolve(fileName)
 
-            PathType.MBTILES_RESULT -> mapsForgeDir.resolve("_result_mbtiles").resolve(versionPath).resolve(fileName)
+            // Offline map files
+            PathType.MAPSFORGE_GENERATE -> getBaseDir(PathType.MAPSFORGE_GENERATE).resolve(versionPath).resolve(fileName).toAbsolutePath()
+            PathType.MBTILES_GENERATE -> getBaseDir(PathType.MBTILES_GENERATE).resolve(versionPath).resolve(fileName)
+
+            PathType.MAPSFORGE_RESULT -> getBaseDir(PathType.MAPSFORGE_RESULT).resolve(versionPath).resolve(fileName)
+
+            // custom result for classic locus with old POI DB
+            PathType.ADDRESS_POI_DB_CLASSIC -> getBaseDir(PathType.ADDRESS_POI_DB_CLASSIC).resolve(versionPath).resolve(fileName)
 
             // online lomaps outdoor
-            PathType.MBTILES_ONLINE_OUTDOOR -> mbtilesDir.resolve("mbtiles_online_outdoor").resolve(versionPath).resolve(fileName)
+            PathType.MBTILES_ONLINE_OUTDOOR -> getBaseDir(PathType.MBTILES_ONLINE_OUTDOOR).resolve(versionPath).resolve(fileName)
+        }
+    }
 
-            // POI V2
-            PathType.POI_V2_DB_MBTILES -> mbtilesDir.resolve("_poi_v2_db_mbtiles").resolve(versionPath).resolve(fileName)
-            PathType.POI_V2_DB_MAPSFORGE -> mbtilesDir.resolve("_poi_v2_db_mapsforge").resolve(versionPath).resolve(fileName)
+    /**
+     * Returns the absolute path to the base directory for the given PathType.
+     * This does NOT include versionPath  just the root directory for the PathType.
+     */
+    fun getBaseDir(type: PathType): Path {
+        return when (type) {
+            PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
+
+            PathType.TRANSFORM,
+            PathType.COASTLINE,
+            PathType.SHP,
+            PathType.CONTOUR,
+
+            PathType.MERGE,
+            PathType.ADDRESS_DB,
+            PathType.MAPSFORGE_GENERATE,
+            PathType.MAPSFORGE_RESULT,
+            PathType.ADDRESS_POI_DB_CLASSIC -> mapsForgeDir.resolve(type.baseDir)
+
+            PathType.TOURIST,
+            PathType.EXTRACT -> if (map.isPlanet) planetDir.resolve(type.baseDir) else mapsForgeDir.resolve(type.baseDir)
+
+            PathType.POI_V2_DB_MBTILES,
+            PathType.POI_V2_DB_MAPSFORGE,
+            PathType.MBTILES_GENERATE,
+            PathType.MBTILES_ONLINE_OUTDOOR -> mbtilesDir.resolve(type.baseDir)
+
         }
     }
 }

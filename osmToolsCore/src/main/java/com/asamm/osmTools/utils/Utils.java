@@ -78,7 +78,7 @@ public class Utils {
         // check if folder exist
         File dir = pathToDir.toFile();
         if (!dir.exists() && !dir.isDirectory()) {
-            System.out.println("Path for deleting: " + pathToDir + " does not exist or is not directory");
+            Logger.w(TAG, "Path for deleting: " + pathToDir + " does not exist or is not directory");
             return;
         }
         File[] fileList = dir.listFiles();
@@ -86,6 +86,20 @@ public class Utils {
             if (fileList[i].isFile()) {
                 fileList[i].delete();
             }
+        }
+    }
+
+    public static void deleteDirRecursively(Path pathToDir) {
+        // check if folder exist
+        File dir = pathToDir.toFile();
+        if (!dir.exists() && !dir.isDirectory()) {
+            Logger.w(TAG, "Path for deleting: " + pathToDir + " does not exist or is not directory");
+            return;
+        }
+        try {
+            FileUtils.deleteDirectory(dir);
+        } catch (IOException e) {
+            Logger.w(TAG, "deleteDirRecursively()", e);
         }
     }
 

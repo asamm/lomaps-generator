@@ -1,6 +1,7 @@
 package com.asamm.osmTools.generator;
 
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
+import com.asamm.osmTools.mapConfig.ConfigXmlParser;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.utils.Logger;
@@ -21,7 +22,7 @@ public class GenStoreRegionDB extends AGenerator {
     private MapSource mMapSource;
 
     public GenStoreRegionDB(Path configXmlPath) throws IOException, XmlPullParserException {
-        mMapSource = parseConfigXml(configXmlPath.toFile());
+        mMapSource = ConfigXmlParser.parseConfigXml(configXmlPath.toFile());
     }
 
     public void process() throws IOException, InterruptedException {

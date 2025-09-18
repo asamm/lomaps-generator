@@ -1,6 +1,6 @@
 package com.asamm.osmTools
 
-import com.asamm.osmTools.LoMapsCommand.Companion.TAG
+import com.asamm.osmTools.cleanup.OldMapsCleaner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
@@ -86,6 +86,36 @@ class UpdatePlanetCommand : CliktCommand(
         planetUpdater.update()
     }
 }
+
+
+// DELETE OLD MAPS SUBCOMMAND
+
+class CleanOldGenerationCommand : CliktCommand(
+    name = "clean_old",
+    help = "Subcommand to clean old maps and support files from data folders"
+) {
+
+    // path to a configuration file where are defined maps for generation
+    val configFile: File by option("-cf", "--config_file", help = "Path to configuration file").file(mustExist = true)
+        .defaultLazy {
+            val defaultConfigFile = File("config.xml")
+            require(defaultConfigFile.exists()) {
+                "Default config file '$defaultConfigFile' doesn't exist. Please specify path to config file"
+            }
+            defaultConfigFile
+        }
+
+
+    override fun run() {
+
+        // Set path to the configuration file
+        AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
+
+        val oldMapsCleaner = OldMapsCleaner()
+        oldMapsCleaner.purgePreviousMapGeneration()
+    }
+}
+
 
 // LOMAPS SUBCOMMAND
 
@@ -249,6 +279,6 @@ class StoreGeoCommand : CliktCommand(
 
 fun main(args: Array<String>) {
     OsmToolsCommand()
-        .subcommands(LoMapsCommand(), UpdatePlanetCommand(), StoreGeoCommand())
+        .subcommands(LoMapsCommand(), UpdatePlanetCommand(), CleanOldGenerationCommand(), StoreGeoCommand())
         .main(args)
 }

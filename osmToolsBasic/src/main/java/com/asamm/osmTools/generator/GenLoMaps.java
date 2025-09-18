@@ -14,6 +14,7 @@ import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
+import com.asamm.osmTools.mapConfig.ConfigXmlParser;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
@@ -49,7 +50,7 @@ public class GenLoMaps extends AGenerator {
     public GenLoMaps() throws IOException, XmlPullParserException {
 
         // parse definition xml
-        mMapSource = parseConfigXml(AppConfig.config.getMapsforgeConfig().getMapConfigXml().toFile());
+        mMapSource = ConfigXmlParser.parseConfigXml(AppConfig.config.getMapsforgeConfig().getMapConfigXml().toFile());
     }
 
     public void process() throws Exception {
@@ -133,26 +134,24 @@ public class GenLoMaps extends AGenerator {
         // find ItemMap with if "planet" and process it
         Logger.i(TAG, "================ PROCESS PLANET MAP ================");
         ItemMap mapPlanet = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
-        if (mapPlanet != null) {
-            for (Action action : actionList) {
-                switch (action) {
-                    case TOURIST:
-                        actionTourist(mapPlanet);
-                        break;
-                    case CONTOUR:
-                        actionContour(mapPlanet);
-                        break;
-                }
+
+        for (Action action : actionList) {
+            switch (action) {
+                case TOURIST:
+                    actionTourist(mapPlanet);
+                    break;
+                case CONTOUR:
+                    actionContour(mapPlanet);
+                    break;
             }
-            actionMergePlanet(mapPlanet);
-
-
-            // generate lomaps outdoor planet tiles
-            actionGenerateMbtilesOnline(mapPlanet);
-
-            // upload to maptiler
-            actionUploadPlanetToMapTiler(mapPlanet);
         }
+        actionMergePlanet(mapPlanet);
+
+        // generate lomaps outdoor planet tiles
+        actionGenerateMbtilesOnline(mapPlanet);
+
+        // upload to maptiler
+        actionUploadPlanetToMapTiler(mapPlanet);
     }
 
 
@@ -614,10 +613,6 @@ public class GenLoMaps extends AGenerator {
         }
 
         ItemMap planetMbtilesMap = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
-        if (planetMbtilesMap == null) {
-            throw new IllegalArgumentException("Planet Mbtiles map not found in configuration. Edit config.xml file " +
-                    "and set add action " + Action.GENERATE_MBTILES.getLabel() + " to planet map.");
-        }
 
         // check if source planet file exist
         if (!planetMbtilesMap.getPathMbtiles().toFile().exists()) {
@@ -748,27 +743,10 @@ public class GenLoMaps extends AGenerator {
 
     private void actionInsertMetaData(ItemMap itemMap) throws Exception {
 
-        if (!itemMap.hasAction(Action.ADDRESS_POI_DB) || !itemMap.hasAction(Action.GENERATE_MAPSFORGE)) {
+        if (!itemMap.hasAction(Action.GENERATE_MAPSFORGE)) {
             return;
         }
 
-        File dbAddressPoiFile = itemMap.getPathAddressDb().toFile();
-        if (dbAddressPoiFile.getParentFile() != null) {
-            dbAddressPoiFile.getParentFile().mkdirs();
-        }
-
-        DatabaseData dbData = new DatabaseData(dbAddressPoiFile);
-
-        // read description from definition json
-//        JSONParser parser = new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE);
-//        JSONArray descriptionJson = (JSONArray) parser.parse(
-//                new FileReader(Parameters.getMapDescriptionDefinitionJsonPath()));
-
-        // parse version into java date
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
-        Date dateVersion = sdf.parse(AppConfig.config.getVersion());
-
-        // insert version of map
         // create area coverage (it's intersection of country border and data json)
         Geometry geom = WriterAddressDefinition.createDbGeom(
                 itemMap.getPathJsonPolygon().toString(), itemMap.getPathCountryBoundaryGeoJson().toString());
@@ -782,6 +760,24 @@ public class GenLoMaps extends AGenerator {
             throw new IllegalArgumentException("Country map geom is not valid, map : " + itemMap.getName());
         }
 
+        // insert metadata to db file for LoMaps Classic
+        insertMetadata(itemMap, itemMap.getPathAddressPoiDb().toFile(), geom);
+
+        // insert metadata to db file for LM4
+        insertMetadata(itemMap, itemMap.getPathAddressDb().toFile(), geom);
+
+    }
+
+    private void insertMetadata(ItemMap itemMap, File dbFile, Geometry geom) throws Exception {
+
+        if (dbFile == null || !dbFile.exists()) {
+            Logger.w(TAG,"DB file for inserting metadata doesn't exist: " + dbFile);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
+        Date dateVersion = sdf.parse(AppConfig.config.getVersion());
+
+        DatabaseData dbData = new DatabaseData(dbFile);
         WKTWriter wktWriter = new WKTWriter();
 
         dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
@@ -795,7 +791,6 @@ public class GenLoMaps extends AGenerator {
         dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbAddressVersion()));
 
         dbData.destroy();
-
     }
 
     // ACTION UPLOAD

@@ -551,7 +551,8 @@ public class DatabaseDataTmp extends ADatabaseHandler {
             }
 
         } catch (Exception e) {
-            Logger.e(TAG, "selectWayStreetsByOsmIds(), problem with query", e);
+            Logger.e(TAG, "selectWayStreetsByOsmIds(), problem with query: " + sql , e);
+
         }
         return streets;
     }

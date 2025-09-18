@@ -1,6 +1,5 @@
 package com.asamm.osmTools.compress
 
-import kotlinx.coroutines.*
 import com.asamm.osmTools.Main
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
@@ -11,18 +10,20 @@ import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.TimeWatch
 import com.asamm.osmTools.utils.Utils
 import com.asamm.osmTools.utils.versionToDate
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.RandomAccessFile
 
 class MapCompress {
-    
-    val TAG = MapCompress::class.java.simpleName
+
+        val TAG = MapCompress::class.java.simpleName
 
     fun compressAllMaps(mapSource: MapSource) {
         runBlocking {
             compressMapParallel(mapSource)
         }
     }
+
     /**
      * Reads a MapSource object and compresses the map files.
      */
@@ -33,18 +34,15 @@ class MapCompress {
         val dispatcher = Dispatchers.IO.limitedParallelism(cores)
 
         coroutineScope {
-            mapSource.getMapPacksIterator().asSequence()
-                .flatMap { mapPack -> getAllMaps(mapPack).asSequence() }
+            val allMaps = mapSource.getAllMaps
+            allMaps
                 .map { map ->
                     async(dispatcher) {
                         compressMap(map)
                     }
                 }
-                .toList()
                 .awaitAll()
         }
-
-
     }
 
     /**
@@ -53,7 +51,7 @@ class MapCompress {
     private fun getAllMaps(mapPack: ItemMapPack): List<ItemMap> {
         val maps = mutableListOf<ItemMap>()
         maps.addAll(mapPack.maps)
-        mapPack.mapPacks?.forEach { nestedPack ->
+        mapPack.mapPacks.forEach { nestedPack ->
             maps.addAll(getAllMaps(nestedPack))
         }
         return maps
@@ -68,7 +66,7 @@ class MapCompress {
             compressMbtiles(map)
         }
     }
-    
+
     private fun compressMapsforge(map: ItemMap, isForLmClassic: Boolean) {
 
         if (!map.hasAction(Action.GENERATE_MAPSFORGE) && !map.hasAction(Action.ADDRESS_POI_DB)) {
@@ -77,14 +75,20 @@ class MapCompress {
         }
 
         if (!AppConfig.config.overwrite &&
-            if (isForLmClassic) map.pathResultMapsforgeClassic.toFile().exists() else map.pathResultMapsforge.toFile().exists()) {
-            Logger.d( TAG, "File with compressed result " +
-                    "${if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge} already exist - skipped."
+            if (isForLmClassic) map.pathResultMapsforgeClassic.toFile().exists() else map.pathResultMapsforge.toFile()
+                .exists()
+        ) {
+            Logger.d(
+                TAG, "File with compressed result " +
+                        "${if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge} already exist - skipped."
             )
             return
         }
 
-        Logger.i(TAG, "Compressing mapsforge map: " + if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge)
+        Logger.i(
+            TAG,
+            "Compressing mapsforge map: " + if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge
+        )
         val time = TimeWatch()
         Main.mySimpleLog.print("Compress: ${map.getName()} ...")
 
@@ -108,49 +112,56 @@ class MapCompress {
         if (map.hasAction(Action.ADDRESS_POI_DB)) {
             if (isForLmClassic) {
                 require(map.pathAddressPoiDb.toFile().exists()) {
-                    "Address DB file for compression: ${map.pathAddressPoiDb} does not exist." }
+                    "Address DB file for compression: ${map.pathAddressPoiDb} does not exist."
+                }
                 filesToCompress.add(map.pathAddressPoiDb.toFile())
             } else {
                 require(map.pathAddressDb.toFile().exists()) {
-                    "Address DB file for compression: ${map.pathAddressDb} does not exist." }
+                    "Address DB file for compression: ${map.pathAddressDb} does not exist."
+                }
                 filesToCompress.add(map.getPathAddressDb().toFile())
             }
         }
 
-        if ( !isForLmClassic && map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
+        if (!isForLmClassic && map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
             require(map.getPathPoiV2Db(false).toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db(false)} does not exist." }
+                "POI DB V2 file for compression: ${map.getPathPoiV2Db(false)} does not exist."
+            }
             filesToCompress.add(map.getPathPoiV2Db(false).toFile())
         }
 
         // compress file
-        Utils.compressFiles(filesToCompress,
-            if (isForLmClassic) map.pathResultMapsforgeClassic.toFile() else map.pathResultMapsforge.toFile())
+        Utils.compressFiles(
+            filesToCompress,
+            if (isForLmClassic) map.pathResultMapsforgeClassic.toFile() else map.pathResultMapsforge.toFile()
+        )
 
         Main.mySimpleLog.print("\t\t\tdone " + time.elapsedTimeSec + " sec")
     }
 
-    private fun compressMbtiles(map: ItemMap){
+    private fun compressMbtiles(map: ItemMap) {
         if (!map.hasAction(Action.GENERATE_MBTILES) || !map.hasAction(Action.POI_DB_V2)) {
             // map hasn't any result file for compress
             return
         }
         if (!AppConfig.config.overwrite && map.pathResultMbtiles.toFile().exists()) {
-            Logger.d( TAG, "Zip file with compressed mbtiles ${map.pathResultMbtiles} already exist." )
+            Logger.d(TAG, "Zip file with compressed mbtiles ${map.pathResultMbtiles} already exist.")
             return
         }
 
         Logger.i(TAG, "Compressing mbtiles map: " + map.getPathResultMbtiles())
         val fileToCompress: MutableList<File> = mutableListOf()
-        if (map.hasAction(Action.GENERATE_MBTILES)){
-            require(map.pathMbtiles.toFile().exists()){
-                "Mbtiles file for compression: ${map.pathMbtiles} does not exist."}
+        if (map.hasAction(Action.GENERATE_MBTILES)) {
+            require(map.pathMbtiles.toFile().exists()) {
+                "Mbtiles file for compression: ${map.pathMbtiles} does not exist."
+            }
             fileToCompress.add(map.pathMbtiles.toFile())
         }
 
         if (map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
             require(map.getPathPoiV2Db(true).toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db(true)} does not exist." }
+                "POI DB V2 file for compression: ${map.getPathPoiV2Db(true)} does not exist."
+            }
             fileToCompress.add(map.getPathPoiV2Db(true).toFile())
         }
 

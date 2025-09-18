@@ -12,6 +12,9 @@ dependencies {
     implementation 'net.sf.kxml:kxml2:2.2.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
+
+
     // for reading YAML configuration file
     implementation("com.charleskorn.kaml:kaml:0.66.0")
 }

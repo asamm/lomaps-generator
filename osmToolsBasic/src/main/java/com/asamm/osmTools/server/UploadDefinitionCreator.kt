@@ -58,7 +58,7 @@ class UploadDefinitionCreator {
     }
 
     fun generateJsonUploadDefinition(mapSource: MapSource) {
-        mapSource.getMapPacksIterator().forEach { mapPack ->
+        mapSource.mapPacksIterator.forEach { mapPack ->
             processMapPack(mapPack)
         }
         writeToJsonDefFile()

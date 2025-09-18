@@ -31,7 +31,7 @@ public class CmdExtractOsmium extends Cmd {
     public CmdExtractOsmium(MapSource ms, String sourceId) {
         super(ExternalApp.OSMIUM);
 
-        map = ms.getMapByIdSafe(sourceId);
+        map = ms.getMapById(sourceId);
         initJsonConfig();
     }
 

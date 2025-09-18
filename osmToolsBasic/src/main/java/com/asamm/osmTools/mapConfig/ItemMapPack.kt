@@ -2,105 +2,91 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.asamm.osmTools.mapConfig;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.asamm.osmTools.mapConfig
 
 /**
  *
  * @author volda
  */
-public class ItemMapPack extends AItemMap {
+class ItemMapPack(mpParent: ItemMapPack?) : AItemMap(mpParent) {
 
-    private static final String TAG = ItemMapPack.class.getSimpleName();
-    
-    // list of all maps
-    private List<ItemMap> mMaps;
+    // list of all maps in this mapPack
+    var maps: MutableList<ItemMap> = ArrayList()
+
     // list of child mapPacks
-    private List<ItemMapPack> mMapPacks;
-
-//    public ItemMapPack() {
-//        super(null);
-//        initialize();
-//    }
-
-    public ItemMapPack(ItemMapPack mpParent) {
-        super(mpParent);
-        initialize();
-    }
-
-    private void initialize() {
-        mMaps = new ArrayList<>();
-        mMapPacks = new ArrayList<>();
-    }
-
-    protected ItemMap getMapById(String mapId) {
-        for (ItemMap actualMap : mMaps) {
-            if (actualMap.getId() != null && actualMap.getId().equals(mapId)) {
-                return actualMap;
-            }
-        }
-        for (ItemMapPack mp : mMapPacks) {
-            ItemMap map = mp.getMapById(mapId);
-            if (map != null) {
-                return map;
-            }
-        }
-        return null;
-    }
-    
-    protected ItemMapPack getMapPackByDir (String dirName){
-        for (ItemMapPack mp : mMapPacks){
-            if (mp.getDirGen().contains(dirName) || mp.getDir().contains(dirName)){
-                return mp;
-            }
-            ItemMapPack mpSub = mp.getMapPackByDir(dirName);
-            if (mpSub != null){
-                return mp;
-            }
-        }
-        return null;
-    }
-
-    /**************************************************/
-    /*               GETTERS & SETTERS                */
-    /**************************************************/
+    var mMapPacks: MutableList<ItemMapPack> = ArrayList()
 
     /**
-     *
-     * @return maps that are in this mappack
+     * Get all maps in this mapPack and all sub mapPacks
      */
-    public List<ItemMap> getMaps () {
-        return mMaps;
+    fun getAllMaps(): List<ItemMap> {
+        val allMaps = mutableListOf<ItemMap>()
+        allMaps.addAll(maps)
+
+        for (mp in mMapPacks) {
+            allMaps.addAll(mp.getAllMaps())
+        }
+
+        return allMaps
     }
 
-    public void addMap(ItemMap map) {
-        this.mMaps.add(map);
+    fun getMapById(mapId: String): ItemMap? {
+        for (actualMap in maps) {
+            if (actualMap.id != null && actualMap.id == mapId) {
+                return actualMap
+            }
+        }
+        for (mp in mMapPacks) {
+            val map = mp.getMapById(mapId)
+            if (map != null) {
+                return map
+            }
+        }
+        return null
     }
 
-    public ItemMap getMap(int index) {
-        return mMaps.get(index);
+    /**
+     * Search for mapPack by directory name
+     * @param dirName directory name to search for
+     * @return found mapPack or null if not found
+     */
+    fun getMapPackByDir(dirName: String): ItemMapPack? {
+        for (mp in mMapPacks) {
+            if (mp.dirGen.contains(dirName) || mp.dir.contains(dirName)) {
+                return mp
+            }
+            val mpSub = mp.getMapPackByDir(dirName)
+            if (mpSub != null) {
+                return mp
+            }
+        }
+        return null
     }
 
-    public int getMapsCount() {
-        return mMaps.size();
+    fun addMap(map: ItemMap) {
+        maps.add(map)
     }
 
-    public void addMapPack(ItemMapPack mpSub) {
-        mpSub.validate();
-        mMapPacks.add(mpSub);
+    fun getMap(index: Int): ItemMap {
+        return maps[index]
     }
 
-    public ItemMapPack getMapPack(int index) {
-        return mMapPacks.get(index);
+    val mapsCount: Int
+        get() = maps.size
+
+    fun addMapPack(mpSub: ItemMapPack) {
+        mpSub.validate()
+        mMapPacks.add(mpSub)
     }
 
-    public int getMapPackCount() {
-        return mMapPacks.size();
+    fun getMapPack(index: Int): ItemMapPack {
+        return mMapPacks[index]
     }
 
-    public List<ItemMapPack> getMapPacks (){
-        return mMapPacks;
-    }
+    val mapPackCount: Int
+        get() = mMapPacks.size
+
+    val mapPacks: List<ItemMapPack>
+        get() = mMapPacks
+
 }
