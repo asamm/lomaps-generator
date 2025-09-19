@@ -8,6 +8,7 @@ import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.generator.GenStoreRegionDB
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
+import com.asamm.slack.SlackUtils
 import com.asamm.store.LocusStoreEnv
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
@@ -25,6 +26,7 @@ class OsmToolsCommand : CliktCommand(
     name = "OsmToolsBasic",
     help = "Tool for processing OSM data and generating maps"
 ) {
+
     init {
         versionOption(loadVersionFromProperties())
     }
@@ -108,6 +110,10 @@ class CleanOldGenerationCommand : CliktCommand(
 
     override fun run() {
 
+        if (true){
+            throw IllegalStateException("Testing - Slack notification")
+        }
+
         // Set path to the configuration file
         AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
 
@@ -124,7 +130,7 @@ class LoMapsCommand : CliktCommand(
     help = "Subcommand to generate maps for Locus Store"
 ) {
     companion object {
-        const val TAG: String = "OsmToolsCommand"
+        val TAG: String = LoMapsCommand::class.java.simpleName
     }
 
     // version of the map
@@ -230,7 +236,7 @@ class LoMapsCommand : CliktCommand(
         val genLoMaps = GenLoMaps();
         genLoMaps.process();
 
-
+        SlackUtils.sendMessage("[OsmTools] LoMaps generation finished successfully for version ${AppConfig.config.version}")
         Logger.i(TAG, "== Map generation finished ==")
     }
 
@@ -277,8 +283,31 @@ class StoreGeoCommand : CliktCommand(
     }
 }
 
+// MAIN FUNCTION
+
 fun main(args: Array<String>) {
-    OsmToolsCommand()
-        .subcommands(LoMapsCommand(), UpdatePlanetCommand(), CleanOldGenerationCommand(), StoreGeoCommand())
-        .main(args)
+    // Global uncaught exception handler
+    Thread.setDefaultUncaughtExceptionHandler { thread, e ->
+        try {
+            Logger.e("OsmTools", "Uncaught exception in thread ${thread.name}", e)
+            SlackUtils.sendMessage("[OsmTools] LoMaps generation process ends abnormally with exception: ${e.message}")
+        } catch (_: Exception) {  }
+        // Rethrow the exception to let the program terminate
+        throw e
+    }
+
+    // start the command line interface and catch any exception to send it to Slack
+    try {
+
+        // CMD entry point
+        OsmToolsCommand()
+            .subcommands(LoMapsCommand(), UpdatePlanetCommand(), CleanOldGenerationCommand(), StoreGeoCommand())
+            .main(args)
+
+    } catch (e: Exception) {
+        try {
+            Logger.e("OsmTools", "Exception occurred while running OsmTools", e)
+            SlackUtils.sendMessage("[OsmTools] LoMaps generation process ends abnormally with exception: ${e.message}")
+        } catch (_: Exception) {}
+    }
 }
