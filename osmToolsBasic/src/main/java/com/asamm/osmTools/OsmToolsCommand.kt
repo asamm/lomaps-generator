@@ -1,5 +1,6 @@
 package com.asamm.osmTools
 
+import com.asamm.osmTools.LoMapsCommand.Companion.TAG
 import com.asamm.osmTools.cleanup.OldMapsCleaner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
@@ -110,15 +111,13 @@ class CleanOldGenerationCommand : CliktCommand(
 
     override fun run() {
 
-        if (true){
-            throw IllegalStateException("Testing - Slack notification")
-        }
-
         // Set path to the configuration file
         AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
 
         val oldMapsCleaner = OldMapsCleaner()
         oldMapsCleaner.purgePreviousMapGeneration()
+
+        Logger.i(TAG, "== Purge previous LoMaps generation finished ==")
     }
 }
 
