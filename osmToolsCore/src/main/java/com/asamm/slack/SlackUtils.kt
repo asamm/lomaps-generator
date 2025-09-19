@@ -60,7 +60,7 @@ object SlackUtils {
     @Throws(IOException::class)
     private fun checkResponse(response: Response) {
         if (!response.isSuccessful) {
-            val errorBody = try { response.body?.string() } catch (_: Exception) { null }
+            val errorBody = try { response.body.string() } catch (_: Exception) { null }
             throw IOException("Unexpected code ${response.code} ${response.message}${if (errorBody.isNullOrBlank()) "" else ": $errorBody"}")
         }
     }

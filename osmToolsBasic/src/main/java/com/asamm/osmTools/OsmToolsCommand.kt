@@ -40,7 +40,7 @@ class OsmToolsCommand : CliktCommand(
     // set Locus Store environment (where to upload maps)
     val locusStoreEnv by option(
         "-e", "--ls_environment", help = "Set Locus Store environment - where to upload maps.  " +
-                "Possible values: ${LocusStoreEnv.values().joinToString(", ")}"
+                "Possible values: ${LocusStoreEnv.entries.joinToString(", ")}"
     )
         .enum<LocusStoreEnv>()
         .default(LocusStoreEnv.PROD)
@@ -84,7 +84,7 @@ class UpdatePlanetCommand : CliktCommand(
 ) {
 
     override fun run() {
-        val planetUpdater: PlanetUpdater = PlanetUpdater()
+        val planetUpdater = PlanetUpdater()
         planetUpdater.update()
     }
 }
@@ -163,7 +163,7 @@ class LoMapsCommand : CliktCommand(
     )
         .convert { input ->
             input.split(",").map {
-                var action = Action.getActionByLabel(it.trim().lowercase())
+                val action = Action.getActionByLabel(it.trim().lowercase())
                 // if action is UNKNOWN, end program and print warning
                 require(action != Action.UNKNOWN) {
                     // print warning and possible actions but not the UNKNOWN
@@ -233,8 +233,8 @@ class LoMapsCommand : CliktCommand(
 
         Logger.i(TAG, "Configuration : ${AppConfig.config.toYaml()}")
 
-        val genLoMaps = GenLoMaps();
-        genLoMaps.process();
+        val genLoMaps = GenLoMaps()
+        genLoMaps.process()
 
         SlackUtils.sendMessage("[OsmTools] LoMaps generation finished successfully for version ${AppConfig.config.version}")
         Logger.i(TAG, "== Map generation finished ==")
@@ -278,8 +278,8 @@ class StoreGeoCommand : CliktCommand(
 
 
     override fun run() {
-        val genStoreGeo = GenStoreRegionDB(configFile.toPath());
-        genStoreGeo.process();
+        val genStoreGeo = GenStoreRegionDB(configFile.toPath())
+        genStoreGeo.process()
     }
 }
 
