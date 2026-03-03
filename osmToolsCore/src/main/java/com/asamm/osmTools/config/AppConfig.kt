@@ -14,6 +14,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.io.File
+import java.net.URI
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,17 +29,15 @@ object AppConfig {
 
     fun loadConfig() {
         if (!::config.isInitialized) {
-            //this@AppConfig.config = Config()
-            this@AppConfig.config = loadYamlConfig(this.configFilePath)
+            config = loadYamlConfig(configFilePath)
         }
+        ConfigUtils.loadAwsCredentialsFromEnv()
     }
 
     fun loadYamlConfig(configFilePath: String = "config.yml"): Config {
-
-        //val yaml = Yaml.default
-        val yaml = Yaml(configuration = Yaml.default.configuration.copy( anchorsAndAliases = AnchorsAndAliases.Permitted()))
+        val yaml =
+            Yaml(configuration = Yaml.default.configuration.copy(anchorsAndAliases = AnchorsAndAliases.Permitted()))
         val configFile = File(configFilePath)
-        // read yaml file and initiate Config object
         return yaml.decodeFromString(Config.serializer(), configFile.readText())
     }
 }
@@ -82,16 +81,16 @@ data class Config(
     var planetConfig: PlanetConfig,
     var cmdConfig: CmdConfig,
     var maptilerCloudConfig: MaptilerCloudConfig,
+    var onlineLoMapsConfig: OnlineLoMapsConfig,
     var mbtilesConfig: MbtilesConfig,
     var mapsforgeConfig: MapsforgeConfig,
     var coastlineConfig: CoastlineConfig,
     var poiAddressConfig: PoiAddressConfig,
 
-    )
-{
+    ) {
     fun toYaml(): String {
         val yaml = Yaml.default
-        return yaml.encodeToString(Config.serializer(), this)
+        return yaml.encodeToString(serializer(), this)
     }
 }
 
@@ -149,12 +148,11 @@ class CoastlineConfig(
     val _landPolygonShp: Path = Path.of("coastlines/land_polygons/land_polygons.shp"),
 
     val landPolygonUrl: String = "https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip"
-){
+) {
     @Serializable(with = PathSerializer::class)
     val landPolygonShp: Path
         get() = AppConfig.config.mapsForgeDir.resolve(_landPolygonShp)
 }
-
 
 
 @Serializable
@@ -178,6 +176,16 @@ class MaptilerCloudConfig(
     var tilesetTitleLm: String = "LoMaps_Outdoor",
     var tilesetAttributionLm: String,
     var tilesetDescLm: String,
+)
+
+@Serializable
+class OnlineLoMapsConfig(
+    var s3region: String,
+    var s3bucket: String,
+    var s3endpoint: String,
+    var s3pmtilesPath: String,
+    @Transient var s3accessKey: String = "", // Set via environment variable S3_ACCESS_KEY
+    @Transient var s3secretKey: String = "", // Set via environment variable S3_SECRET_KEY
 )
 
 @Serializable
@@ -237,7 +245,7 @@ class CmdConfig(
 ) {
     val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
 
-    val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath()}
+    val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath() }
 }
 
 
@@ -265,6 +273,7 @@ object URLSerializer : KSerializer<URL> {
     }
 
     override fun deserialize(decoder: Decoder): URL {
-        return URL(decoder.decodeString()) // Deserialize the string back to a URL
+        return URI.create(decoder.decodeString()).toURL()
     }
+
 }

@@ -19,6 +19,8 @@ enum class Action {
 
     GENERATE_MBTILES_ONLINE("generate_mbtiles_online", true),
 
+    GENERATE_PMTILES_ONLINE("generate_pmtiles_online", true),
+
     UPLOAD_MAPTILER("upload_maptiler", true),
 
     GENERATE_MAPSFORGE("generate_mapsforge",true),

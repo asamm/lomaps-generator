@@ -23,7 +23,9 @@ enum class PathType(val baseDir: String) {
     MBTILES_GENERATE("_mbtiles"),
     MAPSFORGE_RESULT("_result"),
     ADDRESS_POI_DB_CLASSIC("_address_poi_db"),
-    MBTILES_ONLINE_OUTDOOR("_mbtiles_online_outdoor");
+    MBTILES_ONLINE_OUTDOOR("_mbtiles_online_outdoor"),
+    PMTILES_ONLINE("_pmtiles_online");
+
 }
 
 class PathResolver(val map: ItemMap) {
@@ -77,6 +79,7 @@ class PathResolver(val map: ItemMap) {
 
             // online lomaps outdoor
             PathType.MBTILES_ONLINE_OUTDOOR -> getBaseDir(PathType.MBTILES_ONLINE_OUTDOOR).resolve(versionPath).resolve(fileName)
+            PathType.PMTILES_ONLINE -> getBaseDir(PathType.PMTILES_ONLINE).resolve(versionPath).resolve(fileName)
         }
     }
 
@@ -105,7 +108,8 @@ class PathResolver(val map: ItemMap) {
             PathType.POI_V2_DB_MBTILES,
             PathType.POI_V2_DB_MAPSFORGE,
             PathType.MBTILES_GENERATE,
-            PathType.MBTILES_ONLINE_OUTDOOR -> mbtilesDir.resolve(type.baseDir)
+            PathType.MBTILES_ONLINE_OUTDOOR,
+            PathType.PMTILES_ONLINE -> mbtilesDir.resolve(type.baseDir)
 
         }
     }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'org.jetbrains.kotlin.plugin.lombok' version '2.0.10'
@@ -46,6 +48,10 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+
+    // AWS S3 SDK
+    implementation(platform("software.amazon.awssdk:bom:2.29.51"))
+    implementation("software.amazon.awssdk:s3")
 }
 
 def versionCode = "0.7.8"
@@ -68,7 +74,7 @@ jar {
         attributes 'Main-Class': 'com.asamm.osmTools.OsmToolsCommandKt'
     }
 
-    archiveFileName = newArchiveName;
+    archiveFileName = newArchiveName
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
@@ -77,13 +83,13 @@ jar {
     }
 }
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = "21"
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = "21"
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 
@@ -91,8 +97,8 @@ compileTestKotlin {
 tasks.register('createPlanetUpdateShScript') {
     dependsOn jar
     doLast {
-        def jarFile = new File(buildDir, "libs/${newArchiveName}")
-        def scriptFile = new File(buildDir, "libs/update_planet_file.sh")
+        def jarFile = layout.buildDirectory.file("libs/${newArchiveName}").get().asFile
+        def scriptFile = layout.buildDirectory.file("libs/update_planet_file.sh").get().asFile
         scriptFile.text = """#!/bin/bash
         # Export paths to find pyosmium-up-to-date script
         export PATH=\$PATH:/home/osmtools/.local/bin

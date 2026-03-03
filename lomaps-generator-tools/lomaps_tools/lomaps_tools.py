@@ -122,6 +122,9 @@ def parse_options():
                                          "In normal situation nodes aren't needed because they are "
                                          "included in original planet-file")
 
+    parser_tourist2way.add_argument("-b", "--boundaries", action="store_true",
+                                    help="Process also boundary relations to extract administrative borders or protected areas as ways")
+
     # OSM update
     parser_osmupdate = subparsers.add_parser(Command.osmupdate.value,
                                              help='Update OSM file with new data. Using PyOsmium tool https://github.com/osmcode/pyosmium/blob/master/tools/pyosmium-up-to-date')

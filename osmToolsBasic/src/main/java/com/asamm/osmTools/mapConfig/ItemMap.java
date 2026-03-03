@@ -123,6 +123,14 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.MBTILES_ONLINE_OUTDOOR, name + "_lm_outdoor.mbtiles");
     }
 
+    public Path getPathGenPmtilesOnline() {
+        if (isPlanet()){
+            // customize the name of file for planet
+            return pathResolver.getPath(PathType.PMTILES_ONLINE, "planet.pmtiles");
+        }
+        return pathResolver.getPath(PathType.PMTILES_ONLINE, name + ".pmtiles");
+    }
+
     public Path getPathAddressDb() {
         return pathResolver.getPath(PathType.ADDRESS_DB, name + ".osm.db");
     }
@@ -137,7 +145,7 @@ public class ItemMap extends AItemMap {
     /**
      * Get path to POI V2 database
      * @param isForMbtiles true if file is generated for mbtiles with coverage defined by mbtiles coverage
-     * @return
+     * @return path to POI V2 database
      */
     public Path getPathPoiV2Db(boolean isForMbtiles) {
         if (isForMbtiles){
@@ -259,10 +267,8 @@ public class ItemMap extends AItemMap {
         double minLongitude = 180.0;
 
         //Scanner scan = null;
-        BufferedReader br = null;
-        try {
+        try (BufferedReader br = new BufferedReader(new FileReader(polyFile))) {
             //scan = new Scanner (new BufferedReader(new FileReader(polyFile)));
-            br = new BufferedReader(new FileReader(polyFile));
             String line;
             while ((line = br.readLine()) != null) {
                 //remove white space before and ond end of string line then
@@ -282,10 +288,6 @@ public class ItemMap extends AItemMap {
                 }
             }
             boundary = new Boundaries(minLongitude, maxLongitude, minLatitude, maxLatitude);
-        } finally {
-            if (br != null) {
-                br.close();
-            }
         }
     }
 
@@ -300,20 +302,21 @@ public class ItemMap extends AItemMap {
             throw new IllegalArgumentException("JSON polygon file doesn't exist " + fileJsonPolyg.getAbsolutePath());
         }
 
-        String jsonPolygon = "";
+        String jsonPolygon;
         try {
             jsonPolygon = FileUtils.readFileToString(fileJsonPolyg, UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(TAG, "Can not read JSON polygon file " + fileJsonPolyg.getAbsolutePath(), e);
             throw new IllegalArgumentException("Can not read JSON polygon file " + fileJsonPolyg.getAbsolutePath());
         }
         // replace line brakes
         JSONParser parser = new JSONParser(net.minidev.json.parser.JSONParser.DEFAULT_PERMISSIVE_MODE);
-        JSONObject obj = null;
+        JSONObject obj;
         try {
             obj = (JSONObject) parser.parse(jsonPolygon);
         } catch (ParseException e) {
-            e.printStackTrace();
+            Logger.e(TAG, "Can not parse JSON polygon file " + fileJsonPolyg.getAbsolutePath(), e);
+            throw new IllegalArgumentException("Can not parse JSON polygon file " + fileJsonPolyg.getAbsolutePath());
         }
 
         return obj;

@@ -1,5 +1,6 @@
 package com.asamm.osmTools.config
 
+import com.asamm.osmTools.config.AppConfig.config
 import com.asamm.osmTools.utils.Utils
 import java.io.File
 import java.nio.file.Path
@@ -49,7 +50,7 @@ object ConfigUtils {
         val pyhgtmap = "pyhgtmap"
         val command = checkApps(listOf(pyhgtmap))
 
-        if (command.isNullOrEmpty()) {
+        if (command.isEmpty()) {
             // If none of the commands succeeded, throw an exception
             throw Exception("pyhgtmap not installed. Please install it using 'pip install pyhgtmap'")
         }
@@ -64,7 +65,7 @@ object ConfigUtils {
 
         val command = checkApps(osmiumPaths)
 
-        if (command.isNullOrEmpty()) {
+        if (command.isEmpty()) {
             // If none of the commands succeeded, throw an exception
             throw Exception("Omium not found in locatios: $osmiumPaths")
         }
@@ -112,6 +113,21 @@ object ConfigUtils {
         return command
     }
 
+
+    fun getCheckPmtilesPath(): String {
+        val pmtilesCommands = if (isWindows()) listOf("pmtiles.exe", "pmtiles") else listOf("pmtiles")
+
+        val command = checkApps(pmtilesCommands, "version", "pmtiles")
+
+        if (command.isEmpty()) {
+            // If none of the commands succeeded, throw an exception
+            throw Exception("PMTiles not found. Tried commands: $pmtilesCommands . " +
+                    "Please install PMTiles CLI https://docs.protomaps.com/pmtiles/cli")
+        }
+        return command
+
+    }
+
     /**
      * Check that planetiler util is installed and available in the path
      */
@@ -124,7 +140,9 @@ object ConfigUtils {
         return pathToCheck
     }
 
-
+    /**
+     * Check if any of the provided commands can be executed successfully and contain expected output.
+     */
     fun checkApps(commands: List<String>, argument: String = "--version", expectedOutput: String = ""): String {
         for (command in commands) {
             try {
@@ -146,7 +164,7 @@ object ConfigUtils {
                     // If Python is found, return the path of the executable
                     return command
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore and try the next command
             }
         }
@@ -154,8 +172,29 @@ object ConfigUtils {
     }
 
     // Helper function to check if the system is Windows
-    public fun isWindows(): Boolean {
+    fun isWindows(): Boolean {
         return System.getProperty("os.name").lowercase().contains("win")
+    }
+
+    /**
+     * Loads AWS S3 credentials from environment variables and injects them into [config].
+     *
+     * Expected variables:
+     *  - `S3_ACCESS_KEY` → [OnlineLoMapsConfig.s3accessKey]
+     *  - `S3_SECRET_KEY` → [OnlineLoMapsConfig.s3secretKey]
+     *
+     * Throws [IllegalStateException] if either variable is missing or blank.
+     */
+    fun loadAwsCredentialsFromEnv() {
+        val accessKey = System.getenv("S3_ACCESS_KEY")
+            ?.takeIf { it.isNotBlank() }
+            ?: error("Environment variable S3_ACCESS_KEY is not set or blank")
+        val secretKey = System.getenv("S3_SECRET_KEY")
+            ?.takeIf { it.isNotBlank() }
+            ?: error("Environment variable S3_SECRET_KEY is not set or blank")
+
+        config.onlineLoMapsConfig.s3accessKey = accessKey
+        config.onlineLoMapsConfig.s3secretKey = secretKey
     }
 
 

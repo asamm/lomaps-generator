@@ -4,11 +4,8 @@
  */
 package com.asamm.osmTools.cmdCommands
 
-import com.asamm.osmTools.Main
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
-import com.asamm.osmTools.generator.AGenerator
-import com.asamm.osmTools.generator.AGenerator.Companion
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
@@ -38,7 +35,9 @@ open class Cmd(val externalApp: ExternalApp) {
 
         PLANETILER,
 
-        POI_V2_TOOL
+        POI_V2_TOOL,
+
+        PMTILES
     }
 
 
@@ -70,8 +69,6 @@ open class Cmd(val externalApp: ExternalApp) {
             }
 
             ExternalApp.PLANETILER -> {
-                // get amount RAM in system in GB
-                val ram = Runtime.getRuntime().totalMemory() / (1024 * 1024 * 1024) - 6
 
                 if (ConfigUtils.isWindows()) {
                     addCommands(
@@ -82,7 +79,7 @@ open class Cmd(val externalApp: ExternalApp) {
                     addCommands(
                         "java",
                         "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
-                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}","-jar",
+                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}", "-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )
                 }
@@ -103,29 +100,14 @@ open class Cmd(val externalApp: ExternalApp) {
                 }
             }
 
+            ExternalApp.PMTILES -> addCommand(ConfigUtils.getCheckPmtilesPath())
+
             ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
         }
     }
 
     fun prepareDirectory(pathToWrite: String) {
         FileUtils.forceMkdir(File(pathToWrite).getParentFile())
-    }
-
-    fun addBoundingPolygon(map: ItemMap) {
-        // test if polygon exist in specified path
-        require(
-            map.getPathPolygon().toFile().exists()
-        ) { "Bounding polygon: " + map.getPathPolygon() + " doesn't exists" }
-
-        // finally add to command list
-        addCommand("--bp")
-        addCommand("file=" + map.getPathPolygon())
-
-        //addCommand("completeWays=yes");
-        //addCommand("completeRelations=yes");
-        if (map.getClipIncompleteEntities()) {
-            addCommand("clipIncompleteEntities=true")
-        }
     }
 
     fun addCommand(cmd: String?) {
@@ -154,14 +136,9 @@ open class Cmd(val externalApp: ExternalApp) {
         return runCommands(createArray(), false)
     }
 
-    fun executePb(): ProcessBuilder {
-        return createProcessBuilder(createArray())
-    }
-
     private fun createArray(): Array<String> {
         // create array
-        var cmdArray = cmdList.toTypedArray()
-        return cmdArray
+        return cmdList.toTypedArray()
     }
 
     fun getCmdLine(): String {
@@ -198,7 +175,7 @@ open class Cmd(val externalApp: ExternalApp) {
 
             // read the output from the command
             while ((stdInput.readLine().also { line = it }) != null) {
-                Logger.i(TAG, line )
+                Logger.i(TAG, line)
                 lastOutpuLine = line
             }
             val exitVal = runTime.waitFor()

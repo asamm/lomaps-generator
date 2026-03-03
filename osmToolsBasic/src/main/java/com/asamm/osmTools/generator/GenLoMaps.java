@@ -17,6 +17,7 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mapConfig.ConfigXmlParser;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
+import com.asamm.osmTools.server.S3Client;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
@@ -44,7 +45,7 @@ public class GenLoMaps extends AGenerator {
     private static final String TAG = GenLoMaps.class.getSimpleName();
 
     // parsed configuration of maps
-    private MapSource mMapSource;
+    private final MapSource mMapSource;
 
 
     public GenLoMaps() throws IOException, XmlPullParserException {
@@ -147,8 +148,12 @@ public class GenLoMaps extends AGenerator {
         }
         actionMergePlanet(mapPlanet);
 
-        // generate lomaps outdoor planet tiles
+        // generate lomaps outdoor planet tiles - will be deprecated when Asamm server is ready
         actionGenerateMbtilesOnline(mapPlanet);
+
+        // generate PMTiles for planet and upload to S3
+        actionGeneratePmtiles(mapPlanet);
+        actionUploadOnlineToS3(mapPlanet);
 
         // upload to maptiler
         actionUploadPlanetToMapTiler(mapPlanet);
@@ -198,83 +203,6 @@ public class GenLoMaps extends AGenerator {
             actionAllInOne(mp.getMapPack(i), action);
         }
     }
-
-
-    private class PackForExtract {
-
-        String sourceId;
-        List<ItemMap> maps;
-    }
-
-    // action UPDATE PLANET
-
-    private void actionUpdatePlanet() {
-
-    }
-
-    // ACTION DOWNLOAD
-    @Deprecated
-    private void actionDownload(ItemMap map) {
-        // check if we want to do this action
-        if (!map.hasAction(Action.DOWNLOAD)) {
-            return;
-        }
-
-        // get download url
-        String downloadUrl = map.getUrl();
-
-        // check if file exists
-        if (map.getPathSource().toFile().exists()) {
-//            Logger.i(TAG, "File " + map.getPathSource() + " already exists. No download needed");
-            return;
-        }
-
-        printLogHeader(Action.DOWNLOAD);
-
-        // try to download
-        if (UtilsHttp.downloadFile(map.getPathSource(), downloadUrl)) {
-            Logger.i(TAG, "File " + map.getPathSource() + " successfully downloaded.");
-        } else {
-            throw new IllegalArgumentException("File " + downloadUrl + " was not downloaded.");
-        }
-    }
-
-    // ACTION GRAPHHOPPER
-
-//    private void actionGraphHopper(ItemMap map) throws IOException, InterruptedException {
-//        // check if we want to generate GraphHopper data
-//        if (!map.hasAction(Action.GRAPH_HOPPER)) {
-//            return;
-//        }
-//
-//        // check if file exits and we should overwrite it
-//        if (!Parameters.isRewriteFiles() && map.getPathGraphHopper().toFile().exists()) {
-
-    /// /            Logger.i(TAG, "File with GraphHopper '" + map.getPathGraphHopper()
-    /// /                    + "' already exist - skipped." );
-//            return;
-//        }
-//
-//        // clear working directory
-//        File fileSource = map.getPathSource().toFile();
-//        File ghDir = new File(fileSource.getParentFile(),
-//                FilenameUtils.getBaseName(map.getPathSource().toString()) + "-gh");
-//        FileUtils.deleteDirectory(ghDir);
-//
-//        // execute graphHopper
-//        CmdGraphHopper cmd = new CmdGraphHopper(map);
-//        cmd.execute();
-//
-//        // check result and move it to correct directory
-//        Collection<File> files = FileUtils.listFiles(ghDir, null, false);
-//        if (files.size() == 0) {
-//            throw new UnknownError("Generating of GraphHopper wasn't successful");
-//        }
-//
-//        // move (pack) files
-//        ZipUtils.pack(ghDir, map.getPathGraphHopper().toFile(), true);
-//        FileUtils.deleteDirectory(ghDir);
-//    }
 
     // ACTION ADDRESS/POI DATABASE
     private void actionAddressPoiDatabase(ItemMap map) throws Exception {
@@ -438,7 +366,7 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION TRANSFORM DATA
 
-    private void actionTransformData(ItemMap map) throws IOException, InterruptedException {
+    private void actionTransformData(ItemMap map) throws IOException {
 
         // transform data only maps that are used for generation
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
@@ -542,7 +470,7 @@ public class GenLoMaps extends AGenerator {
         cmdOsmium.merge(pathsToMerge, map.getPathSource());
     }
 
-    private void actionMerge(ItemMap map) throws IOException, InterruptedException {
+    private void actionMerge(ItemMap map) {
 
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
             return;
@@ -588,8 +516,6 @@ public class GenLoMaps extends AGenerator {
 
         TimeWatch time = new TimeWatch();
         // prepare cmd line and string for log
-        String logStr = "Merging maps: " + map.getPathSource() + " and ";
-
         Main.mySimpleLog.print("\nMarging: " + map.getName() + " ...");
         CmdOsmium cmdOsmium = new CmdOsmium();
         cmdOsmium.merge(pathsToMerge, map.getPathMerge());
@@ -679,33 +605,10 @@ public class GenLoMaps extends AGenerator {
         }
     }
 
-    // ACTION PLANET PMTILES
-//    private void actionGeneratePlanetMbtiles(ItemMap map){
-//
-//        if (map.hasAction(Action.GENERATE_MBTILES )) {
-//
-//            if (AppConfig.config.getOverwrite() || !map.getPathMbtiles().toFile().exists()) {
-//
-//                TimeWatch time = new TimeWatch();
-//                Logger.i(TAG, "Generating MbTiles: " + map.getPathMbtiles());
-//                Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
-//
-//                CmdPlanetiler cmdPlanetiler = new CmdPlanetiler();
-//
-//                cmdPlanetiler.generateLoMapsOpenMapTiles(map.getPathSource(), map.getPathMbtiles(), map.getPathPolygon(), map.getId());
-//
-//                // clean tmp
-//                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-//            } else {
-//                Logger.i(TAG, "MBtiles map " + map.getPathGenerate() + " already exists. Nothing to do.");
-//            }
-//        }
-//    }
-
 
     private void actionGenerateMbtilesOnline(ItemMap map) {
-        Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + map.getName() + " ================");
         if (map.hasAction(Action.GENERATE_MBTILES_ONLINE) && AppConfig.config.getActions().contains(Action.GENERATE_MBTILES_ONLINE)) {
+            Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + map.getName() + " ================");
             if (AppConfig.config.getOverwrite() || !map.getPathGenMlOutdoor().toFile().exists()) {
 
                 // write to log and start stop watch
@@ -723,6 +626,52 @@ public class GenLoMaps extends AGenerator {
             }
         }
 
+    }
+
+    // ACTION CONVERT TO PMTILES
+    private void actionGeneratePmtiles(ItemMap mapPlanet) {
+        if (mapPlanet.hasAction(Action.GENERATE_PMTILES_ONLINE) && AppConfig.config.getActions().contains(Action.GENERATE_PMTILES_ONLINE)) {
+            Logger.i(TAG, "================ GENERATE PMTILES ONLINE " + mapPlanet.getName() + " ================");
+            if (AppConfig.config.getOverwrite() || !mapPlanet.getPathGenPmtilesOnline().toFile().exists()) {
+
+                // In first step check or generate planet mbtiles
+                actionGenerateMbtiles(mapPlanet);
+
+                // write to log and start stop watch
+                TimeWatch time = new TimeWatch();
+                Logger.i(TAG, "Convert MBtiles to PMTiles: " + mapPlanet.getPathGenPmtilesOnline());
+                Main.mySimpleLog.print("\nGenerate PMTiles: " + mapPlanet.getName() + " ...");
+
+                CmdPmtiles cmdPmtiles = new CmdPmtiles();
+                cmdPmtiles.convertToPmtiles(mapPlanet.getPathMbtiles(), mapPlanet.getPathGenPmtilesOnline());
+
+                // validate generated PMTiles
+                Logger.i(TAG, "Verift converted PMTiles: " + mapPlanet.getPathGenPmtilesOnline());
+                cmdPmtiles.verifyPmtiles(mapPlanet.getPathGenPmtilesOnline());
+
+
+                // clean tmp
+                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+            } else {
+                Logger.i(TAG, "PMTiles map " + mapPlanet.getPathGenPmtilesOnline() + " already exists. Nothing to do.");
+            }
+        }
+    }
+
+    private void actionUploadOnlineToS3(ItemMap itemMap) {
+        if (itemMap.hasAction(Action.GENERATE_PMTILES_ONLINE) && AppConfig.config.getActions().contains(Action.GENERATE_PMTILES_ONLINE)) {
+            Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + itemMap.getName() + " ================");
+            if (!itemMap.getPathGenPmtilesOnline().toFile().exists()) {
+                throw new IllegalArgumentException("File with generated PMTiles map: " + itemMap.getPathGenPmtilesOnline() + " does not exist.");
+            }
+            Logger.i(TAG, "Prepare for upload to S3, PMTiles file: " + itemMap.getPathGenPmtilesOnline());
+            try (S3Client s3Client = S3Client.Companion.fromAppConfig()) {
+                s3Client.uploadFile(
+                        itemMap.getPathGenPmtilesOnline().toFile(),
+                        AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPath() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString());
+            }
+
+        }
     }
 
     private void actionUploadPlanetToMapTiler(ItemMap itemMap) {
@@ -795,7 +744,7 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION UPLOAD
 
-    private void actionUpload() throws IOException, InterruptedException {
+    private void actionUpload() {
 
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Start action upload ");

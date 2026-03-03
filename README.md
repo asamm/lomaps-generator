@@ -1,4 +1,4 @@
-# LoMaps generator
+﻿# LoMaps generator
 Command-line tools for generation LoMaps and offline POIs.
 
 ## Installation
@@ -74,6 +74,20 @@ LoMaps generator requires several configuration files. These are available in th
 - edit paths where planet file is stored and URL to download planet file
 - set path to `planetiler-openmaptiles`
 
+## Setting S3 Environment Variables Permanently (Linux)
+
+To make the S3 credentials available every time you open a terminal, add them to `~/.bashrc`:
+
+1. Open the file in a text editor:
+   ```bash
+   vi ~/.bashrc
+
+2. Add the following lines at the end of the file, replacing the placeholders with your actual S3 credentials:
+   ```bash
+   export S3_ACCESS_KEY=your-access-key
+   export S3_SECRET_KEY=your-secret-key
+
+--- 
 
 ## Generation
 
@@ -99,7 +113,8 @@ java -jar OsmToolsBasic_0.7.6.jar lomaps --version 2025.06.16 --config_file conf
     - `poi_db` - create POI database
 	- `generate_mapsforge` - generate mapsforge maps for android
     - `generate_mbtiles` - generate mbtiles maps for iOS
-    - `generate_mbtiles_online` - generate tourist, contours as additional source for standard openmaptiles 
+    - `generate_mbtiles_online` - generate tourist, contours as additional source for standard openmaptiles
+    - `generate_pmtiles_online` - generate pmtiles maps for Asamm Map server and upload to S3 storage
     - `upload_maptiler` - upload generated online mbtiles to maptiler cloud
 	- `upload` - upload maps to the Locus Store
 - `--version` - used date in format yyyy.mm.dd (it's name of version in Locus Store and reflect how old are data used for generation
