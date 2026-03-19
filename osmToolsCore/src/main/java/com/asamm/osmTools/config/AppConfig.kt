@@ -184,8 +184,11 @@ class OnlineLoMapsConfig(
     var s3bucket: String,
     var s3endpoint: String,
     var s3pmtilesPath: String,
+    var s3pmtilesPathDev: String, // for testing with dev path
     @Transient var s3accessKey: String = "", // Set via environment variable S3_ACCESS_KEY
     @Transient var s3secretKey: String = "", // Set via environment variable S3_SECRET_KEY
+    var s3terrainRgbPath: String, // Path to upload terrain rgb planet file
+    var s3terrainRgbPathDev: String,
 )
 
 @Serializable

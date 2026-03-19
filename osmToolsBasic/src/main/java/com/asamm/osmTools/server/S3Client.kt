@@ -1,24 +1,28 @@
 package com.asamm.osmTools.server
 
 import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.utils.Logger
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client as AwsS3Client
+import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.transfer.s3.S3TransferManager
+import software.amazon.awssdk.transfer.s3.model.UploadFileRequest
+import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener
+import software.amazon.awssdk.transfer.s3.progress.TransferListener
 import java.io.File
 import java.net.URI
 
 /**
- * S3 client that uploads a file to an S3  *
- * Credentials and connection settings are normally supplied via [AppConfig.config.onlineLoMapsConfig]
+ * S3 client that uploads a file to an S3 bucket using multipart upload via [S3TransferManager].
+ * Credentials and connection settings are supplied via [AppConfig].
  *
  * @param accessKey   AWS access key ID
  * @param secretKey   AWS secret access key
  * @param region      AWS region (e.g. "eu-central-1")
  * @param bucketName  Target S3 bucket name
- * @param endpointUrl Optional custom endpoint for S3-compatible storage (e.g. MinIO).
+ * @param endpointUrl Optional custom endpoint for S3-compatible storage (e.g. DigitalOcean Spaces).
  *                    Pass `null` to use the standard AWS endpoint.
  */
 class S3Client(
@@ -26,13 +30,16 @@ class S3Client(
     secretKey: String,
     region: String,
     private val bucketName: String,
-    endpointUrl: String? = null
+    endpointUrl: String
 ) : AutoCloseable {
 
     companion object {
+
+        val TAG: String = S3Client::class.java.simpleName
+
         /**
          * Creates an [S3Client] from the current [AppConfig] settings.
-         * Credentials must have been loaded beforehand via [AppConfig.loadAwsCredentialsFromEnv].
+         * Credentials must have been loaded beforehand via `ConfigUtils.loadAwsCredentialsFromEnv`.
          */
         fun fromAppConfig(): S3Client {
             val cfg = AppConfig.config.onlineLoMapsConfig
@@ -41,19 +48,25 @@ class S3Client(
                 secretKey = cfg.s3secretKey,
                 region = cfg.s3region,
                 bucketName = cfg.s3bucket,
-                endpointUrl = cfg.s3endpoint.takeIf { it.isNotBlank() }
+                endpointUrl = cfg.s3endpoint
             )
         }
     }
 
-    private val client: AwsS3Client = AwsS3Client.builder()
+    private val asyncClient: S3AsyncClient = S3AsyncClient.crtBuilder()
         .credentialsProvider(
             StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(accessKey, secretKey)
             )
         )
         .region(Region.of(region))
-        .apply { if (endpointUrl != null) endpointOverride(URI.create(endpointUrl)) }
+        .endpointOverride(URI.create(endpointUrl))
+        .forcePathStyle(true)                       // required for Ceph / DigitalOcean Spaces custom endpoints
+        .minimumPartSizeInBytes(64 * 1024 * 1024L) // 128 MB per part
+        .build()
+
+    private val transferManager: S3TransferManager = S3TransferManager.builder()
+        .s3Client(asyncClient)
         .build()
 
     /**
@@ -67,16 +80,70 @@ class S3Client(
         val request = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(s3Key)
-            .contentLength(file.length())
             .build()
 
-        println("S3Client: uploading '${file.name}' (${file.length()} bytes) → s3://$bucketName/$s3Key")
-        val response = client.putObject(request, RequestBody.fromFile(file))
-        println("S3Client: upload complete, ETag: ${response.eTag()}")
+        Logger.i(TAG, "S3Client: uploading '${file.name}' (${file.length()} bytes) → s3://$bucketName/$s3Key")
+        Logger.i(TAG, "S3Client: endpoint=${ asyncClient.serviceClientConfiguration().endpointOverride().orElse(null) }, region=${asyncClient.serviceClientConfiguration().region()}")
+
+        try {
+            val upload = transferManager.uploadFile(
+                UploadFileRequest.builder()
+                    .putObjectRequest(request)
+                    .source(file.toPath())
+                    .addTransferListener(ProgressTransferListener.create())
+                    .build()
+            )
+
+            val result = upload.completionFuture().join()
+            Logger.i(TAG, "S3Client: upload complete, ETag: ${result.response().eTag()}")
+        } catch (e: java.util.concurrent.CompletionException) {
+            val cause = e.cause
+            if (cause is software.amazon.awssdk.services.s3.model.S3Exception) {
+                Logger.e(TAG, "S3 error: statusCode=${cause.statusCode()}, code=${cause.awsErrorDetails()?.errorCode()}, message=${cause.awsErrorDetails()?.errorMessage()}, requestId=${cause.requestId()}")
+            }
+            throw e
+        }
     }
 
     override fun close() {
-        client.close()
+        transferManager.close()
+        asyncClient.close()
+    }
+
+    // Create a custom TransferListener that logs progress for every 5% of the upload completed.
+    private class ProgressTransferListener : TransferListener {
+
+        companion object {
+            fun create(): ProgressTransferListener = ProgressTransferListener()
+        }
+
+        private var lastLoggedPercent: Int = -1
+
+        override fun bytesTransferred(context: TransferListener.Context.BytesTransferred?) {
+            val ratio = context?.progressSnapshot()?.ratioTransferred()?.asDouble
+            if (ratio == null || ratio.isNaN()) {
+                return
+            }
+
+            // Convert ratio to percentage and round to nearest integer
+            val percent = (ratio * 100).toInt()
+
+            if (percent == lastLoggedPercent) {
+                // this percent has already been logged
+                return
+            }
+
+            val shouldLog = when {
+                percent <= 10 -> true                     // log every percent from 0..10
+                percent == 100 -> true                    // always log completion
+                percent > 10 && percent % 5 == 0 -> true  // above 10, log every 5%
+                else -> false
+            }
+
+            if (shouldLog) {
+                Logger.i(TAG, "S3 upload progress: ${percent}%")
+                lastLoggedPercent = percent
+            }
+        }
     }
 }
-

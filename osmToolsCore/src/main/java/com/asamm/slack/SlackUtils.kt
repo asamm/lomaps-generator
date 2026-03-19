@@ -37,10 +37,10 @@ object SlackUtils {
     @Throws(IOException::class)
     fun sendMessage(message: String) {
 
+        Logger.i(TAG, "Slack message: $message")
         // Do not send message if DEV environment or running on local machine windows
         if (Utils.isLocalDEV() || AppConfig.config.locusStoreEnv == LocusStoreEnv.DEV) {
             Logger.w(TAG,"Slack message is not send because running in DEV environment or Locus Store DEV")
-            Logger.w(TAG, "Slack message: $message")
             return
         }
 

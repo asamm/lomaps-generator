@@ -78,7 +78,7 @@ public class GenLoMaps extends AGenerator {
         for (Action action : actionList) {
 
             // skip Contour and Tourist action, because they are processed on planet level
-            if (action == Action.CONTOUR || action == Action.TOURIST) {
+            if (action == Action.CONTOUR || action == Action.TOURIST || action == Action.GENERATE_PMTILES_ONLINE) {
                 continue;
             }
 
@@ -666,9 +666,16 @@ public class GenLoMaps extends AGenerator {
             }
             Logger.i(TAG, "Prepare for upload to S3, PMTiles file: " + itemMap.getPathGenPmtilesOnline());
             try (S3Client s3Client = S3Client.Companion.fromAppConfig()) {
+
+                String s3key = AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPath() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString();
+
+                // if DEV env replace path with DEV path
+                if (Utils.isLocalDEV()) {
+                    s3key = AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPathDev() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString();
+                }
+
                 s3Client.uploadFile(
-                        itemMap.getPathGenPmtilesOnline().toFile(),
-                        AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPath() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString());
+                        itemMap.getPathGenPmtilesOnline().toFile(), s3key);
             }
 
         }
