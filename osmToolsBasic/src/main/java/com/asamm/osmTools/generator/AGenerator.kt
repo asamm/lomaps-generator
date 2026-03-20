@@ -4,18 +4,12 @@ import com.asamm.osmTools.Main
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium
 import com.asamm.osmTools.config.Action
-import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.ItemMapPack
 import com.asamm.osmTools.mapConfig.MapSource
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.TimeWatch
-import org.apache.commons.io.IOUtils
-import org.kxml2.io.KXmlParser
-import org.xmlpull.v1.XmlPullParserException
-import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import java.util.*
 
@@ -24,7 +18,7 @@ import java.util.*
  */
 abstract class AGenerator {
 
-     // ACTION EXTRACT
+    // ACTION EXTRACT
     @Throws(IOException::class, InterruptedException::class)
     fun actionExtract(mp: ItemMapPack, ms: MapSource) {
         Logger.i(TAG, "actionExtract(" + mp.name + ", " + ms.hasData() + ")")
@@ -136,19 +130,12 @@ abstract class AGenerator {
                     // export only 7 maps in one step due to memory limitation
                     if (j != 0 && j % 7 == 0) {
                         ceo.createCmd(completeRelations)
-
-                        Logger.i(TAG, ceo.getCmdLine())
-                        ceo.execute()
-
                         ceo = CmdExtractOsmium(ms, sourceId)
                     }
                     j++
                 }
                 if (ceo.hasMapForExtraction()) {
-                    // process the rest of map
                     ceo.createCmd(completeRelations)
-                    Logger.i(TAG, ceo.getCmdLine())
-                    ceo.execute()
                 }
 
                 Logger.i(TAG, "\t\t\tdone " + time.elapsedTimeSec + " sec")
@@ -190,18 +177,14 @@ abstract class AGenerator {
             }
 
             // filter only boundary values from source
-            val cmdCBfilter = CmdCountryBorders(sourceMap, storageType)
-            if (!cmdCBfilter.filteredTempMap.exists()) {
-                cmdCBfilter.addTaskFilter()
-                Logger.i(TAG, "Filter for generation country bound, command: " + cmdCBfilter.getCmdLine())
-                cmdCBfilter.execute()
+            val cmdCB = CmdCountryBorders(sourceMap, storageType)
+            if (!cmdCB.filteredTempMap.exists()) {
+                Logger.i(TAG, "Filter for generation country boundaries: ${sourceMap.name}")
+                cmdCB.filterBoundaries()
             }
 
-            val cmdBorders = CmdCountryBorders(sourceMap, storageType)
-            cmdBorders.addGeneratorCountryBoundary()
-            cmdBorders.addCountries(mapToCreate)
-            Logger.i(TAG, "Generate country boundary, command: " + cmdBorders.getCmdLine())
-            cmdBorders.execute()
+            Logger.i(TAG, "Generate country boundaries: ${sourceMap.name}")
+            cmdCB.generateBoundaries(mapToCreate)
 
             // delete tmp file
             //cmdBorders.deleteTmpFile();

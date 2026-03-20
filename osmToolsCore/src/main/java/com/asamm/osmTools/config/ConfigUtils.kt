@@ -121,8 +121,10 @@ object ConfigUtils {
 
         if (command.isEmpty()) {
             // If none of the commands succeeded, throw an exception
-            throw Exception("PMTiles not found. Tried commands: $pmtilesCommands . " +
-                    "Please install PMTiles CLI https://docs.protomaps.com/pmtiles/cli")
+            throw Exception(
+                "PMTiles not found. Tried commands: $pmtilesCommands . " +
+                        "Please install PMTiles CLI https://docs.protomaps.com/pmtiles/cli"
+            )
         }
         return command
 

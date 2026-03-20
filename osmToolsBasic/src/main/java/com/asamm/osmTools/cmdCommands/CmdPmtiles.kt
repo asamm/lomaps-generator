@@ -5,26 +5,16 @@ import java.nio.file.Path
 
 class CmdPmtiles : Cmd(ExternalApp.PMTILES) {
 
-     fun convertToPmtiles(inputMbtiles: Path, outputPmtiles: Path) {
-         addCommands(
-             "convert",
-             inputMbtiles.toString(),
-             outputPmtiles.toString()
-         )
-
-         FileUtils.forceMkdir(outputPmtiles.parent.toFile())
-
-         execute()
-         reset()
-     }
+    fun convertToPmtiles(inputMbtiles: Path, outputPmtiles: Path) {
+        FileUtils.forceMkdir(outputPmtiles.parent.toFile())
+        builder()
+            .add("convert", inputMbtiles.toString(), outputPmtiles.toString())
+            .execute()
+    }
 
     fun verifyPmtiles(pmtiles: Path) {
-        addCommands(
-            "verify",
-            pmtiles.toString()
-        )
-
-        execute()
-        reset()
+        builder()
+            .add("verify", pmtiles.toString())
+            .execute()
     }
 }

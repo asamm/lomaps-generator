@@ -2,34 +2,19 @@ package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.generatorDb.plugin.DataPluginLoader
 import com.asamm.osmTools.mapConfig.ItemMap
-import java.io.File
-import java.io.IOException
 
 /**
- * Created by voldapet on 16/1/2017.
- * Set cdm tools to start generation of customized data - eq. city residential areas
+ * Transforms OSM data — e.g. generates city residential areas — using the
+ * Osmosis data-transform plugin. The result is written to [ItemMap.pathTranform].
  */
-class CmdTransformData(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS), CmdOsmosis {
-    /**
-     * Definition where PBF file with customized OSM data will be created
-     */
-    private val mFileTransformedData: File? = null
+class CmdTransformData(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
 
-    @Throws(IOException::class)
     fun addDataTransform() {
-        // read extracted pbf
-
-        addReadPbf(map.pathSource.toString())
-        // set plugin to create city residential areas
-        addCommand("--" + DataPluginLoader.PLUGIN_DATA_TRANSFORM)
-
-        addSort()
-
-        addWritePbf(map.pathTranform.toString(), true)
-        //addWriteXml(getMap().getPathTranform(),true);
-    }
-
-    companion object {
-        private val TAG: String = CmdTransformData::class.java.simpleName
+        osmosisBuilder()
+            .readPbf(map.pathSource.toString())
+            .add("--${DataPluginLoader.PLUGIN_DATA_TRANSFORM}")
+            .sort()
+            .writePbf(map.pathTranform.toString(), omitMetadata = true)
+            .execute()
     }
 }

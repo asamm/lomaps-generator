@@ -11,10 +11,10 @@ import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.generatorDb.utils.GeomUtils;
+import com.asamm.osmTools.mapConfig.ConfigXmlParser;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
-import com.asamm.osmTools.mapConfig.ConfigXmlParser;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.server.S3Client;
@@ -22,7 +22,6 @@ import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
 import com.asamm.osmTools.utils.Utils;
-import com.asamm.osmTools.utils.UtilsHttp;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -236,7 +235,7 @@ public class GenLoMaps extends AGenerator {
 
         //Utils.deleteFileQuietly(map.getPathAddressDb());
         //Address generation
-        if ( !map.getPathAddressDb().toFile().exists() || AppConfig.config.getOverwrite()) {
+        if (!map.getPathAddressDb().toFile().exists() || AppConfig.config.getOverwrite()) {
             CmdLoMapsDbPlugin cmdLoMapsDbPlugin = new CmdLoMapsDbPlugin(map);
             Logger.i(TAG, "Filter data for Address DB, command: ");
             cmdLoMapsDbPlugin.simplifyForAddress();
@@ -366,7 +365,7 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION TRANSFORM DATA
 
-    private void actionTransformData(ItemMap map) throws IOException {
+    private void actionTransformData(ItemMap map) {
 
         // transform data only maps that are used for generation
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
@@ -380,10 +379,8 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        CmdTransformData cdt = new CmdTransformData(map);
-        cdt.addDataTransform();
-        Logger.i(TAG, "Transform custom OSM data, command: " + cdt.getCmdLine());
-        cdt.execute();
+        Logger.i(TAG, "Transform custom OSM data");
+        new CmdTransformData(map).addDataTransform();
     }
 
 
@@ -407,10 +404,8 @@ public class GenLoMaps extends AGenerator {
         Main.mySimpleLog.print("\nContour: " + map.getName() + " ...");
         Logger.i(TAG, "Creating contours: " + map.getPathContour());
 
-        // create commands for generation contours
         CmdContour cc = new CmdContour(map);
         cc.generate();
-        Logger.i(TAG, "Command: " + cc.getCmdLine());
 
 //        CmdSort cs = new CmdSort(map);
 //        cs.createCmdSort();
@@ -579,18 +574,15 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION GENERATE
 
-    private void actionGenerate(ItemMap map) throws IOException, InterruptedException {
+    private void actionGenerate(ItemMap map) {
 
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
             if (AppConfig.config.getOverwrite() || !map.getPathGenerate().toFile().exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
-                cg.createCmd();
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
                 Logger.i(TAG, "Generating map: " + map.getPathGenerate());
-                Logger.i(TAG, "Generating map cmd: " + cg.getCmdLine());
-
                 Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
                 cg.execute(2, true);
 
@@ -727,7 +719,7 @@ public class GenLoMaps extends AGenerator {
     private void insertMetadata(ItemMap itemMap, File dbFile, Geometry geom) throws Exception {
 
         if (dbFile == null || !dbFile.exists()) {
-            Logger.w(TAG,"DB file for inserting metadata doesn't exist: " + dbFile);
+            Logger.w(TAG, "DB file for inserting metadata doesn't exist: " + dbFile);
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");

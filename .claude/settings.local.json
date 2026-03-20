@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"D:\\\\asamm\\\\projects\\\\lomaps-generator\\\\osmToolsBasic\\\\src\\\\main\\\\java\\\\com\\\\asamm\\\\osmTools\\\\cmdCommands\"\" -type f -name \"*.java\" -o -name \"*.kt \")"
+    ]
+  }
+}

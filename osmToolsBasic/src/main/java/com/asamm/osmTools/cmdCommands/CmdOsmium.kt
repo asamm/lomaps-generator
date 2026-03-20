@@ -1,176 +1,133 @@
 package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.config.AppConfig
-import com.asamm.osmTools.utils.Logger
 import org.apache.commons.io.FileUtils
 import java.nio.file.Path
 import java.time.Instant
 import java.util.Date
 
 /**
- * Command for running Osmium tool.
+ * Command wrapper for the Osmium tool.
+ * Each public method builds and immediately executes its own [ProcessCommand].
  */
 class CmdOsmium : Cmd(ExternalApp.OSMIUM) {
 
     enum class ExtractStrategy {
-
         /**
-         * Runs in a single pass. The extract will contain all nodes inside the region and all ways
-         * referencing those nodes as well as all relations referencing any nodes or ways already included.
-         * Ways crossing the region boundary will not be reference-complete. Relations will not be reference-complete.
+         * Single pass. Contains all nodes inside the region and all ways referencing those nodes,
+         * plus all relations referencing any included nodes or ways.
+         * Ways crossing the boundary are not reference-complete.
          */
         SIMPLE,
 
         /**
-         * Runs in two passes. The extract will contain all nodes inside the region and all ways referencing those nodes
-         * as well as all nodes referenced by those ways. The extract will also contain all relations referenced
-         * by nodes inside the region or ways already included and, recursively, their parent relations.
-         * The ways are reference-complete, but the relations are not.
+         * Two passes. Ways are reference-complete; relations are not.
          */
         COMPLETE_WAYS,
 
         /**
-         * Runs in three passes. The extract will contain all nodes inside the region and all ways referencing those
-         * nodes as well as all nodes referenced by those ways. The extract will also contain all relations referenced
-         * by nodes inside the region or ways already included and, recursively, their parent relations.
-         * The extract will also contain all nodes and ways (and the nodes they reference) referenced by
-         * relations tagged “type=multipolygon” directly referencing any nodes in the region or ways referencing nodes
-         * in the region. The ways are reference-complete, and all multipolygon relations referencing nodes in the
-         * regions or ways that have nodes in the region are reference-complete.
-         * Other relations are not reference-complete.
+         * Three passes. Ways and multipolygon relations referencing nodes in the region
+         * are reference-complete.
          */
-        SMART;
+        SMART
     }
 
-    private val TAG: String = CmdOsmium::class.java.getSimpleName()
-
-    fun extractByPolygon(input: Path, output: Path, polygon: Path, strategy: ExtractStrategy = ExtractStrategy.COMPLETE_WAYS) {
-        addCommands("extract", "--polygon", polygon.toString(), input.toString(), "-o", output.toString(),
-            "--fsync", "--strategy", strategy.name.lowercase())
-        if (AppConfig.config.overwrite){
-            addCommand("--overwrite")
-        }
-        Logger.i(TAG, "Command: " + getCmdLine())
-
-        execute()
-        reset()
+    fun extractByPolygon(
+        input: Path,
+        output: Path,
+        polygon: Path,
+        strategy: ExtractStrategy = ExtractStrategy.COMPLETE_WAYS
+    ) {
+        builder()
+            .add("extract", "--polygon", polygon.toString(), input.toString(),
+                "-o", output.toString(), "--fsync", "--strategy", strategy.name.lowercase())
+            .addIf(AppConfig.config.overwrite, "--overwrite")
+            .execute()
     }
 
-    fun merge(inputPaths: MutableList<Path>, outputPath: Path) {
-
-        // create folders for output
+    fun merge(inputPaths: List<Path>, outputPath: Path) {
         FileUtils.forceMkdir(outputPath.parent.toFile())
-
-        addCommands("merge")
-        inputPaths.forEach {
-            if (it.toFile().length() > 128) {
-                // skip small files because they are probably empty and osmium will throw an error when merging them
-                addCommand(it.toString())
+        builder()
+            .add("merge")
+            .apply {
+                inputPaths
+                    .filter { it.toFile().length() > 128 }
+                    .forEach { add(it.toString()) }
             }
-        }
-        addCommands("-o", outputPath.toString())
-        if (AppConfig.config.overwrite){
-            addCommand("--overwrite")
-        }
-        Logger.i(TAG, "Command: " + getCmdLine())
-        execute()
-        reset()
+            .add("-o", outputPath.toString())
+            .addIf(AppConfig.config.overwrite, "--overwrite")
+            .execute()
     }
 
+    /** Returns true if the file contains any OSM data (non-empty). */
     fun containsData(input: Path): Boolean {
-        // the goal is to run osmium fileinfo and check if the process return 0 the file contains some data
-        addCommands("fileinfo", input.toString())
-        Logger.i(TAG, "Command: " + getCmdLine())
-
-        val lastOutputLine = executeQuietly()
-        reset()
-        // if the last line starts with the id, the id is in the file
-        return lastOutputLine?.trim()?.startsWith("osmfile") ?: false
+        val lastLine = builder()
+            .add("fileinfo", input.toString())
+            .executeQuietly()
+        return lastLine?.trim()?.startsWith("osmfile") ?: false
     }
 
     /**
-     * Check if the OSM file contains the entity with specified id.
-     * @param input The input file to check.
-     * @param id The id to check for. The type letter is ‘n’ for nodes, ‘w’ for ways, and ‘r’ for relations.
-     *  So “n13 w22 17 r21” will match the nodes 13 and 17, the way 22 and the relation 21.
+     * Returns true if the OSM file contains an entity with [id].
+     * The id format is: 'n' for nodes, 'w' for ways, 'r' for relations
+     * e.g. "n13", "w22", "r21".
      */
-    fun containsId(input: Path, id: String):Boolean {
-        // the goal is to run osmium getid and check if the process return 0 the id is in the file
-        addCommands("getid", "-f", "opl", input.toString(), id)
-        Logger.i(TAG, "Command: " + getCmdLine())
-
-        val lastOutputLine = executeQuietly()
-        reset()
-        // if the last line starts with the id, the id is in the file
-        return lastOutputLine?.trim()?.startsWith(id) ?: false
+    fun containsId(input: Path, id: String): Boolean {
+        val lastLine = builder()
+            .add("getid", "-f", "opl", input.toString(), id)
+            .executeQuietly()
+        return lastLine?.trim()?.startsWith(id) ?: false
     }
 
-    fun renumber(input: Path, output: Path, nodeStartId: Long = 0, wayStartId: Long = 0, relationStartId: Long = 0) {
-
-        addCommands("renumber", input.toString(), "-o", output.toString())
-
-        // merge all starts ids to the command if not 0
-        var startId = "$nodeStartId,$wayStartId,$relationStartId"
-
-        addCommands("--start-id=" + startId)
-
-        if (nodeStartId != 0L) addCommand("--object-type=node")
-        if (wayStartId != 0L)  addCommand("--object-type=way")
-        if (relationStartId != 0L)  addCommand("--object-type=relation")
-
-        if (AppConfig.config.overwrite){
-            addCommand("--overwrite")
-        }
-        Logger.i(TAG, "Command: " + getCmdLine())
-        execute()
-        reset()
+    fun renumber(
+        input: Path,
+        output: Path,
+        nodeStartId: Long = 0,
+        wayStartId: Long = 0,
+        relationStartId: Long = 0
+    ) {
+        val startId = "$nodeStartId,$wayStartId,$relationStartId"
+        builder()
+            .add("renumber", input.toString(), "-o", output.toString())
+            .add("--start-id=$startId")
+            .addIf(nodeStartId != 0L, "--object-type=node")
+            .addIf(wayStartId != 0L, "--object-type=way")
+            .addIf(relationStartId != 0L, "--object-type=relation")
+            .addIf(AppConfig.config.overwrite, "--overwrite")
+            .execute()
     }
 
     /**
      * Filter the OSM file by tags.
-     * @param input The input file to filter.
-     * @param output The output file to save the filtered data.
-     * @param filters The list of filters when the filter is a string with the format "nw/highway" "r/type=restriction"
-     *                  according to https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html
+     * @param filters List of filter expressions, e.g. "nw/highway", "r/type=restriction".
+     *   See https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html
      */
     fun tagFilter(input: Path, output: Path, filters: List<String>) {
-
-        addCommands("tags-filter", input.toString(), "-o", output.toString())
-
-        filters.forEach { addCommand(it) }
-
-        if (AppConfig.config.overwrite){
-            addCommand("--overwrite")
-        }
-        Logger.i(TAG, "Command: " + getCmdLine())
-        execute()
-        reset()
+        builder()
+            .add("tags-filter", input.toString(), "-o", output.toString())
+            .apply { filters.forEach { add(it) } }
+            .addIf(AppConfig.config.overwrite, "--overwrite")
+            .execute()
     }
 
     /**
-     * Get the timestamp of the OSM file from header. If not defined use fallback to the last modified time of the file.
+     * Returns the timestamp from the OSM file header,
+     * falling back to the file's last-modified time if no header timestamp is present.
      */
     fun getTimeStamp(path: Path): Instant {
+        val lines = builder()
+            .add("fileinfo", path.toString())
+            .build()
+            .executeCapture()
 
-        // run commads and get all lines to the list
-        addCommands("fileinfo", path.toString())
-        Logger.i(TAG, "Command: " + getCmdLine())
-
-        val outputLines = mutableListOf<String>()
-        val processBuilder = createProcessBuilder(cmdList.toTypedArray())
-        val process = processBuilder.start()
-        process.inputStream.bufferedReader().useLines { lines -> lines.forEach { outputLines.add(it) } }
-
-        reset()
-        // Process the outputLines to extract the timestamp
-        // Assuming the timestamp is in a specific format and line
-        val timestampStr = outputLines.find { it.contains("timestamp=") || it.contains("osmosis_replication_timestamp=") }
+        val timestampStr = lines
+            .find { it.contains("timestamp=") || it.contains("osmosis_replication_timestamp=") }
             ?.substringAfter("=")
 
-        if (timestampStr == null) {
-            // get the last modified time of the file
-            return Date(path.toFile().lastModified()).toInstant()
+        return if (timestampStr == null) {
+            Date(path.toFile().lastModified()).toInstant()
+        } else {
+            Instant.parse(timestampStr)
         }
-        return Instant.parse(timestampStr)
     }
 }

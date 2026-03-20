@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.asamm.osmTools.cmdCommands
 
 import com.asamm.osmTools.config.AppConfig
@@ -10,222 +6,121 @@ import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
 import org.apache.commons.io.FileUtils
-import java.io.BufferedReader
 import java.io.File
-import java.io.IOException
-import java.io.InputStreamReader
 
+/**
+ * Base class for external-tool command wrappers.
+ *
+ */
+open class Cmd(externalApp: ExternalApp) {
 
-open class Cmd(val externalApp: ExternalApp) {
+    /** Base args for this external application (e.g. path to binary + JVM flags). */
+    protected val baseArgs: List<String> = resolveBaseArgs(externalApp)
 
-    enum class ExternalApp {
-        NO_EXTERNAL_APP,
+    /** Working directory required by the tool, or null if none is needed. */
+    protected val appWorkDir: File? = resolveWorkDir(externalApp)
 
-        OSMOSIS,
+    /** Create a fresh [ProcessCommand.Builder] seeded with [baseArgs]. */
+    protected fun builder(): ProcessCommand.Builder = ProcessCommand.Builder(baseArgs)
 
-        STORE_UPLOAD,
+    /** Create a fresh [OsmosisBuilder] seeded with [baseArgs] and [appWorkDir]. */
+    protected fun osmosisBuilder(): OsmosisBuilder = OsmosisBuilder(baseArgs, appWorkDir)
 
-        OSMIUM,
-
-        LOMAPS_TOOLS,
-
-        OGR2OGR,
-
-        PYHGTMAP,
-
-        PLANETILER,
-
-        POI_V2_TOOL,
-
-        PMTILES
-    }
-
-
-    // list of added commands
-    val cmdList: MutableList<String> = mutableListOf()
-
-    init {
-
-        // add basic
-        initializeExternApp()
-    }
-
-    private fun initializeExternApp() {
-        when (externalApp) {
-            ExternalApp.OSMIUM -> addCommand(AppConfig.config.cmdConfig.osmium)
-            ExternalApp.STORE_UPLOAD -> addCommands(
-                "java",
-                "-jar",
-                ConfigUtils.getCheckPath(AppConfig.config.storeUploaderPath).toString()
-            )
-
-            ExternalApp.LOMAPS_TOOLS -> {
-                addCommand(ConfigUtils.findPythonPath(AppConfig.config.touristConfig.lomapsToolsPy))
-                addCommand(AppConfig.config.touristConfig.lomapsToolsPy.toString())
-            }
-
-            ExternalApp.PYHGTMAP -> {
-                addCommand(AppConfig.config.cmdConfig.pyghtmap)
-            }
-
-            ExternalApp.PLANETILER -> {
-
-                if (ConfigUtils.isWindows()) {
-                    addCommands(
-                        "c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
-                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
-                    )
-                } else {
-                    addCommands(
-                        "java",
-                        "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
-                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}", "-jar",
-                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
-                    )
-                }
-            }
-
-            ExternalApp.OSMOSIS -> addCommand(
-                ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.osmosis.toAbsolutePath()).toString()
-            )
-
-            ExternalApp.OGR2OGR -> addCommand(ConfigUtils.findOgr2ogrPath())
-
-            ExternalApp.POI_V2_TOOL -> {
-                // not commands is added, only check if the path is correct
-                if (!Utils.isLocalDEV()) {
-                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Init).toString()
-
-                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Generator).toString()
-                }
-            }
-
-            ExternalApp.PMTILES -> addCommand(ConfigUtils.getCheckPmtilesPath())
-
-            ExternalApp.NO_EXTERNAL_APP -> Unit // do nothing
-        }
-    }
-
-    fun prepareDirectory(pathToWrite: String) {
-        FileUtils.forceMkdir(File(pathToWrite).getParentFile())
-    }
-
-    fun addCommand(cmd: String?) {
-        // check command
-        if (cmd == null || cmd.length == 0) {
-            return
-        }
-
-        // add to the list
-        cmdList.add(cmd)
-    }
-
-    fun addCommands(vararg cmds: String) {
-        for (cmd in cmds) {
-            addCommand(cmd)
-        }
-    }
-
-    // TOOLS
-
-    fun execute(): String? {
-        return runCommands(createArray())
-    }
-
-    fun executeQuietly(): String? {
-        return runCommands(createArray(), false)
-    }
-
-    private fun createArray(): Array<String> {
-        // create array
-        return cmdList.toTypedArray()
-    }
-
-    fun getCmdLine(): String {
-        var line = ""
-        for (param in cmdList) {
-            line += param + " "
-        }
-        return line
-    }
-
-    protected fun createProcessBuilder(mCmdArray: Array<String>): ProcessBuilder {
-        val pb = ProcessBuilder(*mCmdArray)
-        pb.redirectErrorStream(true)
-
-        // set custom working directory based on external software
-        if (externalApp == ExternalApp.OSMOSIS) {
-            pb.directory(AppConfig.config.cmdConfig.osmosis.toFile().getParentFile().getParentFile())
-        }
-        // return builder
-        return pb
-    }
-
-    @Throws(IOException::class, InterruptedException::class)
-    private fun runCommands(mCmdArray: Array<String>, printError: Boolean = true): String? {
-        var line: String?
-        var lastOutpuLine: String? = null
-        var stdInput: BufferedReader? = null
-        try {
-            Logger.i(TAG, getCmdLine() + "\n")
-            val pb = createProcessBuilder(mCmdArray)
-
-            val runTime = pb.start()
-            stdInput = BufferedReader(InputStreamReader(runTime.getInputStream()))
-
-            // read the output from the command
-            while ((stdInput.readLine().also { line = it }) != null) {
-                Logger.i(TAG, line)
-                lastOutpuLine = line
-            }
-            val exitVal = runTime.waitFor()
-
-            // break program when wrong exit value
-            if (exitVal != 0) {
-                // on windows accept also exit value 15
-                if (ConfigUtils.isWindows() && externalApp == ExternalApp.LOMAPS_TOOLS && exitVal == 15) {
-                    // Python Osmium on Windows is not correctly ended and it's needed to kill the process for this reason
-                    // accept exit value 15 https://github.com/osmcode/pyosmium/issues/280
-                    Logger.w(TAG, "Due to osmium issue accept Exit value 15 on Windows")
-                } else {
-                    Logger.e(TAG, "Wrong return value from sub command, exit value: " + exitVal)
-                    if (printError) {
-                        val errorMsg = "exception happened when run cmd: \n" + getCmdLine()
-                        throw IllegalArgumentException(errorMsg)
-                    }
-                }
-            }
-
-            // return result
-            cmdList.clear()
-            return lastOutpuLine
-        } finally {
-            try {
-                if (stdInput != null) {
-                    stdInput.close()
-                }
-
-                reset() // reset command list
-            } catch (ex: IOException) {
-                throw IOException(ex.toString())
+    /**
+     * Execute [cmd] and retry up to [remaining] more times on failure.
+     * [onRetry] is invoked before each retry attempt (e.g. to delete a partially-written file).
+     */
+    protected fun executeWithRetry(
+        cmd: ProcessCommand,
+        remaining: Int,
+        onRetry: (() -> Unit)? = null
+    ): String? {
+        return try {
+            cmd.execute()
+        } catch (e: Exception) {
+            if (remaining > 0) {
+                onRetry?.invoke()
+                Logger.w(this::class.java.simpleName, "Retrying command (${remaining - 1} retries left): ${cmd.getCmdLine()}")
+                executeWithRetry(cmd, remaining - 1, onRetry)
+            } else {
+                throw e
             }
         }
+    }
+
+    protected fun prepareDirectory(pathToWrite: String) {
+        FileUtils.forceMkdir(File(pathToWrite).parentFile)
     }
 
     protected fun checkFileLocalPath(map: ItemMap) {
         require(map.getPathSource().toFile().exists()) {
-            "Extracted map: " +
-                    map.getPathSource() + " does not exist"
+            "Extracted map: ${map.getPathSource()} does not exist"
         }
     }
 
-    protected fun reset() {
-        cmdList.clear()
-
-        initializeExternApp()
-    }
-
     companion object {
-        private val TAG: String = Cmd::class.java.getSimpleName()
+
+        private fun resolveBaseArgs(app: ExternalApp): List<String> = when (app) {
+            ExternalApp.OSMIUM ->
+                listOf(AppConfig.config.cmdConfig.osmium)
+
+            ExternalApp.STORE_UPLOAD ->
+                listOf(
+                    "java", "-jar",
+                    ConfigUtils.getCheckPath(AppConfig.config.storeUploaderPath).toString()
+                )
+
+            ExternalApp.LOMAPS_TOOLS ->
+                listOf(
+                    ConfigUtils.findPythonPath(AppConfig.config.touristConfig.lomapsToolsPy),
+                    AppConfig.config.touristConfig.lomapsToolsPy.toString()
+                )
+
+            ExternalApp.PYHGTMAP ->
+                listOf(AppConfig.config.cmdConfig.pyghtmap)
+
+            ExternalApp.PLANETILER ->
+                if (ConfigUtils.isWindows()) {
+                    listOf(
+                        "c:\\Program Files\\Java\\jdk-21\\bin\\java.exe", "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
+                    )
+                } else {
+                    listOf(
+                        "java",
+                        "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
+                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}",
+                        "-jar",
+                        ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
+                    )
+                }
+
+            ExternalApp.OSMOSIS ->
+                listOf(ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.osmosis.toAbsolutePath()).toString())
+
+            ExternalApp.OGR2OGR ->
+                listOf(ConfigUtils.findOgr2ogrPath())
+
+            ExternalApp.POI_V2_TOOL -> {
+                // No base binary — individual methods add the specific script paths.
+                // Validate configured paths up front (throws if missing).
+                if (!Utils.isLocalDEV()) {
+                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Init)
+                    ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.poiDbV2Generator)
+                }
+                emptyList()
+            }
+
+            ExternalApp.PMTILES ->
+                listOf(ConfigUtils.getCheckPmtilesPath())
+
+            ExternalApp.NO_EXTERNAL_APP -> emptyList()
+        }
+
+        private fun resolveWorkDir(app: ExternalApp): File? = when (app) {
+            ExternalApp.OSMOSIS ->
+                AppConfig.config.cmdConfig.osmosis.toFile().parentFile.parentFile
+            else -> null
+        }
     }
 }

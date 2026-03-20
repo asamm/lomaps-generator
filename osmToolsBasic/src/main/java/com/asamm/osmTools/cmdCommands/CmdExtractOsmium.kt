@@ -1,101 +1,55 @@
-    /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.asamm.osmTools.cmdCommands;
+package com.asamm.osmTools.cmdCommands
 
-    import com.asamm.osmTools.mapConfig.ItemMap;
-    import com.asamm.osmTools.mapConfig.MapSource;
-    import com.asamm.osmTools.utils.Utils;
-    import net.minidev.json.JSONArray;
-    import net.minidev.json.JSONObject;
+import com.asamm.osmTools.mapConfig.ItemMap
+import com.asamm.osmTools.mapConfig.MapSource
+import com.asamm.osmTools.utils.Utils
+import net.minidev.json.JSONArray
+import net.minidev.json.JSONObject
+import java.io.File
 
-    import java.io.File;
+private const val CONFIG_TMP_JSON_FILE = "osmium_extract_config.json"
 
-    /**
- *
- * @author volda
- */
-public class CmdExtractOsmium extends Cmd {
+class CmdExtractOsmium(ms: MapSource, sourceId: String) : Cmd(ExternalApp.OSMIUM) {
 
-    private static String CONFIG_TMP_JSON_FILE = "osmium_extract_config.json";
+    private val map: ItemMap = ms.getMapById(sourceId)
 
-    /*
-     * Json objects for oonfiguration file
-     */
-    JSONObject configJ = new JSONObject();
-    JSONArray extractsJ = new JSONArray();
+    private val extractsJ = JSONArray()
 
-    ItemMap map;
+    fun hasMapForExtraction(): Boolean = extractsJ.isNotEmpty()
 
-    public CmdExtractOsmium(MapSource ms, String sourceId) {
-        super(ExternalApp.OSMIUM);
-
-        map = ms.getMapById(sourceId);
-        initJsonConfig();
-    }
-
-    private void initJsonConfig (){
-        configJ = new JSONObject();
-        extractsJ = new JSONArray();
-
-        configJ.put("extracts", extractsJ);
-    }
-
-    public boolean hasMapForExtraction(){
-        return (extractsJ.size() > 0);
-    }
-
-    public void addExtractMap (ItemMap map){
-
-
-        // create needed parent folders
-        Utils.createParentDirs(map.getPathSource());
-
-        JSONObject extractJ = new JSONObject();
-        extractJ.put("output", map.getPathSource().toString() );
-
-        JSONObject polygonJ = new JSONObject();
-        polygonJ.put("file_name", map.getPathPolygon().toString());
-        polygonJ.put("file_type", "poly");
-        extractJ.put("polygon", polygonJ);
-
-        // add to the main array
-        extractsJ.add(extractJ);
+    fun addExtractMap(mapToAdd: ItemMap) {
+        Utils.createParentDirs(mapToAdd.pathSource)
+        val extractJ = JSONObject().apply {
+            put("output", mapToAdd.pathSource.toString())
+            put("polygon", JSONObject().apply {
+                put("file_name", mapToAdd.pathPolygon.toString())
+                put("file_type", "poly")
+            })
+        }
+        extractsJ.add(extractJ)
     }
 
     /**
-     * Write temporary config json file to the hdd
+     * Write the JSON config, build the extract command, and execute it.
      */
-    private void writeConfigJsonFile(){
-        Utils.writeStringToFile(new File(CONFIG_TMP_JSON_FILE), configJ.toJSONString(), false);
+    fun createCmd(completeRelations: Boolean) {
+        val configFile = writeConfigJsonFile()
+        val strategy = if (completeRelations) "smart" else "simple"
+        builder()
+            .add("extract", "-c", configFile.path)
+            .add("--strategy", strategy)
+            .add("-v")
+            .add(map.pathSource.toString())
+            .add("--fsync")
+            .execute()
+        configFile.delete()
     }
 
-    public void deleteConfigJsonFile() {
-        File fileToDelete = new File(CONFIG_TMP_JSON_FILE);
-        if (fileToDelete.exists()){
-            fileToDelete.delete();
-        }
+    private fun writeConfigJsonFile(): File {
+        val configJ = JSONObject().apply { put("extracts", extractsJ) }
+        val file = File(CONFIG_TMP_JSON_FILE)
+        Utils.writeStringToFile(file, configJ.toJSONString(), false)
+        return file
     }
 
-    public void createCmd (boolean completeRelations) {
-        // prepare config file
-        writeConfigJsonFile();
-
-        addCommand("extract");
-        addCommand("-c");
-        addCommand(CONFIG_TMP_JSON_FILE);
-
-        if (completeRelations){
-            addCommand("--strategy");
-            addCommand("smart");  //alternatives: simple | complete_ways | smart
-        }
-        else {
-            addCommand("--strategy");
-            addCommand("simple");  //alternatives: simple | complete_ways | smart
-        }
-        addCommand("-v");
-        addCommand(map.getPathSource().toString());
-        addCommand("--fsync");
-    }
 }
