@@ -25,7 +25,7 @@ class CmdRioRgbify : Cmd(ExternalApp.RIO_RGBIFY) {
         outputMbtiles: Path,
         minZoom: Int = 3,
         maxZoom: Int = 11,
-        workers: Int = Runtime.getRuntime().availableProcessors() -8, // TODO remove limited number of processors
+        workers: Int = Runtime.getRuntime().availableProcessors() -1,
         format: String = "webp",
     ) {
         // prepare directory for generation
