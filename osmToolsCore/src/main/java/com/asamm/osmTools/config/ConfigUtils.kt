@@ -127,7 +127,31 @@ object ConfigUtils {
             )
         }
         return command
+    }
 
+    fun getCheckGdalPath(tool: String): String {
+        val cmds = if (isWindows()) listOf("$tool.exe", tool) else listOf(tool)
+        val command = checkApps(cmds, "--version", "GDAL")
+        if (command.isEmpty()) {
+            throw Exception("$tool not found. Tried: $cmds. Please install GDAL.")
+        }
+        return command
+    }
+
+    /**
+     * Check that rio (rasterio CLI) is installed and available in the path.
+     * Required by the rio-rgbify plugin.
+     */
+    fun getCheckRioRgbifyPath(): String {
+        val rioCommands = if (isWindows()) listOf("rio.exe", "rio") else listOf("rio")
+        val command = checkApps(rioCommands, "--version", "")
+        if (command.isEmpty()) {
+            throw Exception(
+                "rio not found. Tried commands: $rioCommands . " +
+                        "Please install via: pip install rio-rgbify"
+            )
+        }
+        return command
     }
 
     /**
@@ -160,12 +184,12 @@ object ConfigUtils {
                 val fileNameWithExtension = command.substringAfterLast(File.separator)
                 val fileNameWithoutExtension = fileNameWithExtension.substringBeforeLast(".")
 
-                if (output.contains(fileNameWithoutExtension, ignoreCase = true) ||
-                    (expectedOutput.isNotEmpty() && output.contains(expectedOutput))
-                ) {
-                    // If Python is found, return the path of the executable
-                    return command
+                val valid = when {
+                    expectedOutput.isNotEmpty() -> output.contains(expectedOutput)
+                    output.contains(fileNameWithoutExtension, ignoreCase = true) -> true
+                    else -> output.isNotBlank() && process.exitValue() == 0
                 }
+                if (valid) return command
             } catch (_: Exception) {
                 // Ignore and try the next command
             }

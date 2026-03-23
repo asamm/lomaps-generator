@@ -7,6 +7,7 @@ import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Base class for external-tool command wrappers.
@@ -48,8 +49,8 @@ open class Cmd(externalApp: ExternalApp) {
         }
     }
 
-    protected fun prepareDirectory(pathToWrite: String) {
-        FileUtils.forceMkdir(File(pathToWrite).parentFile)
+    protected fun prepareDirectory(pathToWrite: Path) {
+        FileUtils.forceMkdir(pathToWrite.toFile().parentFile)
     }
 
     protected fun checkFileLocalPath(map: ItemMap) {
@@ -113,6 +114,15 @@ open class Cmd(externalApp: ExternalApp) {
 
             ExternalApp.PMTILES ->
                 listOf(ConfigUtils.getCheckPmtilesPath())
+
+            ExternalApp.RIO_RGBIFY ->
+                listOf(AppConfig.config.cmdConfig.rioRgbify, "rgbify")
+
+            ExternalApp.GDALBUILDVRT ->
+                listOf(AppConfig.config.cmdConfig.gdalbuildvrt)
+
+            ExternalApp.GDALWARP ->
+                listOf(AppConfig.config.cmdConfig.gdalwarp)
 
             ExternalApp.NO_EXTERNAL_APP -> emptyList()
         }

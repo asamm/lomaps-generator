@@ -7,6 +7,7 @@ import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.generator.GenStoreRegionDB
+import com.asamm.osmTools.generator.GenTerrainRgb
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
 import com.asamm.slack.SlackUtils
@@ -20,7 +21,7 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Properties
+import java.util.*
 
 
 class OsmToolsCommand : CliktCommand(
@@ -118,6 +119,38 @@ class CleanOldGenerationCommand : CliktCommand(
         oldMapsCleaner.purgePreviousMapGeneration()
 
         Logger.i(TAG, "== Purge previous LoMaps generation finished ==")
+    }
+}
+
+// GENERATE TERRAIN RGB SUBCOMMAND
+
+class GenerateTerrainRgbCommand : CliktCommand(
+    name = "terrain_rgb",
+    help = "Generate RGB terrain tiles (Mapbox Terrain-RGB encoding) from HGT files and optionally upload to S3."
+) {
+    companion object {
+        val TAG: String = GenerateTerrainRgbCommand::class.java.simpleName
+    }
+
+    val pathHgtFolder: File by option(
+        "-i", "--inputHgtFolder",
+        help = "Path to the folder with HGT files"
+    ).file(mustExist = true).required()
+
+    val upload: Boolean by option(
+        "-u",
+        "--upload",
+        help = "Upload resulting MBTiles/PMTiles to S3 after generation"
+    ).flag()
+
+    override fun run() {
+        val cfg = AppConfig.config.terrainRgbConfig
+        GenTerrainRgb(
+            hgtDir = pathHgtFolder.toPath(),
+            output = cfg.outputFile.toFile(),
+            minZoom = cfg.minZoom,
+            maxZoom = cfg.maxZoom,
+        ).process(upload)
     }
 }
 
@@ -290,7 +323,8 @@ fun main(args: Array<String>) {
         try {
             Logger.e("OsmTools", "Uncaught exception in thread ${thread.name}", e)
             SlackUtils.sendMessage("[OsmTools] LoMaps generation process ends abnormally with exception: ${e.message}")
-        } catch (_: Exception) {  }
+        } catch (_: Exception) {
+        }
         // Rethrow the exception to let the program terminate
         throw e
     }
@@ -300,13 +334,20 @@ fun main(args: Array<String>) {
 
         // CMD entry point
         OsmToolsCommand()
-            .subcommands(LoMapsCommand(), UpdatePlanetCommand(), CleanOldGenerationCommand(), StoreGeoCommand())
+            .subcommands(
+                LoMapsCommand(),
+                UpdatePlanetCommand(),
+                CleanOldGenerationCommand(),
+                StoreGeoCommand(),
+                GenerateTerrainRgbCommand()
+            )
             .main(args)
 
     } catch (e: Exception) {
         try {
             Logger.e("OsmTools", "Exception occurred while running OsmTools", e)
             SlackUtils.sendMessage("[OsmTools] LoMaps generation process ends abnormally with exception: ${e.message}")
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 }

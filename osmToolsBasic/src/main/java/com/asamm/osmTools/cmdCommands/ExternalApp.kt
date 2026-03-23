@@ -10,5 +10,8 @@ enum class ExternalApp {
     PYHGTMAP,
     PLANETILER,
     POI_V2_TOOL,
-    PMTILES
+    PMTILES,
+    RIO_RGBIFY,
+    GDALBUILDVRT,
+    GDALWARP,
 }

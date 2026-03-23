@@ -37,7 +37,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
             "ram" -> "ram"
             else  -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
         }
-        prepareDirectory(map.pathGenerate.toString())
+        prepareDirectory(map.pathGenerate)
         return osmosisBuilder()
             .apply {
                 if (map.isMerged) readPbf(map.pathMerge.toString())

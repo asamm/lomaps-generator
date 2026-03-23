@@ -86,6 +86,7 @@ data class Config(
     var mapsforgeConfig: MapsforgeConfig,
     var coastlineConfig: CoastlineConfig,
     var poiAddressConfig: PoiAddressConfig,
+    var terrainRgbConfig: TerrainRgbConfig,
 
     ) {
     fun toYaml(): String {
@@ -228,6 +229,18 @@ class MapsforgeConfig(
 )
 
 @Serializable
+class TerrainRgbConfig(
+
+    /** Output file for the generated terrain RGB tiles. Extension determines format: .mbtiles or .pmtiles */
+    @Serializable(with = PathSerializer::class)
+    val outputFile: Path,
+
+    val minZoom: Int = 3,
+
+    val maxZoom: Int = 11,
+)
+
+@Serializable
 class CmdConfig(
     @Serializable(with = PathSerializer::class)
     val planetiler: Path,
@@ -249,6 +262,12 @@ class CmdConfig(
     val pyghtmap: String by lazy { ConfigUtils.getCheckPyhgtmapPath() }
 
     val osmium: String by lazy { ConfigUtils.getCheckOsmiumPath() }
+
+    val rioRgbify: String by lazy { ConfigUtils.getCheckRioRgbifyPath() }
+
+    val gdalbuildvrt: String by lazy { ConfigUtils.getCheckGdalPath("gdalbuildvrt") }
+
+    val gdalwarp: String by lazy { ConfigUtils.getCheckGdalPath("gdalwarp") }
 }
 
 
