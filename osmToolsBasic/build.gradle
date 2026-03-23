@@ -72,19 +72,24 @@ tasks.register('generateVersionProperties') {
 processResources.dependsOn(generateVersionProperties)
 
 jar {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
-        attributes 'Main-Class': 'com.asamm.osmTools.OsmToolsCommandKt'
+        attributes(
+            'Main-Class': 'com.asamm.osmTools.OsmToolsCommandKt',
+            'Class-Path': configurations.runtimeClasspath.collect { "lib/${it.name}" }.join(' ')
+        )
     }
-
     archiveFileName = newArchiveName
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
     from('src/main/config/') {
         include 'plugin.xml'
     }
 }
+
+tasks.register('copyDeps', Copy) {
+    from configurations.runtimeClasspath
+    into layout.buildDirectory.dir("libs/lib")
+}
+
+jar.dependsOn copyDeps
 compileKotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
