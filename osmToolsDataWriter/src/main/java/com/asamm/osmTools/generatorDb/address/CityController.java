@@ -484,12 +484,18 @@ public class CityController extends AaddressController {
                 && oldBoundary != boundary
                 && oldBoundary.getName().equalsIgnoreCase(boundary.getName())){
 
-            MultiPolygon newBounds = GeomUtils.fixInvalidGeom(oldBoundary.getGeom().union(boundary.getGeom()));
-            oldBoundary.setGeom(newBounds);
+            try {
+                Geometry a = GeomUtils.fixInvalidGeom(oldBoundary.getGeom());
+                Geometry b = GeomUtils.fixInvalidGeom(boundary.getGeom());
+                MultiPolygon newBounds = GeomUtils.fixInvalidGeom(a.union(b));
+                oldBoundary.setGeom(newBounds);
 
-            if (isDebugEntity && oldBoundary.getId() == debugEntityId || boundary.getId() == debugEntityId){
-                Logger.i(TAG, "Combine geometries of boundaries. Old boundary id: "+oldBoundary.getId()
-                        + " new boundary id: " + boundary.getId());
+                if (isDebugEntity && oldBoundary.getId() == debugEntityId || boundary.getId() == debugEntityId){
+                    Logger.i(TAG, "Combine geometries of boundaries. Old boundary id: "+oldBoundary.getId()
+                            + " new boundary id: " + boundary.getId());
+                }
+            } catch (TopologyException e) {
+                Logger.w(TAG, "Cannot union boundaries " + oldBoundary.getId() + " + " + boundary.getId() + ": " + e.getMessage());
             }
         }
 
