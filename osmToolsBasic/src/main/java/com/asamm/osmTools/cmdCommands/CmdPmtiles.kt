@@ -17,4 +17,18 @@ class CmdPmtiles : Cmd(ExternalApp.PMTILES) {
             .add("verify", pmtiles.toString())
             .execute()
     }
+
+    /**
+     * Extract a zoom-filtered subset of [input] into [output].
+     *
+     * Equivalent to: `pmtiles extract <input> <output> --minzoom=N --maxzoom=N`
+     */
+    fun extract(input: Path, output: Path, minZoom: Int, maxZoom: Int) {
+        prepareDirectory(output)
+        builder()
+            .add("extract", input.toString(), output.toString())
+            .add("--minzoom=$minZoom")
+            .add("--maxzoom=$maxZoom")
+            .execute()
+    }
 }

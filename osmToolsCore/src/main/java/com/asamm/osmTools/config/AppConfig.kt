@@ -231,14 +231,37 @@ class MapsforgeConfig(
 @Serializable
 class TerrainRgbConfig(
 
-    /** Output file for the generated terrain RGB tiles. Extension determines format: .mbtiles or .pmtiles */
+    /** LoMaps-ready terrain RGB PMTiles - path to local folder where is */
     @Serializable(with = PathSerializer::class)
-    val outputFile: Path,
-
-    val minZoom: Int = 3,
+    val planetFile: Path,
 
     val maxZoom: Int = 11,
+
+    /** URL of the Mapterhorn download index JSON used to resolve the planet file download URL and MD5. */
+    val mapterhornIndexUrl: String = "https://download.mapterhorn.com/download_urls.json",
+
+    val mapterhornPlanetEntryName: String = "6-30-21.pmtiles",  // for production planet.pmtiles
+
+    /** Raw Mapterhorn planet file as downloaded (before zoom-level filtering). */
+    @Serializable(with = PathSerializer::class)
+    val mapterhornRawFile: Path = Path.of("_planet/terrain_rgb/mapterhorn_raw.pmtiles"),
+
+    /** Output directory for generated HGT elevation files. */
+    @Serializable(with = PathSerializer::class)
+    val hgtOutputDir: Path = Path.of("_planet/terrain_rgb/hgt"),
+
+    /** Resampling method for terrain-RGB to HGT conversion. */
+    val hgtResampling: HgtResampling = HgtResampling.BILINEAR,
 )
+
+/** Resampling method used when converting terrain-RGB tiles to HGT grid. */
+@Serializable
+enum class HgtResampling {
+    /** 2×2 pixel neighborhood, smooth interpolation. Standard for DEM data. */
+    BILINEAR,
+    /** 4×4 pixel neighborhood (Keys cubic, a=-0.5). Sharper but may overshoot at edges. */
+    BICUBIC,
+}
 
 @Serializable
 class CmdConfig(

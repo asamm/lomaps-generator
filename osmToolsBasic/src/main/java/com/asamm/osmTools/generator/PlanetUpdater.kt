@@ -3,8 +3,8 @@ package com.asamm.osmTools.generator
 import com.asamm.osmTools.cmdCommands.CmdLoMapsTools
 import com.asamm.osmTools.cmdCommands.CmdOsmium
 import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.utils.FileDownloader
 import com.asamm.osmTools.utils.Logger
-import com.asamm.osmTools.utils.UtilsHttp
 import java.net.URL
 import java.nio.file.Path
 import java.time.Duration
@@ -43,7 +43,7 @@ class PlanetUpdater {
      */
     fun downloadPlanetFile(downloadUrl: URL, destinationPath: Path) {
         // download planet file
-        if (UtilsHttp.downloadFile(destinationPath, downloadUrl.toString())) {
+        if (FileDownloader.download(downloadUrl.toString(), destinationPath)) {
             Logger.i(TAG, "File $destinationPath successfully downloaded.")
         } else {
             throw IllegalArgumentException("File $downloadUrl was not downloaded.")

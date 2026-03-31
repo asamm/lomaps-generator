@@ -1,7 +1,6 @@
-package com.asamm.osmTools.server
+package com.asamm.osmTools.utils
 
 import com.asamm.osmTools.config.AppConfig
-import com.asamm.osmTools.utils.Logger
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -9,7 +8,6 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.transfer.s3.S3TransferManager
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest
-import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener
 import software.amazon.awssdk.transfer.s3.progress.TransferListener
 import java.io.File
 import java.net.URI
@@ -62,7 +60,7 @@ class S3Client(
         .region(Region.of(region))
         .endpointOverride(URI.create(endpointUrl))
         .forcePathStyle(true)                       // required for Ceph / DigitalOcean Spaces custom endpoints
-        .minimumPartSizeInBytes(64 * 1024 * 1024L) // 128 MB per part
+        .minimumPartSizeInBytes(64 * 1024 * 1024L) // 64 MB per part
         .build()
 
     private val transferManager: S3TransferManager = S3TransferManager.builder()
@@ -110,7 +108,7 @@ class S3Client(
         asyncClient.close()
     }
 
-    // Create a custom TransferListener that logs progress for every 5% of the upload completed.
+    // Custom TransferListener that logs progress for every 5% of the upload completed.
     private class ProgressTransferListener : TransferListener {
 
         companion object {
@@ -125,11 +123,9 @@ class S3Client(
                 return
             }
 
-            // Convert ratio to percentage and round to nearest integer
             val percent = (ratio * 100).toInt()
 
             if (percent == lastLoggedPercent) {
-                // this percent has already been logged
                 return
             }
 

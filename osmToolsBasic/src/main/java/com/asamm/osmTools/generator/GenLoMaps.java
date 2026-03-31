@@ -17,7 +17,7 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.sea.LandArea;
-import com.asamm.osmTools.server.S3Client;
+import com.asamm.osmTools.utils.S3Client;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;

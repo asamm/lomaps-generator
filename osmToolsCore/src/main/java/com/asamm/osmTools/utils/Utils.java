@@ -178,51 +178,34 @@ public class Utils {
         return pathToFile.getParent().resolve(fileName + newExtension);
     }
 
-    public static String generateMD5hash(String pathToFile) {
-
-        File file = new File(pathToFile);
-        FileInputStream fis = null;
-
-        try {
-            fis = new FileInputStream(file);
+    /**
+     * Generates the MD5 hash of the file at the given path.
+     *
+     * @param pathToFile the path to the file for which to generate the MD5 hash
+     * @return the MD5 hash as a hexadecimal string
+     * @throws RuntimeException if the file cannot be read or the MD5 algorithm is not available
+     */
+    public static String generateMD5hash(Path pathToFile) {
+        try (InputStream fis = Files.newInputStream(pathToFile)) {
             MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] dataBytes = new byte[1024];
-
-            int nread = 0;
+            byte[] dataBytes = new byte[8192];
+            int nread;
+            // Read the file in chunks and update the digest
             while ((nread = fis.read(dataBytes)) != -1) {
                 md.update(dataBytes, 0, nread);
             }
-            ;
-            byte[] mdbytes = md.digest();
-
-            //convert the byte to hex format method 1
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < mdbytes.length; i++) {
-                sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+            // Convert the digest to a hexadecimal string
+            StringBuilder sb = new StringBuilder();
+            for (byte b : md.digest()) {
+                sb.append(String.format("%02x", b));
             }
-
-//            //convert the byte to hex format method 2
-//            StringBuffer hexString = new StringBuffer(); 
-//            for (int i=0;i<mdbytes.length;i++) {
-//                    String hex=Integer.toHexString(0xff & mdbytes[i]);
-//                    if(hex.length()==1) hexString.append('0');
-//                    hexString.append(hex);
-//            }
-//            System.out.println("Digest(in hex format):: " + hexString.toString());
-
             return sb.toString();
-
         } catch (IOException e) {
             Logger.w(TAG, "generateMD5hash()", e);
-            throw new RuntimeException("Unable to generate MD5hash for file: " +
-                    file.getAbsolutePath(), e);
+            throw new RuntimeException("Unable to generate MD5 hash for file: " + pathToFile, e);
         } catch (NoSuchAlgorithmException e) {
             Logger.w(TAG, "generateMD5hash()", e);
-            throw new RuntimeException("No such algorythm Unable to generate MD5hash for file: " +
-                    file.getAbsolutePath(), e);
-        } finally {
-            IOUtils.closeQuietly(fis);
+            throw new RuntimeException("MD5 algorithm not available", e);
         }
     }
 

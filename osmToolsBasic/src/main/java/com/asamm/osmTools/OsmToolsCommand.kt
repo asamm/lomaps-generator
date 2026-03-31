@@ -5,9 +5,9 @@ import com.asamm.osmTools.cleanup.OldMapsCleaner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
+import com.asamm.osmTools.elevation.ElevationPlanetBuilder
 import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.generator.GenStoreRegionDB
-import com.asamm.osmTools.generator.GenTerrainRgb
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger
 import com.asamm.slack.SlackUtils
@@ -124,33 +124,41 @@ class CleanOldGenerationCommand : CliktCommand(
 
 // GENERATE TERRAIN RGB SUBCOMMAND
 
-class GenerateTerrainRgbCommand : CliktCommand(
+class TerrainRgbCommand : CliktCommand(
     name = "terrain_rgb",
-    help = "Generate RGB terrain tiles (Mapbox Terrain-RGB encoding) from HGT files and optionally upload to S3."
+    help = "Prepare RGB terrain tiles with planet coverage when source is Mapterhorn data"
 ) {
-    companion object {
-        val TAG: String = GenerateTerrainRgbCommand::class.java.simpleName
-    }
 
-    val pathHgtFolder: File by option(
-        "-i", "--inputHgtFolder",
-        help = "Path to the folder with HGT files"
-    ).file(mustExist = true).required()
-
-    val upload: Boolean by option(
+    val uploadToS3: Boolean by option(
         "-u",
-        "--upload",
-        help = "Upload resulting MBTiles/PMTiles to S3 after generation"
+        "--upload_to_s3",
+        help = "Upload resulting MBTiles/PMTiles to S3 after preparation"
+    ).flag()
+
+    val generateHgt: Boolean by option(
+        "--generate_hgt",
+        help = "Convert prepared terrain RGB elevation data to HGT files"
     ).flag()
 
     override fun run() {
-        val cfg = AppConfig.config.terrainRgbConfig
-        GenTerrainRgb(
-            hgtDir = pathHgtFolder.toPath(),
-            output = cfg.outputFile.toFile(),
-            minZoom = cfg.minZoom,
-            maxZoom = cfg.maxZoom,
-        ).process(upload)
+        val elevationPlanetBuilder = ElevationPlanetBuilder()
+
+        // Step 1–3: Download, extract, simplify terrain RGB planet
+        elevationPlanetBuilder.prepareTerrainRgb4LoMaps()
+
+        // Step 4 (optional): Convert terrain RGB tiles to HGT elevation files
+        if (generateHgt) {
+            elevationPlanetBuilder.generateHgt()
+        }
+
+        // Upload terrain RGB planet PMTiles to S3
+        if (uploadToS3) {
+            elevationPlanetBuilder.uploadTerrainRgbPlanetToS3()
+        }
+    }
+
+    companion object {
+        private const val TAG = "TerrainRgbCommand"
     }
 }
 
@@ -339,7 +347,7 @@ fun main(args: Array<String>) {
                 UpdatePlanetCommand(),
                 CleanOldGenerationCommand(),
                 StoreGeoCommand(),
-                GenerateTerrainRgbCommand()
+                TerrainRgbCommand()
             )
             .main(args)
 

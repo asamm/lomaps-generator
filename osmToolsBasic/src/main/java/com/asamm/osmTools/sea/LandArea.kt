@@ -13,9 +13,9 @@ import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.osm.Node
 import com.asamm.osmTools.osm.Tags
 import com.asamm.osmTools.osm.Way
+import com.asamm.osmTools.utils.FileDownloader
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
-import com.asamm.osmTools.utils.UtilsHttp
 import org.apache.commons.io.FileUtils
 import java.io.IOException
 import java.nio.file.Path
@@ -81,7 +81,7 @@ class LandArea(var map: ItemMap) {
     @Throws(IOException::class, InterruptedException::class)
     private fun createCoastShp() {
 
-        if ( !AppConfig.config.coastlineConfig.landPolygonShp.toFile().exists()){
+        if (!AppConfig.config.coastlineConfig.landPolygonShp.toFile().exists()) {
             downloadUnzipLandPolygons()
         }
 
@@ -92,11 +92,11 @@ class LandArea(var map: ItemMap) {
         CmdOgr().clipGlobalLandPolyToMapBounds(map)
     }
 
-    private fun downloadUnzipLandPolygons(){
+    private fun downloadUnzipLandPolygons() {
 
         val pathForDownload = AppConfig.config.coastlineConfig.landPolygonShp.parent.parent.resolve("land_polygon.zip")
 
-        if (UtilsHttp.downloadFile(pathForDownload, AppConfig.config.coastlineConfig.landPolygonUrl)) {
+        if (FileDownloader.download(AppConfig.config.coastlineConfig.landPolygonUrl, pathForDownload)) {
             Logger.i(TAG, "File $pathForDownload successfully downloaded.")
         } else {
             throw IllegalArgumentException("File ${AppConfig.config.coastlineConfig.landPolygonUrl} was not downloaded.")
@@ -105,8 +105,10 @@ class LandArea(var map: ItemMap) {
         Utils.unzipFile(pathForDownload, AppConfig.config.coastlineConfig.landPolygonShp.parent.parent)
 
         // rename unpacked folder
-        Utils.renameFileQuitly(pathForDownload.parent.resolve("land-polygons-complete-4326"),
-            AppConfig.config.coastlineConfig.landPolygonShp.parent, true)
+        Utils.renameFileQuitly(
+            pathForDownload.parent.resolve("land-polygons-complete-4326"),
+            AppConfig.config.coastlineConfig.landPolygonShp.parent, true
+        )
 
         // delete the downloaded file
         Utils.deleteFileQuietly(pathForDownload)
