@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/_work/_temp/planetiler" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/_work/_temp/planetiler/planetiler-openmaptiles" vcs="Git" />
   </component>
 </project>

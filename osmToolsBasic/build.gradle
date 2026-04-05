@@ -6,7 +6,16 @@ plugins {
     id 'io.freefair.lombok' version '8.14.2'
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
-configurations { providedCompile }
+configurations {
+    providedCompile
+    // Force JTS version across all transitive deps — GeometryFixer.fix() requires bufferByZero()
+    // which was added in 1.19.1; older JTS jars from GeoTools/Osmosis would cause NoSuchMethodError
+    all {
+        resolutionStrategy {
+            force "org.locationtech.jts:jts-core:1.20.0"
+        }
+    }
+}
 
 repositories {
     // Asamm private repository
@@ -23,6 +32,7 @@ repositories {
         url  "https://jcenter.bintray.com"
     }
     mavenCentral()
+    maven { url = uri("https://repo.osgeo.org/repository/release/") }
 }
 
 dependencies {
@@ -30,6 +40,22 @@ dependencies {
     implementation(project(":osmToolsDataWriter"))
     implementation(project(":maptiler-api"))
     implementation(project(":elevation"))
+    // GeoTools for reading SHP and CRS handling (Natural Earth / overview map)
+    implementation("org.geotools:gt-shapefile:33.2") {
+        exclude group: "javax.media", module: "jai_core"
+    }
+    // gt-geopkg kept only for transitive CRS utilities; direct GPKG reading is done via mil.nga
+    implementation("org.geotools:gt-geopkg:33.2") {
+        exclude group: "javax.media", module: "jai_core"
+    }
+    implementation("org.geotools:gt-epsg-hsql:33.2") {
+        exclude group: "javax.media", module: "jai_core"
+    }
+    // NGA GeoPackage library — direct WKB access that bypasses GeoTools axis-order processing
+    // (follows the approach used by planetiler's GeoPackageReader to avoid incorrect polygon winding order)
+    implementation("mil.nga.geopackage:geopackage:6.6.5")
+    implementation("org.openstreetmap.osmosis:osmosis-pbf:0.49.2")
+    implementation("org.openstreetmap.pbf:osmpbf:1.5.0")
 
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("com.asamm.locus:api-store:1.2.26")

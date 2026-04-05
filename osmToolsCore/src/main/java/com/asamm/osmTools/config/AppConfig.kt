@@ -87,6 +87,7 @@ data class Config(
     var coastlineConfig: CoastlineConfig,
     var poiAddressConfig: PoiAddressConfig,
     var terrainRgbConfig: TerrainRgbConfig,
+    var naturalEarthConfig: NaturalEarthConfig = NaturalEarthConfig(),
 
     ) {
     fun toYaml(): String {
@@ -262,6 +263,33 @@ enum class HgtResampling {
     /** 4×4 pixel neighborhood (Keys cubic, a=-0.5). Sharper but may overshoot at edges. */
     BICUBIC,
 }
+
+@Serializable
+class NaturalEarthConfig(
+
+    /** URL to the Natural Earth 6.0 https://shadedrelief.com data Shapefiles */
+    val baseMapShpUrl: String = "https://www.shadedrelief.com/ne-draft/World-Base-Map-Shapefiles.zip",
+
+    /** URL to the Natural Earth GeoPackage ZIP */
+    val gpkgUrl: String = "https://naciscdn.org/naturalearth/packages/natural_earth_vector.gpkg.zip",
+
+    /** Directory for downloaded/extracted Natural Earth data */
+    @Serializable(with = PathSerializer::class)
+    val dataDir: Path = Path.of("download/natural_earth"),
+
+    /** Output PBF file with all NE data converted to OSM format */
+    @Serializable(with = PathSerializer::class)
+    val outputPbf: Path = Path.of("_planet/overview/planet_overview.osm.pbf"),
+
+    /** Start node ID for NE features (must not conflict with existing ranges) */
+    val startNodeId: Long = 2100000000000,
+
+    /** Start way ID for NE features */
+    val startWayId: Long = 2200000000000,
+
+    /** Start relation ID for NE features */
+    val startRelationId: Long = 2300000000000,
+)
 
 @Serializable
 class CmdConfig(

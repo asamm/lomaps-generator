@@ -6,6 +6,7 @@ import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.elevation.ElevationPlanetBuilder
+import com.asamm.osmTools.overviewMap.OverviewMapBuilder
 import com.asamm.osmTools.generator.GenLoMaps
 import com.asamm.osmTools.generator.GenStoreRegionDB
 import com.asamm.osmTools.generator.PlanetUpdater
@@ -159,6 +160,19 @@ class TerrainRgbCommand : CliktCommand(
 
     companion object {
         private const val TAG = "TerrainRgbCommand"
+    }
+}
+
+
+// NATURAL EARTH SUBCOMMAND
+
+class OverviewMapCommand : CliktCommand(
+    name = "overview_map",
+    help = "Download non OSM data (Natural Earth, Shadedrelief data and convert to OSM PBF " +
+            "for simplified global map (zoom 0-9)"
+) {
+    override fun run() {
+        OverviewMapBuilder().build()
     }
 }
 
@@ -347,7 +361,8 @@ fun main(args: Array<String>) {
                 UpdatePlanetCommand(),
                 CleanOldGenerationCommand(),
                 StoreGeoCommand(),
-                TerrainRgbCommand()
+                TerrainRgbCommand(),
+                OverviewMapCommand()
             )
             .main(args)
 
