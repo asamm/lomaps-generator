@@ -2,7 +2,7 @@ package com.asamm.osmTools.overviewMap.reader
 
 import com.asamm.osmTools.overviewMap.FeatureAttributes
 import com.asamm.osmTools.overviewMap.LayerDefinition
-import com.asamm.osmTools.overviewMap.NaturalEarthFeature
+import com.asamm.osmTools.overviewMap.OverviewMapFeature
 import com.asamm.osmTools.utils.Logger
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTS
@@ -28,7 +28,7 @@ class ShpFeatureReader {
      * Reads all features from SHP files in [shpDir] matching the given [layerDef].
      * The layer name is used to find the corresponding .shp file.
      */
-    fun readFeatures(shpDir: Path, layerDef: LayerDefinition): List<NaturalEarthFeature> {
+    fun readFeatures(shpDir: Path, layerDef: LayerDefinition): List<OverviewMapFeature> {
         // Find SHP file matching the layer name
         val shpFile = findShpFile(shpDir, layerDef.layerName)
         if (shpFile == null) {
@@ -42,8 +42,9 @@ class ShpFeatureReader {
     /**
      * Reads features from a specific SHP file.
      */
-    fun readFromFile(shpFile: Path, layerDef: LayerDefinition): List<NaturalEarthFeature> {
-        val features = mutableListOf<NaturalEarthFeature>()
+    fun readFromFile(shpFile: Path, layerDef: LayerDefinition): List<OverviewMapFeature> {
+
+        val features = mutableListOf<OverviewMapFeature>()
         val store = ShapefileDataStore(shpFile.toUri().toURL())
 
         try {
@@ -84,11 +85,11 @@ class ShpFeatureReader {
                         if (geometry.isEmpty) continue
                     }
 
-                    // Clip to Web Mercator valid bounds o
-                    if (!MERCATOR_BOUNDS_GEOM.envelopeInternal.contains(geometry.envelopeInternal)) {
-                        geometry = OverlayNGRobust.overlay(geometry, MERCATOR_BOUNDS_GEOM, OverlayNG.INTERSECTION)
-                        if (geometry.isEmpty) continue
-                    }
+//                    // Clip to Web Mercator valid bounds o
+//                    if (!MERCATOR_BOUNDS_GEOM.envelopeInternal.contains(geometry.envelopeInternal)) {
+//                        geometry = OverlayNGRobust.overlay(geometry, MERCATOR_BOUNDS_GEOM, OverlayNG.INTERSECTION)
+//                        if (geometry.isEmpty) continue
+//                    }
 
                     // Build OSM tags — wrap SimpleFeature in FeatureAttributes adapter
                     val tags = buildMap {
@@ -101,7 +102,7 @@ class ShpFeatureReader {
                         }
                     }
 
-                    features.add(NaturalEarthFeature(geometry, tags, layerDef.layerName))
+                    features.add(OverviewMapFeature(geometry, tags, layerDef.layerName))
                 }
             } finally {
                 iterator.close()

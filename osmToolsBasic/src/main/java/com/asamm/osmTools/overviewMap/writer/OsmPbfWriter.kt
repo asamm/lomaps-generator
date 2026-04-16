@@ -1,6 +1,6 @@
 package com.asamm.osmTools.overviewMap.writer
 
-import com.asamm.osmTools.overviewMap.NaturalEarthFeature
+import com.asamm.osmTools.overviewMap.OverviewMapFeature
 import com.asamm.osmTools.utils.Logger
 import crosby.binary.file.BlockOutputStream
 import crosby.binary.osmosis.OsmosisSerializer
@@ -35,9 +35,8 @@ import java.util.Date
  * Converts JTS geometries into OSM nodes, ways, and relations:
  * - Point → Node
  * - LineString → Way + Nodes
- * - Polygon (no holes) → Way + Nodes (closed ring)
- * - Polygon (with holes) → Relation (type=multipolygon) + outer/inner Ways + Nodes
- * - MultiPolygon → Relation (type=multipolygon) + outer/inner Ways + Nodes
+ * - Polygon → Relation (type=multipolygon) + outer Way + optional inner Ways + Nodes
+ * - MultiPolygon → multiple Relations (type=multipolygon), each with outer/inner Ways + Nodes
  * - MultiLineString → multiple Ways + Nodes
  *
  * PBF format requires sorted output: all Nodes first, then Ways, then Relations.
@@ -63,7 +62,7 @@ class OsmPbfWriter(
     private val ways = mutableListOf<Way>()
     private val relations = mutableListOf<Relation>()
 
-    fun write(features: List<NaturalEarthFeature>) {
+    fun write(features: List<OverviewMapFeature>) {
         Logger.i(TAG, "Converting ${features.size} features to OSM entities...")
 
         // Phase 1: Convert all features to OSM entities
@@ -85,10 +84,10 @@ class OsmPbfWriter(
     }
 
     /**
-     * Converts a single NaturalEarthFeature into OSM entities based on its geometry type.
+     * Converts a single OverviewFeature into OSM entities based on its geometry type.
      * Handles geometry types and creates appropriate nodes, ways, and relations with tags.
      */
-    private fun convertFeature(feature: NaturalEarthFeature) {
+    private fun convertFeature(feature: OverviewMapFeature) {
         val tags = feature.osmTags.map { (k, v) -> Tag(k, v) }
         when (val geom = feature.geometry) {
             is Point -> convertPoint(geom, tags)
@@ -97,6 +96,7 @@ class OsmPbfWriter(
                     convertPoint(geom.getGeometryN(i) as Point, tags)
                 }
             }
+            is LinearRing -> convertRing(geom, tags)
             is LineString -> convertLineString(geom, tags)
             is MultiLineString -> {
                 for (i in 0 until geom.numGeometries) {
@@ -107,7 +107,7 @@ class OsmPbfWriter(
             is MultiPolygon -> convertMultiPolygon(geom, tags)
             is GeometryCollection -> {
                 for (i in 0 until geom.numGeometries) {
-                    convertFeature(NaturalEarthFeature(geom.getGeometryN(i), feature.osmTags, feature.sourceLayer))
+                    convertFeature(OverviewMapFeature(geom.getGeometryN(i), feature.osmTags, feature.sourceLayer))
                 }
             }
         }
@@ -175,33 +175,29 @@ class OsmPbfWriter(
         return way
     }
 
+    /** Converts a [Polygon] to an OSM multipolygon relation with outer/inner roles. */
     private fun convertPolygon(polygon: Polygon, tags: Collection<Tag>) {
-        if (polygon.numInteriorRing == 0) {
-            // Simple polygon: single closed way with tags
-            convertRing(polygon.exteriorRing, tags)
-        } else {
-            // Polygon with holes: multipolygon relation
-            val members = mutableListOf<RelationMember>()
+        val members = mutableListOf<RelationMember>()
 
-            // Outer ring
-            val outerWay = convertRing(polygon.exteriorRing, emptyList())
-            members.add(RelationMember(outerWay.id, EntityType.Way, "outer"))
+        // Outer ring — always role "outer"
+        val outerWay = convertRing(polygon.exteriorRing, emptyList())
+        members.add(RelationMember(outerWay.id, EntityType.Way, "outer"))
 
-            // Inner rings (holes)
-            for (i in 0 until polygon.numInteriorRing) {
-                val innerWay = convertRing(polygon.getInteriorRingN(i), emptyList())
-                members.add(RelationMember(innerWay.id, EntityType.Way, "inner"))
-            }
+        // Inner rings (holes) — role "inner"
+        for (i in 0 until polygon.numInteriorRing) {
+            val innerWay = convertRing(polygon.getInteriorRingN(i), emptyList())
+            members.add(RelationMember(innerWay.id, EntityType.Way, "inner"))
+        }
 
-            val relTags = tags.toMutableList()
-            relTags.add(Tag("type", "multipolygon"))
+        val relTags = tags.toMutableList()
+        relTags.add(Tag("type", "multipolygon"))
 
-            val relation = Relation(
+        relations.add(
+            Relation(
                 CommonEntityData(nextRelationId++, 1, EPOCH, OSM_USER, 0, relTags),
                 members
             )
-            relations.add(relation)
-        }
+        )
     }
 
     private fun convertMultiPolygon(multiPolygon: MultiPolygon, tags: Collection<Tag>) {

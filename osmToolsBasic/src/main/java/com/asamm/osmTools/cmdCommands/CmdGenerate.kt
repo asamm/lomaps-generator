@@ -3,20 +3,34 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
+import java.nio.file.Path
 import java.util.Locale
 
-class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
+class CmdGenerate private constructor(
+    private val inputPbf: Path,
+    private val outputMap: Path,
+    private val bbox: String,
+    private val type: String,
+    private val prefLang: String?,
+    private val zoomInterval: String?,
+) : Cmd(ExternalApp.OSMOSIS) {
 
-    init {
+    // ── Section 1: ItemMap-based generation ──────────────────────────────────
+
+    constructor(map: ItemMap) : this(
+        inputPbf = if (map.isMerged) map.pathMerge else map.pathSource,
+        outputMap = map.pathGenerate,
+        bbox = "${map.boundary.minLat},${map.boundary.minLon},${map.boundary.maxLat},${map.boundary.maxLon}",
+        type = resolveType(map),
+        prefLang = map.prefLang?.takeIf { it.isNotEmpty() },
+        zoomInterval = map.forceInterval?.takeIf { it.isNotEmpty() },
+    ) {
         if (map.isMerged) {
             require(map.pathMerge.toFile().exists()) {
                 "Merged map for generation: ${map.pathMerge} does not exist!"
             }
             require(AppConfig.config.mapsforgeConfig.tagMapping.toFile().exists()) {
                 "Map writer definition file: ${AppConfig.config.mapsforgeConfig.tagMapping} does not exist."
-            }
-            if (!map.pathMerge.toFile().exists()) {
-                map.isMerged = false
             }
         } else {
             require(map.pathSource.toFile().exists()) {
@@ -25,35 +39,27 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
         }
     }
 
+    // ── Shared generation logic ───────────────────────────────────────────────
+
     /**
-     * Build the full Osmosis/mapfile-writer command for this map.
+     * Build the full Osmosis/mapfile-writer command.
      * The returned [ProcessCommand] can be executed immediately or retried.
      */
     fun createCmd(): ProcessCommand {
-        val cores = Runtime.getRuntime().availableProcessors()
-        val sourcePath = if (map.isMerged) map.pathMerge else map.pathSource
-        val type = when (map.forceType?.lowercase(Locale.getDefault())) {
-            "hd"  -> "hd"
-            "ram" -> "ram"
-            else  -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
-        }
-        prepareDirectory(map.pathGenerate)
+        prepareDirectory(outputMap)
         return osmosisBuilder()
-            .apply {
-                if (map.isMerged) readPbf(map.pathMerge.toString())
-                else readPbf(map.pathSource.toString())
-            }
-            .add("--mapfile-writer", "file=${map.pathGenerate}")
+            .readPbf(inputPbf.toString())
+            .add("--mapfile-writer", "file=$outputMap")
             .add("type=$type")
-            .addNotBlank(map.prefLang?.takeIf { it.isNotEmpty() }?.let { "preferred-languages=$it" })
-            .add("bbox=${map.boundary.minLat},${map.boundary.minLon},${map.boundary.maxLat},${map.boundary.maxLon}")
+            .addNotBlank(prefLang?.let { "preferred-languages=$it" })
+            .add("bbox=$bbox")
             .add("tag-conf-file=${AppConfig.config.mapsforgeConfig.tagMapping.toAbsolutePath()}")
-            .addNotBlank(map.forceInterval?.takeIf { it.isNotEmpty() }?.let { "zoom-interval-conf=$it" })
+            .addNotBlank(zoomInterval?.let { "zoom-interval-conf=$it" })
             .add("simplification-factor=0.5")
             .add("bbox-enlargement=5")
             .add("label-position=true")
             .add("tag-values=true")
-            .add("threads=$cores")
+            .add("threads=${Runtime.getRuntime().availableProcessors()}")
             .add("comment=${AppConfig.config.mapsforgeConfig.mapDescription}")
             .build()
     }
@@ -65,7 +71,7 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
     fun execute(numRepeat: Int, deleteFile: Boolean): String? {
         val cmd = createCmd()
         val onRetry: (() -> Unit)? = if (deleteFile) ({
-            val out = map.pathGenerate.toFile()
+            val out = outputMap.toFile()
             if (out.exists()) {
                 Logger.w(TAG, "Deleting partially-written file before retry: ${out.absolutePath}")
                 out.delete()
@@ -74,7 +80,47 @@ class CmdGenerate(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
         return executeWithRetry(cmd, numRepeat, onRetry)
     }
 
+    // ── Section 2: Overview map generation ───────────────────────────────────
+
     companion object {
+
         private val TAG: String = CmdGenerate::class.java.simpleName
+
+        private fun resolveType(map: ItemMap): String {
+            val sourcePath = if (map.isMerged) map.pathMerge else map.pathSource
+            return when (map.forceType?.lowercase(Locale.getDefault())) {
+                "hd"  -> "hd"
+                "ram" -> "ram"
+                else  -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
+            }
+        }
+
+        /**
+         * Creates a [CmdGenerate] configured to generate the global overview .map file
+         * from the Natural Earth PBF produced by [OverviewMapBuilder].
+         *
+         * Output path is derived from [OverviewMapConfig.outputPbf] by replacing the
+         * `.osm.pbf` extension with `.osm.map` in the same directory.
+         *
+         * Two zoom intervals are used:
+         *  - 3,0,4  — world-level overview (zooms 0–4, base zoom 3)
+         *  - 8,5,9  — regional detail      (zooms 5–9, base zoom 8)
+         */
+        @JvmStatic
+        fun forOverviewMap(): CmdGenerate {
+            val cfg = AppConfig.config.overviewMapConfig
+            require(cfg.outputPbf.toFile().exists()) {
+                "Natural Earth PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
+            }
+            val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map"))
+            return CmdGenerate(
+                inputPbf = cfg.outputPbf,
+                outputMap = outputMap,
+                bbox = "-90.0,-180.0,90.0,180.0",
+                type = "hd",
+                prefLang = null,
+                zoomInterval = "3,0,4,8,5,9",
+            )
+        }
     }
 }

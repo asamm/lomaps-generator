@@ -1,22 +1,23 @@
 package com.asamm.osmTools.overviewMap
 
-import com.asamm.osmTools.config.NaturalEarthConfig
+import com.asamm.osmTools.config.OverviewMapConfig
 import com.asamm.osmTools.utils.FileDownloader
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.text.substringAfterLast
 
 /**
- * Downloads and extracts Natural Earth data sources.
+ * Downloads and extracts geo data sources used for the overview map.
  *
- * ZIP files are kept in [NaturalEarthConfig.dataDir] permanently so re-runs only need to
+ * ZIP files are kept in [OverviewMapConfig.dataDir] permanently so re-runs only need to
  * re-extract, not re-download.  After the output PBF is written the caller should invoke
  * [deleteExtractedData] to remove the large extracted directories while leaving the ZIPs intact.
  */
-object NaturalEarthDownloader {
+object OverviewMapDataDownloader {
 
-    private const val TAG = "NaturalEarthDownloader"
+    private const val TAG = "OverviewDataDownloader"
 
     /**
      * Ensures the World Base Map Shapefiles are extracted and ready.
@@ -25,22 +26,48 @@ object NaturalEarthDownloader {
      * - Otherwise downloads the ZIP first, then extracts.
      * @return path to the directory containing extracted SHP files
      */
-    fun ensureNaturalEarthBaseShp(config: NaturalEarthConfig): Path {
-        val shpDir = config.dataDir.resolve("basemap_shp")
+    fun ensureBaseMapShp(config: OverviewMapConfig): Path {
+        val shpDir = config.dataDir.resolve("shadedrelief_com")
         if (Files.exists(shpDir) && Files.list(shpDir).use { it.anyMatch { f -> f.toString().endsWith(".shp") } }) {
             Logger.i(TAG, "Base map SHP directory already exists: $shpDir")
             return shpDir
         }
 
-        val zipPath = config.dataDir.resolve("World-Base-Map-Shapefiles.zip")
+        val zipPath = config.dataDir.resolve(config.baseMapShpUrl.substringAfterLast('/'))
         ensureZip(config.baseMapShpUrl, zipPath)
 
         Logger.i(TAG, "Extracting: $zipPath → $shpDir")
         Files.createDirectories(shpDir)
 
-        Utils.unzipFile(zipPath, shpDir)
+        // unzip TODO uncomment
+        //Utils.unzipFile(zipPath, shpDir)
         Logger.i(TAG, "Extraction complete: $shpDir")
 
+        return shpDir
+    }
+
+    /**
+     * Ensures the Ecoregions SHP files are extracted and ready.
+     * - If the extracted directory already exists, returns it immediately.
+     * - If the ZIP already exists locally, extracts from it (no download).
+     * - Otherwise downloads the ZIP first, then extracts.
+      * @return path to the directory containing extracted SHP files
+     */
+    fun ensureEcoregionsShp(config: OverviewMapConfig): Path {
+        val shpDir = config.dataDir.resolve("ecoregions2017")
+
+        if (Files.exists(shpDir) && Files.list(shpDir).use { it.anyMatch { f -> f.toString().endsWith(".shp") } }) {
+            Logger.i(TAG, "Ecoregions SHP directory already exists: $shpDir")
+            return shpDir
+        }
+
+        val zipFileName = config.ecoregionsShpUrl.substringAfterLast('/')
+        val zipPath = config.dataDir.resolve(zipFileName)
+        ensureZip(config.ecoregionsShpUrl, zipPath)
+
+        // unzip TODO uncomment
+        //Utils.unzipFile(zipPath, shpDir)
+        Logger.i(TAG, "Extraction complete: $shpDir")
         return shpDir
     }
 
@@ -51,8 +78,8 @@ object NaturalEarthDownloader {
      * - Otherwise downloads the ZIP first, then extracts.
      * @return path to the .gpkg file
      */
-    fun ensureGpkg(config: NaturalEarthConfig): Path {
-        val gpkgDir = config.dataDir.resolve("gpkg")
+    fun ensureNeGpkg(config: OverviewMapConfig): Path {
+        val gpkgDir = config.dataDir.resolve("natural_earth")
         val gpkgFile = gpkgDir.resolve("natural_earth_vector.gpkg")
         if (Files.exists(gpkgFile)) {
             Logger.i(TAG, "GeoPackage already exists: $gpkgFile")
@@ -65,8 +92,8 @@ object NaturalEarthDownloader {
         Logger.i(TAG, "Extracting: $zipPath → $gpkgDir")
         Files.createDirectories(gpkgDir)
 
-        // unzip
-        Utils.unzipFile(zipPath, gpkgDir)
+        // unzip TODO uncomment
+        //Utils.unzipFile(zipPath, gpkgDir)
 
         // Find the .gpkg file in the extracted directory (may be nested)
         val found = Files.walk(gpkgDir).use { stream ->
@@ -88,7 +115,7 @@ object NaturalEarthDownloader {
      * Deletes the extracted data directories (basemap_shp and gpkg) while keeping the
      * downloaded ZIP files.  Call this after the output PBF has been successfully written.
      */
-    fun deleteExtractedData(config: NaturalEarthConfig) {
+    fun deleteExtractedData(config: OverviewMapConfig) {
         listOf(
             config.dataDir.resolve("basemap_shp"),
             config.dataDir.resolve("gpkg"),

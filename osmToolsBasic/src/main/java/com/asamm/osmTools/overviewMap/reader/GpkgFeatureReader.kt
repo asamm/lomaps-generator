@@ -2,7 +2,7 @@ package com.asamm.osmTools.overviewMap.reader
 
 import com.asamm.osmTools.overviewMap.FeatureAttributes
 import com.asamm.osmTools.overviewMap.LayerDefinition
-import com.asamm.osmTools.overviewMap.NaturalEarthFeature
+import com.asamm.osmTools.overviewMap.OverviewMapFeature
 import com.asamm.osmTools.utils.Logger
 import mil.nga.geopackage.GeoPackageManager
 import mil.nga.geopackage.features.user.FeatureDao
@@ -31,9 +31,9 @@ class GpkgFeatureReader {
      *
      * @param gpkgFile Path to the GeoPackage file.
      * @param layerDef Definition of the layer to read, including filters and tag mapping.
-     * @return List of NaturalEarthFeature objects representing the features in the layer.
+     * @return List of OverviewFeature objects representing the features in the layer.
      */
-    fun readFeatures(gpkgFile: Path, layerDef: LayerDefinition): List<NaturalEarthFeature> {
+    fun readFeatures(gpkgFile: Path, layerDef: LayerDefinition): List<OverviewMapFeature> {
         val layer = layerDef.layerName
 
         // Open the GeoPackage file
@@ -67,7 +67,7 @@ class GpkgFeatureReader {
                         }
 
                         // Add feature with tags
-                        add(NaturalEarthFeature(geometry, buildTags(attrs, layerDef), layer))
+                        add(OverviewMapFeature(geometry, buildTags(attrs, layerDef), layer))
                     }
                 }
             } finally {

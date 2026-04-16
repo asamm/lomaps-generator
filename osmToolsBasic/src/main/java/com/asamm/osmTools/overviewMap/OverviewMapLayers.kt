@@ -13,7 +13,7 @@ fun interface FeatureAttributes {
 }
 
 /**
- * Defines which Natural Earth layers to process and how to map their attributes to OSM tags.
+ * Defines which layers to process and how to map their attributes to OSM tags.
  */
 
 enum class DataSource {
@@ -22,33 +22,38 @@ enum class DataSource {
 
     /** Standard Natural Earth GeoPackage */
     GPKG,
+
+    /** RESOLVE Ecoregions 2017 Shapefiles */
+    ECOREGIONS_SHP,
 }
 
 /**
- * A single Natural Earth layer definition with its OSM tag mapping.
+ * A single layer definition with its OSM tag mapping.
  *
- * @param layerName NE table/file name (e.g. "ne_50m_ocean")
+ * @param layerName table/file name (e.g. "ne_50m_ocean")
  * @param source which data source this layer comes from
  * @param staticTags tags always applied to every feature in this layer
  * @param minZoom minimum zoom level for this layer
  * @param maxZoom maximum zoom level for this layer
  * @param attributeMapper optional function to derive additional OSM tags from feature attributes
  * @param filter optional predicate to skip features
+ * @param toCenterLine if true, convert polygon geometries to centerlines (for lakes, areals)
  */
 data class LayerDefinition(
     val layerName: String,
     val source: DataSource,
-    val staticTags: Map<String, String>,
+    val staticTags: Map<String, String> = emptyMap(),
     val minZoom: Int,
     val maxZoom: Int,
     val attributeMapper: ((FeatureAttributes) -> Map<String, String>)? = null,
     val filter: ((FeatureAttributes) -> Boolean)? = null,
+    val toCenterLine: Boolean = false,
 )
 
 /**
- * All Natural Earth layer definitions used for the simplified global map (zoom 0-9).
+ * All layer definitions used for the simplified global map (zoom 0-9).
  */
-object NaturalEarthLayers {
+object OverviewMapLayers {
 
     /** Helper to extract a trimmed, non-empty string attribute. */
     private fun FeatureAttributes.str(name: String): String? {
@@ -59,44 +64,96 @@ object NaturalEarthLayers {
 
     // ---- OCEANS ----
 
-    private val OCEAN_TAGS = mapOf("natural" to "water", "water" to "ocean")
+    private val OCEAN_TAGS = mapOf("ne_natural" to "water", "ne_water" to "ocean")
 
     private val ne110mOcean = LayerDefinition(
         layerName = "ne_110m_ocean",
         source = DataSource.GPKG,
         staticTags = OCEAN_TAGS,
-        minZoom = 0, maxZoom = 1,
+        minZoom = 0, maxZoom = 4,
     )
 
     private val ne50mOcean = LayerDefinition(
         layerName = "ne_50m_ocean",
         source = DataSource.GPKG,
         staticTags = OCEAN_TAGS,
-        minZoom = 2, maxZoom = 4,
+        minZoom = 4, maxZoom = 9,
     )
 
-    private val ne10mOcean = LayerDefinition(
-        layerName = "ne_10m_ocean",
+    // OCEAN CENTER LINES
+
+    private fun geographyCenterLineMapper(f: FeatureAttributes): Map<String, String> = buildMap {
+        f.str("featurecla")?.let { put("type", it) }
+        f.str("name")?.let { put("name", it) }
+        f.str("name_en")?.let { put("name:en", it) }
+
+        val scalerank = ((f.get("scalerank") as? Number)?.toInt() ?: 0) + 1
+        put("rank", scalerank.toString())
+    }
+
+    private val ne110mOcenCenterLines = LayerDefinition(
+        layerName = "ne_110m_geography_marine_polys",
         source = DataSource.GPKG,
-        staticTags = OCEAN_TAGS,
-        minZoom = 5, maxZoom = 9,
+        staticTags = mapOf("ne_geography_marine" to "yes"),
+        minZoom = 0, maxZoom = 4,
+        attributeMapper = ::geographyCenterLineMapper,
+        toCenterLine = true
     )
+
+    private val ne50mOceanCenterLines = LayerDefinition(
+        layerName = "ne_50m_geography_marine_polys",
+        source = DataSource.GPKG,
+        staticTags = mapOf("ne_geography_marine" to "yes"),
+        minZoom = 5, maxZoom = 9,
+        attributeMapper = ::geographyCenterLineMapper,
+        toCenterLine = true,
+    )
+
+//    private val ne10mOceanCenterLines = LayerDefinition(
+//        layerName = "ne_10m_geography_marine_polys",
+//        source = DataSource.GPKG,
+//        staticTags = mapOf("geography_marine" to "yes"),
+//        minZoom = 3, maxZoom = 9,
+//        attributeMapper = ::geographyCenterLineMapper,
+//        toCenterLine = true,
+//    )
+
+    // REGION CENTER NAMES
+
+    private val ne110mRegionsCenterLines = LayerDefinition(
+        layerName = "ne_110m_geography_regions_polys",
+        source = DataSource.GPKG,
+        staticTags = mapOf("ne_geography_regions" to "yes"),
+        minZoom = 0, maxZoom = 4,
+        attributeMapper = ::geographyCenterLineMapper,
+        toCenterLine = true
+    )
+
+    private val ne50mRegionsCenterLines = LayerDefinition(
+        layerName = "ne_50m_geography_regions_polys",
+        source = DataSource.GPKG,
+        staticTags = mapOf("ne_geography_regions" to "yes"),
+        minZoom = 5, maxZoom = 9,
+        attributeMapper = ::geographyCenterLineMapper,
+        toCenterLine = true,
+    )
+
+//    private val ne10mRegionsCenterLines = LayerDefinition(
+//        layerName = "ne_10m_geography_regions_polys",
+//        source = DataSource.GPKG,
+//        staticTags = mapOf("geography_regions" to "yes"),
+//        minZoom = 4, maxZoom = 9,
+//        attributeMapper = ::geographyCenterLineMapper,
+//        toCenterLine = true,
+//    )
 
     // ---- LAKES ----
 
-    private val LAKE_TAGS = mapOf("natural" to "water")
+    private val LAKE_TAGS = mapOf("ne_natural" to "water")
 
     private fun lakesMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         f.str("name")?.let { put("name", it) }
     }
-
-    private val ne110mLakes = LayerDefinition(
-        layerName = "ne_110m_lakes",
-        source = DataSource.GPKG,
-        staticTags = LAKE_TAGS,
-        minZoom = 0, maxZoom = 1,
-        attributeMapper = ::lakesMapper,
-    )
 
     private val ne50mLakes = LayerDefinition(
         layerName = "ne_50m_lakes",
@@ -117,7 +174,7 @@ object NaturalEarthLayers {
     // ---- COUNTRY BOUNDARIES ----
 
     private val COUNTRY_BOUNDARY_TAGS = mapOf(
-        "boundary" to "administrative",
+        "boundary" to "ne_administrative",
         "admin_level" to "2",
     )
 
@@ -145,7 +202,7 @@ object NaturalEarthLayers {
     // ---- STATE/PROVINCE BOUNDARIES ----
 
     private val STATE_BOUNDARY_TAGS = mapOf(
-        "boundary" to "administrative",
+        "boundary" to "ne_administrative",
         "admin_level" to "4",
     )
 
@@ -158,7 +215,7 @@ object NaturalEarthLayers {
 
     // ---- RIVERS ----
 
-    private val RIVER_TAGS = mapOf("waterway" to "river")
+    private val RIVER_TAGS = mapOf("ne_waterway" to "river")
 
     private fun riverMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         f.str("name")?.let { put("name", it) }
@@ -189,7 +246,7 @@ object NaturalEarthLayers {
 
     // ---- GLACIATED AREAS ----
 
-    private val GLACIER_TAGS = mapOf("natural" to "glacier")
+    private val GLACIER_TAGS = mapOf("ne_natural" to "glacier")
 
     private val ne50mGlaciers = LayerDefinition(
         layerName = "ne_50m_glaciated_areas",
@@ -210,7 +267,7 @@ object NaturalEarthLayers {
     private val ne50mUrban = LayerDefinition(
         layerName = "ne_50m_urban_areas",
         source = DataSource.GPKG,
-        staticTags = mapOf("landuse" to "residential"),
+        staticTags = mapOf("ne_landuse" to "residential"),
         minZoom = 4, maxZoom = 9,
     )
 
@@ -244,6 +301,20 @@ object NaturalEarthLayers {
         attributeMapper = ::populatedPlaceMapper,
     )
 
+    // --- ECOREGIONS SHP ---
+
+    private fun ecoregionsMapper(f: FeatureAttributes): Map<String, String> = buildMap {
+        f.str("LANDTYPE")?.let { put("ne_landtype", it) }
+        (f.get("BIOME") as? Number)?.toInt()?.let { put("biome", it.toString()) }
+    }
+
+    private val ecoregions2017 = LayerDefinition(
+        layerName = "wwf_terr_ecos_dissolved",
+        source = DataSource.ECOREGIONS_SHP,
+        minZoom = 0, maxZoom = 9,
+        attributeMapper = ::ecoregionsMapper,
+    )
+
     // --- BASE MAP SHP ---
 
     // ROADS & FERRY
@@ -252,14 +323,14 @@ object NaturalEarthLayers {
         f.str("name")?.let { put("name", it) }
         f.str("featurecla")?.let {
             when (it) {
-                "Ferry" -> put("route", "ferry")
+                "Ferry" -> put("ne_route", "ferry")
                 "Road" -> {
                     f.str("type")?.let { type ->
                         when (type) {
-                            "Expressway" -> put("highway", "motorway")
-                            "Road" -> put("highway", "primary")
-                            "Track", "Other Highway" -> put("highway", "other")
-                            else -> put("highway", "other")
+                            "Expressway" -> put("ne_highway", "motorway")
+                            "Road" -> put("ne_highway", "primary")
+                            "Track", "Other Highway" -> put("ne_highway", "other")
+                            else -> put("ne_highway", "other")
                         }
                     }
                 }
@@ -277,23 +348,25 @@ object NaturalEarthLayers {
 
 
     // --- RAILROADS ---
+    private val RAILS_TAGS = mapOf("ne_railway" to "rail")
+
     private fun railsMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         val scalerank = (f.get("scalerank") as? Number)?.toInt()
 
         when (scalerank) {
-            4, 5 -> put("scalerank", "1")
-            6 -> put("scalerank", "2")
-            7 -> put("scalerank", "3")
-            8 -> put("scalerank", "4")
-            9, 10 -> put("scalerank", "5")
-            else -> put("scalerank", "4")
+            4, 5 -> put("rank", "1")
+            6 -> put("rank", "2")
+            7 -> put("rank", "3")
+            8 -> put("rank", "4")
+            9, 10 -> put("rank", "5")
+            else -> put("rank", "4")
         }
     }
 
     private val bmRailroads = LayerDefinition(
         layerName = "Railroads-beta2",
         source = DataSource.BASE_MAP_SHP,
-        staticTags = emptyMap(),
+        staticTags = RAILS_TAGS,
         minZoom = 5, maxZoom = 9,
         attributeMapper = ::railsMapper,
     )
@@ -301,26 +374,32 @@ object NaturalEarthLayers {
     // ---- ALL LAYERS ----
 
     val ALL: List<LayerDefinition> = listOf(
+        // Ecoregions
+        ecoregions2017,
         // Oceans
-        ne110mOcean, ne50mOcean, ne10mOcean,
+        ne110mOcean, ne50mOcean, //ne10mOcean,
+        // Ocean center lines (polygon → centerline for labels)
+        ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
+        // Geography region center lines
+        ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
         // Lakes
-        ne110mLakes, ne50mLakes, ne10mLakes,
-        // Country boundaries
-        ne110mBoundary, ne50mBoundary, ne10mBoundary,
-        // State boundaries
-        ne10mStateBoundary,
-        // Rivers
-        ne110mRivers, ne50mRivers,
-        // Glaciated areas
-        ne50mGlaciers, ne10mGlaciers,
-        // Urban areas
-        ne50mUrban,
-        // Populated places
-        ne10mPopulatedPlaces,
-        // Base map SHP
-        // Roads
-        bmRoadFerries,
-        // Railroads
-        bmRailroads,
+//        ne110mLakes, ne50mLakes, ne10mLakes,
+//        // Country boundaries
+//        ne110mBoundary, ne50mBoundary, ne10mBoundary,
+//        // State boundaries
+//        ne10mStateBoundary,
+//        // Rivers
+//        ne110mRivers, ne50mRivers,
+//        // Glaciated areas
+//        ne50mGlaciers, ne10mGlaciers,
+//        // Urban areas
+//        ne50mUrban,
+//        // Populated places
+//        ne10mPopulatedPlaces,
+//        // Base map SHP
+//        // Roads
+//        bmRoadFerries,
+//        // Railroads
+//        bmRailroads,
     )
 }
