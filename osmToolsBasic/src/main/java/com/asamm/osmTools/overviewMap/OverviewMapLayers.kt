@@ -62,6 +62,23 @@ object OverviewMapLayers {
         return s.ifEmpty { null }
     }
 
+    // LAND
+    private val LAND_TAGS = mapOf("ne_natural" to "land")
+
+    private val ne110mLand = LayerDefinition(
+        layerName = "ne_110m_land",
+        source = DataSource.GPKG,
+        staticTags = LAND_TAGS,
+        minZoom = 0, maxZoom = 4,
+    )
+
+    private val ne50mLand = LayerDefinition(
+        layerName = "ne_50m_land",
+        source = DataSource.GPKG,
+        staticTags = LAND_TAGS,
+        minZoom = 4, maxZoom = 9,
+    )
+
     // ---- OCEANS ----
 
     private val OCEAN_TAGS = mapOf("ne_natural" to "water", "ne_water" to "ocean")

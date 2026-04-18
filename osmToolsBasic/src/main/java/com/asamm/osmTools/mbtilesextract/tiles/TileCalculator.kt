@@ -1,6 +1,7 @@
 package com.asamm.osmTools.mbtilesextract.tiles
 
 import com.asamm.geoutils.PolyReader
+import com.asamm.osmTools.utils.MercatorUtils
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
@@ -36,10 +37,10 @@ class TileCalculator {
 
         for (zoom in 0..maxZoom) {
             val envelope = geometry.envelopeInternal
-            val minTileX = TileUtils.lonToTileX(envelope.minX, zoom)
-            val maxTileX = TileUtils.lonToTileX(envelope.maxX, zoom)
-            val minTileY = TileUtils.latToTileY(envelope.maxY, zoom)
-            val maxTileY = TileUtils.latToTileY(envelope.minY, zoom)
+            val minTileX = MercatorUtils.lonToTileX(envelope.minX, zoom)
+            val maxTileX = MercatorUtils.lonToTileX(envelope.maxX, zoom)
+            val minTileY = MercatorUtils.latToTileY(envelope.maxY, zoom)
+            val maxTileY = MercatorUtils.latToTileY(envelope.minY, zoom)
 
             for (x in minTileX..maxTileX) {
                 for (y in minTileY..maxTileY) {
@@ -124,10 +125,10 @@ class TileCalculator {
     }
 
     fun tileToPolygon(x: Int, y: Int, zoom: Int): Polygon {
-        val lonMin = TileUtils.tileXToLon(x, zoom)
-        val lonMax = TileUtils.tileXToLon(x + 1, zoom)
-        val latMin = TileUtils.tileYToLat(y + 1, zoom)
-        val latMax = TileUtils.tileYToLat(y, zoom)
+        val lonMin = MercatorUtils.tileXToLon(x, zoom)
+        val lonMax = MercatorUtils.tileXToLon(x + 1, zoom)
+        val latMin = MercatorUtils.tileYToLat(y + 1, zoom)
+        val latMax = MercatorUtils.tileYToLat(y, zoom)
 
         val coordinates = arrayOf(
             Coordinate(lonMin, latMin),

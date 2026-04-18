@@ -16,6 +16,7 @@ import com.asamm.osmTools.osm.Way
 import com.asamm.osmTools.utils.FileDownloader
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
+import com.asamm.osmTools.utils.ZipUtils
 import org.apache.commons.io.FileUtils
 import java.io.IOException
 import java.nio.file.Path
@@ -102,7 +103,7 @@ class LandArea(var map: ItemMap) {
             throw IllegalArgumentException("File ${AppConfig.config.coastlineConfig.landPolygonUrl} was not downloaded.")
         }
         // unzip file
-        Utils.unzipFile(pathForDownload, AppConfig.config.coastlineConfig.landPolygonShp.parent.parent)
+        ZipUtils.unzipFile(pathForDownload, AppConfig.config.coastlineConfig.landPolygonShp.parent.parent)
 
         // rename unpacked folder
         Utils.renameFileQuitly(

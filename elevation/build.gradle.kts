@@ -8,6 +8,7 @@ version = "0.0.1"
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://artifacts.unidata.ucar.edu/repository/unidata-all/") }
 }
 
 dependencies {
@@ -18,6 +19,10 @@ dependencies {
 
     // WebP ImageIO plugin — provides read/write via javax.imageio SPI (native libwebp)
     implementation("org.sejda.imageio:webp-imageio:0.1.6")
+
+    // NetCDF-Java — reads GEBCO bathymetry NetCDF (.nc) files
+    implementation("edu.ucar:netcdf4:5.6.0")
+    implementation("edu.ucar:cdm-core:5.6.0")
 }
 
 kotlin {

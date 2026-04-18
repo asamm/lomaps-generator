@@ -3,7 +3,6 @@ package com.asamm.osmTools.overviewMap
 import com.asamm.osmTools.config.OverviewMapConfig
 import com.asamm.osmTools.utils.FileDownloader
 import com.asamm.osmTools.utils.Logger
-import com.asamm.osmTools.utils.Utils
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.text.substringAfterLast
@@ -40,7 +39,7 @@ object OverviewMapDataDownloader {
         Files.createDirectories(shpDir)
 
         // unzip TODO uncomment
-        //Utils.unzipFile(zipPath, shpDir)
+        //ZipUtils.unzipFile(zipPath, shpDir)
         Logger.i(TAG, "Extraction complete: $shpDir")
 
         return shpDir
@@ -66,7 +65,7 @@ object OverviewMapDataDownloader {
         ensureZip(config.ecoregionsShpUrl, zipPath)
 
         // unzip TODO uncomment
-        //Utils.unzipFile(zipPath, shpDir)
+        //ZipUtils.unzipFile(zipPath, shpDir)
         Logger.i(TAG, "Extraction complete: $shpDir")
         return shpDir
     }
@@ -93,7 +92,7 @@ object OverviewMapDataDownloader {
         Files.createDirectories(gpkgDir)
 
         // unzip TODO uncomment
-        //Utils.unzipFile(zipPath, gpkgDir)
+        //ZipUtils.unzipFile(zipPath, gpkgDir)
 
         // Find the .gpkg file in the extracted directory (may be nested)
         val found = Files.walk(gpkgDir).use { stream ->

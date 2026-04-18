@@ -127,8 +127,20 @@ class CleanOldGenerationCommand : CliktCommand(
 
 class TerrainRgbCommand : CliktCommand(
     name = "terrain_rgb",
-    help = "Prepare RGB terrain tiles with planet coverage when source is Mapterhorn data"
+    help = "Prepare RGB terrain tiles with planet coverage (from Mapternhorn and GEBCO data)"
 ) {
+
+    val terrain: Boolean by option(
+        "-t",
+        "--terrain",
+        help = "Download Mapternhorn data and generate terrain RGB tiles for land elevation (without ocean floor)"
+    ).flag()
+
+    val bathymetry: Boolean by option(
+        "-b",
+        "--bathymetry",
+        help = "Download GEBCO data and generate bathymetry (ocean floor) terrain-RGB tiles"
+    ).flag()
 
     val uploadToS3: Boolean by option(
         "-u",
@@ -138,23 +150,38 @@ class TerrainRgbCommand : CliktCommand(
 
     val generateHgt: Boolean by option(
         "--generate_hgt",
-        help = "Convert prepared terrain RGB elevation data to HGT files"
+        help = "Convert prepared terrain RGB elevation data to HGT files (only for land)"
     ).flag()
 
     override fun run() {
         val elevationPlanetBuilder = ElevationPlanetBuilder()
 
-        // Step 1–3: Download, extract, simplify terrain RGB planet
-        elevationPlanetBuilder.prepareTerrainRgb4LoMaps()
+        // Step Download, extract, simplify terrain RGB planet
+        if (terrain) {
+            elevationPlanetBuilder.prepareTerrainRgbMapternhorn()
+        }
 
         // Step 4 (optional): Convert terrain RGB tiles to HGT elevation files
         if (generateHgt) {
-            elevationPlanetBuilder.generateHgt()
+            elevationPlanetBuilder.generateHgtForLand()
+        }
+
+        // Optional: Download GEBCO data and generate bathymetry terrain-RGB tiles
+        if (bathymetry) {
+            elevationPlanetBuilder.prepareBathymetry()
         }
 
         // Upload terrain RGB planet PMTiles to S3
         if (uploadToS3) {
-            elevationPlanetBuilder.uploadTerrainRgbPlanetToS3()
+            if (terrain) {
+                elevationPlanetBuilder.uploadTerrainRgbToS3()
+            }
+            if (bathymetry) {
+                elevationPlanetBuilder.uploadBathymetryToS3()
+            }
+            if (!terrain && !bathymetry) {
+                Logger.w(TAG, "Upload requested but neither --terrain nor --bathymetry was specified, nothing to upload.")
+            }
         }
     }
 

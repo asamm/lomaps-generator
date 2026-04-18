@@ -7,9 +7,11 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
+import com.luciad.imageio.webp.WebPImageWriterSpi
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
+import javax.imageio.stream.MemoryCacheImageOutputStream
 
 /**
  * Shared codec for terrain-RGB tile data.
@@ -182,16 +184,16 @@ object TerrainRgbCodec {
     /**
      * Encodes a [BufferedImage] as lossless WebP.
      *
-     * Uses ImageIO SPI to find a WebP writer. Falls back to PNG
-     * if no WebP writer is available on the classpath.
+     * Instantiates the WebP writer directly via [WebPImageWriterSpi] to avoid
+     * triggering [javax.imageio.ImageIO] class initialization, which crashes when
+     * the GeoTools TIFF SPI tries to load the absent JAI library.
      *
      * Thread-safe: creates a new writer instance per call.
      */
     fun encodeLosslessWebP(img: BufferedImage): ByteArray {
         val bos = ByteArrayOutputStream(img.width * img.height * 3)
-        val writers = ImageIO.getImageWritersByFormatName("webp")
-        if (writers.hasNext()) {
-            val writer = writers.next()
+        val writer = WebPImageWriterSpi().createWriterInstance()
+        try {
             val param = writer.defaultWriteParam
             if (param.canWriteCompressed()) {
                 param.compressionMode = ImageWriteParam.MODE_EXPLICIT
@@ -199,13 +201,12 @@ object TerrainRgbCodec {
                 val lossless = types?.firstOrNull { it.contains("lossless", ignoreCase = true) }
                 if (lossless != null) param.compressionType = lossless
             }
-            ImageIO.createImageOutputStream(bos).use { ios ->
+            MemoryCacheImageOutputStream(bos).use { ios ->
                 writer.output = ios
                 writer.write(null, IIOImage(img, null, null), param)
             }
+        } finally {
             writer.dispose()
-        } else {
-            ImageIO.write(img, "png", bos)
         }
         return bos.toByteArray()
     }

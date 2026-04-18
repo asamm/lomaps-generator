@@ -191,6 +191,8 @@ class OnlineLoMapsConfig(
     @Transient var s3secretKey: String = "", // Set via environment variable S3_SECRET_KEY
     var s3terrainRgbPath: String, // Path to upload terrain rgb planet file
     var s3terrainRgbPathDev: String,
+    var s3bathymetryRgbPath: String,
+    var s3bathymetryRgbPathDev: String,
 )
 
 @Serializable
@@ -251,17 +253,48 @@ class TerrainRgbConfig(
     @Serializable(with = PathSerializer::class)
     val hgtOutputDir: Path = Path.of("_planet/terrain_rgb/hgt"),
 
-    /** Resampling method for terrain-RGB to HGT conversion. */
-    val hgtResampling: HgtResampling = HgtResampling.BILINEAR,
+    /** Resampling method for terrain-RGB to HGT conversion and for GEBCO to terrain-rgb. */
+    val terrainResampling: TerrainResampling = TerrainResampling.BILINEAR,
+
+    // ── Bathymetry (GEBCO) ───────────────────────────────────────────────
+
+    /** URL of the GEBCO gridded bathymetry NetCDF zip archive (elevation + TID). */
+    val gebcoElevationUrl: String,
+
+    /** URL of the GEBCO TID (Type Identifier) grid NetCDF zip archive. */
+    val gebcoTidUrl: String,
+
+    /** Working directory for GEBCO downloads and unpacked data. */
+    @Transient
+    val gebcoWorkDir: Path = Path.of("download/bathymetry"),
+
+    /** Directory with unpacked GEBCO elevation data (contains .nc and auxiliary files). */
+    @Transient
+    val gebcoElevationDir: Path = gebcoWorkDir.resolve(Path.of("elevation")),
+
+    /** Directory with unpacked GEBCO TID data (contains .nc and auxiliary files). */
+    @Transient
+    val gebcoTidDir: Path = gebcoWorkDir.resolve(Path.of("tid")),
+
+    /** Output bathymetry terrain-RGB PMTiles file. */
+    @Serializable(with = PathSerializer::class)
+    val bathymetryPlanetFile: Path = Path.of("_planet/bathymetry/bathymetry_terrain_rgb.pmtiles"),
+
+    /** Maximum zoom level for bathymetry terrain-RGB tiles. */
+    val bathymetryMaxZoom: Int = 7,
 )
 
-/** Resampling method used when converting terrain-RGB tiles to HGT grid. */
+/** Resampling method used when converting raster grids (terrain-RGB ↔ HGT, GEBCO → tiles). */
 @Serializable
-enum class HgtResampling {
+enum class TerrainResampling {
+    /** Nearest-neighbor: fast, no interpolation. Best for categorical/TID grids. */
+    NEAREST,
     /** 2×2 pixel neighborhood, smooth interpolation. Standard for DEM data. */
     BILINEAR,
     /** 4×4 pixel neighborhood (Keys cubic, a=-0.5). Sharper but may overshoot at edges. */
     BICUBIC,
+    /** 6×6 pixel neighborhood (Lanczos-3 sinc kernel). Sharpest, best for downsampling. */
+    LANCZOS,
 }
 
 @Serializable

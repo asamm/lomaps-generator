@@ -78,7 +78,7 @@ dependencies {
 
 }
 
-def versionCode = "0.7.8-SNAPSHOT"
+def versionCode = "0.8.0-SNAPSHOT"
 def newArchiveName = "OsmToolsBasic.jar"
 
 // Generate version.properties file with current version

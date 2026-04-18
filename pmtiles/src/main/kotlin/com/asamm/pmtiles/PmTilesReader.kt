@@ -95,6 +95,29 @@ class PmTilesReader(val source: (offset: Long, length: Int) -> ByteArray) {
     }
 
     /**
+     * Lazily yields every directory [Entry] in the archive in Hilbert-curve order.
+     *
+     * Only tile entries (runLength > 0) are yielded — leaf-directory pointers are
+     * followed transparently. This is useful for re-writing/clustering archives.
+     */
+    fun allEntries(): Sequence<Entry> = sequence {
+        val h = header
+        val queue = ArrayDeque<Pair<Long, Int>>()
+        queue.addLast(h.rootOffset to h.rootLength.toInt())
+
+        while (queue.isNotEmpty()) {
+            val (dirOffset, dirLength) = queue.removeFirst()
+            for (entry in deserializeDirectory(source(dirOffset, dirLength))) {
+                if (entry.runLength > 0) {
+                    yield(entry)
+                } else {
+                    queue.addLast((h.leafDirectoryOffset + entry.offset) to entry.length)
+                }
+            }
+        }
+    }
+
+    /**
      * Lazily yields every tile in the archive as [TileData] in Hilbert-curve order.
      *
      * Uses an iterative queue rather than recursive coroutines — avoids nested
@@ -180,7 +203,7 @@ class FileChannelPmTilesReader(path: Path) : AutoCloseable {
 
     private val channel = FileChannel.open(path, StandardOpenOption.READ)
 
-    private val reader = PmTilesReader { offset, length ->
+    private val sourceFunc: (Long, Int) -> ByteArray = { offset, length ->
         val buf = ByteBuffer.allocate(length)
         var pos = offset
         while (buf.hasRemaining()) {
@@ -191,11 +214,17 @@ class FileChannelPmTilesReader(path: Path) : AutoCloseable {
         buf.array()
     }
 
+    private val reader = PmTilesReader(sourceFunc)
+
+    /** Raw byte-level access: `source(offset, length)` returns [length] bytes at [offset]. */
+    val source: (Long, Int) -> ByteArray get() = sourceFunc
+
     val header: PmTilesHeader get() = reader.header
     fun metadata(): String = reader.metadata()
     fun getTile(z: Int, x: Int, y: Int): ByteArray? = reader.getTile(z, x, y)
     fun getTile(z: Int, x: Long, y: Long): ByteArray? = reader.getTile(z, x, y)
     fun getTileById(tileId: Long): ByteArray? = reader.getTileById(tileId)
+    fun allEntries(): Sequence<Entry> = reader.allEntries()
     fun allTiles(): Sequence<TileData> = reader.allTiles()
 
     override fun close() = channel.close()
@@ -260,6 +289,7 @@ class MmapPmTilesReader(path: Path) : AutoCloseable {
     fun getTile(z: Int, x: Int, y: Int): ByteArray? = reader.getTile(z, x, y)
     fun getTile(z: Int, x: Long, y: Long): ByteArray? = reader.getTile(z, x, y)
     fun getTileById(tileId: Long): ByteArray? = reader.getTileById(tileId)
+    fun allEntries(): Sequence<Entry> = reader.allEntries()
     fun allTiles(): Sequence<TileData> = reader.allTiles()
 
     override fun close() = channel.close()

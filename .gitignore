@@ -7,6 +7,7 @@ out/
 
 # Gradle files
 .gradle/
+build.gradle
 
 # Intellij
 *.iml
@@ -26,3 +27,6 @@ _tools/
 # Python tools
 __pycache__/
 *.pyc
+
+# Claude
+.claude/

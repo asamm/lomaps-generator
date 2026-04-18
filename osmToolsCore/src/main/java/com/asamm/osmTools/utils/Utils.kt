@@ -1,515 +1,364 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.asamm.osmTools.utils;
+package com.asamm.osmTools.utils
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.net.UnknownHostException
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import java.util.regex.Pattern
+import java.util.zip.ZipEntry
+import java.util.zip.ZipException
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
-import java.io.*;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.*;
+object Utils {
 
-/**
- * @author volda
- */
-public class Utils {
+    private const val TAG = "Utils"
 
-    private static final String TAG = Utils.class.getSimpleName();
+    /** Returns `true` when the `ENV` environment variable is set to `"DEV"`. */
+    fun isLocalDEV(): Boolean = System.getenv("ENV") == "DEV"
 
-    public static boolean isLocalDEV() {
-        String env = System.getenv("ENV");
-        if (env == null) {
-            return false;
-        }
-        return System.getenv("ENV").equals("DEV");
+    /** Normalises path separators in [name] to the platform separator ([Consts.FILE_SEP]). */
+    fun changeSlash(name: String): String = when {
+        name.contains("/") -> name.replace("/", Consts.FILE_SEP)
+        name.contains("\\") -> name.replace("\\", Consts.FILE_SEP)
+        else -> name
     }
 
-    public static String changeSlash(String name) {
-        if (name.contains("/")) {
-            return name.replace("/", Consts.FILE_SEP);
-        }
-        if (name.contains("\\")) {
-            return name.replace("\\", Consts.FILE_SEP);
-        }
-        return name;
-
+    /** Returns the size of [path] in bytes, or 0 if the file is missing or inaccessible. */
+    fun fileSize(path: Path): Long = try {
+        Files.size(path)
+    } catch (_: IOException) {
+        0L
     }
+
+    /** Replaces the platform separator ([Consts.FILE_SEP]) in [name] with a Unix forward slash. */
+    fun changeSlashToUnix(name: String): String =
+        if (name.contains(Consts.FILE_SEP)) name.replace(Consts.FILE_SEP, "/") else name
+
+    /** @see deleteFilesInDir */
+    fun deleteFilesInDir(pathToDir: String) = deleteFilesInDir(Path.of(pathToDir))
 
     /**
-     * Returns the size of {@code path} as a file, or 0 if missing/inaccessible.
-     * @param path the file to get the size
+     * Deletes all **files** (non-recursive) inside [pathToDir].
+     * Sub-directories are left in place. Logs a warning if the path does not exist.
      */
-    public static long fileSize(Path path) {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            return 0;
+    fun deleteFilesInDir(pathToDir: Path) {
+        val dir = pathToDir.toFile()
+        if (!dir.exists() || !dir.isDirectory) {
+            Logger.w(TAG, "Path for deleting: $pathToDir does not exist or is not directory")
+            return
         }
+        dir.listFiles()?.filter { it.isFile }?.forEach { it.delete() }
     }
-
-    public static String changeSlashToUnix(String name) {
-        if (name.contains(Consts.FILE_SEP)) {
-            return name.replace(Consts.FILE_SEP, "/");
-        }
-        return name;
-    }
-
-    public static void deleteFilesInDir(String pathToDir) {
-        deleteFilesInDir(Path.of(pathToDir));
-    }
-
-    public static void deleteFilesInDir(Path pathToDir) {
-        // check if folder exist
-        File dir = pathToDir.toFile();
-        if (!dir.exists() && !dir.isDirectory()) {
-            Logger.w(TAG, "Path for deleting: " + pathToDir + " does not exist or is not directory");
-            return;
-        }
-        File[] fileList = dir.listFiles();
-        for (int i = 0; i < fileList.length; i++) {
-            if (fileList[i].isFile()) {
-                fileList[i].delete();
-            }
-        }
-    }
-
-    public static void deleteDirRecursively(Path pathToDir) {
-        // check if folder exist
-        File dir = pathToDir.toFile();
-        if (!dir.exists() && !dir.isDirectory()) {
-            Logger.w(TAG, "Path for deleting: " + pathToDir + " does not exist or is not directory");
-            return;
-        }
-        try {
-            FileUtils.deleteDirectory(dir);
-        } catch (IOException e) {
-            Logger.w(TAG, "deleteDirRecursively()", e);
-        }
-    }
-
 
     /**
-     * Delete file quietly without throwing exception
+     * Recursively deletes [pathToDir] and all its contents.
+     * Logs a warning if the path does not exist; logs and swallows [IOException] on failure.
+     */
+    fun deleteDirRecursively(pathToDir: Path) {
+        val dir = pathToDir.toFile()
+        if (!dir.exists() || !dir.isDirectory) {
+            Logger.w(TAG, "Path for deleting: $pathToDir does not exist or is not directory")
+            return
+        }
+        try {
+            FileUtils.deleteDirectory(dir)
+        } catch (e: IOException) {
+            Logger.w(TAG, "deleteDirRecursively()", e)
+        }
+    }
+
+    /**
+     * Deletes [path] without throwing — logs a warning on [IOException].
+     * Does nothing if the file does not exist.
+     */
+    fun deleteFileQuietly(path: Path) {
+        try {
+            if (path.toFile().exists()) Files.delete(path)
+        } catch (e: IOException) {
+            Logger.w(TAG, "deleteFile(), Unable to delete file", e)
+        }
+    }
+
+    /**
+     * Copies [source] to [target], creating any missing parent directories.
      *
-     * @param path path to file to delete
+     * @param replaceExisting overwrite [target] if it already exists
+     * @throws IllegalArgumentException on [IOException]
      */
-    public static void deleteFileQuietly(Path path) {
+    fun copyFile(source: Path, target: Path, replaceExisting: Boolean) {
         try {
-            if (path.toFile().exists()) {
-                Files.delete(path);
-            }
-        } catch (IOException e) {
-            Logger.w(TAG, "deleteFile(), Unable to delete file", e);
-        }
-    }
-
-    public static void copyFile(Path source, Path target, boolean replaceExisting) {
-
-
-        try {
-            // create parent directories if not exists
-            if (target.getParent() != null) {
-                Files.createDirectories(target.getParent());
-            }
-
+            target.parent?.let { Files.createDirectories(it) }
             if (replaceExisting) {
-                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
             } else {
-                Files.copy(source, target);
+                Files.copy(source, target)
             }
-        } catch (IOException e) {
-            Logger.e(TAG, "Error copying file: " + source + " to file: " + target + " Error: " + e.getMessage());
-            throw new IllegalArgumentException("Error copying file:  " + e.getMessage());
+        } catch (e: IOException) {
+            Logger.e(TAG, "Error copying file: $source to file: $target Error: ${e.message}")
+            throw IllegalArgumentException("Error copying file:  ${e.message}")
         }
     }
 
     /**
-     * Rename file quietly without throwing exception.
+     * Moves (renames) [source] to [target].
      *
-     * @param source          file to rename
-     * @param target          new name of file
-     * @param replaceExisting true if replace existing file
+     * @param replaceExisting overwrite [target] if it already exists
+     * @throws IllegalArgumentException on [IOException]
      */
-    public static void renameFileQuitly(Path source, Path target, boolean replaceExisting) {
+    fun renameFileQuitly(source: Path, target: Path, replaceExisting: Boolean) {
         try {
             if (replaceExisting) {
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING)
             } else {
-                Files.move(source, target);
+                Files.move(source, target)
             }
-        } catch (IOException e) {
-            Logger.e(TAG, "Error renaming file: " +source + " to file: "+target+" Error: "+ e.getMessage());
-            throw new IllegalArgumentException("Error renaming file:  "+ e.getMessage());
+        } catch (e: IOException) {
+            Logger.e(TAG, "Error renaming file: $source to file: $target Error: ${e.message}")
+            throw IllegalArgumentException("Error renaming file:  ${e.message}")
         }
     }
 
     /**
-     * Method change file extension. If file has no extension, new extension is added.
-     * The original path is not changed only extension is changed
+     * Changes the extension of [pathToFile]. If the file has no extension, [newExtension] is appended.
      *
-     * @param pathToFile   path to file to change extension
-     * @param newExtension new extension to set. Define extenstion also with dot (e.g. ".txt")
-     * @return
+     * @param newExtension new extension including the dot (e.g. `".txt"`)
      */
-    public static Path changeFileExtension(Path pathToFile, String newExtension) {
-
-        String fileName = pathToFile.getFileName().toString();
-        int lastDotIndex = fileName.lastIndexOf(".");
-        if (lastDotIndex != -1) {
-            // delete file extension
-            fileName = fileName.substring(0, lastDotIndex);
-        }
-        return pathToFile.getParent().resolve(fileName + newExtension);
+    fun changeFileExtension(pathToFile: Path, newExtension: String): Path {
+        val fileName = pathToFile.fileName.toString()
+        val dotIndex = fileName.lastIndexOf('.')
+        val baseName = if (dotIndex != -1) fileName.substring(0, dotIndex) else fileName
+        return pathToFile.parent.resolve(baseName + newExtension)
     }
 
     /**
-     * Generates the MD5 hash of the file at the given path.
+     * Generates the MD5 hash of the file at [pathToFile].
      *
-     * @param pathToFile the path to the file for which to generate the MD5 hash
-     * @return the MD5 hash as a hexadecimal string
-     * @throws RuntimeException if the file cannot be read or the MD5 algorithm is not available
+     * @return the MD5 hash as a lowercase hexadecimal string
+     * @throws RuntimeException if the file cannot be read or MD5 is unavailable
      */
-    public static String generateMD5hash(Path pathToFile) {
-        try (InputStream fis = Files.newInputStream(pathToFile)) {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] dataBytes = new byte[8192];
-            int nread;
-            // Read the file in chunks and update the digest
-            while ((nread = fis.read(dataBytes)) != -1) {
-                md.update(dataBytes, 0, nread);
-            }
-            // Convert the digest to a hexadecimal string
-            StringBuilder sb = new StringBuilder();
-            for (byte b : md.digest()) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (IOException e) {
-            Logger.w(TAG, "generateMD5hash()", e);
-            throw new RuntimeException("Unable to generate MD5 hash for file: " + pathToFile, e);
-        } catch (NoSuchAlgorithmException e) {
-            Logger.w(TAG, "generateMD5hash()", e);
-            throw new RuntimeException("MD5 algorithm not available", e);
-        }
-    }
-
-    /**
-     * Method unzip file to target directory
-     *
-     * @param zipFile         file to unzip
-     * @param targetDirectory directory to unzip file
-     * @throws IOException
-     */
-    public static void unzipFile(Path zipFile, Path targetDirectory) {
-        File targetDir = targetDirectory.toFile();
-
-        // Ensure the target directory exists
-        if (!targetDir.exists()) {
-            targetDir.mkdirs();
-        }
-
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile.toFile()))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                File newFile = new File(targetDir, entry.getName());
-
-                // Prevent Zip Slip vulnerability
-                String canonicalPath = newFile.getCanonicalPath();
-                if (!canonicalPath.startsWith(targetDir.getCanonicalPath())) {
-                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+    fun generateMD5hash(pathToFile: Path): String {
+        return try {
+            val md = MessageDigest.getInstance("MD5")
+            Files.newInputStream(pathToFile).use { fis ->
+                val buf = ByteArray(8192)
+                var nread: Int
+                while (fis.read(buf).also { nread = it } != -1) {
+                    md.update(buf, 0, nread)
                 }
-
-                if (entry.isDirectory()) {
-                    newFile.mkdirs();
-                } else {
-                    // Ensure parent directories exist
-                    new File(newFile.getParent()).mkdirs();
-                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
-                        byte[] buffer = new byte[1024];
-                        int length;
-                        while ((length = zis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, length);
-                        }
-                    }
-                }
-                zis.closeEntry();
             }
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Error occurred while unzipping file: " + e.getMessage());
+            md.digest().joinToString("") { "%02x".format(it) }
+        } catch (e: IOException) {
+            Logger.w(TAG, "generateMD5hash()", e)
+            throw RuntimeException("Unable to generate MD5 hash for file: $pathToFile", e)
         }
     }
 
-    public static void compressFile(String source, String target) throws IOException {
-        List<File> files = Arrays.asList(new File(source));
-        compressFiles(files, new File(target));
-    }
 
-
-    public static void compressFiles(List<File> files, File target) throws IOException {
-        ZipOutputStream zos = null;
-        try {
-            File parentFolder = target.getParentFile();
-            if (parentFolder != null) {
-                FileUtils.forceMkdir(target.getParentFile());
+    /**
+     * Compresses [files] into a single ZIP archive at [target] (maximum compression, level 9).
+     * Parent directories of [target] are created if missing.
+     * The last-modified timestamp of each source file is preserved in the ZIP entry.
+     *
+     * @throws IllegalArgumentException if any source file does not exist
+     */
+    @Throws(IOException::class)
+    fun compressFiles(files: List<File>, target: File) {
+        target.parentFile?.let { FileUtils.forceMkdir(it) }
+        ZipOutputStream(FileOutputStream(target)).use { zos ->
+            zos.setLevel(9)
+            for (file in files) {
+                require(file.exists()) { "File '$file' for compress does not exist" }
+                val entry = ZipEntry(file.name).apply { time = file.lastModified() }
+                zos.putNextEntry(entry)
+                FileUtils.copyFile(file, zos)
+                zos.closeEntry()
             }
-            zos = new ZipOutputStream(new FileOutputStream(target));
-            zos.setLevel(9);
-
-            // insert entry
-            for (File file : files){
-
-                // check file
-                if (!file.exists()) {
-                    throw new IllegalArgumentException(
-                            "Fie '" + file + "' for compress do not exists");
-                }
-
-                // write data
-
-                ZipEntry entry = new ZipEntry(file.getName());
-                // set the same last change value for entry as source file
-                entry.setTime(file.lastModified());
-                zos.putNextEntry(entry);
-                FileUtils.copyFile(file, zos);
-                zos.closeEntry();
-            }
-
-            // end packing
-            zos.flush();
-            IOUtils.closeQuietly(zos);
-        } finally {
-            IOUtils.closeQuietly(zos);
+            zos.flush()
         }
-    }
-
-    public static String formatBytesToHuman(double bytes) {
-        String[] units = {"B", "KB", "MB", "GB", "TB"};
-        // if is lower then zero
-        bytes = Math.max(bytes, 0);
-        int count = 0;
-        while (bytes >= 1024) {
-            bytes = bytes / 1024;
-            count++;
-        }
-        //bytes = Math.roun
-        return String.format("%.2f", bytes) + " " + units[count];
-    }
-
-    public static boolean isNumeric(String str) {
-        try {
-            double d = Double.parseDouble(str);
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean createEmptyFile(String path) {
-        File file = new File(path);
-        if (!file.exists()) {
-            try {
-                FileUtils.forceMkdir(file);
-                return file.createNewFile();
-            } catch (IOException ioe) {
-                throw new IllegalArgumentException("Error while creating a new empty file :" + ioe);
-            }
-
-        }
-        return false;
-    }
-
-    public static boolean createParentDirs(Path path) {
-        return createParentDirs(path.toString());
-    }
-
-    public static boolean createParentDirs(String path) {
-        File file = new File(path);
-        if (!file.exists()) {
-            try {
-                FileUtils.forceMkdir(file.getParentFile());
-            } catch (IOException ioe) {
-                throw new IllegalArgumentException("Error while creating directory structure :" + ioe);
-            }
-        }
-        return false;
     }
 
     /**
-     * Get file name without an extension
-     *
-     * @param path path to file to get name without an extension
-     * @return name of the file without extension or empty string if the file has no extension
+     * Formats [bytes] as a human-readable string with two decimal places (e.g. `"1.23 MB"`).
+     * Negative values are treated as 0.
      */
-    public static String getFileNamePart(Path path) {
-        String fileName = path.getFileName().toString();
-        int lastDotIndex = fileName.indexOf(".");
-        if (lastDotIndex != -1) {
-            // delete file extension
-            return fileName.substring(0, lastDotIndex);
+    fun formatBytesToHuman(bytes: Long): String {
+        val units = arrayOf("B", "KB", "MB", "GB", "TB")
+        var value = maxOf(bytes, 0L).toDouble()
+        var unit = 0
+        while (value >= 1024 && unit < units.lastIndex) {
+            value /= 1024
+            unit++
         }
-        return "";
+        return "%.2f %s".format(value, units[unit])
     }
 
-    /**
-     * Append custom string before an extension of file
-     *
-     * @param filePath path to file to rename
-     * @param text     custom string to append before an extension
-     * @return new path to file with appended text before an extension
-     */
-    public static Path appendBeforeExtension(Path filePath, String text) {
-        String fileName = filePath.getFileName().toString();
-        int dotIndex = fileName.indexOf('.');
-        if (dotIndex == -1) {
-            // if there is no extension append text to the end
-            return filePath.getParent().resolve(fileName + text);
-        }
-        String newFileName = fileName.substring(0, dotIndex) + text + fileName.substring(dotIndex);
-        return filePath.getParent().resolve(newFileName);
-    }
+    /** Returns `true` if [str] can be parsed as a [Double]. */
+    fun isNumeric(str: String): Boolean = str.toDoubleOrNull() != null
 
     /**
-     * Move file from source to target path
+     * Creates an empty file at [path], including any missing parent directories.
      *
-     * @param source          path to source file
-     * @param target          path to target file
-     * @param replaceExisting true if replace existing file
-     * @return true if file was moved successfully
+     * @return `true` if the file was created; `false` if it already existed
+     * @throws IllegalArgumentException on [IOException]
      */
-    public static boolean moveFile(Path source, Path target, boolean replaceExisting) {
+    fun createEmptyFile(path: String): Boolean {
+        val file = File(path)
+        if (file.exists()) return false
+        return try {
+            FileUtils.forceMkdir(file)
+            file.createNewFile()
+        } catch (e: IOException) {
+            throw IllegalArgumentException("Error while creating a new empty file: $e")
+        }
+    }
+
+    /** @see createParentDirs */
+    fun createParentDirs(path: Path): Boolean = createParentDirs(path.toString())
+
+    /**
+     * Ensures all parent directories of [path] exist, creating them if necessary.
+     * Does nothing if [path] already exists.
+     *
+     * @throws IllegalArgumentException on [IOException]
+     */
+    fun createParentDirs(path: String): Boolean {
+        val file = File(path)
+        if (file.exists()) return false
         try {
-            if (replaceExisting) {
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                Files.move(source, target);
-            }
-            return true;
-        } catch (IOException e) {
-            Logger.e(TAG, ("Error moving file: " + e.getMessage()));
-            return false;
+            FileUtils.forceMkdir(file.parentFile)
+        } catch (e: IOException) {
+            throw IllegalArgumentException("Error while creating directory structure: $e")
         }
+        return false
     }
 
-
-    public static boolean isSystemWindows() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("win");
+    /**
+     * Returns the file name without its extension, or an empty string if there is no extension.
+     */
+    fun getFileNamePart(path: Path): String {
+        val fileName = path.fileName.toString()
+        val dotIndex = fileName.indexOf('.')
+        return if (dotIndex != -1) fileName.substring(0, dotIndex) else ""
     }
 
-    public static boolean isSystemUnix() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("nix") || os.contains("nux");
-    }
-
-    public static String getHostname() throws UnknownHostException {
-        String hostname = null;
-        // try to guess value from operating system variable
-        if (isSystemUnix()) {
-            hostname = System.getenv("hostname");
-        }
-        if (isSystemWindows()) {
-            hostname = System.getenv("computername");
-        }
-        if (hostname != null) {
-            return hostname;
-        }
-        java.net.InetAddress addr = java.net.InetAddress.getLocalHost();
-        return addr.getHostName();
-    }
-
-    public static long getZipEntrySize(File file) throws ZipException, IOException {
-        ZipFile zipFile = new ZipFile(file);
-        Enumeration e = zipFile.entries();
-
-        long originalSize = 0;
-        while (e.hasMoreElements()) {
-            ZipEntry entry = (ZipEntry) e.nextElement();
-            originalSize += entry.getSize();
-        }
-
-        return originalSize;
-
-    }
-
-    public static String getEncoding(String data) {
-        // <?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
-        // <?xml version="1.0" encoding="UTF-8"?>
-        Pattern pat = Pattern.compile("<?xml version\\S+ encoding=\"(\\S+)\"");
-        Matcher mat = pat.matcher(data);
-        if (mat.find()) {
-            MatchResult mr = mat.toMatchResult();
-            return mr.group(1);
+    /**
+     * Inserts [text] before the extension of [filePath].
+     * If there is no extension, [text] is appended to the end.
+     */
+    fun appendBeforeExtension(filePath: Path, text: String): Path {
+        val fileName = filePath.fileName.toString()
+        val dotIndex = fileName.indexOf('.')
+        val newFileName = if (dotIndex == -1) {
+            fileName + text
         } else {
-            return "UTF-8";
+            fileName.substring(0, dotIndex) + text + fileName.substring(dotIndex)
         }
+        return filePath.parent.resolve(newFileName)
     }
 
     /**
-     * Write string into file
+     * Moves [source] to [target].
      *
-     * @param file   file to write text into
-     * @param text   text to write
-     * @param append true if append text in the end
+     * @param replaceExisting overwrite [target] if it already exists
+     * @return `true` on success; `false` on [IOException] (error is logged)
      */
-    public static void writeStringToFile(File file, String text, boolean append) {
-
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(file, append));
-            writer.write(text);
-        } catch (IOException e) {
-            System.err.println("writeStringToFile(), e:" + e);
-            e.printStackTrace();
-        } finally {
-            try {
-                if (writer != null)
-                    writer.close();
-            } catch (IOException e) {
-                System.err.println("writeStringToFile(), e:" + e);
-                e.printStackTrace();
+    fun moveFile(source: Path, target: Path, replaceExisting: Boolean): Boolean {
+        return try {
+            if (replaceExisting) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING)
+            } else {
+                Files.move(source, target)
             }
+            true
+        } catch (e: IOException) {
+            Logger.e(TAG, "Error moving file: ${e.message}")
+            false
+        }
+    }
+
+    /** Returns `true` when running on a Windows OS. */
+    fun isSystemWindows(): Boolean = System.getProperty("os.name").lowercase().contains("win")
+
+    /** Returns `true` when running on a Unix/Linux OS. */
+    fun isSystemUnix(): Boolean = System.getProperty("os.name").lowercase().let {
+        it.contains("nix") || it.contains("nux")
+    }
+
+    /**
+     * Returns the machine hostname.
+     * Tries the `hostname` / `computername` environment variables first,
+     * then falls back to [java.net.InetAddress.getLocalHost].
+     */
+    @Throws(UnknownHostException::class)
+    fun getHostname(): String {
+        val hostname = when {
+            isSystemUnix() -> System.getenv("hostname")
+            isSystemWindows() -> System.getenv("computername")
+            else -> null
+        }
+        return hostname ?: java.net.InetAddress.getLocalHost().hostName
+    }
+
+    /**
+     * Returns the total uncompressed size (in bytes) of all entries in the ZIP [file].
+     */
+    @Throws(ZipException::class, IOException::class)
+    fun getZipEntrySize(file: File): Long =
+        ZipFile(file).use { zip ->
+            zip.entries().asSequence().sumOf { it.size }
+        }
+
+    /**
+     * Extracts the XML encoding declaration from [data].
+     * Matches `<?xml version=... encoding="..."` and returns the encoding name,
+     * or `"UTF-8"` if no declaration is found.
+     */
+    fun getEncoding(data: String): String {
+        val mat = Pattern.compile("""<\?xml version\S+ encoding="(\S+)"""").matcher(data)
+        return if (mat.find()) mat.toMatchResult().group(1) else "UTF-8"
+    }
+
+    /**
+     * Writes [text] to [file], silently logging errors to stderr.
+     *
+     * @param append `true` to append to the file; `false` to overwrite
+     */
+    fun writeStringToFile(file: File, text: String, append: Boolean) {
+        try {
+            file.writer().use { it.write(text) }
+        } catch (e: IOException) {
+            System.err.println("writeStringToFile(), e: $e")
+            e.printStackTrace()
         }
     }
 
     /**
-     * Read file and get content as String. Be sure what you do because the memmory
-     *
-     * @param path     path to file to read its content
-     * @param encoding encoding of string in file
-     * @return *
+     * Reads the entire file at [path] and returns its content as a [String].
+     * Returns an empty string and logs to stderr on [IOException].
      */
-    public static String readFileToString(String path, Charset encoding) {
-        byte[] encoded = new byte[0];
+    fun readFileToString(path: String, encoding: Charset): String =
         try {
-            encoded = Files.readAllBytes(Paths.get(path));
-        } catch (IOException e) {
-            System.err.println("readFileToString(), e:" + e);
-            e.printStackTrace();
+            String(Files.readAllBytes(Paths.get(path)), encoding)
+        } catch (e: IOException) {
+            System.err.println("readFileToString(), e: $e")
+            e.printStackTrace()
+            ""
         }
-        return new String(encoded, encoding);
-    }
 
-    public static String getEnvVariable(String name) {
-        String value = System.getenv(name);
-        if (value == null) {
-            throw new IllegalArgumentException("Environment variable " + name + " is not set.");
-        }
-        return value;
-    }
+    /**
+     * Returns the value of environment variable [name].
+     *
+     * @throws IllegalArgumentException if the variable is not set
+     */
+    fun getEnvVariable(name: String): String =
+        System.getenv(name) ?: throw IllegalArgumentException("Environment variable $name is not set.")
 }

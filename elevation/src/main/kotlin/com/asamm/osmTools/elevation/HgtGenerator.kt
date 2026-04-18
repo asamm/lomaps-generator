@@ -1,6 +1,7 @@
 package com.asamm.osmTools.elevation
 
-import com.asamm.osmTools.config.HgtResampling
+import com.asamm.osmTools.config.TerrainResampling
+import com.asamm.osmTools.utils.MercatorUtils
 import com.asamm.pmtiles.Compression
 import com.asamm.pmtiles.MmapPmTilesReader
 import kotlinx.coroutines.*
@@ -90,7 +91,7 @@ object HgtGenerator {
      * @param input       Source terrain-RGB PMTiles file.
      * @param outputDir   Directory where HGT files will be written (created if absent).
      * @param encoding    How the source tiles encode elevation in RGB pixels.
-     * @param resampling  Interpolation method: [HgtResampling.BILINEAR] (2×2) or [HgtResampling.BICUBIC] (4×4).
+     * @param resampling  Interpolation method: [TerrainResampling.BILINEAR] (2×2) or [TerrainResampling.BICUBIC] (4×4).
      * @param concurrency Max number of cells processed concurrently (default: CPU cores).
      * @param listener    Optional progress callback (exponential backoff: 10 s → 5 min).
      * @return Generation summary.
@@ -99,7 +100,7 @@ object HgtGenerator {
         input: Path,
         outputDir: Path,
         encoding: TerrainRgbCodec.Encoding = TerrainRgbCodec.Encoding.TERRARIUM,
-        resampling: HgtResampling = HgtResampling.BILINEAR,
+        resampling: TerrainResampling = TerrainResampling.BILINEAR,
         concurrency: Int = Runtime.getRuntime().availableProcessors(),
         listener: ProgressListener? = null,
     ): GenerateResult {
@@ -205,7 +206,7 @@ object HgtGenerator {
         zoom: Int,
         gridSize: Int,
         encoding: TerrainRgbCodec.Encoding,
-        resampling: HgtResampling,
+        resampling: TerrainResampling,
         reader: MmapPmTilesReader,
         isGzip: Boolean,
     ): ShortArray? {
@@ -240,8 +241,10 @@ object HgtGenerator {
 
                 // Interpolate elevation from source pixels using the configured method
                 val elevation = when (resampling) {
-                    HgtResampling.BILINEAR -> sampleBilinear(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip)
-                    HgtResampling.BICUBIC -> sampleBicubic(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip)
+                    TerrainResampling.NEAREST -> sampleNearest(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip)
+                    TerrainResampling.BILINEAR -> sampleBilinear(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip)
+                    TerrainResampling.BICUBIC -> sampleBicubic(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip)
+                    TerrainResampling.LANCZOS -> sampleBicubic(tileXf, tileYf, zoom, tileCache, reader, encoding, isGzip) // Lanczos not implemented for tile source; falls back to bicubic
                 }
 
                 if (!elevation.isNaN()) {
@@ -271,6 +274,26 @@ object HgtGenerator {
     ): TerrainRgbCodec.DecodedTile? {
         val raw = reader.getTile(zoom, tileX, tileY) ?: return null
         return TerrainRgbCodec.decodeTileToElevations(raw, encoding, isGzip)
+    }
+
+    // ── Nearest-neighbor sampling ────────────────────────────────────────────
+
+    /**
+     * Samples elevation at the nearest pixel (no interpolation).
+     */
+    private fun sampleNearest(
+        tileXf: Double, tileYf: Double,
+        zoom: Int,
+        cache: HashMap<Long, TerrainRgbCodec.DecodedTile>,
+        reader: MmapPmTilesReader,
+        encoding: TerrainRgbCodec.Encoding,
+        isGzip: Boolean,
+    ): Float {
+        val tileX = tileXf.toInt()
+        val tileY = tileYf.toInt()
+        val px = ((tileXf - tileX) * TILE_SIZE).roundToInt().coerceIn(0, TILE_SIZE - 1)
+        val py = ((tileYf - tileY) * TILE_SIZE).roundToInt().coerceIn(0, TILE_SIZE - 1)
+        return getElevationAt(tileX, tileY, px, py, zoom, cache, reader, encoding, isGzip)
     }
 
     // ── Bilinear interpolation ───────────────────────────────────────────────
@@ -430,16 +453,9 @@ object HgtGenerator {
     /** Packs two tile indices into a single Long key for the cache HashMap. */
     private fun packXY(x: Int, y: Int): Long = (x.toLong() shl 32) or (y.toLong() and 0xFFFFFFFFL)
 
-    // ── Coordinate conversion (WGS84 ↔ Web Mercator tiles) ──────────────────
+    private fun lonToTileX(lon: Double, zoom: Int): Double = MercatorUtils.lonToTileXExact(lon, zoom)
 
-    private fun lonToTileX(lon: Double, zoom: Int): Double {
-        return (lon + 180.0) / 360.0 * (1 shl zoom)
-    }
-
-    private fun latToTileY(lat: Double, zoom: Int): Double {
-        val latRad = Math.toRadians(lat)
-        return (1.0 - ln(tan(latRad) + 1.0 / cos(latRad)) / PI) / 2.0 * (1 shl zoom)
-    }
+    private fun latToTileY(lat: Double, zoom: Int): Double = MercatorUtils.latToTileYExact(lat, zoom)
 
     // ── HGT file I/O ────────────────────────────────────────────────────────
 
