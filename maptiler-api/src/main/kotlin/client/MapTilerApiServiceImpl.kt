@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import retrofit2.Retrofit
 
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 object MapTilerClient {
 
     private const val BASE_URL = "https://service.maptiler.com/v1/"

@@ -23,9 +23,11 @@ object Utils {
     private const val TAG = "Utils"
 
     /** Returns `true` when the `ENV` environment variable is set to `"DEV"`. */
+    @JvmStatic
     fun isLocalDEV(): Boolean = System.getenv("ENV") == "DEV"
 
     /** Normalises path separators in [name] to the platform separator ([Consts.FILE_SEP]). */
+    @JvmStatic
     fun changeSlash(name: String): String = when {
         name.contains("/") -> name.replace("/", Consts.FILE_SEP)
         name.contains("\\") -> name.replace("\\", Consts.FILE_SEP)
@@ -50,6 +52,7 @@ object Utils {
      * Deletes all **files** (non-recursive) inside [pathToDir].
      * Sub-directories are left in place. Logs a warning if the path does not exist.
      */
+    @JvmStatic
     fun deleteFilesInDir(pathToDir: Path) {
         val dir = pathToDir.toFile()
         if (!dir.exists() || !dir.isDirectory) {
@@ -94,6 +97,7 @@ object Utils {
      * @param replaceExisting overwrite [target] if it already exists
      * @throws IllegalArgumentException on [IOException]
      */
+    @JvmStatic
     fun copyFile(source: Path, target: Path, replaceExisting: Boolean) {
         try {
             target.parent?.let { Files.createDirectories(it) }
@@ -132,6 +136,7 @@ object Utils {
      *
      * @param newExtension new extension including the dot (e.g. `".txt"`)
      */
+    @JvmStatic
     fun changeFileExtension(pathToFile: Path, newExtension: String): Path {
         val fileName = pathToFile.fileName.toString()
         val dotIndex = fileName.lastIndexOf('.')
@@ -202,6 +207,7 @@ object Utils {
     }
 
     /** Returns `true` if [str] can be parsed as a [Double]. */
+    @JvmStatic
     fun isNumeric(str: String): Boolean = str.toDoubleOrNull() != null
 
     /**
@@ -222,6 +228,7 @@ object Utils {
     }
 
     /** @see createParentDirs */
+    @JvmStatic
     fun createParentDirs(path: Path): Boolean = createParentDirs(path.toString())
 
     /**
@@ -322,6 +329,7 @@ object Utils {
      * Matches `<?xml version=... encoding="..."` and returns the encoding name,
      * or `"UTF-8"` if no declaration is found.
      */
+    @JvmStatic
     fun getEncoding(data: String): String {
         val mat = Pattern.compile("""<\?xml version\S+ encoding="(\S+)"""").matcher(data)
         return if (mat.find()) mat.toMatchResult().group(1) else "UTF-8"
@@ -332,6 +340,7 @@ object Utils {
      *
      * @param append `true` to append to the file; `false` to overwrite
      */
+    @JvmStatic
     fun writeStringToFile(file: File, text: String, append: Boolean) {
         try {
             file.writer().use { it.write(text) }
@@ -345,6 +354,7 @@ object Utils {
      * Reads the entire file at [path] and returns its content as a [String].
      * Returns an empty string and logs to stderr on [IOException].
      */
+    @JvmStatic
     fun readFileToString(path: String, encoding: Charset): String =
         try {
             String(Files.readAllBytes(Paths.get(path)), encoding)
