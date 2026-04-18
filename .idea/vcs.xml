@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/_work/_temp/label_centerlines" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/_work/_temp/planetiler" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/_work/_temp/planetiler/planetiler-openmaptiles" vcs="Git" />
-  </component>
-</project>
