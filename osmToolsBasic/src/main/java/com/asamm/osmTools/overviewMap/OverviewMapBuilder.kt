@@ -1,6 +1,5 @@
 package com.asamm.osmTools.overviewMap
 
-import com.asamm.osmTools.cmdCommands.CmdGenerate
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.overviewMap.centerline.CenterlineExtractor
 import com.asamm.osmTools.overviewMap.reader.GpkgFeatureReader
@@ -24,7 +23,10 @@ class OverviewMapBuilder {
         private const val TAG = "OverviewMapBuilder"
     }
 
-    fun build() {
+    /**
+     * Generate OSM PBF file with simplified data from low zooms that are used fro merging with original OSM planet file
+     */
+    fun buildOverviewOsmPbf() {
         val cfg = AppConfig.config.overviewMapConfig
 
         if (cfg.outputPbf.exists() && !AppConfig.config.overwrite) {
@@ -92,10 +94,6 @@ class OverviewMapBuilder {
         // 4. Clean up extracted directories; ZIPs are kept for future runs
         // TODO uncomment
         //OverviewDataDownloader.deleteExtractedData(cfg)
-
-        // Generate mapsforge map
-        Logger.i(TAG, "Generating overview mapsforge map: ${cfg.outputPbf}")
-        //CmdGenerate.forOverviewMap().execute(2, true)
 
         Logger.i(TAG, "================ OVERVIEW MAP DATA COMPLETE ================")
     }

@@ -2,10 +2,7 @@ package com.asamm.osmTools.overviewMap
 
 /**
  * A minimal, library-agnostic interface for accessing feature attributes by name.
- *
- * Used by [LayerDefinition] filter and attribute-mapper functions so that they remain
- * independent of the specific reading library (GeoTools [SimpleFeature] for SHP files,
- * or [mil.nga.geopackage.features.user.FeatureRow] for GeoPackage files).
+ * This allows the layer definitions to be decoupled from the underlying data reading implementation
  */
 fun interface FeatureAttributes {
     /** Returns the value of the named attribute, or `null` if it does not exist. */
@@ -135,7 +132,7 @@ object OverviewMapLayers {
 //        toCenterLine = true,
 //    )
 
-    // REGION CENTER NAMES
+    // REGION LINE NAMES
 
     private val ne110mRegionsCenterLines = LayerDefinition(
         layerName = "ne_110m_geography_regions_polys",
@@ -303,7 +300,7 @@ object OverviewMapLayers {
             popMax > 50_000 -> "town"
             else -> "village"
         }
-        put("place", placeType)
+        put("ne_place", placeType)
 
         if (popMax > 0) {
             put("population", popMax.toString())
@@ -328,7 +325,7 @@ object OverviewMapLayers {
     private val ecoregions2017 = LayerDefinition(
         layerName = "wwf_terr_ecos_dissolved",
         source = DataSource.ECOREGIONS_SHP,
-        minZoom = 0, maxZoom = 9,
+        minZoom = 0, maxZoom = 6,
         attributeMapper = ::ecoregionsMapper,
     )
 
@@ -400,23 +397,24 @@ object OverviewMapLayers {
         // Geography region center lines
         ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
         // Lakes
-//        ne110mLakes, ne50mLakes, ne10mLakes,
-//        // Country boundaries
-//        ne110mBoundary, ne50mBoundary, ne10mBoundary,
-//        // State boundaries
-//        ne10mStateBoundary,
-//        // Rivers
-//        ne110mRivers, ne50mRivers,
-//        // Glaciated areas
-//        ne50mGlaciers, ne10mGlaciers,
-//        // Urban areas
-//        ne50mUrban,
-//        // Populated places
-//        ne10mPopulatedPlaces,
-//        // Base map SHP
-//        // Roads
-//        bmRoadFerries,
-//        // Railroads
-//        bmRailroads,
+        ne50mLakes, ne10mLakes,
+        // Country boundaries
+        ne110mBoundary, ne50mBoundary, ne10mBoundary,
+        // State boundaries
+        ne10mStateBoundary,
+        // Rivers
+        ne110mRivers, ne50mRivers,
+        // Glaciated areas
+        ne50mGlaciers, ne10mGlaciers,
+        // Urban areas
+        ne50mUrban,
+        // Populated places
+        ne10mPopulatedPlaces,
+
+        // Base map SHP
+        // Roads
+        bmRoadFerries,
+        // Railroads
+        bmRailroads,
     )
 }

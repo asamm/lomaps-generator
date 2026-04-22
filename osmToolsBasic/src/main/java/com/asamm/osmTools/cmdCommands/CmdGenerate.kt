@@ -3,8 +3,10 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
+import com.asamm.osmTools.utils.MercatorUtils
 import java.nio.file.Path
 import java.util.Locale
+import kotlin.io.path.absolute
 
 class CmdGenerate private constructor(
     private val inputPbf: Path,
@@ -97,9 +99,9 @@ class CmdGenerate private constructor(
 
         /**
          * Creates a [CmdGenerate] configured to generate the global overview .map file
-         * from the Natural Earth PBF produced by [OverviewMapBuilder].
+         * from the Natural Earth PBF produced by [com.asamm.osmTools.overviewMap.OverviewMapBuilder].
          *
-         * Output path is derived from [OverviewMapConfig.outputPbf] by replacing the
+         * Output path is derived from [com.asamm.osmTools.config.OverviewMapConfig.outputPbf] by replacing the
          * `.osm.pbf` extension with `.osm.map` in the same directory.
          *
          * Two zoom intervals are used:
@@ -110,13 +112,13 @@ class CmdGenerate private constructor(
         fun forOverviewMap(): CmdGenerate {
             val cfg = AppConfig.config.overviewMapConfig
             require(cfg.outputPbf.toFile().exists()) {
-                "Natural Earth PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
+                "Overview PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
             }
             val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map"))
             return CmdGenerate(
-                inputPbf = cfg.outputPbf,
+                inputPbf = cfg.outputPbf.absolute(),
                 outputMap = outputMap,
-                bbox = "-90.0,-180.0,90.0,180.0",
+                bbox = "${- MercatorUtils.WEB_MERCATOR_MAX_LAT},-180.0,${MercatorUtils.WEB_MERCATOR_MAX_LAT},180.0",
                 type = "hd",
                 prefLang = null,
                 zoomInterval = "3,0,4,8,5,9",

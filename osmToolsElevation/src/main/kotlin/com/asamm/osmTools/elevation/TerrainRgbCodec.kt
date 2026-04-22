@@ -214,7 +214,7 @@ object TerrainRgbCodec {
     // ── Raw pixel access ───────────────────────────────────────────────────
 
     /**
-     * Reads raw ARGB pixels directly from the image's [DataBuffer], bypassing
+     * Reads raw ARGB pixels directly from the image's bypassing
      * [BufferedImage.getRGB] which may apply sRGB color-space conversion via
      * [java.awt.image.ColorModel.getRGB].
      *

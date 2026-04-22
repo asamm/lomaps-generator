@@ -11,8 +11,6 @@ import java.util.zip.GZIPInputStream
 /**
  * Reads tiles and metadata from a PMTiles v3 archive.
  *
- * The [source] function provides random-access byte reads:
- * `source(offset, length)` returns exactly [length] bytes starting at [offset].
  *
  * The root directory is parsed once and cached; subsequent [getTileById] calls
  * perform only leaf-directory reads on cache misses.
@@ -216,7 +214,7 @@ class FileChannelPmTilesReader(path: Path) : AutoCloseable {
 
     private val reader = PmTilesReader(sourceFunc)
 
-    /** Raw byte-level access: `source(offset, length)` returns [length] bytes at [offset]. */
+    /** Raw byte-level access: `source(offset, length)`  */
     val source: (Long, Int) -> ByteArray get() = sourceFunc
 
     val header: PmTilesHeader get() = reader.header

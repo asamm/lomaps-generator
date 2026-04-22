@@ -100,9 +100,9 @@ class ElevationPlanetBuilder {
     /**
      * Convert the prepared terrain RGB planet file into HGT elevation files.
      *
-     * Reads the most detailed zoom level from [TerrainRgbConfig.planetFile],
+     * Reads the most detailed zoom level from [com.asamm.osmTools.config.TerrainRgbConfig.planetFile],
      * reprojects from Web Mercator to WGS84 grid, and writes one HGT file
-     * per 1°×1° cell into [TerrainRgbConfig.hgtOutputDir].
+     * per 1°×1° cell into [com.asamm.osmTools.config.TerrainRgbConfig.hgtOutputDir].
      *
      * Resolution is determined by the source max zoom:
      * - zoom ≤ 11 → SRTM-3 (3 arc-second, 1201×1201)

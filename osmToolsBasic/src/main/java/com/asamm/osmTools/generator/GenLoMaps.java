@@ -7,6 +7,7 @@ import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.compress.MapCompress;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
+import com.asamm.osmTools.config.OverviewMapConfig;
 import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
@@ -16,6 +17,7 @@ import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
+import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
 import com.asamm.osmTools.sea.LandArea;
 import com.asamm.osmTools.utils.S3Client;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
@@ -77,7 +79,10 @@ public class GenLoMaps extends AGenerator {
         for (Action action : actionList) {
 
             // skip Contour and Tourist action, because they are processed on planet level
-            if (action == Action.CONTOUR || action == Action.TOURIST || action == Action.GENERATE_PMTILES_ONLINE) {
+            if (action == Action.CONTOUR
+                    || action == Action.TOURIST
+                    || action == Action.GENERATE_PMTILES_ONLINE
+                    || action == Action.OVERVIEW_MAP) {
                 continue;
             }
 
@@ -142,6 +147,11 @@ public class GenLoMaps extends AGenerator {
                     break;
                 case CONTOUR:
                     actionContour(mapPlanet);
+                    break;
+
+                case OVERVIEW_MAP:
+                    OverviewMapBuilder overviewMapBuilder = new OverviewMapBuilder();
+                    overviewMapBuilder.buildOverviewOsmPbf();
                     break;
             }
         }
@@ -459,6 +469,17 @@ public class GenLoMaps extends AGenerator {
             }
         }
 
+        // merge overview map (with data for low zooms)
+        if (map.hasAction(Action.OVERVIEW_MAP)) {
+
+            OverviewMapConfig cfg = AppConfig.config.getOverviewMapConfig();
+            if (!cfg.getOutputPbf().toAbsolutePath().toFile().exists()) {
+                throw new IllegalStateException("Overview PBF not found: " + cfg.getOutputPbf() + ". " +
+                        "Run the overview map build step first.");
+            }
+            pathsToMerge.add(cfg.getOutputPbf().toAbsolutePath());
+        }
+
         // merge
         Utils.createParentDirs(map.getPathSource());
         CmdOsmium cmdOsmium = new CmdOsmium();
@@ -667,7 +688,11 @@ public class GenLoMaps extends AGenerator {
                 }
 
                 s3Client.uploadFile(
-                        itemMap.getPathGenPmtilesOnline().toFile(), s3key);
+                        itemMap.getPathGenPmtilesOnline().toFile(),
+                        s3key,
+                        2,
+                        20_000L
+                        );
             }
 
         }

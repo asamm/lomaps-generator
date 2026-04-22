@@ -69,11 +69,14 @@ class S3Client(
 
     /**
      * Uploads [file] to S3 under the given [s3Key] (defaults to the file name).
+     * Retries up to [maxAttempts] times on transient failures, waiting [retryDelayMs] ms between attempts.
      *
      * @throws software.amazon.awssdk.services.s3.model.S3Exception on S3 errors
      */
-    fun uploadFile(file: File, s3Key: String = file.name) {
+    fun uploadFile(file: File, s3Key: String = file.name, maxAttempts: Int = 2, retryDelayMs: Long = 30_000L) {
+
         require(file.exists() && file.isFile) { "Not a valid file: ${file.absolutePath}" }
+        require(maxAttempts >= 1) { "maxAttempts must be at least 1" }
 
         val request = PutObjectRequest.builder()
             .bucket(bucketName)
@@ -81,26 +84,40 @@ class S3Client(
             .build()
 
         Logger.i(TAG, "S3Client: uploading '${file.name}' (${file.length()} bytes) → s3://$bucketName/$s3Key")
-        Logger.i(TAG, "S3Client: endpoint=${ asyncClient.serviceClientConfiguration().endpointOverride().orElse(null) }, region=${asyncClient.serviceClientConfiguration().region()}")
+        Logger.i(TAG, "S3Client: " +
+                "endpoint=${ asyncClient.serviceClientConfiguration().endpointOverride().orElse(null) }, " +
+                "region=${asyncClient.serviceClientConfiguration().region()}")
 
-        try {
-            val upload = transferManager.uploadFile(
-                UploadFileRequest.builder()
-                    .putObjectRequest(request)
-                    .source(file.toPath())
-                    .addTransferListener(ProgressTransferListener.create())
-                    .build()
-            )
-
-            val result = upload.completionFuture().join()
-            Logger.i(TAG, "S3Client: upload complete, ETag: ${result.response().eTag()}")
-        } catch (e: java.util.concurrent.CompletionException) {
-            val cause = e.cause
-            if (cause is software.amazon.awssdk.services.s3.model.S3Exception) {
-                Logger.e(TAG, "S3 error: statusCode=${cause.statusCode()}, code=${cause.awsErrorDetails()?.errorCode()}, message=${cause.awsErrorDetails()?.errorMessage()}, requestId=${cause.requestId()}")
+        var lastException: Exception? = null
+        for (attempt in 1..maxAttempts) {
+            if (attempt > 1) {
+                Logger.i(TAG, "S3Client: retrying upload (attempt $attempt/$maxAttempts) after ${retryDelayMs}ms delay…")
+                Thread.sleep(retryDelayMs)
             }
-            throw e
+            try {
+                val upload = transferManager.uploadFile(
+                    UploadFileRequest.builder()
+                        .putObjectRequest(request)
+                        .source(file.toPath())
+                        .addTransferListener(ProgressTransferListener.create())
+                        .build()
+                )
+
+                val result = upload.completionFuture().join()
+                Logger.i(TAG, "S3Client: upload complete, ETag: ${result.response().eTag()}")
+                return
+            } catch (e: java.util.concurrent.CompletionException) {
+                val cause = e.cause
+                if (cause is software.amazon.awssdk.services.s3.model.S3Exception) {
+                    Logger.e(TAG, "S3 error: statusCode=${cause.statusCode()}, " +
+                            "code=${cause.awsErrorDetails()?.errorCode()}, " +
+                            "message=${cause.awsErrorDetails()?.errorMessage()}")
+                }
+                Logger.e(TAG, "S3Client: upload attempt $attempt/$maxAttempts failed: ${e.cause?.message ?: e.message}")
+                lastException = e
+            }
         }
+        throw lastException!!
     }
 
     override fun close() {

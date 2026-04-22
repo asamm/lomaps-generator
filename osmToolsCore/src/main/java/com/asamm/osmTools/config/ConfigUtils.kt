@@ -17,7 +17,7 @@ object ConfigUtils {
         for (index in cliActions.size - 1 downTo 0) {
             when (cliActions[index]) {
                 Action.GENERATE_MAPSFORGE -> {
-                    cliActions.addAll(index, listOf(Action.EXTRACT, Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
+                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.EXTRACT, Action.COASTLINE, Action.TRANSFORM, Action.MERGE))
                     if (!cliActions.contains(Action.POI_DB_V2)) {
                         cliActions.addAll(index, listOf(Action.POI_DB_V2))
                     }
@@ -25,8 +25,12 @@ object ConfigUtils {
 
                 Action.GENERATE_MBTILES -> {
                     if (!Utils.isLocalDEV() && !cliActions.contains(Action.POI_DB_V2)) {
-                        cliActions.addAll(index, listOf(Action.POI_DB_V2))
+                        cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.POI_DB_V2))
                     }
+                }
+
+                Action.GENERATE_MBTILES_ONLINE, Action.GENERATE_PMTILES_ONLINE -> {
+                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP))
                 }
 
                 Action.UPLOAD -> {

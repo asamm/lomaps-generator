@@ -4,10 +4,8 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.OutputStream
 import java.nio.channels.Channels
 import java.nio.file.Path
-import java.util.zip.GZIPOutputStream
 
 /**
  * Re-clusters an existing PMTiles archive so that tile data is stored in
@@ -143,7 +141,14 @@ object PmTilesCluster {
                                             last.runLength + entry.runLength
                                         )
                                     } else {
-                                        entries.add(Entry(entry.tileId, existing.offset, existing.length, entry.runLength))
+                                        entries.add(
+                                            Entry(
+                                                entry.tileId,
+                                                existing.offset,
+                                                existing.length,
+                                                entry.runLength
+                                            )
+                                        )
                                     }
                                 } else {
                                     entries.add(Entry(entry.tileId, existing.offset, existing.length, entry.runLength))

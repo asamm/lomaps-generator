@@ -199,7 +199,10 @@ class OverviewMapCommand : CliktCommand(
             "for simplified global map (zoom 0-9)"
 ) {
     override fun run() {
-        OverviewMapBuilder().build()
+        OverviewMapBuilder().buildOverviewOsmPbf()
+
+        // TODO generate standalone .map file for overview map (without upload to Locus Store)
+        //CmdGenerate.forOverviewMap().execute(2, true)
     }
 }
 

@@ -15,6 +15,8 @@ enum class Action {
 
     CONTOUR("contour", true),
 
+    OVERVIEW_MAP("overview_map"),
+
     MERGE("merge"),
 
     GENERATE_MBTILES_ONLINE("generate_mbtiles_online", true),

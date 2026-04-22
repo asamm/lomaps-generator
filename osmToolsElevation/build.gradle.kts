@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     implementation(project(":osmToolsCore"))
-    implementation(project(":pmtiles"))
+    implementation(project(":osmToolsPmtiles"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 

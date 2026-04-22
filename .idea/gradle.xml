@@ -9,12 +9,12 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/elevation" />
             <option value="$PROJECT_DIR$/maptiler-api" />
             <option value="$PROJECT_DIR$/osmToolsBasic" />
             <option value="$PROJECT_DIR$/osmToolsCore" />
             <option value="$PROJECT_DIR$/osmToolsDataWriter" />
-            <option value="$PROJECT_DIR$/pmtiles" />
+            <option value="$PROJECT_DIR$/osmToolsElevation" />
+            <option value="$PROJECT_DIR$/osmToolsPmtiles" />
           </set>
         </option>
       </GradleProjectSettings>

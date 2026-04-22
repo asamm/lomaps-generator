@@ -39,7 +39,7 @@ dependencies {
     implementation(project(":osmToolsCore"))
     implementation(project(":osmToolsDataWriter"))
     implementation(project(":maptiler-api"))
-    implementation(project(":elevation"))
+    implementation(project(":osmToolsElevation"))
     // GeoTools for reading SHP and CRS handling (Natural Earth / overview map)
     implementation("org.geotools:gt-shapefile:33.2") {
         exclude group: "javax.media", module: "jai_core"

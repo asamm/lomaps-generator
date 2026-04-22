@@ -54,7 +54,8 @@ object MapterhornDownloader {
     // --- internal helpers ---
 
     /**
-     * Downloads and parses the Mapterhorn index, then returns the entry for [PLANET_ENTRY_NAME].
+     * Downloads and parses the Mapterhorn index, then returns the entry for planet id defined in
+     * [AppConfig.config.terrainRgbConfig.mapterhornPlanetEntryName].
      *
      * @throws IOException If the index cannot be fetched or the planet entry is absent.
      */
