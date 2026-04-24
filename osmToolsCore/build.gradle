@@ -14,11 +14,11 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
 
-    // AWS S3 SDK
-    implementation(platform("software.amazon.awssdk:bom:2.42.4"))
+    // AWS S3 SDK — standard (Netty) async client + TransferManager for multipart uploads.
+    implementation(platform("software.amazon.awssdk:bom:2.42.37"))
     implementation("software.amazon.awssdk:s3")
-    implementation("software.amazon.awssdk:s3-transfer-manager:2.42.4")
-    implementation("software.amazon.awssdk:aws-crt-client:2.42.4")
+    implementation("software.amazon.awssdk:s3-transfer-manager")
+    implementation("software.amazon.awssdk:netty-nio-client")
 
     // for reading YAML configuration file
     implementation("com.charleskorn.kaml:kaml:0.66.0")

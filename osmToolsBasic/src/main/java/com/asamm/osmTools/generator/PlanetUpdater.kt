@@ -10,6 +10,15 @@ import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 
+/**
+ * PlanetUpdater is responsible for managing the update process of the OSM planet file used in the application.
+ * <p>
+ * It checks the age of the current planet file and decides whether to download a new version or update it incrementally.
+ * - If the file is older than one month, it downloads a fresh planet file from the configured URL.
+ * - If the file is older than one day, it performs an OSM update using the latest changes.
+ * <p>
+ * The class uses python lomaps-tools script for incremental updates
+ */
 class PlanetUpdater {
 
     private val TAG: String = PlanetUpdater::class.java.getSimpleName()

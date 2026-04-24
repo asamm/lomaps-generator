@@ -7,6 +7,7 @@ import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.compress.MapCompress;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
+import com.asamm.osmTools.config.OnlineLoMapsConfig;
 import com.asamm.osmTools.config.OverviewMapConfig;
 import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
@@ -19,6 +20,7 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
 import com.asamm.osmTools.sea.LandArea;
+import com.asamm.osmTools.utils.OnlinePlanetVersionsManager;
 import com.asamm.osmTools.utils.S3Client;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.Logger;
@@ -680,19 +682,19 @@ public class GenLoMaps extends AGenerator {
             Logger.i(TAG, "Prepare for upload to S3, PMTiles file: " + itemMap.getPathGenPmtilesOnline());
             try (S3Client s3Client = S3Client.Companion.fromAppConfig()) {
 
-                String s3key = AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPath() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString();
+                OnlineLoMapsConfig cfg = AppConfig.config.getOnlineLoMapsConfig();
+                boolean isDev = Utils.isLocalDEV();
+                String latestPrefix = isDev ? cfg.getS3pmtilesPathDev() : cfg.getS3pmtilesPath();
+                String versionsPrefix = isDev ? cfg.getS3pmtilesVersionsPathDev() : cfg.getS3pmtilesVersionsPath();
 
-                // if DEV env replace path with DEV path
-                if (Utils.isLocalDEV()) {
-                    s3key = AppConfig.config.getOnlineLoMapsConfig().getS3pmtilesPathDev() + "/" + itemMap.getPathGenPmtilesOnline().getFileName().toString();
-                }
-
-                s3Client.uploadFile(
+                OnlinePlanetVersionsManager versionsManager = new OnlinePlanetVersionsManager(
+                        s3Client, versionsPrefix, latestPrefix, cfg.getS3pmtilesVersionsKeep()
+                );
+                versionsManager.publish(
                         itemMap.getPathGenPmtilesOnline().toFile(),
-                        s3key,
-                        2,
-                        20_000L
-                        );
+                        AppConfig.config.getVersion(),
+                        itemMap.getPathGenPmtilesOnline().getFileName().toString()
+                );
             }
 
         }
