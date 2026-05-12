@@ -114,14 +114,15 @@ class CmdGenerate private constructor(
             require(cfg.outputPbf.toFile().exists()) {
                 "Overview PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
             }
-            val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map"))
+            val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map")).absolute()
             return CmdGenerate(
                 inputPbf = cfg.outputPbf.absolute(),
                 outputMap = outputMap,
-                bbox = "${- MercatorUtils.WEB_MERCATOR_MAX_LAT},-180.0,${MercatorUtils.WEB_MERCATOR_MAX_LAT},180.0",
-                type = "hd",
+                bbox = "${- MercatorUtils.WEB_MERCATOR_MAX_LAT + 10},-179.9,${MercatorUtils.WEB_MERCATOR_MAX_LAT-10},179.9",
+                type = "ram",
                 prefLang = null,
-                zoomInterval = "3,0,4,8,5,9",
+                zoomInterval = "3,1,4,8,5,9",
+                //zoomInterval = "3,1,4",
             )
         }
     }

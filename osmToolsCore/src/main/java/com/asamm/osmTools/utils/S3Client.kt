@@ -75,8 +75,8 @@ class S3Client(
         .multipartEnabled(true)
         .multipartConfiguration(
             MultipartConfiguration.builder()
-                .minimumPartSizeInBytes(64 * 1024 * 1024L) // 64 MB per part
-                .thresholdInBytes(64 * 1024 * 1024L)       // switch to multipart above 64 MB
+                .minimumPartSizeInBytes(256 * 1024 * 1024L) // 256 MB per part 
+                .thresholdInBytes(64 * 1024 * 1024L)         // switch to multipart above 64 MB
                 .build()
         )
         .httpClientBuilder(
@@ -86,6 +86,10 @@ class S3Client(
                 // CompleteMultipartUpload stitch on DO Spaces for very large objects can take minutes.
                 .readTimeout(Duration.ofMinutes(10))
                 .writeTimeout(Duration.ofMinutes(10))
+                // Server-side multipart copy queues one UploadPartCopy per part. With hundreds
+                // of parts and maxConcurrency=100, queued requests can sit far longer than the
+                // 10 s SDK default before getting a connection.
+                .connectionAcquisitionTimeout(Duration.ofMinutes(5))
         )
         .overrideConfiguration(
             ClientOverrideConfiguration.builder()
@@ -132,7 +136,7 @@ class S3Client(
                     UploadFileRequest.builder()
                         .putObjectRequest(request)
                         .source(file.toPath())
-                        .addTransferListener(ProgressTransferListener.create("upload"))
+                        .addTransferListener(ProgressTransferListener())
                         .build()
                 )
 
@@ -157,8 +161,7 @@ class S3Client(
      * Server-side copy within the configured bucket from [sourceKey] to [destKey].
      *
      * For objects larger than 5 GB [S3TransferManager] automatically switches to multipart copy
-     * (`UploadPartCopy`); no bytes travel through the client. Progress events are reported via
-     * [ProgressTransferListener] the same way as for uploads.
+     * (`UploadPartCopy`); no bytes travel through the client. 
      *
      * @throws software.amazon.awssdk.services.s3.model.S3Exception on S3 errors
      */
@@ -170,17 +173,16 @@ class S3Client(
             .destinationKey(destKey)
             .build()
 
-        Logger.i(TAG, "S3Client: copying s3://$bucketName/$sourceKey → s3://$bucketName/$destKey")
+        Logger.i(TAG, "S3Client: copy initiated s3://$bucketName/$sourceKey → s3://$bucketName/$destKey")
 
         try {
             val copy = transferManager.copy(
                 CopyRequest.builder()
                     .copyObjectRequest(copyObjectRequest)
-                    .addTransferListener(ProgressTransferListener.create("copy"))
                     .build()
             )
             val result = copy.completionFuture().join()
-            Logger.i(TAG, "S3Client: copy complete, ETag: ${result.response().copyObjectResult().eTag()}")
+            Logger.i(TAG, "S3Client: copy finished, ETag: ${result.response().copyObjectResult().eTag()}")
         } catch (e: java.util.concurrent.CompletionException) {
             val cause = e.cause
             if (cause is software.amazon.awssdk.services.s3.model.S3Exception) {
@@ -231,13 +233,8 @@ class S3Client(
         asyncClient.close()
     }
 
-    // Custom TransferListener that logs progress for every 5% of the transfer completed.
-    // [operation] is a human-readable label ("upload", "copy", ...) used in the log line.
-    private class ProgressTransferListener(private val operation: String) : TransferListener {
-
-        companion object {
-            fun create(operation: String): ProgressTransferListener = ProgressTransferListener(operation)
-        }
+    // Custom TransferListener that logs upload progress for every 5% of the transfer completed.
+    private class ProgressTransferListener : TransferListener {
 
         private var lastLoggedPercent: Int = -1
 
@@ -261,7 +258,7 @@ class S3Client(
             }
 
             if (shouldLog) {
-                Logger.i(TAG, "S3 $operation progress: ${percent}%")
+                Logger.i(TAG, "S3 upload progress: ${percent}%")
                 lastLoggedPercent = percent
             }
         }

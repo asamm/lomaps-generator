@@ -84,14 +84,21 @@ object OverviewMapLayers {
         layerName = "ne_110m_ocean",
         source = DataSource.GPKG,
         staticTags = OCEAN_TAGS,
-        minZoom = 0, maxZoom = 4,
+        minZoom = 0, maxZoom = 2,
     )
 
     private val ne50mOcean = LayerDefinition(
         layerName = "ne_50m_ocean",
         source = DataSource.GPKG,
         staticTags = OCEAN_TAGS,
-        minZoom = 4, maxZoom = 9,
+        minZoom = 3, maxZoom = 4,
+    )
+
+    private val ne10mOcean = LayerDefinition(
+        layerName = "ne_10m_ocean",
+        source = DataSource.GPKG,
+        staticTags = OCEAN_TAGS,
+        minZoom = 5, maxZoom = 9,
     )
 
     // OCEAN CENTER LINES
@@ -183,6 +190,76 @@ object OverviewMapLayers {
         staticTags = LAKE_TAGS,
         minZoom = 5, maxZoom = 9,
         attributeMapper = ::lakesMapper,
+    )
+
+    // ---- BATHYMETRY ----
+    private val BATHYMETRY_TAGS = mapOf("ne_bathymetry" to "yes")
+    private fun bathymetryMapper(f: FeatureAttributes): Map<String, String> = buildMap {
+        f.str("depth")?.let { depthStr ->
+            val cleaned = depthStr.replace(",", "").replace(Regex("[^0-9.\\-]"), "")
+            val parsed = cleaned.toDoubleOrNull()?.let { Math.round(it).toInt() }
+            if (parsed != null) {
+                put("depth", parsed.toString())
+            } else {
+                put("depth", depthStr)
+            }
+        }
+    }
+
+    private val bmBathymetry200 = LayerDefinition(layerName = "Bathymetry-200m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry1000 = LayerDefinition(layerName = "Bathymetry-1000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry2000 = LayerDefinition(layerName = "Bathymetry-2000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry3000 = LayerDefinition(layerName = "Bathymetry-3000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry4000 = LayerDefinition(layerName = "Bathymetry-4000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry5000 = LayerDefinition(layerName = "Bathymetry-5000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry6000 = LayerDefinition(layerName = "Bathymetry-6000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry7000 = LayerDefinition(layerName = "Bathymetry-7000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry8000 = LayerDefinition(layerName = "Bathymetry-8000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry9000 = LayerDefinition(layerName = "Bathymetry-9000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+    private val bmBathymetry10000 = LayerDefinition(layerName = "Bathymetry-10000m",  source = DataSource.BASE_MAP_SHP,
+        staticTags = BATHYMETRY_TAGS,  minZoom = 0, maxZoom = 6, attributeMapper = ::bathymetryMapper
+    )
+
+
+
+
+    // ---- COUNTRY NAMES ----
+    private val COUNTRY_NAME_TAGS = mapOf("ne_place" to "country")
+
+    private fun countryMapper(f: FeatureAttributes): Map<String, String> = buildMap {
+        f.str("NAME")?.let { put("name", it) }
+        f.str("NAME_EN")?.let { put("name:en", it) }
+
+        val labelrank = ((f.get("LABELRANK") as? Number)?.toInt() ?: 0)
+        put("rank", labelrank.toString())
+    }
+
+    private val ne110mCountry = LayerDefinition(
+        layerName = "ne_110m_admin_0_countries",
+        source = DataSource.GPKG,
+        staticTags = COUNTRY_NAME_TAGS,
+        minZoom = 0, maxZoom = 9,
+        attributeMapper = ::countryMapper
     )
 
     // ---- COUNTRY BOUNDARIES ----
@@ -391,13 +468,17 @@ object OverviewMapLayers {
         // Ecoregions
         ecoregions2017,
         // Oceans
-        ne110mOcean, ne50mOcean, //ne10mOcean,
+        ne110mOcean,
+        ne50mOcean, ne10mOcean,
         // Ocean center lines (polygon → centerline for labels)
         ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
         // Geography region center lines
         ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
         // Lakes
         ne50mLakes, ne10mLakes,
+
+        // Countries
+        ne110mCountry,
         // Country boundaries
         ne110mBoundary, ne50mBoundary, ne10mBoundary,
         // State boundaries
@@ -406,6 +487,7 @@ object OverviewMapLayers {
         ne110mRivers, ne50mRivers,
         // Glaciated areas
         ne50mGlaciers, ne10mGlaciers,
+
         // Urban areas
         ne50mUrban,
         // Populated places
@@ -416,5 +498,9 @@ object OverviewMapLayers {
         bmRoadFerries,
         // Railroads
         bmRailroads,
+        // bathymetry
+        bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
+        //bmBathymetry6000,
+        bmBathymetry7000,bmBathymetry8000,bmBathymetry9000,bmBathymetry10000,
     )
 }

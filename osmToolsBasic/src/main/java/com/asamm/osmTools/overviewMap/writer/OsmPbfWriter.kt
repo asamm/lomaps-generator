@@ -51,6 +51,9 @@ class OsmPbfWriter(
         private const val TAG = "OsmPbfWriter"
         private val EPOCH = Date(0)
         private val OSM_USER = OsmUser(0, "naturalearth")
+
+        private fun clampLon(lon: Double) = lon.coerceIn(-180.0, 180.0)
+        private fun clampLat(lat: Double) = lat.coerceIn(-90.0, 90.0)
     }
 
     private var nextNodeId = startNodeId
@@ -117,7 +120,7 @@ class OsmPbfWriter(
     private fun convertPoint(point: Point, tags: Collection<Tag>) {
         val node = Node(
             CommonEntityData(nextNodeId++, 1, EPOCH, OSM_USER, 0, tags),
-            point.y, point.x  // lat, lon
+            clampLat(point.y), clampLon(point.x)
         )
         nodes.add(node)
     }
@@ -131,7 +134,7 @@ class OsmPbfWriter(
             nodes.add(
                 Node(
                     CommonEntityData(nodeId, 1, EPOCH, OSM_USER, 0, emptyList()),
-                    coord.y, coord.x
+                    clampLat(coord.y), clampLon(coord.x)
                 )
             )
             wayNodeRefs.add(WayNode(nodeId))
@@ -159,7 +162,7 @@ class OsmPbfWriter(
             nodes.add(
                 Node(
                     CommonEntityData(nodeId, 1, EPOCH, OSM_USER, 0, emptyList()),
-                    coord.y, coord.x
+                    clampLat(coord.y), clampLon(coord.x)
                 )
             )
             wayNodeRefs.add(WayNode(nodeId))
