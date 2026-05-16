@@ -45,6 +45,7 @@ data class LayerDefinition(
     val attributeMapper: ((FeatureAttributes) -> Map<String, String>)? = null,
     val filter: ((FeatureAttributes) -> Boolean)? = null,
     val toCenterLine: Boolean = false,
+    val toPoint: Boolean = false,
 )
 
 /**
@@ -259,7 +260,8 @@ object OverviewMapLayers {
         source = DataSource.GPKG,
         staticTags = COUNTRY_NAME_TAGS,
         minZoom = 0, maxZoom = 9,
-        attributeMapper = ::countryMapper
+        attributeMapper = ::countryMapper,
+        toPoint = true
     )
 
     // ---- COUNTRY BOUNDARIES ----
@@ -454,14 +456,6 @@ object OverviewMapLayers {
         }
     }
 
-    private val bmRailroads = LayerDefinition(
-        layerName = "Railroads-beta2",
-        source = DataSource.BASE_MAP_SHP,
-        staticTags = RAILS_TAGS,
-        minZoom = 5, maxZoom = 9,
-        attributeMapper = ::railsMapper,
-    )
-
     // ---- ALL LAYERS ----
 
     val ALL: List<LayerDefinition> = listOf(
@@ -477,7 +471,7 @@ object OverviewMapLayers {
         // Lakes
         ne50mLakes, ne10mLakes,
 
-        // Countries
+        // Country names
         ne110mCountry,
         // Country boundaries
         ne110mBoundary, ne50mBoundary, ne10mBoundary,
@@ -496,8 +490,6 @@ object OverviewMapLayers {
         // Base map SHP
         // Roads
         bmRoadFerries,
-        // Railroads
-        bmRailroads,
         // bathymetry
         bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
         //bmBathymetry6000,

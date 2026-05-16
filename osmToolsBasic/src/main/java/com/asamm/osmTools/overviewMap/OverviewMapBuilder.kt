@@ -75,6 +75,10 @@ class OverviewMapBuilder {
                     .toList()
                 allFeatures.addAll(converted)
                 Logger.i(TAG, "Converted ${features.size} polygons to centerlines")
+            } else if (layerDef.toPoint) {
+                val converted = features.map { feature -> feature.copy(geometry = feature.geometry.interiorPoint) }
+                allFeatures.addAll(converted)
+                Logger.i(TAG, "Converted ${features.size} geometries to interior points")
             } else {
                 allFeatures.addAll(features)
             }
