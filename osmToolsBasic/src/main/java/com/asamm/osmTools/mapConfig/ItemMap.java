@@ -96,7 +96,7 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.EXTRACT, name + ".osm.pbf");
     }
 
-    public Path getPathGenerate() {
+    public Path getPathMapsforgeGenerate() {
         if (nameGen != null && !nameGen.isEmpty()) {
             return pathResolver.getPath(PathType.MAPSFORGE_GENERATE, nameGen + ".osm.map");
         }

@@ -154,6 +154,8 @@ public class GenLoMaps extends AGenerator {
         }
         actionMergePlanet(mapPlanet);
 
+        actionMapsforgePlanet(mapPlanet);
+
         // generate lomaps outdoor planet tiles - will be deprecated when Asamm server is ready
         actionGenerateMbtilesOnline(mapPlanet);
 
@@ -163,6 +165,28 @@ public class GenLoMaps extends AGenerator {
 
         // upload to maptiler
         actionUploadPlanetToMapTiler(mapPlanet);
+    }
+
+    /** Generate mapsforge map for whole planet. This is later extracted to particular mapsforge maps */
+    private void actionMapsforgePlanet(ItemMap mapPlanet) {
+
+        if (!AppConfig.config.getActions().contains(Action.GENERATE_MAPSFORGE)) {
+            return;
+        }
+
+        if (!AppConfig.config.getOverwrite() && mapPlanet.getPathMapsforgeGenerate().toFile().exists()) {
+            Logger.i(TAG, "Planet mapsforge map already exists: " + mapPlanet.getPathMapsforgeGenerate());
+            return;
+        }
+
+        TimeWatch time = new TimeWatch();
+        Logger.i(TAG, "Generating planet mapsforge map: " + mapPlanet.getPathMapsforgeGenerate());
+        Main.mySimpleLog.print("\nGenerate planet map: " + mapPlanet.getName() + " ...");
+
+        MapsforgeTilerRunner.generatePlanetMap(mapPlanet);
+
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        time.stopCount();
     }
 
 
@@ -510,12 +534,12 @@ public class GenLoMaps extends AGenerator {
     private void actionGenerate(ItemMap map) {
 
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (AppConfig.config.getOverwrite() || !map.getPathGenerate().toFile().exists()) {
+            if (AppConfig.config.getOverwrite() || !map.getPathMapsforgeGenerate().toFile().exists()) {
                 CmdGenerate cg = new CmdGenerate(map);
 
                 // write to log and start stop watch
                 TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Generating map: " + map.getPathGenerate());
+                Logger.i(TAG, "Generating map: " + map.getPathMapsforgeGenerate());
                 Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
                 cg.execute(2, true);
 
@@ -525,7 +549,7 @@ public class GenLoMaps extends AGenerator {
 
                 Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
             } else {
-                Logger.i(TAG, "Generated map " + map.getPathGenerate() + " already exists. Nothing to do.");
+                Logger.i(TAG, "Generated map " + map.getPathMapsforgeGenerate() + " already exists. Nothing to do.");
             }
         }
     }

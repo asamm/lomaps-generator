@@ -3,10 +3,8 @@ package com.asamm.osmTools.cmdCommands
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
-import com.asamm.osmTools.utils.MercatorUtils
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.absolute
 
 class CmdGenerate private constructor(
     private val inputPbf: Path,
@@ -21,7 +19,7 @@ class CmdGenerate private constructor(
 
     constructor(map: ItemMap) : this(
         inputPbf = map.pathSource,
-        outputMap = map.pathGenerate,
+        outputMap = map.pathMapsforgeGenerate,
         bbox = "${map.boundary.minLat},${map.boundary.minLon},${map.boundary.maxLat},${map.boundary.maxLon}",
         type = resolveType(map),
         prefLang = map.prefLang?.takeIf { it.isNotEmpty() },
@@ -75,8 +73,6 @@ class CmdGenerate private constructor(
         return executeWithRetry(cmd, numRepeat, onRetry)
     }
 
-    // ── Section 2: Overview map generation ───────────────────────────────────
-
     companion object {
 
         private val TAG: String = CmdGenerate::class.java.simpleName
@@ -88,35 +84,6 @@ class CmdGenerate private constructor(
                 "ram" -> "ram"
                 else -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
             }
-        }
-
-        /**
-         * Creates a [CmdGenerate] configured to generate the global overview .map file
-         * from the Natural Earth PBF produced by [com.asamm.osmTools.overviewMap.OverviewMapBuilder].
-         *
-         * Output path is derived from [com.asamm.osmTools.config.OverviewMapConfig.outputPbf] by replacing the
-         * `.osm.pbf` extension with `.osm.map` in the same directory.
-         *
-         * Two zoom intervals are used:
-         *  - 3,0,4  — world-level overview (zooms 0–4, base zoom 3)
-         *  - 8,5,9  — regional detail      (zooms 5–9, base zoom 8)
-         */
-        @JvmStatic
-        fun forOverviewMap(): CmdGenerate {
-            val cfg = AppConfig.config.overviewMapConfig
-            require(cfg.outputPbf.toFile().exists()) {
-                "Overview PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
-            }
-            val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map")).absolute()
-            return CmdGenerate(
-                inputPbf = cfg.outputPbf.absolute(),
-                outputMap = outputMap,
-                bbox = "${-MercatorUtils.WEB_MERCATOR_MAX_LAT + 10},-179.9,${MercatorUtils.WEB_MERCATOR_MAX_LAT - 10},179.9",
-                type = "ram",
-                prefLang = null,
-                zoomInterval = "3,1,4,8,5,9",
-                //zoomInterval = "3,1,4",
-            )
         }
     }
 }

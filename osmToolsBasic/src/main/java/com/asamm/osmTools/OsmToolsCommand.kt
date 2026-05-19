@@ -2,7 +2,7 @@ package com.asamm.osmTools
 
 import com.asamm.osmTools.LoMapsCommand.Companion.TAG
 import com.asamm.osmTools.cleanup.OldMapsCleaner
-import com.asamm.osmTools.cmdCommands.CmdGenerate
+import com.asamm.osmTools.generator.MapsforgeTilerRunner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
@@ -202,8 +202,7 @@ class OverviewMapCommand : CliktCommand(
     override fun run() {
         OverviewMapBuilder().buildOverviewOsmPbf()
 
-        // TODO generate standalone .map file for overview map (without upload to Locus Store)
-        CmdGenerate.forOverviewMap().execute(1, true)
+        MapsforgeTilerRunner.generateOverviewMap()
     }
 }
 

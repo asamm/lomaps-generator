@@ -157,7 +157,7 @@ class UploadDefinitionCreator {
         }
 
         // compute loCoins based on mapsforge file size
-        sai.setLoCoins(computeLocoins(map.pathGenerate.toFile()))
+        sai.setLoCoins(computeLocoins(map.pathMapsforgeGenerate.toFile()))
 
         sai.setRegionDatastoreIds(Arrays.asList(map.regionId))
 

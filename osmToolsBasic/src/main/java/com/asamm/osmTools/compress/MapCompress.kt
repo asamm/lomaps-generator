@@ -96,8 +96,8 @@ class MapCompress {
         // change lastChange attribute of generated file this workaround how to set date of map file in Locus
         val filesToCompress: MutableList<File> = ArrayList()
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            val mapFile: File = map.getPathGenerate().toFile()
-            require(mapFile.exists()) { "Map file for compression: ${map.getPathGenerate()} does not exist." }
+            val mapFile: File = map.getPathMapsforgeGenerate().toFile()
+            require(mapFile.exists()) { "Map file for compression: ${map.getPathMapsforgeGenerate()} does not exist." }
 
             val versionDate = versionToDate(AppConfig.config.version).time
             // rewrite bytes in header to set new creation date
