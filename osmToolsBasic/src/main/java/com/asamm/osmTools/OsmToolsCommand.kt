@@ -203,7 +203,7 @@ class OverviewMapCommand : CliktCommand(
         OverviewMapBuilder().buildOverviewOsmPbf()
 
         // TODO generate standalone .map file for overview map (without upload to Locus Store)
-        //CmdGenerate.forOverviewMap().execute(1, true)
+        CmdGenerate.forOverviewMap().execute(1, true)
     }
 }
 

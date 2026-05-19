@@ -1,12 +1,11 @@
 package com.asamm.osmTools.cmdCommands
 
-import com.asamm.mapsforge.writer.config.MapWriterConfig
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.MercatorUtils
 import java.nio.file.Path
-import java.util.Locale
+import java.util.*
 import kotlin.io.path.absolute
 
 class CmdGenerate private constructor(
@@ -94,9 +93,9 @@ class CmdGenerate private constructor(
         private fun resolveType(map: ItemMap): String {
             val sourcePath = if (map.isMerged) map.pathMerge else map.pathSource
             return when (map.forceType?.lowercase(Locale.getDefault())) {
-                "hd"  -> "hd"
+                "hd" -> "hd"
                 "ram" -> "ram"
-                else  -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
+                else -> if (sourcePath.toFile().length() / 1024 / 1024 < 1100L) "ram" else "hd"
             }
         }
 
@@ -121,7 +120,7 @@ class CmdGenerate private constructor(
             return CmdGenerate(
                 inputPbf = cfg.outputPbf.absolute(),
                 outputMap = outputMap,
-                bbox = "${- MercatorUtils.WEB_MERCATOR_MAX_LAT + 10},-179.9,${MercatorUtils.WEB_MERCATOR_MAX_LAT-10},179.9",
+                bbox = "${-MercatorUtils.WEB_MERCATOR_MAX_LAT + 10},-179.9,${MercatorUtils.WEB_MERCATOR_MAX_LAT - 10},179.9",
                 type = "ram",
                 prefLang = null,
                 zoomInterval = "3,1,4,8,5,9",
