@@ -7,8 +7,6 @@ enum class Action {
 
     EXTRACT("extract"),
 
-    COASTLINE("coastline"),
-
     TOURIST("tourist", true),
 
     TRANSFORM("transform"),

@@ -190,14 +190,6 @@ public class ItemMap extends AItemMap {
         return Path.of(getPathResultMapsforge().toString().replace(".zip", "_mbtiles.zip"));
     }
 
-    public Path getPathShp() {
-        return pathResolver.getPath(PathType.SHP, name + ".shp");
-    }
-
-    public Path getPathCoastline() {
-        return pathResolver.getPath(PathType.COASTLINE, name + ".osm.pbf");
-    }
-
     public Path getPathTourist() {
         return pathResolver.getPath(PathType.TOURIST, name + ".osm.pbf");
     }

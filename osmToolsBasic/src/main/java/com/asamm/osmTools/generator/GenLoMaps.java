@@ -19,13 +19,8 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
-import com.asamm.osmTools.sea.LandArea;
-import com.asamm.osmTools.utils.OnlinePlanetVersionsManager;
-import com.asamm.osmTools.utils.S3Client;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.utils.Logger;
-import com.asamm.osmTools.utils.TimeWatch;
-import com.asamm.osmTools.utils.Utils;
+import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -180,15 +175,9 @@ public class GenLoMaps extends AGenerator {
 
             switch (action) {
                 //download, tourist and contour are already processed for whole planet
-                case GRAPH_HOPPER:
-//                    actionGraphHopper(map);
-                    break;
                 case ADDRESS_POI_DB:
                     actionAddressPoiDatabase(map);
                     actionInsertMetaData(map);
-                    break;
-                case COASTLINE:
-                    actionCoastline(map);
                     break;
                 case TRANSFORM:
                     actionTransformData(map);
@@ -314,26 +303,6 @@ public class GenLoMaps extends AGenerator {
             new CmdPoiV2().generatePoiV2ForMapsforge(map);
         }
 
-    }
-
-    // ACTION COASTLINE
-
-    private void actionCoastline(ItemMap map)
-            throws IOException, InterruptedException {
-
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            return;
-        }
-
-        // check if file exits and we should overwrite it
-        if (!AppConfig.config.getOverwrite() && map.getPathCoastline().toFile().exists()) {
-            Logger.i(TAG, "File with land area " + map.getPathCoastline()
-                    + " already exist - skipped.");
-            return;
-        }
-
-        // start Creation sea and nosea lands
-        new LandArea(map).create();
     }
 
     // ACTION TOURIST
@@ -512,13 +481,6 @@ public class GenLoMaps extends AGenerator {
                     map.getPathSource() + " does not exist.");
         }
         pathsToMerge.add(map.getPathSource());
-
-        if (map.hasSea()) {
-            if (!map.getPathCoastline().toFile().exists()) {
-                throw new IllegalArgumentException("Coastlines path: " + map.getPathCoastline() + " does not exist.");
-            }
-            pathsToMerge.add(map.getPathCoastline());
-        }
 
         if (AppConfig.config.getActions().contains(Action.TRANSFORM)) {
             if (!map.getPathTranform().toFile().exists()) {

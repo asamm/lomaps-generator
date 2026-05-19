@@ -84,7 +84,6 @@ data class Config(
     var onlineLoMapsConfig: OnlineLoMapsConfig,
     var mbtilesConfig: MbtilesConfig,
     var mapsforgeConfig: MapsforgeConfig,
-    var coastlineConfig: CoastlineConfig,
     var poiAddressConfig: PoiAddressConfig,
     var terrainRgbConfig: TerrainRgbConfig,
     var overviewMapConfig: OverviewMapConfig
@@ -140,22 +139,6 @@ data class ContourConfig(
     var tempFeetFile: Path = Path.of("_contours/planet_feet.osm.pbf"), // temporary file for generated contours in feet
 
 )
-
-@Serializable
-class CoastlineConfig(
-    var nodeBorderId: Long,
-
-    @Serializable(with = PathSerializer::class)
-    @SerialName("landPolygonShp")
-    val _landPolygonShp: Path = Path.of("coastlines/land_polygons/land_polygons.shp"),
-
-    val landPolygonUrl: String = "https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip"
-) {
-    @Serializable(with = PathSerializer::class)
-    val landPolygonShp: Path
-        get() = AppConfig.config.mapsForgeDir.resolve(_landPolygonShp)
-}
-
 
 @Serializable
 class PlanetConfig(

@@ -23,10 +23,7 @@ contourConfig:
   polyCoverageFeet: "polygons/_contours/planet_contours_feets.poly"
   tempMetersFile: "_contours/planet_meter.osm.pbf"
   tempFeetFile: "_contours/planet_feet.osm.pbf"
-    
 
-coastlineConfig:
-  nodeBorderId: 2000000000000
 
 planetConfig:
   planetLatestPath: "/osm_tools/vectorMaps/_planet/orig/planet-latest.osm.pbf"

@@ -9,8 +9,6 @@ enum class PathType(val baseDir: String) {
 
     // data files
     TRANSFORM("transform"),
-    COASTLINE("coastlines/_pbf"),
-    SHP("coastlines/_shp"),
     CONTOUR("contours"),
 
     TOURIST("_tourist"),
@@ -53,8 +51,6 @@ class PathResolver(val map: ItemMap) {
 
             // located in data directory not generated with every version
             PathType.TRANSFORM -> getBaseDir(PathType.TRANSFORM).resolve(map.dir).resolve(fileName)
-            PathType.COASTLINE -> getBaseDir(PathType.COASTLINE).resolve(map.dir).resolve(fileName)
-            PathType.SHP -> getBaseDir(PathType.SHP).resolve(map.dir).resolve(fileName)
             PathType.CONTOUR -> getBaseDir(PathType.CONTOUR).resolve(map.dir).resolve(fileName)
 
             // temporary planet data generated with every version located in data directory
@@ -92,8 +88,6 @@ class PathResolver(val map: ItemMap) {
             PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
 
             PathType.TRANSFORM,
-            PathType.COASTLINE,
-            PathType.SHP,
             PathType.CONTOUR,
 
             PathType.MERGE,

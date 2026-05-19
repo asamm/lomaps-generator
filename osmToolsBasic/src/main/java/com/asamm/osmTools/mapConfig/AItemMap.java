@@ -49,8 +49,6 @@ public class AItemMap {
     private String forceType;
     // define internal for map file used during generating
     private String forceInterval;
-    // parameter if we need coastline
-    private boolean hasSea;
 
     public AItemMap(ItemMapPack parent) {
         setDefaults();
@@ -72,7 +70,6 @@ public class AItemMap {
             cycleNode = parent.getCycleNode();
             forceType = parent.getForceType();
             forceInterval = parent.getForceInterval();
-            hasSea = parent.hasSea();
         }
     }
 
@@ -94,7 +91,6 @@ public class AItemMap {
         contourSep = "";
         forceType = "";
         forceInterval = "";
-        hasSea = false;
     }
 
     public void validate() {
@@ -239,10 +235,6 @@ public class AItemMap {
         if (parser.getAttributeValue(null, "cyclo_node") != null) {
             cycleNode = parser.getAttributeValue(null, "cyclo_node");
         }
-        if (parser.getAttributeValue(null, "coastline") != null) {
-            String coastline = parser.getAttributeValue(null, "coastline");
-            hasSea = coastline.equalsIgnoreCase("yes");
-        }
         if (parser.getAttributeValue(null, "contourSep") != null) {
             contourSep = parser.getAttributeValue(null, "contourSep");
         }
@@ -354,9 +346,5 @@ public class AItemMap {
 
     public String getForceInterval() {
         return forceInterval;
-    }
-
-    public boolean hasSea() {
-        return hasSea;
     }
 }
