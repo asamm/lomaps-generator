@@ -31,8 +31,6 @@ enum class Action {
 
     POI_DB_V2("poi_db", false),
 
-    GRAPH_HOPPER("graphHopper"),
-
     ADDRESS_POI_DB("address_poi_db", true),
 
     COMPRESS("compress"),
