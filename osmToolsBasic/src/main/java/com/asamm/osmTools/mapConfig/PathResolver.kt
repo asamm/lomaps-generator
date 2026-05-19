@@ -12,7 +12,6 @@ enum class PathType(val baseDir: String) {
     CONTOUR("contours"),
 
     TOURIST("_tourist"),
-    MERGE("_merge"),
     EXTRACT("_extract"),
     ADDRESS_DB("_address_db"),
     POI_V2_DB_MBTILES("_poi_v2_db_mbtiles"),
@@ -58,7 +57,6 @@ class PathResolver(val map: ItemMap) {
             PathType.EXTRACT -> getBaseDir(PathType.EXTRACT).resolve(versionPath).resolve(fileName)
 
             // temporary data generated with every version located in data directory
-            PathType.MERGE -> getBaseDir(PathType.MERGE).resolve(versionPath).resolve(fileName).toAbsolutePath()
             PathType.ADDRESS_DB -> getBaseDir(PathType.ADDRESS_DB).resolve(versionPath).resolve(fileName)
             // POI V2
             PathType.POI_V2_DB_MBTILES -> getBaseDir(PathType.POI_V2_DB_MBTILES).resolve(versionPath).resolve(fileName)
@@ -90,7 +88,6 @@ class PathResolver(val map: ItemMap) {
             PathType.TRANSFORM,
             PathType.CONTOUR,
 
-            PathType.MERGE,
             PathType.ADDRESS_DB,
             PathType.MAPSFORGE_GENERATE,
             PathType.MAPSFORGE_RESULT,

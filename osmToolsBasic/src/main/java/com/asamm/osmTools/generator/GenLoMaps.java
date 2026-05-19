@@ -182,9 +182,6 @@ public class GenLoMaps extends AGenerator {
                 case TRANSFORM:
                     actionTransformData(map);
                     break;
-                case MERGE:
-                    actionMerge(map);
-                    break;
                 case GENERATE_MBTILES:
                     actionGenerateMbtiles(map);
                     break;
@@ -455,55 +452,6 @@ public class GenLoMaps extends AGenerator {
         Utils.createParentDirs(map.getPathSource());
         CmdOsmium cmdOsmium = new CmdOsmium();
         cmdOsmium.merge(pathsToMerge, map.getPathSource());
-    }
-
-    private void actionMerge(ItemMap map) {
-
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            return;
-        }
-
-        // test if merged file already exist
-        if (!AppConfig.config.getOverwrite()) {
-            if (map.getPathMerge().toFile().exists() || (map.hasAction(Action.GENERATE_MAPSFORGE) && map.getPathGenerate().toFile().exists())) {
-                // nothing to do file already exist
-                Logger.i(TAG, "Merged file: " + map.getPathMerge() + " already exist. Or generated file exist: " + map.getPathGenerate());
-                map.setMerged(true);
-                return;
-            }
-        }
-
-        List<Path> pathsToMerge = new ArrayList<>();
-
-        // test if extracted map from planet exist
-        if (!map.getPathSource().toFile().exists()) {
-            throw new IllegalArgumentException("Extracted base map for merging: " +
-                    map.getPathSource() + " does not exist.");
-        }
-        pathsToMerge.add(map.getPathSource());
-
-        if (AppConfig.config.getActions().contains(Action.TRANSFORM)) {
-            if (!map.getPathTranform().toFile().exists()) {
-                throw new IllegalArgumentException("Transformed data path: " + map.getPathTranform() + " does not exist.");
-            }
-            pathsToMerge.add(map.getPathTranform());
-        }
-
-        if (pathsToMerge.size() == 1) {
-            Logger.i(TAG, "Only one file to merge: " + map.getPathSource() + ". Nothing to do.");
-            return;
-        }
-
-        TimeWatch time = new TimeWatch();
-        // prepare cmd line and string for log
-        Main.mySimpleLog.print("\nMarging: " + map.getName() + " ...");
-        CmdOsmium cmdOsmium = new CmdOsmium();
-        cmdOsmium.merge(pathsToMerge, map.getPathMerge());
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-        time.stopCount();
-
-        //set information about margin
-        map.setMerged(true);
     }
 
     private void actionGenerateMbtiles(ItemMap map) {

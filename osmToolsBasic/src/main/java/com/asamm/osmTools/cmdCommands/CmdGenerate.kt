@@ -20,24 +20,15 @@ class CmdGenerate private constructor(
     // ── Section 1: ItemMap-based generation ──────────────────────────────────
 
     constructor(map: ItemMap) : this(
-        inputPbf = if (map.isMerged) map.pathMerge else map.pathSource,
+        inputPbf = map.pathSource,
         outputMap = map.pathGenerate,
         bbox = "${map.boundary.minLat},${map.boundary.minLon},${map.boundary.maxLat},${map.boundary.maxLon}",
         type = resolveType(map),
         prefLang = map.prefLang?.takeIf { it.isNotEmpty() },
         zoomInterval = map.forceInterval?.takeIf { it.isNotEmpty() },
     ) {
-        if (map.isMerged) {
-            require(map.pathMerge.toFile().exists()) {
-                "Merged map for generation: ${map.pathMerge} does not exist!"
-            }
-            require(AppConfig.config.mapsforgeConfig.tagMapping.toFile().exists()) {
-                "Map writer definition file: ${AppConfig.config.mapsforgeConfig.tagMapping} does not exist."
-            }
-        } else {
-            require(map.pathSource.toFile().exists()) {
-                "Extracted map for generation: ${map.pathSource} does not exist."
-            }
+        require(map.pathSource.toFile().exists()) {
+            "Extracted map for generation: ${map.pathSource} does not exist."
         }
     }
 
@@ -91,7 +82,7 @@ class CmdGenerate private constructor(
         private val TAG: String = CmdGenerate::class.java.simpleName
 
         private fun resolveType(map: ItemMap): String {
-            val sourcePath = if (map.isMerged) map.pathMerge else map.pathSource
+            val sourcePath = map.pathSource
             return when (map.forceType?.lowercase(Locale.getDefault())) {
                 "hd" -> "hd"
                 "ram" -> "ram"

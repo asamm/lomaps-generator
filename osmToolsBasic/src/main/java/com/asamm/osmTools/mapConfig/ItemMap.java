@@ -57,10 +57,6 @@ public class ItemMap extends AItemMap {
     @Getter
     private Boundaries boundary;
 
-    @Getter
-    @Setter
-    private boolean isMerged = false;
-
     // MAIN PART
 
     public ItemMap(ItemMapPack mpParent) {
@@ -152,10 +148,6 @@ public class ItemMap extends AItemMap {
             return pathResolver.getPath(PathType.POI_V2_DB_MBTILES, name + ".poiv2.db");
         }
         return pathResolver.getPath(PathType.POI_V2_DB_MAPSFORGE, name + ".poiv2.db");
-    }
-
-    public Path getPathMerge() {
-        return pathResolver.getPath(PathType.MERGE, name + ".osm.pbf");
     }
 
     public Path getPathPolygon() {
@@ -322,7 +314,6 @@ public class ItemMap extends AItemMap {
                 ", mNameGen='" + nameGen + '\'' +
                 ", mResultMD5hash='" + resultMD5hash + '\'' +
                 ", mBounds=" + boundary +
-                ", isMerged=" + isMerged +
                 '}';
     }
 }

@@ -18,7 +18,6 @@ class OldMapsCleaner {
     val TAG = OldMapsCleaner::class.java.simpleName
 
     val pathTypesForDeletion = listOf(
-        PathType.MERGE,
         PathType.ADDRESS_DB,
         PathType.MAPSFORGE_GENERATE,
         PathType.MAPSFORGE_RESULT,
