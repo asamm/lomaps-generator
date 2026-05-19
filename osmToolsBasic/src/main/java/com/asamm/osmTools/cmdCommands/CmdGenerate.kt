@@ -1,5 +1,6 @@
 package com.asamm.osmTools.cmdCommands
 
+import com.asamm.mapsforge.writer.config.MapWriterConfig
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.utils.Logger
@@ -48,6 +49,8 @@ class CmdGenerate private constructor(
      * The returned [ProcessCommand] can be executed immediately or retried.
      */
     fun createCmd(): ProcessCommand {
+
+        //MapWriterConfig(input = ,)
         prepareDirectory(outputMap)
         return osmosisBuilder()
             .readPbf(inputPbf.toString())

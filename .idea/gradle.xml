@@ -4,6 +4,17 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/../mapsforgeTiler" name="mapsforgetiler">
+                <projects>
+                  <project path="$PROJECT_DIR$/../mapsforgeTiler" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="21" />
         <option name="modules">
@@ -15,6 +26,7 @@
             <option value="$PROJECT_DIR$/osmToolsDataWriter" />
             <option value="$PROJECT_DIR$/osmToolsElevation" />
             <option value="$PROJECT_DIR$/osmToolsPmtiles" />
+            <option value="$PROJECT_DIR$/../mapsforgeTiler" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -11,3 +11,13 @@ include ':osmToolsDataWriter'
 include 'maptiler-api'
 include 'osmToolsElevation'
 include 'osmToolsPmtiles'
+
+
+// Composite build - mapsforge-tiler
+def localMapsforgeTiler = file('../mapsforgeTiler')
+if (localMapsforgeTiler.exists()) {
+    println(">> [LOCAL] mapsforge-tiler")
+    includeBuild('../mapsforgeTiler')
+} else {
+    println(">> [PUBLISHED] mapsforge-tiler")
+}
