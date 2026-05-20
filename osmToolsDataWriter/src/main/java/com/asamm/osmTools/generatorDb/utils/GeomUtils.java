@@ -429,4 +429,5 @@ public class GeomUtils {
         GeoJSONReader jsonReader = new GeoJSONReader();
         return jsonReader.read(geoJsonString);
     }
+
 }

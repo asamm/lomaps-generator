@@ -49,7 +49,9 @@ object MapsforgeTilerRunner {
             threads = Runtime.getRuntime().availableProcessors(),
             preferredLanguages = map.prefLang?.takeIf { it.isNotEmpty() }?.split(","),
             nodeMapType = "sparsearray",
+            oceanPolygons = true,
             workDir = AppConfig.config.temporaryDir,
+            downloadDir = AppConfig.config.planetConfig.planetilerDownloadDir, // same download folder as planetiler
         )
         runWriter(config)
     }
@@ -79,6 +81,7 @@ object MapsforgeTilerRunner {
             zoomIntervalConfig = ZoomIntervalConfig.parse("3,1,4,8,5,9"),
             nodeMapType = "sparsearray",
             workDir = AppConfig.config.temporaryDir,
+            downloadDir = AppConfig.config.planetConfig.planetilerDownloadDir, // same download folder as planetiler
         )
         runWriter(config)
     }

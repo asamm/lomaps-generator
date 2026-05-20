@@ -147,11 +147,11 @@ public class GenLoMaps extends AGenerator {
                 case CONTOUR:
                     actionPlanetContour(mapPlanet);
                     break;
-// TODO uncomment
-//                case OVERVIEW_MAP:
-//                    OverviewMapBuilder overviewMapBuilder = new OverviewMapBuilder();
-//                    overviewMapBuilder.buildOverviewOsmPbf();
-//                    break;
+
+                case OVERVIEW_MAP:
+                    OverviewMapBuilder overviewMapBuilder = new OverviewMapBuilder();
+                    overviewMapBuilder.buildOverviewOsmPbf();
+                    break;
 
                 case RESIDENTIAL:
                     actionPlanetResidential(mapPlanet);
@@ -208,9 +208,6 @@ public class GenLoMaps extends AGenerator {
                     break;
                 case POI_DB_V2:
                     actionPoiV2Database(map);
-                    break;
-                case GENERATE_MAPSFORGE:
-                    actionInsertMetaData(map);
                     break;
             }
         }

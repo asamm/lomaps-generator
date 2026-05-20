@@ -9,6 +9,11 @@ dependencies {
 
     implementation 'org.xerial:sqlite-jdbc:3.46.1.3'
 
+    // Pin Jackson to match the version used by planetiler-core; 
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.0'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.21'
+
     implementation group: 'net.sf.trove4j', name: 'trove4j', version:'3.0.3'
     implementation 'org.postgresql:postgresql:42.7.3'
 

@@ -85,15 +85,15 @@ class PathResolver(val map: ItemMap) {
         return when (type) {
             PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
 
-            PathType.RESIDENTIAL,
-            PathType.CONTOUR,
 
+            PathType.CONTOUR,
             PathType.ADDRESS_DB,
-            PathType.MAPSFORGE_GENERATE,
             PathType.MAPSFORGE_RESULT,
             PathType.ADDRESS_POI_DB_CLASSIC -> mapsForgeDir.resolve(type.baseDir)
 
             PathType.TOURIST,
+            PathType.RESIDENTIAL,
+            PathType.MAPSFORGE_GENERATE,
             PathType.EXTRACT -> if (map.isPlanet) planetDir.resolve(type.baseDir) else mapsForgeDir.resolve(type.baseDir)
 
             PathType.POI_V2_DB_MBTILES,
