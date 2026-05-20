@@ -186,8 +186,8 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.TOURIST, name + ".osm.pbf");
     }
 
-    public Path getPathTranform() {
-        return pathResolver.getPath(PathType.TRANSFORM, name + ".osm.pbf");
+    public Path getPathResidential() {
+        return pathResolver.getPath(PathType.RESIDENTIAL, name + ".osm.pbf");
     }
 
     // BASIC PARAMETERS

@@ -17,7 +17,7 @@ object ConfigUtils {
         for (index in cliActions.size - 1 downTo 0) {
             when (cliActions[index]) {
                 Action.GENERATE_MAPSFORGE -> {
-                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.EXTRACT, Action.TRANSFORM))
+                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.EXTRACT, Action.RESIDENTIAL))
                     if (!cliActions.contains(Action.POI_DB_V2)) {
                         cliActions.addAll(index, listOf(Action.POI_DB_V2))
                     }

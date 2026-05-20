@@ -8,7 +8,7 @@ enum class PathType(val baseDir: String) {
     POLYGON("polygons"),
 
     // data files
-    TRANSFORM("transform"),
+    RESIDENTIAL("residential"),
     CONTOUR("contours"),
 
     TOURIST("_tourist"),
@@ -49,7 +49,7 @@ class PathResolver(val map: ItemMap) {
             PathType.POLYGON -> getBaseDir(PathType.POLYGON).resolve(map.dir).resolve(fileName)
 
             // located in data directory not generated with every version
-            PathType.TRANSFORM -> getBaseDir(PathType.TRANSFORM).resolve(map.dir).resolve(fileName)
+            PathType.RESIDENTIAL -> getBaseDir(PathType.RESIDENTIAL).resolve(map.dir).resolve(fileName)
             PathType.CONTOUR -> getBaseDir(PathType.CONTOUR).resolve(map.dir).resolve(fileName)
 
             // temporary planet data generated with every version located in data directory
@@ -85,7 +85,7 @@ class PathResolver(val map: ItemMap) {
         return when (type) {
             PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
 
-            PathType.TRANSFORM,
+            PathType.RESIDENTIAL,
             PathType.CONTOUR,
 
             PathType.ADDRESS_DB,

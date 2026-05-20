@@ -15,7 +15,7 @@ public class DataPluginLoader implements PluginLoader {
 
     public static final String PLUGIN_LOMAPS_DB = "loMapsDb";
 
-	public static final String PLUGIN_DATA_TRANSFORM = "dataTransform";
+	public static final String PLUGIN_DATA_RESIDENTIAL = "residential";
 
 	public Map<String, TaskManagerFactory> loadTaskFactories() {
     	// create factory that will handle request for generation LoMaps db
@@ -24,8 +24,8 @@ public class DataPluginLoader implements PluginLoader {
 		map.put(PLUGIN_LOMAPS_DB, factory);
 		map.put("gDb", factory);
 
-		DataTransformTaskFactory dataTransformTaskFactory = new DataTransformTaskFactory();
-		map.put(PLUGIN_DATA_TRANSFORM,dataTransformTaskFactory);
+		DataResidentialTaskFactory residentialTaskFactory = new DataResidentialTaskFactory();
+		map.put(PLUGIN_DATA_RESIDENTIAL, residentialTaskFactory);
 
         // return filled container
 		return map;

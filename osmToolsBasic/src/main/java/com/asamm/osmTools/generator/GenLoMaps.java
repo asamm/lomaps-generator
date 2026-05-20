@@ -184,8 +184,8 @@ public class GenLoMaps extends AGenerator {
                     actionAddressPoiDatabase(map);
                     actionInsertMetaData(map);
                     break;
-                case TRANSFORM:
-                    actionTransformData(map);
+                case RESIDENTIAL:
+                    actionPrepareResidential(map);
                     break;
                 case GENERATE_MBTILES:
                     actionGenerateMbtiles(map);
@@ -334,24 +334,19 @@ public class GenLoMaps extends AGenerator {
         cmdTourist.generateTourist(pathToSource, map.getPathTourist());
     }
 
-    // ACTION TRANSFORM DATA
-    @Deprecated(since = "2025-06", forRemoval = true)
-    private void actionTransformData(ItemMap map) {
+    private void actionPrepareResidential(ItemMap map) {
 
-        // transform data only maps that are used for generation
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) {
             return;
         }
 
-        // check if output file with transformed data already exist
-        if (map.getPathTranform().toFile().exists()) {
-            Logger.i(TAG, "File with transformed data, already exist. Skip data transform action; path: "
-                    + map.getPathTranform());
+        if (map.getPathResidential().toFile().exists()) {
+            Logger.i(TAG, "Residential data already exists, skipping: " + map.getPathResidential());
             return;
         }
 
-        Logger.i(TAG, "Transform custom OSM data");
-        new CmdTransformData(map).addDataTransform();
+        Logger.i(TAG, "Prepare residential areas");
+        new CmdResidential(map).execute();
     }
 
 

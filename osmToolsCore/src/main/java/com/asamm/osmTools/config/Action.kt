@@ -9,7 +9,7 @@ enum class Action {
 
     TOURIST("tourist", true),
 
-    TRANSFORM("transform"),
+    RESIDENTIAL("residential"),
 
     CONTOUR("contour", true),
 
