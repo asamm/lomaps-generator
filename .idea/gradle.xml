@@ -25,6 +25,7 @@
             <option value="$PROJECT_DIR$/osmToolsCore" />
             <option value="$PROJECT_DIR$/osmToolsDataWriter" />
             <option value="$PROJECT_DIR$/osmToolsElevation" />
+            <option value="$PROJECT_DIR$/osmToolsPbfWriter" />
             <option value="$PROJECT_DIR$/osmToolsPmtiles" />
             <option value="$PROJECT_DIR$/../mapsforgeTiler" />
           </set>

@@ -4,7 +4,7 @@ import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.overviewMap.DataSource
 import com.asamm.osmTools.overviewMap.LayerDefinition
 import com.asamm.osmTools.overviewMap.reader.GpkgFeatureReader
-import com.asamm.osmTools.overviewMap.writer.OsmPbfWriter
+import com.asamm.osmTools.pbf.OsmPbfWriter
 import com.asamm.osmTools.utils.Logger
 import java.nio.file.Path
 

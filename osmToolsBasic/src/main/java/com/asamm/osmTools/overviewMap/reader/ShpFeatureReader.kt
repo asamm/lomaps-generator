@@ -2,7 +2,7 @@ package com.asamm.osmTools.overviewMap.reader
 
 import com.asamm.osmTools.overviewMap.FeatureAttributes
 import com.asamm.osmTools.overviewMap.LayerDefinition
-import com.asamm.osmTools.overviewMap.OverviewMapFeature
+import com.asamm.osmTools.pbf.OsmFeature
 import com.asamm.osmTools.utils.Logger
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTS
@@ -28,7 +28,7 @@ class ShpFeatureReader {
      * Reads all features from SHP files in [shpDir] matching the given [layerDef].
      * The layer name is used to find the corresponding .shp file.
      */
-    fun readFeatures(shpDir: Path, layerDef: LayerDefinition): List<OverviewMapFeature> {
+    fun readFeatures(shpDir: Path, layerDef: LayerDefinition): List<OsmFeature> {
         // Find SHP file matching the layer name
         val shpFile = findShpFile(shpDir, layerDef.layerName)
         if (shpFile == null) {
@@ -42,9 +42,9 @@ class ShpFeatureReader {
     /**
      * Reads features from a specific SHP file.
      */
-    fun readFromFile(shpFile: Path, layerDef: LayerDefinition): List<OverviewMapFeature> {
+    fun readFromFile(shpFile: Path, layerDef: LayerDefinition): List<OsmFeature> {
 
-        val features = mutableListOf<OverviewMapFeature>()
+        val features = mutableListOf<OsmFeature>()
         val store = ShapefileDataStore(shpFile.toUri().toURL())
 
         try {
@@ -102,7 +102,7 @@ class ShpFeatureReader {
                         }
                     }
 
-                    features.add(OverviewMapFeature(geometry, tags, layerDef.layerName))
+                    features.add(OsmFeature(geometry, tags, layerDef.layerName))
                 }
             } finally {
                 iterator.close()

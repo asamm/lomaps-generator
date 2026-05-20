@@ -1,7 +1,5 @@
-package com.asamm.osmTools.overviewMap.writer
+package com.asamm.osmTools.pbf
 
-import com.asamm.osmTools.overviewMap.OverviewMapFeature
-import com.asamm.osmTools.utils.Logger
 import crosby.binary.file.BlockOutputStream
 import crosby.binary.osmosis.OsmosisSerializer
 import org.locationtech.jts.geom.GeometryCollection
@@ -28,9 +26,15 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Date
+import java.util.logging.Logger
 
 /**
- * Writes Natural Earth features as an OSM PBF file using Osmosis + crosby.binary serializer.
+ * Writes geo features as an OSM PBF file using Osmosis + crosby.binary serializer.
+ *
+ * Lives in its own Gradle module that uses the Shadow plugin to relocate
+ * `crosby.binary` → `com.asamm.shadow.crosby.binary`. This sidesteps the class-name
+ * collision with planetiler-core (which bundles a binary-incompatible copy of the
+ * same protobuf-generated classes for reading PBF).
  *
  * Converts JTS geometries into OSM nodes, ways, and relations:
  * - Point → Node
@@ -48,9 +52,9 @@ class OsmPbfWriter(
     startRelationId: Long,
 ) {
     companion object {
-        private const val TAG = "OsmPbfWriter"
+        private val LOG = Logger.getLogger("OsmPbfWriter")
         private val EPOCH = Date(0)
-        private val OSM_USER = OsmUser(0, "naturalearth")
+        private val OSM_USER = OsmUser(0, "lomaps-generator")
 
         private fun clampLon(lon: Double) = lon.coerceIn(-180.0, 180.0)
         private fun clampLat(lat: Double) = lat.coerceIn(-90.0, 90.0)
@@ -65,15 +69,15 @@ class OsmPbfWriter(
     private val ways = mutableListOf<Way>()
     private val relations = mutableListOf<Relation>()
 
-    fun write(features: List<OverviewMapFeature>) {
-        Logger.i(TAG, "Converting ${features.size} features to OSM entities...")
+    fun write(features: List<OsmFeature>) {
+        LOG.info("Converting ${features.size} features to OSM entities...")
 
         // Phase 1: Convert all features to OSM entities
         for (feature in features) {
             convertFeature(feature)
         }
 
-        Logger.i(TAG, "Created ${nodes.size} nodes, ${ways.size} ways, ${relations.size} relations")
+        LOG.info("Created ${nodes.size} nodes, ${ways.size} ways, ${relations.size} relations")
 
         // Phase 2: Sort entities by ID (PBF requirement)
         nodes.sortBy { it.id }
@@ -83,14 +87,10 @@ class OsmPbfWriter(
         // Phase 3: Write PBF
         writePbf()
 
-        Logger.i(TAG, "PBF written: $outputPath")
+        LOG.info("PBF written: $outputPath")
     }
 
-    /**
-     * Converts a single OverviewFeature into OSM entities based on its geometry type.
-     * Handles geometry types and creates appropriate nodes, ways, and relations with tags.
-     */
-    private fun convertFeature(feature: OverviewMapFeature) {
+    private fun convertFeature(feature: OsmFeature) {
         val tags = feature.osmTags.map { (k, v) -> Tag(k, v) }
         when (val geom = feature.geometry) {
             is Point -> convertPoint(geom, tags)
@@ -110,13 +110,12 @@ class OsmPbfWriter(
             is MultiPolygon -> convertMultiPolygon(geom, tags)
             is GeometryCollection -> {
                 for (i in 0 until geom.numGeometries) {
-                    convertFeature(OverviewMapFeature(geom.getGeometryN(i), feature.osmTags, feature.sourceLayer))
+                    convertFeature(OsmFeature(geom.getGeometryN(i), feature.osmTags, feature.sourceLayer))
                 }
             }
         }
     }
 
-    /** Converts a JTS Point to an OSM Node with the given tags. */
     private fun convertPoint(point: Point, tags: Collection<Tag>) {
         val node = Node(
             CommonEntityData(nextNodeId++, 1, EPOCH, OSM_USER, 0, tags),
@@ -125,7 +124,6 @@ class OsmPbfWriter(
         nodes.add(node)
     }
 
-    /** Converts LineString to OSM way */
     private fun convertLineString(line: LineString, tags: Collection<Tag>): Way {
         val wayNodeRefs = mutableListOf<WayNode>()
         for (i in 0 until line.numPoints) {
@@ -148,13 +146,10 @@ class OsmPbfWriter(
         return way
     }
 
-    /**
-     * Converts a [LinearRing] to a closed OSM way
-     */
     private fun convertRing(ring: LinearRing, tags: Collection<Tag>): Way {
         val wayNodeRefs = mutableListOf<WayNode>()
         val firstNodeId = nextNodeId
-        // numPoints includes the closing duplicate — skip it (i < numPoints - 1)
+        // numPoints includes the closing duplicate — skip it
         for (i in 0 until ring.numPoints - 1) {
             val coord = ring.getCoordinateN(i)
             val nodeId = nextNodeId++
@@ -167,7 +162,6 @@ class OsmPbfWriter(
             )
             wayNodeRefs.add(WayNode(nodeId))
         }
-        // Close the ring by referencing the first node again (valid OSM closed way)
         wayNodeRefs.add(WayNode(firstNodeId))
 
         val way = Way(
@@ -178,15 +172,12 @@ class OsmPbfWriter(
         return way
     }
 
-    /** Converts a [Polygon] to an OSM multipolygon relation with outer/inner roles. */
     private fun convertPolygon(polygon: Polygon, tags: Collection<Tag>) {
         val members = mutableListOf<RelationMember>()
 
-        // Outer ring — always role "outer"
         val outerWay = convertRing(polygon.exteriorRing, emptyList())
         members.add(RelationMember(outerWay.id, EntityType.Way, "outer"))
 
-        // Inner rings (holes) — role "inner"
         for (i in 0 until polygon.numInteriorRing) {
             val innerWay = convertRing(polygon.getInteriorRingN(i), emptyList())
             members.add(RelationMember(innerWay.id, EntityType.Way, "inner"))
@@ -212,26 +203,25 @@ class OsmPbfWriter(
     private fun writePbf() {
         Files.createDirectories(outputPath.parent)
 
-        val output = FileOutputStream(outputPath.toFile())
-        val serializer = OsmosisSerializer(BlockOutputStream(output))
+        FileOutputStream(outputPath.toFile()).use { output ->
+            val serializer = OsmosisSerializer(BlockOutputStream(output))
+            try {
+                serializer.initialize(emptyMap())
 
-        try {
-            serializer.initialize(emptyMap())
+                for (node in nodes) {
+                    serializer.process(NodeContainer(node))
+                }
+                for (way in ways) {
+                    serializer.process(WayContainer(way))
+                }
+                for (relation in relations) {
+                    serializer.process(RelationContainer(relation))
+                }
 
-            // Write in required order: nodes, ways, relations
-            for (node in nodes) {
-                serializer.process(NodeContainer(node))
+                serializer.complete()
+            } finally {
+                serializer.close()
             }
-            for (way in ways) {
-                serializer.process(WayContainer(way))
-            }
-            for (relation in relations) {
-                serializer.process(RelationContainer(relation))
-            }
-
-            serializer.complete()
-        } finally {
-            serializer.close()
         }
     }
 }

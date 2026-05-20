@@ -1,4 +1,4 @@
-package com.asamm.osmTools.overviewMap
+package com.asamm.osmTools.pbf
 
 import org.locationtech.jts.geom.Geometry
 
@@ -6,7 +6,7 @@ import org.locationtech.jts.geom.Geometry
  * Intermediate representation of a geo feature (from any source) with JTS geometry
  * and OSM tags ready for PBF writing.
  */
-data class OverviewMapFeature(
+data class OsmFeature(
     val geometry: Geometry,
     val osmTags: Map<String, String>,
     val sourceLayer: String,

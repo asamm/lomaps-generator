@@ -16,6 +16,10 @@ configurations {
             // mapsforgeTiler pulls runtimeOnly(clikt:5.0.2) for its own CLI; pin to 4.x
             // so OsmToolsCommand (compiled against 4.4.0) keeps its expected constructor.
             force "com.github.ajalt.clikt:clikt:4.4.0"
+            // osmpbf:1.5.0 transitively brings in protobuf-java:2.6.1 which breaks
+            // planetiler-core's internal crosby.binary (compiled against 4.x API).
+            // Pin to the version that planetiler-core resolves to.
+            force "com.google.protobuf:protobuf-java:4.33.3"
         }
     }
 }
@@ -61,8 +65,10 @@ dependencies {
     // NGA GeoPackage library — direct WKB access that bypasses GeoTools axis-order processing
     // (follows the approach used by planetiler's GeoPackageReader to avoid incorrect polygon winding order)
     implementation("mil.nga.geopackage:geopackage:6.6.5")
-    implementation("org.openstreetmap.osmosis:osmosis-pbf:0.49.2")
-    implementation("org.openstreetmap.pbf:osmpbf:1.5.0")
+
+    // OSM PBF writing — lives in its own module that shadow-relocates crosby.binary
+    // so it doesn't collide with planetiler-core's bundled copy.
+    implementation(project(":osmToolsPbfWriter"))
 
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("com.asamm.locus:api-store:1.2.26")

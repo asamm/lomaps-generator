@@ -4,7 +4,8 @@ import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.overviewMap.centerline.CenterlineExtractor
 import com.asamm.osmTools.overviewMap.reader.GpkgFeatureReader
 import com.asamm.osmTools.overviewMap.reader.ShpFeatureReader
-import com.asamm.osmTools.overviewMap.writer.OsmPbfWriter
+import com.asamm.osmTools.pbf.OsmFeature
+import com.asamm.osmTools.pbf.OsmPbfWriter
 import com.asamm.osmTools.utils.Logger
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
@@ -42,7 +43,7 @@ class OverviewMapBuilder {
         val ecoregionsDir = OverviewMapDataDownloader.ensureEcoregionsShp(cfg)
 
         // 2. Read features from all configured layers
-        val allFeatures = mutableListOf<OverviewMapFeature>()
+        val allFeatures = mutableListOf<OsmFeature>()
         val shpReader = ShpFeatureReader()
         val gpkgReader = GpkgFeatureReader()
         val centerlineExtractor = CenterlineExtractor()
