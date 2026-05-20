@@ -2,13 +2,13 @@ package com.asamm.osmTools
 
 import com.asamm.osmTools.LoMapsCommand.Companion.TAG
 import com.asamm.osmTools.cleanup.OldMapsCleaner
-import com.asamm.osmTools.generator.MapsforgeTilerRunner
+import com.asamm.osmTools.generator.lomaps.MapsforgeTilerRunner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.elevation.ElevationPlanetBuilder
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder
-import com.asamm.osmTools.generator.GenLoMaps
+import com.asamm.osmTools.generator.lomaps.GenLoMaps
 import com.asamm.osmTools.generator.GenStoreRegionDB
 import com.asamm.osmTools.generator.PlanetUpdater
 import com.asamm.osmTools.utils.Logger

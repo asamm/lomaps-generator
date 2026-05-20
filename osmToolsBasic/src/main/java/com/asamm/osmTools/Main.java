@@ -4,11 +4,8 @@
  */
 package com.asamm.osmTools;
 
-import com.asamm.osmTools.generator.GenLoMaps;
-import com.asamm.osmTools.generator.GenStoreRegionDB;
 import com.asamm.osmTools.utils.*;
 
-import java.util.logging.Handler;
 import java.util.logging.Logger;
 
 /**

@@ -1,4 +1,4 @@
-package com.asamm.osmTools.generator
+package com.asamm.osmTools.generator.lomaps
 
 import com.asamm.mapsforge.writer.batchextract.BatchExtractor
 import com.asamm.mapsforge.writer.batchextract.BatchOptions
@@ -17,7 +17,6 @@ import com.asamm.osmTools.utils.MercatorUtils
 import com.asamm.osmTools.utils.Utils
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.absolute
 
 object MapsforgeTilerRunner {
 
@@ -89,7 +88,7 @@ object MapsforgeTilerRunner {
     /**
      * Extracts per-country maps from a planet-scale mapsforge map using batch extraction.
      *
-     * Every [ItemMap] in [mMapSource] that has the [Action.GENERATE_MAPSFORGE] action is
+     * Every [ItemMap] in [mMapSource] that has the [com.asamm.osmTools.config.Action.GENERATE_MAPSFORGE] action is
      * is extracted (in a single-pass)
      */
     @JvmStatic
