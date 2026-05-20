@@ -16,7 +16,7 @@ enum class PathType(val baseDir: String) {
     ADDRESS_DB("_address_db"),
     POI_V2_DB_MBTILES("_poi_v2_db_mbtiles"),
     POI_V2_DB_MAPSFORGE("_poi_v2_db_mapsforge"),
-    MAPSFORGE_GENERATE("_generate"),
+    MAPSFORGE_GENERATE("_mapsforge"),
     MBTILES_GENERATE("_mbtiles"),
     MAPSFORGE_RESULT("_result"),
     ADDRESS_POI_DB_CLASSIC("_address_poi_db"),
@@ -81,7 +81,7 @@ class PathResolver(val map: ItemMap) {
      * Returns the absolute path to the base directory for the given PathType.
      * This does NOT include versionPath  just the root directory for the PathType.
      */
-    fun getBaseDir(type: PathType): Path {
+    fun  getBaseDir(type: PathType): Path {
         return when (type) {
             PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
 

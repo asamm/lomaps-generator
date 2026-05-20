@@ -140,10 +140,10 @@ public class GenLoMaps extends AGenerator {
         for (Action action : actionList) {
             switch (action) {
                 case TOURIST:
-                    actionTourist(mapPlanet);
+                    actionPlanetTourist(mapPlanet);
                     break;
                 case CONTOUR:
-                    actionContour(mapPlanet);
+                    actionPlanetContour(mapPlanet);
                     break;
 
                 case OVERVIEW_MAP:
@@ -155,6 +155,7 @@ public class GenLoMaps extends AGenerator {
         actionMergePlanet(mapPlanet);
 
         actionMapsforgePlanet(mapPlanet);
+        actionMapsforgeItems(mapPlanet);
 
         // generate lomaps outdoor planet tiles - will be deprecated when Asamm server is ready
         actionGenerateMbtilesOnline(mapPlanet);
@@ -167,27 +168,7 @@ public class GenLoMaps extends AGenerator {
         actionUploadPlanetToMapTiler(mapPlanet);
     }
 
-    /** Generate mapsforge map for whole planet. This is later extracted to particular mapsforge maps */
-    private void actionMapsforgePlanet(ItemMap mapPlanet) {
 
-        if (!AppConfig.config.getActions().contains(Action.GENERATE_MAPSFORGE)) {
-            return;
-        }
-
-        if (!AppConfig.config.getOverwrite() && mapPlanet.getPathMapsforgeGenerate().toFile().exists()) {
-            Logger.i(TAG, "Planet mapsforge map already exists: " + mapPlanet.getPathMapsforgeGenerate());
-            return;
-        }
-
-        TimeWatch time = new TimeWatch();
-        Logger.i(TAG, "Generating planet mapsforge map: " + mapPlanet.getPathMapsforgeGenerate());
-        Main.mySimpleLog.print("\nGenerate planet map: " + mapPlanet.getName() + " ...");
-
-        MapsforgeTilerRunner.generatePlanetMap(mapPlanet);
-
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-        time.stopCount();
-    }
 
 
     public void actionAllInOne(ItemMapPack mp, Action action)
@@ -213,7 +194,6 @@ public class GenLoMaps extends AGenerator {
                     actionPoiV2Database(map);
                     break;
                 case GENERATE_MAPSFORGE:
-                    actionGenerate(map);
                     actionInsertMetaData(map);
                     break;
             }
@@ -328,7 +308,7 @@ public class GenLoMaps extends AGenerator {
 
     // ACTION TOURIST
 
-    private void actionTourist(ItemMap map) {
+    private void actionPlanetTourist(ItemMap map) {
         // check if we want to do this action
         if (!map.hasAction(Action.TOURIST)) {
             return;
@@ -342,31 +322,20 @@ public class GenLoMaps extends AGenerator {
         }
 
         // for planet it's needed to customize "source" path and use the orig planet file as source
-        Path pathToSource = map.getPathSource();
-        if (map.isPlanet()) {
-            pathToSource = AppConfig.config.getPlanetConfig().getPlanetLatestPath();
-        }
+        Path pathToSource = AppConfig.config.getPlanetConfig().getPlanetLatestPath();
 
         // test if source file exist
         if (!pathToSource.toFile().exists()) {
             throw new IllegalArgumentException("Input file for creation tourist path "
-                    + map.getPathSource() + " does not exist!");
+                    + pathToSource + " does not exist!");
         }
-
-        // write to log and start stop watch
-        TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nTourist: " + map.getName() + " ...");
 
         CmdLoMapsTools cmdTourist = new CmdLoMapsTools();
         cmdTourist.generateTourist(pathToSource, map.getPathTourist());
-
-        // notify about result
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-        time.stopCount();
     }
 
     // ACTION TRANSFORM DATA
-
+    @Deprecated(since = "2025-06", forRemoval = true)
     private void actionTransformData(ItemMap map) {
 
         // transform data only maps that are used for generation
@@ -386,9 +355,9 @@ public class GenLoMaps extends AGenerator {
     }
 
 
-    // ACTION CONTOUR
+    // ACTION PLANET CONTOUR
 
-    private void actionContour(ItemMap map) {
+    private void actionPlanetContour(ItemMap map) {
         // check if we want to do this action
         if (!map.hasAction(Action.CONTOUR)) {
             return;
@@ -401,25 +370,11 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        // write to log and start stop watch
-        TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("\nContour: " + map.getName() + " ...");
-        Logger.i(TAG, "Creating contours: " + map.getPathContour());
-
         CmdContour cc = new CmdContour(map);
         cc.generate();
-
-//        CmdSort cs = new CmdSort(map);
-//        cs.createCmdSort();
-//        cs.execute();
-//        cs.rename();
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-
-        // stop timeWatch
-        time.stopCount();
     }
 
-    // ACTION MERGE
+    // ACTION PLANET MERGE
     private void actionMergePlanet(ItemMap map) {
 
         Logger.i(TAG, "================ MERGE PLANET MAP ================");
@@ -529,29 +484,32 @@ public class GenLoMaps extends AGenerator {
         time.stopCount();
     }
 
-    // ACTION GENERATE
+    // ACTION GENERATE MAPSFORGE
 
-    private void actionGenerate(ItemMap map) {
+    /** Generate mapsforge map for whole planet. This is later extracted to particular mapsforge maps */
+    private void actionMapsforgePlanet(ItemMap mapPlanet) {
 
-        if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            if (AppConfig.config.getOverwrite() || !map.getPathMapsforgeGenerate().toFile().exists()) {
-                CmdGenerate cg = new CmdGenerate(map);
-
-                // write to log and start stop watch
-                TimeWatch time = new TimeWatch();
-                Logger.i(TAG, "Generating map: " + map.getPathMapsforgeGenerate());
-                Main.mySimpleLog.print("\nGenerate: " + map.getName() + " ...");
-                cg.execute(2, true);
-
-                // clean tmp
-                Logger.i(TAG, "Deleting files in tmp dir: " + AppConfig.config.getTemporaryDir());
-                Utils.deleteFilesInDir(AppConfig.config.getTemporaryDir());
-
-                Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
-            } else {
-                Logger.i(TAG, "Generated map " + map.getPathMapsforgeGenerate() + " already exists. Nothing to do.");
-            }
+        if (!AppConfig.config.getActions().contains(Action.GENERATE_MAPSFORGE)) {
+            return;
         }
+
+        if (!AppConfig.config.getOverwrite() && mapPlanet.getPathMapsforgeGenerate().toFile().exists()) {
+            Logger.i(TAG, "Planet mapsforge map already exists: " + mapPlanet.getPathMapsforgeGenerate());
+            return;
+        }
+
+        TimeWatch time = new TimeWatch();
+        Logger.i(TAG, "Generating planet mapsforge map: " + mapPlanet.getPathMapsforgeGenerate());
+        Main.mySimpleLog.print("\nGenerate planet map: " + mapPlanet.getName() + " ...");
+
+        MapsforgeTilerRunner.generatePlanetMap(mapPlanet);
+
+        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        time.stopCount();
+    }
+
+    private void actionMapsforgeItems(ItemMap mapPlanet) {
+        MapsforgeTilerRunner.extractFromPlanetMap(mapPlanet.getPathMapsforgeGenerate(), mMapSource);
     }
 
 
