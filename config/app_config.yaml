@@ -58,6 +58,13 @@ mbtilesConfig:
   mapDescription: *lomaps_short_desc
   mapAttribution: *lomaps_attribution
 
+residentialConfig:
+  sourceGpkg: "/mnt/work/residential/planet_residential.gpkg"
+  layerName: "residential"
+  startNodeId: 2000000000000
+  startWayId:  2100000000000
+  startRelationId: 2200000000000
+
 mapsforgeConfig:
   mapConfigXml: "config/config.xml"
   tagMapping: "config/tag-mapping-tourist.xml"

@@ -86,7 +86,8 @@ data class Config(
     var mapsforgeConfig: MapsforgeConfig,
     var poiAddressConfig: PoiAddressConfig,
     var terrainRgbConfig: TerrainRgbConfig,
-    var overviewMapConfig: OverviewMapConfig
+    var overviewMapConfig: OverviewMapConfig,
+    var residentialConfig: ResidentialConfig,
 
     ) {
     fun toYaml(): String {
@@ -310,6 +311,24 @@ class OverviewMapConfig(
 
     /** Start relation ID for NE features */
     val startRelationId: Long,
+)
+
+@Serializable
+class ResidentialConfig(
+
+    /** GeoPackage file containing residential area polygons with lm_residential attribute. */
+    @Serializable(with = PathSerializer::class)
+    val sourceGpkg: Path,
+
+    /** Name of the feature table / layer inside the GeoPackage. */
+    val layerName: String = "planet_residentilal_areas",
+
+    /** Start node ID — must not overlap with OSM or other synthetic ID ranges. */
+    val startNodeId: Long,
+
+    /** Start way ID. */
+    val startWayId: Long,
+
 )
 
 @Serializable

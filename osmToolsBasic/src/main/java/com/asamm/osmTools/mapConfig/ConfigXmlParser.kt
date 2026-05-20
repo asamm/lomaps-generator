@@ -44,10 +44,6 @@ object ConfigXmlParser {
                 if (tag == KXmlParser.START_TAG) {
                     tagName = parser.name
                     if (tagName.equals("maps", ignoreCase = true)) {
-                        val rewriteFiles = parser.getAttributeValue(null, "rewriteFiles")
-                        AppConfig.config.overwrite = (
-                                rewriteFiles != null && rewriteFiles.equals("yes", ignoreCase = true)
-                                )
                     } else if (tagName.equals("mapPack", ignoreCase = true)) {
                         mapPack = ItemMapPack(mapPack)
                         mapPack.fillAttributes(parser)

@@ -19,6 +19,7 @@ import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
+import com.asamm.osmTools.residential.ResidentialBuilder;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
@@ -75,9 +76,10 @@ public class GenLoMaps extends AGenerator {
         // for every action value in array do
         for (Action action : actionList) {
 
-            // skip Contour and Tourist action, because they are processed on planet level
+            // skip actions processed on planet level
             if (action == Action.CONTOUR
                     || action == Action.TOURIST
+                    || action == Action.RESIDENTIAL
                     || action == Action.GENERATE_PMTILES_ONLINE
                     || action == Action.OVERVIEW_MAP) {
                 continue;
@@ -145,10 +147,14 @@ public class GenLoMaps extends AGenerator {
                 case CONTOUR:
                     actionPlanetContour(mapPlanet);
                     break;
+// TODO uncomment
+//                case OVERVIEW_MAP:
+//                    OverviewMapBuilder overviewMapBuilder = new OverviewMapBuilder();
+//                    overviewMapBuilder.buildOverviewOsmPbf();
+//                    break;
 
-                case OVERVIEW_MAP:
-                    OverviewMapBuilder overviewMapBuilder = new OverviewMapBuilder();
-                    overviewMapBuilder.buildOverviewOsmPbf();
+                case RESIDENTIAL:
+                    actionPlanetResidential(mapPlanet);
                     break;
             }
         }
@@ -168,7 +174,17 @@ public class GenLoMaps extends AGenerator {
         actionUploadPlanetToMapTiler(mapPlanet);
     }
 
+    private void actionPlanetResidential(ItemMap mapPlanet) {
 
+        printLogHeader(Action.RESIDENTIAL);
+
+        if (!AppConfig.config.getOverwrite() && mapPlanet.getPathResidential().toFile().exists()) {
+            Logger.i(TAG, "Residential PBF already exists, skipping: " + mapPlanet.getPathResidential());
+            return;
+        }
+
+        ResidentialBuilder.INSTANCE.buildResidentialPbf(mapPlanet.getPathResidential());
+    }
 
 
     public void actionAllInOne(ItemMapPack mp, Action action)
@@ -420,6 +436,15 @@ public class GenLoMaps extends AGenerator {
                         "Run the overview map build step first.");
             }
             pathsToMerge.add(cfg.getOutputPbf().toAbsolutePath());
+        }
+
+        // merge residential areas
+        if (AppConfig.config.getActions().contains(Action.RESIDENTIAL) && map.hasAction(Action.RESIDENTIAL)) {
+            if (!map.getPathResidential().toFile().exists()) {
+                throw new IllegalStateException("Residential PBF not found: " + map.getPathResidential() +
+                        ". Run the residential build step first.");
+            }
+            pathsToMerge.add(map.getPathResidential());
         }
 
         // merge

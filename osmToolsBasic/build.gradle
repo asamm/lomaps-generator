@@ -13,6 +13,9 @@ configurations {
     all {
         resolutionStrategy {
             force "org.locationtech.jts:jts-core:1.20.0"
+            // mapsforgeTiler pulls runtimeOnly(clikt:5.0.2) for its own CLI; pin to 4.x
+            // so OsmToolsCommand (compiled against 4.4.0) keeps its expected constructor.
+            force "com.github.ajalt.clikt:clikt:4.4.0"
         }
     }
 }
@@ -38,7 +41,10 @@ repositories {
 dependencies {
     implementation(project(":osmToolsCore"))
     implementation(project(":osmToolsDataWriter"))
-    implementation("com.asamm:mapsforgetiler")
+    implementation("com.asamm:mapsforgetiler") {
+        // exclude clikt to avoid colisiton with clickt in OsmTools
+        exclude group: "com.github.ajalt.clikt", module: "clikt"
+    }
     implementation(project(":maptiler-api"))
     implementation(project(":osmToolsElevation"))
     // GeoTools for reading SHP and CRS handling (Natural Earth / overview map)

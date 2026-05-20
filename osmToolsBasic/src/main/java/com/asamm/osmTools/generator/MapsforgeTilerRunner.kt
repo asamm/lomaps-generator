@@ -14,6 +14,7 @@ import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.MapSource
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.MercatorUtils
+import com.asamm.osmTools.utils.Utils
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolute
@@ -24,15 +25,22 @@ object MapsforgeTilerRunner {
 
     @JvmStatic
     fun generatePlanetMap(map: ItemMap) {
-        val config = MapWriterConfig(
-            input = map.pathSource,
-            output = map.pathMapsforgeGenerate,
-            bbox = BoundingBox(
+
+        val bbox: BoundingBox? = if (Utils.isLocalDEV()) {
+            null
+        } else {
+            BoundingBox(
                 minLat = -MercatorUtils.WEB_MERCATOR_MAX_LAT,
                 minLon = -180.0,
                 maxLat = MercatorUtils.WEB_MERCATOR_MAX_LAT,
                 maxLon = 180.0,
-            ),
+            )
+        }
+
+        val config = MapWriterConfig(
+            input = map.pathSource,
+            output = map.pathMapsforgeGenerate,
+            bbox = bbox,
             tagConfFile = AppConfig.config.mapsforgeConfig.tagMapping.toAbsolutePath(),
             labelPosition = true,
             simplificationFactor = 0.5,
