@@ -28,12 +28,14 @@ class PlanetPipeline {
     private static final String TAG = PlanetPipeline.class.getSimpleName();
 
     private final MapSource mapSource;
+    private final ItemMap planet;
 
-    PlanetPipeline(MapSource mapSource) {
+    PlanetPipeline(MapSource mapSource, ItemMap planet) {
         this.mapSource = mapSource;
+        this.planet = planet;
     }
 
-    void run(List<Action> actions, ItemMap planet) {
+    void run(List<Action> actions) {
         Logger.i(TAG, "================ PROCESS PLANET MAP ================");
 
         if (actions.contains(Action.TOURIST))      tourist(planet);

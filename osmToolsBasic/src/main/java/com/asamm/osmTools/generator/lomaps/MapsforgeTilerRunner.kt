@@ -17,7 +17,21 @@ import com.asamm.osmTools.utils.MercatorUtils
 import com.asamm.osmTools.utils.Utils
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.absolute
 
+/**
+ * Runner helper that invokes Mapsforge writer tasks used by the CLI.
+ *
+ * Responsibilities:
+ * - Generate a planet-scale Mapsforge `.osm.map` from a source PBF (`generatePlanetMap`).
+ * - Produce an overview map from an overview PBF (`generateOverviewMap`).
+ * - Batch-extract region maps from a planet map (`extractFromPlanetMap`).
+ *
+ * Notes:
+ * - When local development mode is enabled (`Utils.isLocalDEV()`), the bounding box is left
+ *   null so the writer derives the area from the input; otherwise a global world bbox is used.
+ * - Writer options are populated from `AppConfig` (tag mapping, threads, workDir, etc.).
+ */
 object MapsforgeTilerRunner {
 
     private val TAG = MapsforgeTilerRunner::class.java.simpleName

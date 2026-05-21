@@ -159,7 +159,7 @@ abstract class AGenerator {
      * @param mp map pack to create countries for it's items
      */
     @Throws(IOException::class, InterruptedException::class)
-    protected fun actionCountryBorder(
+    fun actionCountryBorder(
         mp: ItemMapPack, mapSource: MapSource, storageType: ConfigurationCountry.StorageType
     ) {
         Logger.i(TAG, "actionCountryBorder, source: " + mp.name)

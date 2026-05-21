@@ -16,11 +16,11 @@ import java.util.List;
 
 /**
  * Top-level orchestrator for the LoMaps generation pipeline.
- *
+ * <p>
  * Delegates all work to three focused pipeline classes:
- *  1. {@link PlanetPipeline} — planet-wide preparation and map generation
- *  2. {@link MapPipeline}    — per-map extraction, databases, and tiles
- *  3. {@link PostPipeline}   — compression, JSON definition, and upload
+ * 1. {@link PlanetPipeline} — planet-wide preparation and map generation
+ * 2. {@link MapPipeline}    — per-map extraction, databases, and tiles
+ * 3. {@link PostPipeline}   — compression, JSON definition, and upload
  */
 public class GenLoMaps extends AGenerator {
 
@@ -44,10 +44,12 @@ public class GenLoMaps extends AGenerator {
         }
 
         List<Action> actions = AppConfig.config.getActions();
-        ItemMap planet = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
+        ItemMap planetItemMap = mMapSource.getMapById(AppConfig.config.getPlanetConfig().getPlanetExtendedId());
 
-        new PlanetPipeline(mMapSource).run(actions, planet);
-        new MapPipeline(this, mMapSource, planet).run(actions);
+        new PlanetPipeline(mMapSource, planetItemMap).run(actions);
+
+        new MapPipeline(this, mMapSource, planetItemMap).run(actions);
+
         new PostPipeline(mMapSource).run(actions);
     }
 }

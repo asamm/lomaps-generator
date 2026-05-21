@@ -2,7 +2,9 @@ package com.asamm.osmTools.generator.lomaps;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.Main;
-import com.asamm.osmTools.cmdCommands.*;
+import com.asamm.osmTools.cmdCommands.CmdLoMapsDbPlugin;
+import com.asamm.osmTools.cmdCommands.CmdPlanetiler;
+import com.asamm.osmTools.cmdCommands.CmdPoiV2;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.generator.AGenerator;
@@ -14,7 +16,9 @@ import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
-import com.asamm.osmTools.utils.*;
+import com.asamm.osmTools.utils.Logger;
+import com.asamm.osmTools.utils.TimeWatch;
+import com.asamm.osmTools.utils.Utils;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -28,7 +32,7 @@ import java.util.List;
 /**
  * Iterates over all map packs and maps, executing the per-map pipeline stages
  * in action-priority order (all packs/maps for stage X before stage Y).
- *
+ * <p>
  * Steps that require pack-level preparation (EXTRACT, country border) are run
  * before descending into individual maps. The Kotlin {@link AGenerator} reference
  * is used for those two inherited operations.
@@ -39,7 +43,9 @@ class MapPipeline {
 
     private final AGenerator generator;
     private final MapSource mapSource;
-    /** Planet ItemMap — needed for the fallback planet-mbtiles generation inside per-map mbtiles. */
+    /**
+     * Planet ItemMap — needed for the fallback planet-mbtiles generation inside per-map mbtiles.
+     */
     private final ItemMap planet;
 
     MapPipeline(AGenerator generator, MapSource mapSource, ItemMap planet) {
@@ -64,11 +70,6 @@ class MapPipeline {
                     insertMetaData(map);
                 });
             });
-        }
-
-        // RESIDENTIAL — per map
-        if (actions.contains(Action.RESIDENTIAL)) {
-            forEachPack(mp -> forEachMap(mp, this::prepareResidential));
         }
 
         // MBTILES — per map
@@ -150,30 +151,17 @@ class MapPipeline {
         DatabaseData dbData = new DatabaseData(dbFile);
         WKTWriter wktWriter = new WKTWriter();
 
-        dbData.insertData(LoMapsDbConst.VAL_AREA,             wktWriter.write(geom));
-        dbData.insertData(LoMapsDbConst.VAL_COUNTRY,          map.getCountryName());
-        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION,      AppConfig.config.getMapsforgeConfig().getMapMetaDataDescription());
-        dbData.insertData(LoMapsDbConst.VAL_LANGUAGES,        map.getPrefLang());
-        dbData.insertData(LoMapsDbConst.VAL_OSM_DATE,         String.valueOf(dateVersion.getTime()));
-        dbData.insertData(LoMapsDbConst.VAL_REGION_ID,        map.getRegionId());
-        dbData.insertData(LoMapsDbConst.VAL_VERSION,          AppConfig.config.getVersion());
-        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION,   String.valueOf(AppConfig.config.getPoiAddressConfig().getDbPoiVersion()));
+        dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
+        dbData.insertData(LoMapsDbConst.VAL_COUNTRY, map.getCountryName());
+        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, AppConfig.config.getMapsforgeConfig().getMapMetaDataDescription());
+        dbData.insertData(LoMapsDbConst.VAL_LANGUAGES, map.getPrefLang());
+        dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
+        dbData.insertData(LoMapsDbConst.VAL_REGION_ID, map.getRegionId());
+        dbData.insertData(LoMapsDbConst.VAL_VERSION, AppConfig.config.getVersion());
+        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbPoiVersion()));
         dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbAddressVersion()));
 
         dbData.destroy();
-    }
-
-    // ---- RESIDENTIAL ----
-
-    private void prepareResidential(ItemMap map) {
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE)) return;
-
-        if (map.getPathResidential().toFile().exists()) {
-            Logger.i(TAG, "Residential data already exists, skipping: " + map.getPathResidential());
-            return;
-        }
-        Logger.i(TAG, "Prepare residential areas for: " + map.getName());
-        new CmdResidential(map).execute();
     }
 
     // ---- MBTILES ----

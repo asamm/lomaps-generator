@@ -24,9 +24,15 @@ class PostPipeline {
     }
 
     void run(List<Action> actions) {
-        if (actions.contains(Action.CREATE_JSON)) createJson();
-        if (actions.contains(Action.COMPRESS))    compress();
-        if (actions.contains(Action.UPLOAD))      upload();
+        if (actions.contains(Action.CREATE_JSON)){
+            createJson();
+        }
+        if (actions.contains(Action.COMPRESS)) {
+            compress();
+        }
+        if (actions.contains(Action.UPLOAD)){
+            upload();
+        }
     }
 
     private void createJson() {
@@ -41,9 +47,7 @@ class PostPipeline {
 
     private void upload() {
         Logger.i(TAG, "================ UPLOAD ================");
-        TimeWatch time = new TimeWatch();
-        Main.mySimpleLog.print("Upload data....");
+        Logger.i(TAG,"Upload data....");
         new CmdUpload().upload(1);
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
     }
 }
