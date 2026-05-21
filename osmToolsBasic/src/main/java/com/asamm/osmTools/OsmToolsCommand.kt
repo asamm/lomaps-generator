@@ -55,8 +55,13 @@ class OsmToolsCommand : CliktCommand(
         // Load the app configuration (initialize it once)
         AppConfig.loadConfig()
 
-        // Set verbose mode
-        AppConfig.config.verbose = verbose
+        // Configure file logging (archives previous latest.log, opens fresh latest.log)
+        AppConfig.config.loggerConfig.verbose = verbose
+        Logger.configure(
+            AppConfig.config.loggerConfig.logDir,
+            AppConfig.config.loggerConfig.maxFiles,
+            AppConfig.config.loggerConfig.verbose,
+        )
 
         // Set Locus Store environment
         AppConfig.config.locusStoreEnv = locusStoreEnv

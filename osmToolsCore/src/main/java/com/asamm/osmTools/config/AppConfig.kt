@@ -52,7 +52,6 @@ data class Config(
     var overwrite: Boolean = false,
     var actions: MutableList<Action> = mutableListOf<Action>(),
     var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,
-    var verbose: Boolean = false,
 
     @Serializable(with = PathSerializer::class)
     var temporaryDir: Path = Path.of("_temp"),
@@ -88,6 +87,7 @@ data class Config(
     var terrainRgbConfig: TerrainRgbConfig,
     var overviewMapConfig: OverviewMapConfig,
     var residentialConfig: ResidentialConfig,
+    var loggerConfig: LoggerConfig = LoggerConfig(),
 
     ) {
     fun toYaml(): String {
@@ -361,6 +361,17 @@ class CmdConfig(
     val gdalwarp: String by lazy { ConfigUtils.getCheckGdalPath("gdalwarp") }
 }
 
+
+@Serializable
+class LoggerConfig(
+    /** Directory where log files are written. Relative paths are resolved from the working directory. */
+    var logDir: String = "logs",
+    /** How many past run log files to keep alongside the current `latest.log`. Oldest are deleted. */
+    var maxFiles: Int = 10,
+    /** Enable DEBUG (CONFIG-level) logging. Overridden at runtime by the -d/--debug CLI flag. */
+    @Transient
+    var verbose: Boolean = false,
+)
 
 // SERIALIZER FOR PATH
 

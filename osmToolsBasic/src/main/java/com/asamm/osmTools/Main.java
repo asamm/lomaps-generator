@@ -13,8 +13,6 @@ import java.util.logging.Logger;
  */
 public class Main {
 
-    private static final String TAG = Main.class.getSimpleName();
-
     public static final Logger LOG = com.asamm.osmTools.utils.Logger.create();
 
 }

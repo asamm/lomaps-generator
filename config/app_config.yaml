@@ -3,6 +3,10 @@ mapsForgeDir: "/mnt/work/vectorMaps"
 mbtilesDir: "/mnt/data/vectorMaps" 
 storeUploaderPath: ""
 
+loggerConfig:
+  logDir: logs
+  maxFiles: 10
+
 touristConfig:
   nodeId:       1200000000000
   wayId:        1300000000000

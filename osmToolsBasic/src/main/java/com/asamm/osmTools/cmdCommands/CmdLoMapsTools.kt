@@ -21,7 +21,7 @@ class CmdLoMapsTools : Cmd(ExternalApp.LOMAPS_TOOLS) {
 
     fun osmUpdate(path: Path) {
         builder()
-            .addIf(AppConfig.config.verbose, "-v")
+            .addIf(AppConfig.config.loggerConfig.verbose, "-v")
             .add("osmupdate", "-i", path.toString())
             .execute()
     }
