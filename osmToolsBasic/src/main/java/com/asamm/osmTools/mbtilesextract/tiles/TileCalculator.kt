@@ -6,8 +6,10 @@ import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.Polygon
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory
 import org.locationtech.jts.operation.union.CascadedPolygonUnion
 import java.io.File
+import java.util.stream.Collectors
 
 class TileCalculator {
 
@@ -26,98 +28,80 @@ class TileCalculator {
     }
 
     /**
-     * Computes the list of map tiles (x, y, z) that cover the given geometry from zoom level 0 to the specified zoom level.
+     * Computes tiles at [maxZoom] that intersect [geometry], including correct handling of holes
+     * (tiles fully inside a hole are excluded). Uses [PreparedGeometryFactory] for fast repeated
+     * intersection tests and parallel processing across tile columns.
+     *
+     * Lower zoom levels are not computed here — [mergeTiles] compresses the result upward.
      *
      * @param geometry The JTS geometry (Polygon or MultiPolygon) defining the area.
      * @param maxZoom The maximum zoom level to compute tiles for (default is 14).
      * @return A list of map tiles represented as triples (x, y, z).
      */
     fun computeTiles(geometry: Geometry, maxZoom: Int = 14): List<Triple<Int, Int, Int>> {
-        val tiles = mutableListOf<Triple<Int, Int, Int>>()
+        val prepared = PreparedGeometryFactory().create(geometry)
+        val envelope = geometry.envelopeInternal
+        val minTileX = MercatorUtils.lonToTileX(envelope.minX, maxZoom)
+        val maxTileX = MercatorUtils.lonToTileX(envelope.maxX, maxZoom)
+        val minTileY = MercatorUtils.latToTileY(envelope.maxY, maxZoom)
+        val maxTileY = MercatorUtils.latToTileY(envelope.minY, maxZoom)
 
-        for (zoom in 0..maxZoom) {
-            val envelope = geometry.envelopeInternal
-            val minTileX = MercatorUtils.lonToTileX(envelope.minX, zoom)
-            val maxTileX = MercatorUtils.lonToTileX(envelope.maxX, zoom)
-            val minTileY = MercatorUtils.latToTileY(envelope.maxY, zoom)
-            val maxTileY = MercatorUtils.latToTileY(envelope.minY, zoom)
-
-            for (x in minTileX..maxTileX) {
-                for (y in minTileY..maxTileY) {
-                    val tileGeometry = tileToPolygon(x, y, zoom)
-                    if (geometry.intersects(tileGeometry)) {
-                        tiles.add(Triple(x, y, zoom))
-                    }
-                }
-            }
-        }
-
-        return tiles
+        return (minTileX..maxTileX).toList().parallelStream().flatMap { x ->
+            (minTileY..maxTileY).mapNotNull { y ->
+                if (prepared.intersects(tileToPolygon(x, y, maxZoom))) Triple(x, y, maxZoom) else null
+            }.stream()
+        }.collect(Collectors.toList())
     }
 
     /**
-     * Creates a JTS geometry that exactly covers the list of tiles.
+     * Computes the tile coverage geometry for the polygon in the given file.
+     * Convenience wrapper around [computeTiles] + [createTileCoverageGeometry].
+     */
+    fun computeTileCoverageGeometry(polyFile: File, maxZoom: Int = 14): Geometry =
+        createTileCoverageGeometry(computeTiles(polyFile, maxZoom))
+
+    /**
+     * Creates a JTS geometry that covers the list of tiles, preserving holes where tiles are absent.
      *
      * @param tiles The list of tiles represented as triples (x, y, z).
-     * @param zoom The zoom level of the tiles for this level the geometry will be created.
-     * @return A JTS geometry that covers the tiles.
+     * @return A JTS geometry that covers the tiles, with holes where tiles are missing.
      */
     fun createTileCoverageGeometry(tiles: List<Triple<Int, Int, Int>>): Geometry {
-
-        // Merge tiles to reduce the number of polygons
         val mergedTiles = mergeTiles(tiles.toSet())
-
-        val polygons = mergedTiles.map { (x, y, z) -> tileToPolygon(x, y, z) }
-
-        // Union all polygons to single geometry
+        val polygons = mergedTiles.toList().parallelStream()
+            .map { (x, y, z) -> tileToPolygon(x, y, z) }
+            .collect(Collectors.toList())
         return CascadedPolygonUnion(polygons).union()
     }
 
     /**
-     * Merges tiles by replacing 4 adjacent tiles at zoom Z with a single tile at zoom Z-1.
-     * Returns a new list of tiles optimized for coverage.
+     * Merges tiles by replacing 4 sibling tiles at zoom Z with their parent at zoom Z-1,
+     * but only when all 4 siblings are present (preserving holes in the tile set).
+     * Returns a compressed set of tiles spanning multiple zoom levels.
      */
     fun mergeTiles(tiles: Set<Triple<Int, Int, Int>>): Set<Triple<Int, Int, Int>> {
-        // Organize tiles by zoom level
-        val tilesByZoom = tiles.groupBy { it.third }.toSortedMap(reverseOrder()) // Start from max zoom
-
-        val mergedTiles = mutableSetOf<Triple<Int, Int, Int>>()
-        // remove tile with zoom 0
+        val tilesByZoom = tiles.groupBy { it.third }.toSortedMap(reverseOrder())
         val remainingTiles = tiles.filter { it.third != 0 }.toMutableSet()
 
         for (zoom in tilesByZoom.keys.sortedDescending()) {
-            if (zoom == 0) break // Zoom 0 tiles can't be merged further
+            if (zoom == 0) break
 
             val parentTiles = mutableSetOf<Triple<Int, Int, Int>>()
 
             for ((x, y, z) in tilesByZoom[zoom] ?: emptyList()) {
                 val parentTile = Triple(x / 2, y / 2, z - 1)
-
-                // Check if this parent tile is eligible for merging (i.e., all 4 children exist)
-                val allChildrenExist = listOf(
-                    Triple(parentTile.first * 2, parentTile.second * 2, zoom),
-                    Triple(parentTile.first * 2 + 1, parentTile.second * 2, zoom),
-                    Triple(parentTile.first * 2, parentTile.second * 2 + 1, zoom),
+                val siblings = listOf(
+                    Triple(parentTile.first * 2,     parentTile.second * 2,     zoom),
+                    Triple(parentTile.first * 2 + 1, parentTile.second * 2,     zoom),
+                    Triple(parentTile.first * 2,     parentTile.second * 2 + 1, zoom),
                     Triple(parentTile.first * 2 + 1, parentTile.second * 2 + 1, zoom)
-                ).all { it in remainingTiles }
-
-                if (allChildrenExist) {
-                    // Remove all 4 child tiles and replace with parent
-                    remainingTiles.removeAll(
-                        listOf(
-                            Triple(parentTile.first * 2, parentTile.second * 2, zoom),
-                            Triple(parentTile.first * 2 + 1, parentTile.second * 2, zoom),
-                            Triple(parentTile.first * 2, parentTile.second * 2 + 1, zoom),
-                            Triple(parentTile.first * 2 + 1, parentTile.second * 2 + 1, zoom)
-                        )
-                    )
+                )
+                if (siblings.all { it in remainingTiles }) {
+                    remainingTiles.removeAll(siblings.toSet())
                     parentTiles.add(parentTile)
-                } else {
-                    remainingTiles.remove(parentTile)
                 }
             }
 
-            // Add merged parent tiles to the set
             remainingTiles.addAll(parentTiles)
         }
 

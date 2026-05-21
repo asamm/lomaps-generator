@@ -46,8 +46,7 @@ class CmdPoiV2 : Cmd(ExternalApp.POI_V2_TOOL) {
      * The coverage is created by computing the tiles that intersect with the map polygon
      */
     private fun prepareGeoJsonFileWithCoverage(map: ItemMap) {
-        val tiles = TileCalculator().computeTiles(map.pathPolygon.toFile(), 14)
-        val geometry = TileCalculator().createTileCoverageGeometry(tiles)
+        val geometry = TileCalculator().computeTileCoverageGeometry(map.pathPolygon.toFile())
         Utils.writeStringToFile(tempGeoJsonFile.toFile(), GeomUtils.geomToGeoJson(geometry).toString(), false)
     }
 }

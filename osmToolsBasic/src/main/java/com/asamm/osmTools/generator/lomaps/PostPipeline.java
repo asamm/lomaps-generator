@@ -60,8 +60,7 @@ class PostPipeline {
     private void insertMetaData(ItemMap map) throws Exception {
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) return;
 
-        TileCalculator calc = new TileCalculator();
-        Geometry geom = calc.createTileCoverageGeometry(calc.computeTiles(map.getPathPolygon().toFile(), 14));
+        Geometry geom = new TileCalculator().computeTileCoverageGeometry(map.getPathPolygon().toFile(), 14);
 
         insertMetadata(map, map.getPathAddressPoiDb().toFile(), geom);
         insertMetadata(map, map.getPathAddressDb().toFile(), geom);
