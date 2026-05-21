@@ -6,7 +6,6 @@ package com.asamm.osmTools.mapConfig;
 
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
-import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.PolyUtils;
 import com.asamm.osmTools.utils.Utils;
