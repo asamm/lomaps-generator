@@ -14,8 +14,7 @@ enum class PathType(val baseDir: String) {
     TOURIST("_tourist"),
     EXTRACT("_extract"),
     ADDRESS_DB("_address_db"),
-    POI_V2_DB_MBTILES("_poi_v2_db_mbtiles"),
-    POI_V2_DB_MAPSFORGE("_poi_v2_db_mapsforge"),
+    POI_V2_DB("_poi_v2_db"),
     MAPSFORGE_GENERATE("_mapsforge"),
     MBTILES_GENERATE("_mbtiles"),
     MAPSFORGE_RESULT("_result"),
@@ -61,9 +60,7 @@ class PathResolver(val map: ItemMap) {
 
             // temporary data generated with every version located in data directory
             PathType.ADDRESS_DB -> getBaseDir(PathType.ADDRESS_DB).resolve(versionPath).resolve(fileName)
-            // POI V2
-            PathType.POI_V2_DB_MBTILES -> getBaseDir(PathType.POI_V2_DB_MBTILES).resolve(versionPath).resolve(fileName)
-            PathType.POI_V2_DB_MAPSFORGE -> getBaseDir(PathType.POI_V2_DB_MAPSFORGE).resolve(versionPath).resolve(fileName)
+            PathType.POI_V2_DB -> getBaseDir(PathType.POI_V2_DB).resolve(versionPath).resolve(fileName)
 
             // Offline map files
             PathType.MBTILES_GENERATE -> getBaseDir(PathType.MBTILES_GENERATE).resolve(versionPath).resolve(fileName)
@@ -100,8 +97,7 @@ class PathResolver(val map: ItemMap) {
             PathType.MAPSFORGE_GENERATE,
             PathType.EXTRACT -> if (map.isPlanet) planetDir.resolve(type.baseDir) else mapsForgeDir.resolve(type.baseDir)
 
-            PathType.POI_V2_DB_MBTILES,
-            PathType.POI_V2_DB_MAPSFORGE,
+            PathType.POI_V2_DB,
             PathType.MBTILES_GENERATE,
             PathType.MBTILES_ONLINE_OUTDOOR,
             PathType.PMTILES_ONLINE -> mbtilesDir.resolve(type.baseDir)

@@ -203,25 +203,13 @@ class MapPipeline {
     private void poiV2Database(ItemMap map) {
         if (!map.hasAction(Action.POI_DB_V2) || Utils.isLocalDEV()) return;
 
-        if (AppConfig.config.getOverwrite()
-                || !map.getPathPoiV2Db(true).toFile().exists()
-                || !map.getPathPoiV2Db(false).toFile().exists()) {
-            Logger.i(TAG, "Initialize POI V2 Database");
-            new CmdPoiV2().initPoiGeneratorDB();
-        }
+        new CmdPoiV2().initPoiGeneratorDB();
 
-        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db(true).toFile().exists()) {
-            Logger.d(TAG, "POI V2 DB for MBtiles already exists, skipping: " + map.getPathPoiV2Db(true));
+        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db().toFile().exists()) {
+            Logger.d(TAG, "POI V2 DB already exists, skipping: " + map.getPathPoiV2Db());
         } else {
-            Logger.i(TAG, "Generate POI V2 DB for mbtiles: " + map.getPathPoiV2Db(true));
-            new CmdPoiV2().generatePoiV2ForMbtiles(map);
-        }
-
-        if (!AppConfig.config.getOverwrite() && map.getPathPoiV2Db(false).toFile().exists()) {
-            Logger.d(TAG, "POI V2 DB for Mapsforge already exists, skipping: " + map.getPathPoiV2Db(false));
-        } else {
-            Logger.i(TAG, "Generate POI V2 DB for Mapsforge: " + map.getPathPoiV2Db(false));
-            new CmdPoiV2().generatePoiV2ForMapsforge(map);
+            Logger.i(TAG, "Generate POI V2 DB: " + map.getPathPoiV2Db());
+            new CmdPoiV2().generatePoiV2Db(map);
         }
     }
 

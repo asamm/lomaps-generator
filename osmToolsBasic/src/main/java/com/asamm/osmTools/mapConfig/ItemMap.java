@@ -138,16 +138,8 @@ public class ItemMap extends AItemMap {
         return pathResolver.getPath(PathType.ADDRESS_POI_DB_CLASSIC, name + ".osm.db");
     }
 
-    /**
-     * Get path to POI V2 database
-     * @param isForMbtiles true if file is generated for mbtiles with coverage defined by mbtiles coverage
-     * @return path to POI V2 database
-     */
-    public Path getPathPoiV2Db(boolean isForMbtiles) {
-        if (isForMbtiles){
-            return pathResolver.getPath(PathType.POI_V2_DB_MBTILES, name + ".poiv2.db");
-        }
-        return pathResolver.getPath(PathType.POI_V2_DB_MAPSFORGE, name + ".poiv2.db");
+    public Path getPathPoiV2Db() {
+        return pathResolver.getPath(PathType.POI_V2_DB, name + ".poiv2.db");
     }
 
     public Path getPathPolygon() {

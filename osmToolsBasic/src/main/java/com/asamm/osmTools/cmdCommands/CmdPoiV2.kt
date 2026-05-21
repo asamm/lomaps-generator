@@ -12,38 +12,32 @@ class CmdPoiV2 : Cmd(ExternalApp.POI_V2_TOOL) {
     private val tempGeoJsonFile: Path = AppConfig.config.temporaryDir.resolve("poi_db_coverage.geojson")
 
     /**
-     * Initialize PostgreSQL POI database
+     * Initialize PostgreSQL POI database — runs only once per process.
      */
     fun initPoiGeneratorDB() {
+        if (dbInitialized) return
         builder()
             .add(AppConfig.config.cmdConfig.poiDbV2Init.toString())
             .execute()
+        dbInitialized = true
+    }
+
+    companion object {
+        private var dbInitialized = false
     }
 
     /**
-     * Generate POI V2 Db for mbtiles MVT maps
+     * Generate POI V2 database using tile coverage geometry, shared by both mbtiles and mapsforge.
      */
-    fun generatePoiV2ForMbtiles(map: ItemMap) {
+    fun generatePoiV2Db(map: ItemMap) {
         prepareGeoJsonFileWithCoverage(map)
-        Utils.createParentDirs(map.getPathPoiV2Db(true).toAbsolutePath())
+        Utils.createParentDirs(map.getPathPoiV2Db().toAbsolutePath())
         builder()
             .add(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
             .add(tempGeoJsonFile.toAbsolutePath().toString())
-            .add(map.getPathPoiV2Db(true).toAbsolutePath().toString())
+            .add(map.getPathPoiV2Db().toAbsolutePath().toString())
             .execute()
         Utils.deleteFileQuietly(tempGeoJsonFile)
-    }
-
-    /**
-     * Generate POI V2 db for mapsforge map
-     * */
-    fun generatePoiV2ForMapsforge(map: ItemMap) {
-        Utils.createParentDirs(map.getPathPoiV2Db(false).toAbsolutePath())
-        builder()
-            .add(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
-            .add(map.pathJsonPolygon.toAbsolutePath().toString())
-            .add(map.getPathPoiV2Db(false).toAbsolutePath().toString())
-            .execute()
     }
 
     /**

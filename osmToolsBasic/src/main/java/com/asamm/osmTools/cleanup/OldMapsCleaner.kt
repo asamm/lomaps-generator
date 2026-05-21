@@ -24,8 +24,7 @@ class OldMapsCleaner {
         PathType.ADDRESS_POI_DB_CLASSIC,
         PathType.TOURIST,
         PathType.EXTRACT,
-        PathType.POI_V2_DB_MBTILES,
-        PathType.POI_V2_DB_MAPSFORGE,
+        PathType.POI_V2_DB,
         PathType.MBTILES_GENERATE,
         PathType.MBTILES_ONLINE_OUTDOOR,
     )

@@ -122,10 +122,10 @@ class MapCompress {
         }
 
         if (!isForLmClassic && map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
-            require(map.getPathPoiV2Db(false).toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db(false)} does not exist."
+            require(map.getPathPoiV2Db().toFile().exists()) {
+                "POI DB V2 file for compression: ${map.getPathPoiV2Db()} does not exist."
             }
-            filesToCompress.add(map.getPathPoiV2Db(false).toFile())
+            filesToCompress.add(map.getPathPoiV2Db().toFile())
         }
 
         // compress file
@@ -157,10 +157,10 @@ class MapCompress {
         }
 
         if (map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
-            require(map.getPathPoiV2Db(true).toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db(true)} does not exist."
+            require(map.getPathPoiV2Db().toFile().exists()) {
+                "POI DB V2 file for compression: ${map.getPathPoiV2Db()} does not exist."
             }
-            fileToCompress.add(map.getPathPoiV2Db(true).toFile())
+            fileToCompress.add(map.getPathPoiV2Db().toFile())
         }
 
         val time = TimeWatch()
