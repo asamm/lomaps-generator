@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generator.lomaps;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
-import com.asamm.osmTools.Main;
 import com.asamm.osmTools.cmdCommands.CmdLoMapsDbPlugin;
 import com.asamm.osmTools.cmdCommands.CmdPlanetiler;
 import com.asamm.osmTools.cmdCommands.CmdPoiV2;
@@ -178,18 +177,16 @@ class MapPipeline {
         if (!planet.getPathMbtiles().toFile().exists()) {
             TimeWatch time = new TimeWatch();
             Logger.i(TAG, "Generating planet MbTiles: " + planet.getPathMbtiles());
-            Main.mySimpleLog.print("\nGenerate Planet: " + planet.getName() + " ...");
 
             new CmdPlanetiler().generateLoMapsOpenMapTiles(
                     planet.getPathSource(), planet.getPathMbtiles(), planet.getPathPolygon());
 
-            Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+            Logger.i(TAG, "Planet MbTiles done in " + time.getElapsedTimeSec() + " sec");
             return;
         }
 
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Generate mbtiles: " + map.getName());
-        Main.mySimpleLog.print("\nGenerate mbtiles: " + map.getName() + " ...");
 
         new MbtilesCreator().createMbtiles(
                 planet.getPathMbtiles(),
@@ -198,7 +195,7 @@ class MapPipeline {
                 map.getName(),
                 1, 14);
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "MbTiles done in " + time.getElapsedTimeSec() + " sec");
     }
 
     // ---- POI V2 ----

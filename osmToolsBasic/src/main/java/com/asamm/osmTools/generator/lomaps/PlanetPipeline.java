@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generator.lomaps;
 
 import com.asamm.locus.MapTilerUploader;
-import com.asamm.osmTools.Main;
 import com.asamm.osmTools.cmdCommands.*;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
@@ -180,11 +179,10 @@ class PlanetPipeline {
         }
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Generating planet mapsforge map: " + planet.getPathMapsforgeGenerate());
-        Main.mySimpleLog.print("\nGenerate planet map: " + planet.getName() + " ...");
 
         MapsforgeTilerRunner.generatePlanetMap(planet);
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "Planet mapsforge map done in " + time.getElapsedTimeSec() + " sec");
     }
 
     private void extractItems(ItemMap planet) {
@@ -204,12 +202,11 @@ class PlanetPipeline {
 
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Generating MapLibre outdoor map: " + planet.getPathGenMlOutdoor());
-        Main.mySimpleLog.print("\nGenerate: " + planet.getName() + " ...");
 
         new CmdPlanetiler().generateOutdoorTiles(
                 planet.getPathSource(), planet.getPathGenMlOutdoor(), planet.getPathPolygon());
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "MapLibre outdoor map done in " + time.getElapsedTimeSec() + " sec");
     }
 
     // ---- PMTILES ----
@@ -227,13 +224,12 @@ class PlanetPipeline {
 
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Converting MBtiles to PMTiles: " + planet.getPathGenPmtilesOnline());
-        Main.mySimpleLog.print("\nGenerate PMTiles: " + planet.getName() + " ...");
 
         CmdPmtiles cmdPmtiles = new CmdPmtiles();
         cmdPmtiles.convertToPmtiles(planet.getPathMbtiles(), planet.getPathGenPmtilesOnline());
         cmdPmtiles.verifyPmtiles(planet.getPathGenPmtilesOnline());
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "PMTiles done in " + time.getElapsedTimeSec() + " sec");
     }
 
     private void generatePlanetMbtiles(ItemMap planet) {
@@ -242,12 +238,11 @@ class PlanetPipeline {
 
         TimeWatch time = new TimeWatch();
         Logger.i(TAG, "Generating Planet MbTiles: " + planet.getPathMbtiles());
-        Main.mySimpleLog.print("\nGenerate Planet: " + planet.getName() + " ...");
 
         new CmdPlanetiler().generateLoMapsOpenMapTiles(
                 planet.getPathSource(), planet.getPathMbtiles(), planet.getPathPolygon());
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "Planet MbTiles done in " + time.getElapsedTimeSec() + " sec");
     }
 
     // ---- S3 UPLOAD ----

@@ -16,7 +16,5 @@ public class Main {
     private static final String TAG = Main.class.getSimpleName();
 
     public static final Logger LOG = com.asamm.osmTools.utils.Logger.create();
-    public static final MyLogger mySimpleLog
-            = new MyLogger(Consts.DIR_LOGS + Consts.FILE_SEP + "osm2vec_simple.log");
 
 }

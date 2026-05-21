@@ -1,6 +1,5 @@
 package com.asamm.osmTools.generator
 
-import com.asamm.osmTools.Main
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium
 import com.asamm.osmTools.config.Action
@@ -107,7 +106,6 @@ abstract class AGenerator {
                     TAG,
                     "Extracting maps from source: $sourceId"
                 )
-                Main.mySimpleLog.print("\nExtract Maps from: $sourceId ...")
 
                 val ar: List<ItemMap> = mapTableBySourceId[sourceId]!!
 

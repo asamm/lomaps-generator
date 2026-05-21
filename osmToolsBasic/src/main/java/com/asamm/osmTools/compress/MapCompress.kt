@@ -1,6 +1,5 @@
 package com.asamm.osmTools.compress
 
-import com.asamm.osmTools.Main
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
@@ -90,7 +89,6 @@ class MapCompress {
             "Compressing mapsforge map: " + if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge
         )
         val time = TimeWatch()
-        Main.mySimpleLog.print("Compress: ${map.getName()} ...")
 
 
         // change lastChange attribute of generated file this workaround how to set date of map file in Locus
@@ -136,7 +134,7 @@ class MapCompress {
             if (isForLmClassic) map.pathResultMapsforgeClassic.toFile() else map.pathResultMapsforge.toFile()
         )
 
-        Main.mySimpleLog.print("\t\t\tdone " + time.elapsedTimeSec + " sec")
+        Logger.i(TAG, "Compression done in " + time.elapsedTimeSec + " sec")
     }
 
     private fun compressMbtiles(map: ItemMap) {
@@ -166,11 +164,10 @@ class MapCompress {
         }
 
         val time = TimeWatch()
-        Main.mySimpleLog.print("Compress mbtiles: ${map.getName()} ...")
 
         // compress file
         Utils.compressFiles(fileToCompress, map.pathResultMbtiles.toFile())
-        Main.mySimpleLog.print("\t\t\tdone " + time.elapsedTimeSec + " sec")
+        Logger.i(TAG, "MbTiles compression done in " + time.elapsedTimeSec + " sec")
     }
 
 
