@@ -3,6 +3,7 @@ package com.asamm.osmTools.generator
 import com.asamm.osmTools.cmdCommands.CmdCountryBorders
 import com.asamm.osmTools.cmdCommands.CmdExtractOsmium
 import com.asamm.osmTools.config.Action
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.ItemMapPack
@@ -19,7 +20,7 @@ abstract class AGenerator {
 
     // ACTION EXTRACT
     @Throws(IOException::class, InterruptedException::class)
-    fun actionExtract(mp: ItemMapPack, ms: MapSource) {
+    fun actionExtractOsm(mp: ItemMapPack, ms: MapSource) {
         Logger.i(TAG, "actionExtract(" + mp.name + ", " + ms.hasData() + ")")
         // create hashTable where identificator is sourceId of map and values is an list of
         // all map with same sourceId
@@ -32,7 +33,7 @@ abstract class AGenerator {
             while (i < m) {
                 val actualMap = mp.getMap(i)
 
-                if (actualMap.hasAction(Action.EXTRACT)) {
+                if (actualMap.hasAction(Action.EXTRACT_OSM_PLANET)) {
                     var itemsToExtract = mapTableBySourceId[actualMap.sourceId]
                     if (itemsToExtract == null) {
                         itemsToExtract = ArrayList()
@@ -41,7 +42,7 @@ abstract class AGenerator {
 
                     // test if file for extract exist. If yes don't add it into ar
                     val writeFileLocation = actualMap.pathSource
-                    if (!writeFileLocation.toFile().exists()) {
+                    if (AppConfig.config.overwrite || !writeFileLocation.toFile().exists()) {
                         Logger.i(
                             TAG,
                             "Add map for extraction: $writeFileLocation"
@@ -121,12 +122,11 @@ abstract class AGenerator {
                     Logger.i(TAG, "Add map for extraction: " + map.name)
                     ceo.addExtractMap(map)
 
-                    if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
+                    if (map.hasAction(Action.ADDRESS_POI_DB)) {
                         completeRelations = true
                     }
 
-                    // export only 7 maps in one step due to memory limitation
-                    if (j != 0 && j % 7 == 0) {
+                    if (j != 0 && j % EXTRACT_BATCH_SIZE == 0) {
                         ceo.createCmd(completeRelations)
                         ceo = CmdExtractOsmium(ms, sourceId)
                     }
@@ -145,7 +145,7 @@ abstract class AGenerator {
         var i = 0
         val m = mp.mapPackCount
         while (i < m) {
-            actionExtract(mp.getMapPack(i), ms)
+            actionExtractOsm(mp.getMapPack(i), ms)
             i++
         }
     }
@@ -253,5 +253,8 @@ abstract class AGenerator {
 
     companion object {
         private val TAG: String = AGenerator::class.java.simpleName
+
+        /** Maximum number of maps extracted in a single osmium batch (memory limitation). */
+        const val EXTRACT_BATCH_SIZE = 15
     }
 }

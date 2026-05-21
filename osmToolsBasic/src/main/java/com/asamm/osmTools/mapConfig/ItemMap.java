@@ -8,6 +8,7 @@ import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.sea.Boundaries;
 import com.asamm.osmTools.utils.Logger;
+import com.asamm.osmTools.utils.PolyUtils;
 import com.asamm.osmTools.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
@@ -283,7 +284,7 @@ public class ItemMap extends AItemMap {
         // read json file with area definition
         File fileJsonPolyg = getPathJsonPolygon().toFile();
         if (!fileJsonPolyg.exists()) {
-            throw new IllegalArgumentException("JSON polygon file doesn't exist " + fileJsonPolyg.getAbsolutePath());
+            PolyUtils.polyFileToGeoJson(getPathPolygon(), fileJsonPolyg.toPath());
         }
 
         String jsonPolygon;

@@ -56,8 +56,8 @@ class MapPipeline {
     void run(List<Action> actions) throws Exception {
 
         // EXTRACT — handled at pack level; must complete before ADDRESS_POI_DB
-        if (actions.contains(Action.EXTRACT)) {
-            forEachPack(mp -> generator.actionExtract(mp, mapSource));
+        if (actions.contains(Action.EXTRACT_OSM_PLANET)) {
+            forEachPack(mp -> generator.actionExtractOsm(mp, mapSource));
         }
 
         // ADDRESS/POI DB — country-border prep per pack, then generation per map

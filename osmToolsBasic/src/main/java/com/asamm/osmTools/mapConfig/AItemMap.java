@@ -111,7 +111,7 @@ public class AItemMap {
         }
 
         // check extract action
-        if (hasAction(Action.EXTRACT) && (getSourceId() == null)) {
+        if (hasAction(Action.EXTRACT_OSM_PLANET) && (getSourceId() == null)) {
             throw new IllegalArgumentException("Input XML is not valid. MapPack "
                     + getName() + " sourceId is empty, name:" + name);
         }

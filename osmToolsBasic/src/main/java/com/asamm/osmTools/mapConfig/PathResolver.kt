@@ -39,8 +39,11 @@ class PathResolver(val map: ItemMap) {
     // Path to planet directory
     private val planetDir = AppConfig.config.planetDir.toAbsolutePath()
 
-    // Version name (date e.q. 2021.01.01/europe/....) as syubfolder
-    val versionPath: Path = Path.of(AppConfig.config.version, map.dir)
+    // Version name (date e.q. 2021.01.01/europe/....) as subfolder
+    val versionPath: Path by lazy {
+        if (map.isPlanet) Path.of(AppConfig.config.version)
+        else Path.of(AppConfig.config.version, map.dir)
+    }
 
     fun getPath(type: PathType, fileName: String): Path {
 
@@ -48,9 +51,9 @@ class PathResolver(val map: ItemMap) {
             // completely static located in working directory
             PathType.POLYGON -> getBaseDir(PathType.POLYGON).resolve(map.dir).resolve(fileName)
 
-            // located in data directory not generated with every version
-            PathType.RESIDENTIAL -> getBaseDir(PathType.RESIDENTIAL).resolve(map.dir).resolve(fileName)
-            PathType.CONTOUR -> getBaseDir(PathType.CONTOUR).resolve(map.dir).resolve(fileName)
+            // located in data directory not generated with every version because planet folder not use sub dirs
+            PathType.RESIDENTIAL -> getBaseDir(PathType.RESIDENTIAL).resolve(fileName)
+            PathType.CONTOUR -> getBaseDir(PathType.CONTOUR).resolve(fileName)
 
             // temporary planet data generated with every version located in data directory
             PathType.TOURIST -> getBaseDir(PathType.TOURIST).resolve(versionPath).resolve(fileName)
@@ -63,8 +66,8 @@ class PathResolver(val map: ItemMap) {
             PathType.POI_V2_DB_MAPSFORGE -> getBaseDir(PathType.POI_V2_DB_MAPSFORGE).resolve(versionPath).resolve(fileName)
 
             // Offline map files
-            PathType.MAPSFORGE_GENERATE -> getBaseDir(PathType.MAPSFORGE_GENERATE).resolve(versionPath).resolve(fileName).toAbsolutePath()
             PathType.MBTILES_GENERATE -> getBaseDir(PathType.MBTILES_GENERATE).resolve(versionPath).resolve(fileName)
+            PathType.MAPSFORGE_GENERATE -> getBaseDir(PathType.MAPSFORGE_GENERATE).resolve(versionPath).resolve(fileName).toAbsolutePath()
 
             PathType.MAPSFORGE_RESULT -> getBaseDir(PathType.MAPSFORGE_RESULT).resolve(versionPath).resolve(fileName)
 
@@ -86,11 +89,12 @@ class PathResolver(val map: ItemMap) {
             PathType.POLYGON -> workingDirectory.resolve(type.baseDir)
 
 
-            PathType.CONTOUR,
+
             PathType.ADDRESS_DB,
             PathType.MAPSFORGE_RESULT,
             PathType.ADDRESS_POI_DB_CLASSIC -> mapsForgeDir.resolve(type.baseDir)
 
+            PathType.CONTOUR,
             PathType.TOURIST,
             PathType.RESIDENTIAL,
             PathType.MAPSFORGE_GENERATE,

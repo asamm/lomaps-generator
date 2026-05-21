@@ -17,9 +17,18 @@ object ConfigUtils {
         for (index in cliActions.size - 1 downTo 0) {
             when (cliActions[index]) {
                 Action.GENERATE_MAPSFORGE -> {
-                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.EXTRACT, Action.RESIDENTIAL))
+                    cliActions.addAll(index, listOf(
+                        // TODO uncomment
+                        //Action.OVERVIEW_MAP,
+                        Action.RESIDENTIAL))
                     if (!cliActions.contains(Action.POI_DB_V2)) {
                         cliActions.addAll(index, listOf(Action.POI_DB_V2))
+                    }
+                }
+
+                Action.ADDRESS_POI_DB -> {
+                    if (!cliActions.contains(Action.EXTRACT_OSM_PLANET)) {
+                        cliActions.addAll(index, listOf(Action.EXTRACT_OSM_PLANET))
                     }
                 }
 

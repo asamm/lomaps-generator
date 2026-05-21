@@ -37,7 +37,7 @@ public class GenStoreRegionDB extends AGenerator {
         while (packs.hasNext()) {
             ItemMapPack mp = packs.next();
 
-            actionExtract(mp, mMapSource);
+            actionExtractOsm(mp, mMapSource);
 
             Logger.i(TAG, "Map pack: " + mp.getName());
             actionCountryBorder(mp, mMapSource, ConfigurationCountry.StorageType.STORE_REGION_DB);

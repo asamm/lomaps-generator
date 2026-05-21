@@ -99,23 +99,23 @@ class PlanetPipeline {
 
     // ---- RESIDENTIAL ----
 
-    private void residential(ItemMap planet) {
+    private void residential(ItemMap planetItemMap) {
         Logger.i(TAG, "================ RESIDENTIAL ================");
 
-        if (!AppConfig.config.getOverwrite() && planet.getPathResidential().toFile().exists()) {
-            Logger.i(TAG, "Residential PBF already exists, skipping: " + planet.getPathResidential());
+        if (planetItemMap.getPathResidential().toFile().exists()) {
+            Logger.i(TAG, "Residential PBF already exists, skipping: " + planetItemMap.getPathResidential());
             return;
         }
-        ResidentialBuilder.INSTANCE.buildResidentialPbf(planet.getPathResidential());
+        ResidentialBuilder.INSTANCE.buildResidentialPbf(planetItemMap.getPathResidential());
     }
 
     // ---- MERGE ----
 
-    private void merge(ItemMap planet, List<Action> actions) {
+    private void merge(ItemMap itemMap, List<Action> actions) {
         Logger.i(TAG, "================ MERGE PLANET MAP ================");
 
-        if (!AppConfig.config.getOverwrite() && planet.getPathSource().toFile().exists()) {
-            Logger.i(TAG, "Merged planet file " + planet.getPathSource() + " already exists");
+        if (!AppConfig.config.getOverwrite() && itemMap.getPathSource().toFile().exists()) {
+            Logger.i(TAG, "Merged itemMap file " + itemMap.getPathSource() + " already exists");
             return;
         }
 
@@ -123,33 +123,25 @@ class PlanetPipeline {
 
         Path planetLatest = AppConfig.config.getPlanetConfig().getPlanetLatestPath();
         if (!planetLatest.toFile().exists()) {
-            throw new IllegalArgumentException("Original planet file doesn't exist: " + planetLatest);
+            throw new IllegalArgumentException("Original latest OSM PBF file doesn't exist: " + planetLatest);
         }
         toMerge.add(planetLatest);
 
-        if (actions.contains(Action.TOURIST) && planet.hasAction(Action.TOURIST)) {
-            if (!planet.getPathTourist().toFile().exists()) {
-                throw new IllegalArgumentException("Tourist routes file not found: " + planet.getPathTourist());
+        if (actions.contains(Action.TOURIST) && itemMap.hasAction(Action.TOURIST)) {
+            if (!itemMap.getPathTourist().toFile().exists()) {
+                throw new IllegalStateException("Tourist routes file not found: " + itemMap.getPathTourist());
             }
-            if (!planet.getPathSource().toFile().exists() || !containsTourist(planet.getPathSource())) {
-                toMerge.add(planet.getPathTourist());
-            } else {
-                Logger.i(TAG, "Source already contains tourist paths: " + planet.getPathSource());
-            }
+            toMerge.add(itemMap.getPathTourist());
         }
 
-        if (actions.contains(Action.CONTOUR) && planet.hasAction(Action.CONTOUR)) {
-            if (!planet.getPathContour().toFile().exists()) {
-                throw new IllegalArgumentException("Contour file not found: " + planet.getPathContour());
+        if (actions.contains(Action.CONTOUR) && itemMap.hasAction(Action.CONTOUR)) {
+            if (!itemMap.getPathContour().toFile().exists()) {
+                throw new IllegalStateException("Contour file not found: " + itemMap.getPathContour());
             }
-            if (!planet.getPathSource().toFile().exists() || !containsContours(planet.getPathSource())) {
-                toMerge.add(planet.getPathContour());
-            } else {
-                Logger.i(TAG, "Source already contains contours: " + planet.getPathSource());
-            }
+            toMerge.add(itemMap.getPathContour());
         }
 
-        if (planet.hasAction(Action.OVERVIEW_MAP)) {
+        if (itemMap.hasAction(Action.OVERVIEW_MAP)) {
             OverviewMapConfig cfg = AppConfig.config.getOverviewMapConfig();
             if (!cfg.getOutputPbf().toAbsolutePath().toFile().exists()) {
                 throw new IllegalStateException("Overview PBF not found: " + cfg.getOutputPbf() +
@@ -158,16 +150,16 @@ class PlanetPipeline {
             toMerge.add(cfg.getOutputPbf().toAbsolutePath());
         }
 
-        if (actions.contains(Action.RESIDENTIAL) && planet.hasAction(Action.RESIDENTIAL)) {
-            if (!planet.getPathResidential().toFile().exists()) {
-                throw new IllegalStateException("Residential PBF not found: " + planet.getPathResidential() +
+        if (actions.contains(Action.RESIDENTIAL) && itemMap.hasAction(Action.RESIDENTIAL)) {
+            if (!itemMap.getPathResidential().toFile().exists()) {
+                throw new IllegalStateException("Residential PBF not found: " + itemMap.getPathResidential() +
                         ". Run the residential build step first.");
             }
-            toMerge.add(planet.getPathResidential());
+            toMerge.add(itemMap.getPathResidential());
         }
 
-        Utils.createParentDirs(planet.getPathSource());
-        new CmdOsmium().merge(toMerge, planet.getPathSource());
+        Utils.createParentDirs(itemMap.getPathSource());
+        new CmdOsmium().merge(toMerge, itemMap.getPathSource());
     }
 
     // ---- MAPSFORGE PLANET ----
@@ -177,12 +169,9 @@ class PlanetPipeline {
             Logger.i(TAG, "Planet mapsforge map already exists: " + planet.getPathMapsforgeGenerate());
             return;
         }
-        TimeWatch time = new TimeWatch();
+
         Logger.i(TAG, "Generating planet mapsforge map: " + planet.getPathMapsforgeGenerate());
-
         MapsforgeTilerRunner.generatePlanetMap(planet);
-
-        Logger.i(TAG, "Planet mapsforge map done in " + time.getElapsedTimeSec() + " sec");
     }
 
     private void extractItems(ItemMap planet) {

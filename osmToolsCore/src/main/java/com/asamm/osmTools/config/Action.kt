@@ -5,7 +5,7 @@ enum class Action {
     @Deprecated("Do not use this action")
     DOWNLOAD("download", true),
 
-    EXTRACT("extract"),
+    EXTRACT_OSM_PLANET("extract"),
 
     TOURIST("tourist", true),
 
