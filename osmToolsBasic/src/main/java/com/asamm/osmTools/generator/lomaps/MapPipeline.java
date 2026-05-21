@@ -1,16 +1,13 @@
 package com.asamm.osmTools.generator.lomaps;
 
-import com.asamm.locus.features.loMaps.LoMapsDbConst;
 import com.asamm.osmTools.cmdCommands.CmdLoMapsDbPlugin;
 import com.asamm.osmTools.cmdCommands.CmdPlanetiler;
 import com.asamm.osmTools.cmdCommands.CmdPoiV2;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.generator.AGenerator;
-import com.asamm.osmTools.generatorDb.input.definition.WriterAddressDefinition;
 import com.asamm.osmTools.generatorDb.input.definition.WriterPoiDefinition;
 import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
-import com.asamm.osmTools.generatorDb.utils.GeomUtils;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
@@ -18,13 +15,8 @@ import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
 import com.asamm.osmTools.utils.Utils;
-import com.asamm.osmTools.utils.db.DatabaseData;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.io.WKTWriter;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -66,7 +58,6 @@ class MapPipeline {
                 generator.actionCountryBorder(mp, mapSource, ConfigurationCountry.StorageType.GEOJSON);
                 forEachMap(mp, map -> {
                     addressPoiDatabase(map);
-                    insertMetaData(map);
                 });
             });
         }
@@ -116,51 +107,6 @@ class MapPipeline {
         Logger.i(TAG, "Generate POI DB");
         cmd.generatePoiDb();
         cmd.deleteTmpFile();
-    }
-
-    // ---- INSERT METADATA ----
-
-    private void insertMetaData(ItemMap map) throws Exception {
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE)) return;
-
-        Geometry geom = WriterAddressDefinition.createDbGeom(
-                map.getPathJsonPolygon().toString(),
-                map.getPathCountryBoundaryGeoJson().toString());
-
-        if (!geom.isValid()) geom = GeomUtils.fixInvalidGeom(geom);
-
-        if (!geom.isValid() || geom.isEmpty() || geom.getArea() == 0) {
-            Logger.i(TAG, GeomUtils.geomToGeoJson(geom));
-            throw new IllegalArgumentException("Country map geometry is not valid, map: " + map.getName());
-        }
-
-        insertMetadata(map, map.getPathAddressPoiDb().toFile(), geom);
-        insertMetadata(map, map.getPathAddressDb().toFile(), geom);
-    }
-
-    private void insertMetadata(ItemMap map, File dbFile, Geometry geom) throws Exception {
-        if (dbFile == null || !dbFile.exists()) {
-            Logger.w(TAG, "DB file for metadata doesn't exist: " + dbFile);
-            return;
-        }
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
-        Date dateVersion = sdf.parse(AppConfig.config.getVersion());
-
-        DatabaseData dbData = new DatabaseData(dbFile);
-        WKTWriter wktWriter = new WKTWriter();
-
-        dbData.insertData(LoMapsDbConst.VAL_AREA, wktWriter.write(geom));
-        dbData.insertData(LoMapsDbConst.VAL_COUNTRY, map.getCountryName());
-        dbData.insertData(LoMapsDbConst.VAL_DESCRIPTION, AppConfig.config.getMapsforgeConfig().getMapMetaDataDescription());
-        dbData.insertData(LoMapsDbConst.VAL_LANGUAGES, map.getPrefLang());
-        dbData.insertData(LoMapsDbConst.VAL_OSM_DATE, String.valueOf(dateVersion.getTime()));
-        dbData.insertData(LoMapsDbConst.VAL_REGION_ID, map.getRegionId());
-        dbData.insertData(LoMapsDbConst.VAL_VERSION, AppConfig.config.getVersion());
-        dbData.insertData(LoMapsDbConst.VAL_DB_POI_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbPoiVersion()));
-        dbData.insertData(LoMapsDbConst.VAL_DB_ADDRESS_VERSION, String.valueOf(AppConfig.config.getPoiAddressConfig().getDbAddressVersion()));
-
-        dbData.destroy();
     }
 
     // ---- MBTILES ----
