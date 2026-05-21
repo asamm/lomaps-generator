@@ -11,7 +11,7 @@ import java.io.InputStreamReader
  *
  * Build one via [Builder], then call [execute] or [executeCapture].
  * Building and executing are intentionally separate: the same [ProcessCommand]
- * can be executed multiple times (e.g. retry logic in [CmdGenerate]).
+ * can be executed multiple times (e.g. for retry logic).
  */
 class ProcessCommand(
     val args: List<String>,
