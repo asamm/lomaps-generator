@@ -10,7 +10,6 @@ import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.PolyUtils;
 import com.asamm.osmTools.utils.Utils;
 import lombok.Getter;
-import lombok.Setter;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
@@ -49,9 +48,6 @@ public class ItemMap extends AItemMap {
 
     // PATH PARAMETERS
     private final PathResolver pathResolver;
-
-    @Setter
-    private String resultMD5hash;
 
     // bounds of this map generated from polygon file
     @Getter
@@ -304,7 +300,6 @@ public class ItemMap extends AItemMap {
                 "mId='" + id + '\'' +
                 ", mName='" + name + '\'' +
                 ", mNameGen='" + nameGen + '\'' +
-                ", mResultMD5hash='" + resultMD5hash + '\'' +
                 ", mBounds=" + boundary +
                 '}';
     }

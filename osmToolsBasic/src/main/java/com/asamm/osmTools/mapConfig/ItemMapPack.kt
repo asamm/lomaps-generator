@@ -45,24 +45,6 @@ class ItemMapPack(mpParent: ItemMapPack?) : AItemMap(mpParent) {
         return null
     }
 
-    /**
-     * Search for mapPack by directory name
-     * @param dirName directory name to search for
-     * @return found mapPack or null if not found
-     */
-    fun getMapPackByDir(dirName: String): ItemMapPack? {
-        for (mp in mMapPacks) {
-            if (mp.dirGen.contains(dirName) || mp.dir.contains(dirName)) {
-                return mp
-            }
-            val mpSub = mp.getMapPackByDir(dirName)
-            if (mpSub != null) {
-                return mp
-            }
-        }
-        return null
-    }
-
     fun addMap(map: ItemMap) {
         maps.add(map)
     }

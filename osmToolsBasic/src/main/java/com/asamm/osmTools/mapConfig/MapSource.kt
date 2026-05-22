@@ -30,24 +30,6 @@ class MapSource {
     val getAllMaps: List<ItemMap>
         get() = mapPackList.flatMap { it.getAllMaps() }
 
-    fun getMapPackByDir(dirName: String): ItemMapPack? {
-        var i = 0
-        val m = mapPackList.size
-        while (i < m) {
-            val mp = mapPackList[i]
-            if (mp.dirGen.contains(dirName) || mp.dir.contains(dirName)) {
-                return mp
-            }
-
-            val mpSub = mp.getMapPackByDir(dirName)
-            if (mpSub != null) {
-                return mpSub
-            }
-            i++
-        }
-        return null
-    }
-
     /**
      * Search in definitions for map specified by it's ID
      * @param mapId ID of map we search for

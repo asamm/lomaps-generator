@@ -2,7 +2,7 @@
 <maps>
 	
 	<mapPack regionId="wo" name="_world" dir="_world" sourceId="planet-extended" type="extract">
-		<map regionId="wo" file="planet-extended" name="planet-extended" id="planet-extended" type="tourist|contour|generate_mbtiles|generate_mbtiles_online" />
+		<map regionId="wo" file="planet-extended" name="planet-extended" id="planet-extended" type="tourist|contour|residential|generate_mbtiles|generate_mbtiles_online" />
 		<map regionId="wo.af" file="africa" name="Africa" id="africa" />
 		<map regionId="wo.am" file="americas" name="Americas" id="americas" />
 		<map regionId="wo.at" file="antarctica" name="Antarctica" id="antarctica" />
@@ -19,13 +19,13 @@
 		<map regionId="wo.eu.france" file="_france_south" name="France (south)" countryname="France" fileGen="france/_france_south" id="_france_south" sourceId="_france" />	 
 			 
 		<map regionId="wo.eu.germany" file="_germany" name="Germany (Complete)" countryname="Germany" id="_germany" type="extract" />		
-		<map regionId="wo.eu.germany" file="_germany_north" name="Germany (north)" countryname="Germany" fileGen="germany/_germany_north" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,14,12,21" id="_germany_north" sourceId="_germany" />
-		<map regionId="wo.eu.germany" file="_germany_south" name="Germany (South)" countryname="Germany" fileGen="germany/_germany_south" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,14,12,21" id="_germany_south" sourceId="_germany" />		
+		<map regionId="wo.eu.germany" file="_germany_north" name="Germany (north)" countryname="Germany" fileGen="germany/_germany_north" id="_germany_north" sourceId="_germany" />
+		<map regionId="wo.eu.germany" file="_germany_south" name="Germany (South)" countryname="Germany" fileGen="germany/_germany_south" id="_germany_south" sourceId="_germany" />
 		
 		
 		<map regionId="wo.eu.italy" file="_italy_north" name="Italy (north)" countryname="Italy" fileGen="italy/_italy_north" id="_italy_north" />
 		<map regionId="wo.eu.italy" file="_italy_south" name="Italy (south)" countryname="Italy" fileGen="italy/_italy_south" id="_italy_south" />	
-			<map regionId="wo.eu.netherlands" file="_netherlands" name="Netherlands (complete)" fileGen="netherlands/_netherlands" id="_netherlands"  forceInterval="3,0,5,7,6,7,8,8,8,9,9,9,11,10,11,15,12,21" />			
+			<map regionId="wo.eu.netherlands" file="_netherlands" name="Netherlands (complete)" fileGen="netherlands/_netherlands" id="_netherlands" />			
 		
 		<map regionId="wo.eu.spain" file="_spain" name="Spain" id="_spain" />	
 	
@@ -104,7 +104,7 @@
 			<map regionId="wo.eu.germany.hessen" file="hessen" name="Hessen" />
 			<map regionId="wo.eu.germany.mecklenburg" file="mecklenburg-vorpommern" name="Mecklenburg-Vorpommern" />
 			<map regionId="wo.eu.germany.niedersachsen" file="niedersachsen" name="Niedersachsen" />
-			<map regionId="wo.eu.germany.nordrhein" file="nordrhein-westfalen" name="Nordrhein-Westfalen" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,14,12,21" />
+			<map regionId="wo.eu.germany.nordrhein" file="nordrhein-westfalen" name="Nordrhein-Westfalen" />
 			<map regionId="wo.eu.germany.rheinland" file="rheinland-pfalz" name="Rheinland-Pfalz" />
 			<map regionId="wo.eu.germany.saarland" file="saarland" name="Saarland" />
 			<map regionId="wo.eu.germany.sachsen" file="sachsen" name="Sachsen" />
@@ -114,7 +114,7 @@
 		</mapPack>
 		
 	
-		<mapPack parentRegionId="wo.eu.netherlands" name="Netherlands" countryname="Netherlands" cyclo_node="NLBE" dir="netherlands" sourceId="_netherlands" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,15,12,21">
+		<mapPack parentRegionId="wo.eu.netherlands" name="Netherlands" countryname="Netherlands" dir="netherlands" sourceId="_netherlands">
 			<map regionId="wo.eu.netherlands.drenthe" file="drenthe" name="Drenthe" />
 			<map regionId="wo.eu.netherlands.flevoland" file="flevoland" name="Flevoland" />
 			<map regionId="wo.eu.netherlands.friesland" file="friesland" name="Friesland" />
@@ -229,7 +229,7 @@
 		<map regionId="wo.am.el_salvador" file="el_salvador" name="El Salvador" />
 		<map regionId="wo.am.falkland_islands" file="falkland_islands" name="Falkland Islands" />
 		<map regionId="wo.am.french_guiana" file="french_guiana" name="French Guiana" />
-		<!--<map regionId="wo.am.greenland" file="greenland" name="Greenland" forceInterval="5,0,7,10,8,11,12,12,21" />-->
+		<map regionId="wo.am.greenland" file="greenland" name="Greenland" />
 		<map regionId="wo.am.guatemala" file="guatemala" name="Guatemala" />
 		<map regionId="wo.am.guyana" file="guyana" name="Guyana" />
 		<map regionId="wo.am.honduras" file="honduras" name="Honduras" />
@@ -275,7 +275,7 @@
 		    <map regionId="wo.am.brazil.acre" file="acre" name="Acre" />
         	<map regionId="wo.am.brazil.alagoas" file="alagoas" name="Alagoas" />
         	<map regionId="wo.am.brazil.amapa" file="amapa" name="Amapa" />
-        	<map regionId="wo.am.brazil.amazonas" file="amazonas" name="Amazonas" forceInterval="5,0,7,10,8,11,13,12,21" />
+        	<map regionId="wo.am.brazil.amazonas" file="amazonas" name="Amazonas" />
         	<map regionId="wo.am.brazil.bahia" file="bahia" name="Bahia" />
         	<map regionId="wo.am.brazil.ceara" file="ceara" name="Ceara" />
         	<map regionId="wo.am.brazil.distrito_federal_brasilia" file="distrito_federal_brasilia" name="Distrito Federal Brasilia" />
@@ -303,26 +303,26 @@
 
 		<mapPack parentRegionId="wo.am.canada" name="Canada" countryname="Canada" dir="canada" sourceId="_canada"  type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.am.canada.alberta" file="alberta" name="Alberta" />
-			<map regionId="wo.am.canada.british_columbia" file="british_columbia" name="British Columbia" forceInterval="5,0,7,10,8,11,13,12,21" />
-			<map regionId="wo.am.canada.manitoba" file="manitoba" name="Manitoba" forceInterval="5,0,7,10,8,11,13,12,21" />
+			<map regionId="wo.am.canada.british_columbia" file="british_columbia" name="British Columbia" />
+			<map regionId="wo.am.canada.manitoba" file="manitoba" name="Manitoba" />
 			<map regionId="wo.am.canada.new_brunswick" file="new_brunswick" name="New Brunswick" />
-			<map regionId="wo.am.canada.newfoundland_and_labrador" file="newfoundland_and_labrador" name="Newfoundland and Labrador" forceInterval="5,0,7,10,8,11,13,12,21" />
-			<map regionId="wo.am.canada.northwest_territories" file="northwest_territories" name="Northwest Territories" forceInterval="5,0,7,10,8,11,12,12,21" />
-			<map regionId="wo.am.canada.nova_scotia" file="nova_scotia" name="Nova Scotia" forceInterval="5,0,7,10,8,11,13,12,21"/>
-			<map regionId="wo.am.canada.nunavut" file="nunavut" name="Nunavut" forceInterval="5,0,7,10,8,11,12,12,21" forceType="hd" />
-			<map regionId="wo.am.canada.nunavut" file="nunavut" name="Nunavut" forceInterval="5,0,7,10,8,11,12,12,21" />
-			<map regionId="wo.am.canada.ontario" file="ontario" name="Ontario" clipEntities="1" />
+			<map regionId="wo.am.canada.newfoundland_and_labrador" file="newfoundland_and_labrador" name="Newfoundland and Labrador" />
+			<map regionId="wo.am.canada.northwest_territories" file="northwest_territories" name="Northwest Territories" />
+			<map regionId="wo.am.canada.nova_scotia" file="nova_scotia" name="Nova Scotia"/>
+			<map regionId="wo.am.canada.nunavut" file="nunavut" name="Nunavut" />
+			<map regionId="wo.am.canada.nunavut" file="nunavut" name="Nunavut" />
+			<map regionId="wo.am.canada.ontario" file="ontario" name="Ontario" />
 			<map regionId="wo.am.canada.prince_edward_island" file="prince_edward_island" name="Prince Edward Island" />
-			    <map regionId="wo.am.canada.quebec" file="quebec" name="Quebec" forceInterval="5,0,7,10,8,11,13,12,21"/>
-			<map regionId="wo.am.canada.saskatchewan" file="saskatchewan" name="Saskatchewan" forceInterval="5,0,7,10,8,11,13,12,21" />
-			<map regionId="wo.am.canada.yukon" file="yukon" name="Yukon" forceInterval="5,0,7,10,8,11,12,12,21" />
+			<map regionId="wo.am.canada.quebec" file="quebec" name="Quebec"/>
+			<map regionId="wo.am.canada.saskatchewan" file="saskatchewan" name="Saskatchewan" />
+			<map regionId="wo.am.canada.yukon" file="yukon" name="Yukon" />
 		</mapPack>
 
 
 
 		<mapPack parentRegionId="wo.am.united_states" name="United States" countryname="United States" dir="united_states" sourceId="_united_states" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.am.united_states.alabama" file="alabama" name="Alabama" />
-			<map regionId="wo.am.united_states.alaska" file="alaska" name="Alaska" forceInterval="5,0,7,10,8,11,12,12,21" /> 
+			<map regionId="wo.am.united_states.alaska" file="alaska" name="Alaska" /> 
 			<map regionId="wo.am.united_states.arizona" file="arizona" name="Arizona" />
 			<map regionId="wo.am.united_states.arkansas" file="arkansas" name="Arkansas" />
 			<map regionId="wo.am.united_states.california" file="california" name="California" />
@@ -399,7 +399,7 @@
 		<map regionId="wo.as.iraq" file="iraq" name="Iraq" />
 		<map regionId="wo.as.israel" file="israel" name="Israel" />
 		<map regionId="wo.as.jordan" file="jordan" name="Jordan" />
-		<map regionId="wo.as.kazakhstan" file="kazakhstan" name="Kazakhstan" forceType="hd" />
+		<map regionId="wo.as.kazakhstan" file="kazakhstan" name="Kazakhstan" />
 		<map regionId="wo.as.kuwait" file="kuwait" name="Kuwait" />
 		<map regionId="wo.as.kyrgyzstan" file="kyrgyzstan" name="Kyrgyzstan" />
 		<map regionId="wo.as.laos" file="laos" name="Laos" />
@@ -421,7 +421,7 @@
 		<map regionId="wo.as" file="spratly_islands" name="Spratly Islands" />
 		<map regionId="wo.as.sri_lanka" file="sri_lanka" name="Sri Lanka" />
 		<map regionId="wo.as.syria" file="syria" name="Syria" />
-	    <map regionId="wo.as.taiwan" file="taiwan" name="Taiwan" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,15,12,21"  />
+	    <map regionId="wo.as.taiwan" file="taiwan" name="Taiwan"  />
 		<map regionId="wo.as.tajikistan" file="tajikistan" name="Tajikistan" />
 		<map regionId="wo.as.thailand" file="thailand" name="Thailand" />
 		<map regionId="wo.as.tibet" file="tibet" name="Tibet" sourceId="_china" />
@@ -434,7 +434,7 @@
 
 		<mapPack parentRegionId="wo.as.japan" name="Japan" countryname="Japan" dir="japan" sourceId="_japan" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.as.japan" file="hokkaido" name="Hokkaido" />
-			<map regionId="wo.as.japan" file="honshu" name="Honshu" forceInterval="3,0,5,7,6,7,9,8,9,11,10,11,14,12,21" />
+			<map regionId="wo.as.japan" file="honshu" name="Honshu" />
 			<map regionId="wo.as.japan" file="kyushu" name="Kyushu" />
 			<map regionId="wo.as.japan" file="shikoku" name="Shikoku" />
 		</mapPack>
@@ -517,7 +517,7 @@
 				<map regionId="wo.as.russia.altai_krai" file="altai_krai" name="Altai Krai" />
 				<map regionId="wo.as.russia.altai_republic" file="altai_republic" name="Altai Republic" />
 				<map regionId="wo.as.russia.amur_oblast" file="amur_oblast" name="Amur Oblast" />
-				<map regionId="wo.as.russia.arkhangelsk_oblast" file="arkhangelsk_oblast" name="Arkhangelsk Oblast" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.arkhangelsk_oblast" file="arkhangelsk_oblast" name="Arkhangelsk Oblast" />
 				<map regionId="wo.as.russia.astrakhan_oblast" file="astrakhan_oblast" name="Astrakhan Oblast" />
 				<map regionId="wo.as.russia.bashkortostan" file="bashkortostan" name="Bashkortostan" />
 				<map regionId="wo.as.russia.belgorod_oblast" file="belgorod_oblast" name="Belgorod Oblast" />
@@ -530,36 +530,36 @@
 				<map regionId="wo.as.russia.chuvashia" file="chuvashia" name="Chuvashia" />
 				<map regionId="wo.as.russia.dagestan" file="dagestan" name="Dagestan" />
 				<map regionId="wo.as.russia.ingushetia" file="ingushetia" name="Ingushetia" />
-				<map regionId="wo.as.russia.irkutsk_oblast" file="irkutsk_oblast" name="Irkutsk Oblast" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.irkutsk_oblast" file="irkutsk_oblast" name="Irkutsk Oblast" />
 				<map regionId="wo.as.russia.ivanovo_oblast" file="ivanovo_oblast" name="Ivanovo Oblast" />
 				<map regionId="wo.as.russia.jewish_autonomous_oblast" file="jewish_autonomous_oblast" name="Jewish Autonomous Oblast" />
-				<map regionId="wo.as.russia.kabardino-balkaria" file="kabardino-balkaria" name="Kabardino-Balkaria" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.kabardino-balkaria" file="kabardino-balkaria" name="Kabardino-Balkaria" />
 					<map regionId="wo.as.russia.kaliningrad" file="kaliningrad" name="Kaliningrad" sourceId="europe" />
 				<map regionId="wo.as.russia.kalmykia" file="kalmykia" name="Kalmykia" />
 				<map regionId="wo.as.russia.kaluga_oblast" file="kaluga_oblast" name="Kaluga Oblast" />
-				<map regionId="wo.as.russia.kamchatka_krai" file="kamchatka_krai" name="Kamchatka Krai" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.kamchatka_krai" file="kamchatka_krai" name="Kamchatka Krai" />
 				<map regionId="wo.as.russia.karachay-cherkessia" file="karachay-cherkessia" name="Karachay-Cherkessia" />
 				<map regionId="wo.as.russia.republic_of_karelia" file="republic_of_karelia" name="Republic of Karelia" />
 				<map regionId="wo.as.russia.kemerovo_oblast" file="kemerovo_oblast" name="Kemerovo Oblast" />
 				<map regionId="wo.as.russia.khabarovsk_krai" file="khabarovsk_krai" name="Khabarovsk Krai" />
 				<map regionId="wo.as.russia.khakassia" file="khakassia" name="Khakassia" />
-				<map regionId="wo.as.russia.khanty-mansiysk_autonomous_okrug" file="khanty-mansiysk_autonomous_okrug_-_ugra" name="Khanty-Mansiysk Autonomous Okrug – Ugra" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.khanty-mansiysk_autonomous_okrug" file="khanty-mansiysk_autonomous_okrug_-_ugra" name="Khanty-Mansiysk Autonomous Okrug – Ugra" />
 				<map regionId="wo.as.russia.kirov_oblast" file="kirov_oblast" name="Kirov Oblast" />
-				<map regionId="wo.as.russia.komi_republic" file="komi_republic" name="Komi Republic" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.komi_republic" file="komi_republic" name="Komi Republic" />
 				<map regionId="wo.as.russia.kostroma_oblast" file="kostroma_oblast" name="Kostroma Oblast" />
 				<map regionId="wo.as.russia.krasnodar_krai" file="krasnodar_krai" name="Krasnodar Krai" />
-				<map regionId="wo.as.russia.krasnoyarsk_krai" file="krasnoyarsk_krai" name="Krasnoyarsk Krai" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.krasnoyarsk_krai" file="krasnoyarsk_krai" name="Krasnoyarsk Krai" />
 				<map regionId="wo.as.russia.kurgan_oblast" file="kurgan_oblast" name="Kurgan Oblast" />
 				<map regionId="wo.as.russia.kursk_oblast" file="kursk_oblast" name="Kursk Oblast" />
 				<map regionId="wo.as.russia.leningrad_oblast" file="leningrad_oblast" name="Leningrad Oblast" />
 				<map regionId="wo.as.russia.lipetsk_oblast" file="lipetsk_oblast" name="Lipetsk Oblast" />
-				<map regionId="wo.as.russia.magadan_oblast" file="magadan_oblast" name="Magadan Oblast" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.magadan_oblast" file="magadan_oblast" name="Magadan Oblast" />
 				<map regionId="wo.as.russia.mari_el" file="mari_el" name="Mari El" />
 				<map regionId="wo.as.russia.mordovia" file="mordovia" name="Mordovia" />
 				<map regionId="wo.as.russia.moscow" file="moscow" name="Moscow" />
 				<map regionId="wo.as.russia.moscow_oblast" file="moscow_oblast" name="Moscow Oblast" />
-				<map regionId="wo.as.russia.murmansk_oblast" file="murmansk_oblast" name="Murmansk Oblast" forceInterval="5,0,7,10,8,11,13,12,21" />
-				<map regionId="wo.as.russia.nenets_autonomous_okrug" file="nenets_autonomous_okrug" name="Nenets Autonomous Okrug" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.murmansk_oblast" file="murmansk_oblast" name="Murmansk Oblast" />
+				<map regionId="wo.as.russia.nenets_autonomous_okrug" file="nenets_autonomous_okrug" name="Nenets Autonomous Okrug" />
 				<map regionId="wo.as.russia.nizhny_novgorod_oblast" file="nizhny_novgorod_oblast" name="Nizhny Novgorod Oblast" />
 				<map regionId="wo.as.russia.north_ossetia_-_alania" file="north_ossetia_-_alania" name="North Ossetia–Alania" />				
 				<map regionId="wo.as.russia.novgorod_oblast" file="novgorod_oblast" name="Novgorod Oblast" />
@@ -574,7 +574,7 @@
 				<map regionId="wo.as.russia.rostov_oblast" file="rostov_oblast" name="Rostov Oblast" />
 				<map regionId="wo.as.russia.ryazan_oblast" file="ryazan_oblast" name="Ryazan Oblast" />
 				<map regionId="wo.as.russia.saint_petersburg" file="saint_petersburg" name="Saint Petersburg" />
-				<map regionId="wo.as.russia.sakha_republic" file="sakha_republic" name="Sakha Republic" forceInterval="5,0,7,10,8,11,12,12,21" />
+				<map regionId="wo.as.russia.sakha_republic" file="sakha_republic" name="Sakha Republic" />
 				<map regionId="wo.as.russia.sakhalin_oblast" file="sakhalin_oblast" name="Sakhalin Oblast" />
 				<map regionId="wo.as.russia.samara_oblast" file="samara_oblast" name="Samara Oblast" />
 				<map regionId="wo.as.russia.saratov_oblast" file="saratov_oblast" name="Saratov Oblast" />
@@ -595,13 +595,11 @@
 				<map regionId="wo.as.russia.volgograd_oblast" file="volgograd_oblast" name="Volgograd Oblast" />
 				<map regionId="wo.as.russia.vologda_oblast" file="vologda_oblast" name="Vologda Oblast" />
 				<map regionId="wo.as.russia.voronezh_oblast" file="voronezh_oblast" name="Voronezh Oblast" />
-				<map regionId="wo.as.russia.yamalo-nenets_autonomous_okrug" file="yamalo-nenets_autonomous_okrug" name="Yamalo-Nenets Autonomous Okrug" forceInterval="5,0,7,10,8,11,13,12,21" />
+				<map regionId="wo.as.russia.yamalo-nenets_autonomous_okrug" file="yamalo-nenets_autonomous_okrug" name="Yamalo-Nenets Autonomous Okrug" />
 				<map regionId="wo.as.russia.yaroslavl_oblast" file="yaroslavl_oblast" name="Yaroslavl Oblast" />
 				<map regionId="wo.as.russia.zabaykalsky_krai" file="zabaykalsky_krai" name="Zabaykalsky Krai" />
 			</mapPack>
 	</mapPack>
-	
-	
 	
 	<mapPack parentRegionId="wo.oc" name="Oceania" dir="oceania" prefLang="en,zxx" sourceId="oceania" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		<map regionId="wo.oc.american_samoa" file="american_samoa" name="American Samoa" />
@@ -648,11 +646,11 @@
 	</mapPack>
 	<!--
 	<mapPack parentRegionId="wo.oc	" name="Antarctica" dir="antarctica" prefLang="en,zxx" sourceId="antarctica" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
-		<map regionId="wo.oc" file="antarctica_coast" name="Antarctica coast" forceInterval="5,0,7,10,8,11,12,12,21"/> 
-		<map regionId="wo.oc" file="bouvet_island" name="Bouvet Island" forceInterval="5,0,7,10,8,11,13,12,21"/> 
-		<map regionId="wo.oc" file="heard_island_and_mcdonald_islands" name="Heard Island and McDonald Islands" forceInterval="5,0,7,10,8,11,13,12,21" />
-		<map regionId="wo.oc" file="french_southern_territories" name="French Southern and Antarctic Lands" forceInterval="5,0,7,10,8,11,13,12,21" />
-		<map regionId="wo.oc" file="south_georgia_and_the_south_sandwich_islands" name="South Georgia and the South Sandwich Islands" forceInterval="5,0,7,10,8,11,13,12,21" />		
+		<map regionId="wo.oc" file="antarctica_coast" name="Antarctica coast"/> 
+		<map regionId="wo.oc" file="bouvet_island" name="Bouvet Island"/> 
+		<map regionId="wo.oc" file="heard_island_and_mcdonald_islands" name="Heard Island and McDonald Islands" />
+		<map regionId="wo.oc" file="french_southern_territories" name="French Southern and Antarctic Lands" />
+		<map regionId="wo.oc" file="south_georgia_and_the_south_sandwich_islands" name="South Georgia and the South Sandwich Islands" />		
 	</mapPack>
 	-->
 </maps>

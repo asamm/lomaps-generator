@@ -272,7 +272,7 @@ class UploadDefinitionCreator {
      * @return relative path in Locus
      */
     private fun getClientDestinationPath(map: ItemMap): String {
-        return Utils.changeSlashToUnix(CLIENT_VECTOR_MAP_DESTINATION + map.dirGen)
+        return Utils.changeSlashToUnix(CLIENT_VECTOR_MAP_DESTINATION + map.dir)
     }
 
 }

@@ -28,28 +28,12 @@ public class AItemMap {
     private String parentRegionId;
     // directory name
     private String dir;
-    // folder for generation
-    @Deprecated
-    private String dirGen;
     // address DB boundary admin level for address region boundaries
     private String countryName;
-    // when extract map from planet some big areas can be outside the border and are removed. Set true to close
-    private boolean clipIncompleteEntities;
     // prefered language for generating
     private String prefLang;
     // ISO Alpha2 country code used only for creation store region DB
     private String regionCode;
-    // step of contour lines in meters or feet
-    private String contourStep;
-
-    // URL source for map file
-    private String url;
-    private String cycleNode;
-    private String contourSep;
-    private String forceType;
-    // define internal for map file used during generating
-    private String forceInterval;
-
     public AItemMap(ItemMapPack parent) {
         setDefaults();
 
@@ -62,14 +46,9 @@ public class AItemMap {
             regionId = parent.getRegionId();
             parentRegionId = parent.getParentRegionId();
             dir = parent.getDir();
-            dirGen = parent.getDirGen();
             countryName = parent.getCountryName();
             prefLang = parent.getPrefLang();
             regionCode = parent.getRegionCode();
-            url = parent.getUrl();
-            cycleNode = parent.getCycleNode();
-            forceType = parent.getForceType();
-            forceInterval = parent.getForceInterval();
         }
     }
 
@@ -81,16 +60,9 @@ public class AItemMap {
         regionId = "";
         parentRegionId = "";
         dir = "";
-        dirGen = "";
         countryName = "";
-        clipIncompleteEntities = false;
         prefLang = "";
         regionCode = "";
-        url = "";
-        cycleNode = "";
-        contourSep = "";
-        forceType = "";
-        forceInterval = "";
     }
 
     public void validate() {
@@ -116,11 +88,6 @@ public class AItemMap {
                     + getName() + " sourceId is empty, name:" + name);
         }
 
-        // check download action
-        if (hasAction(Action.DOWNLOAD) && getUrl().length() == 0) {
-            throw new IllegalArgumentException("Input XML is not valid. MapPack "
-                    + getName() + " - url is empty, name:" + name);
-        }
     }
 
     public void fillAttributes(KXmlParser parser) {
@@ -192,33 +159,10 @@ public class AItemMap {
             dir = Consts.fixDirectoryPath(dir);
         }
 
-        // dirGen
-        attrValue = parser.getAttributeValue(null, "dirGen");
-        if (attrValue != null) {
-            attrValue = Utils.changeSlash(attrValue);
-            dirGen = (dirGen != null) ? dirGen + Consts.FILE_SEP + attrValue : attrValue;
-        } else {
-            dirGen = dir;
-        }
-        dirGen = Consts.fixDirectoryPath(dirGen);
-
         // addressRegionLevel
         attrValue = parser.getAttributeValue(null, "countryName");
         if (attrValue != null) {
             countryName = attrValue;
-        }
-
-        //clipIncompleteEntities
-        attrValue = parser.getAttributeValue(null, "clipEntities");
-        if (attrValue != null) {
-            if (attrValue.equals("0")) {
-                clipIncompleteEntities = false;
-            } else if (attrValue.equals("1")) {
-                clipIncompleteEntities = true;
-            } else {
-                throw new IllegalArgumentException("Invalid value 'clipEntities' value:" + attrValue +
-                        " Set '0' for not clipping or '1' for clip the incomplete elements");
-            }
         }
 
         if (parser.getAttributeValue(null, "prefLang") != null) {
@@ -228,25 +172,6 @@ public class AItemMap {
             regionCode = parser.getAttributeValue(null, "regionCode");
         }
 
-        // other basis parameters
-        if (parser.getAttributeValue(null, "url") != null) {
-            url = parser.getAttributeValue(null, "url");
-        }
-        if (parser.getAttributeValue(null, "cyclo_node") != null) {
-            cycleNode = parser.getAttributeValue(null, "cyclo_node");
-        }
-        if (parser.getAttributeValue(null, "contourSep") != null) {
-            contourSep = parser.getAttributeValue(null, "contourSep");
-        }
-        if (parser.getAttributeValue(null, "forceType") != null) {
-            forceType = parser.getAttributeValue(null, "forceType");
-        }
-        if (parser.getAttributeValue(null, "forceInterval") != null) {
-            forceInterval = parser.getAttributeValue(null, "forceInterval");
-        }
-        if (parser.getAttributeValue(null, "contour_step") != null) {
-            contourStep = parser.getAttributeValue(null, "contour_step");
-        }
     }
 
     /**************************************************/
@@ -297,11 +222,6 @@ public class AItemMap {
         return dir;
     }
 
-    public String getDirGen() {
-        return dirGen;
-    }
-
-
     /**
      * Get readable name of country in which is item.
      *
@@ -309,19 +229,6 @@ public class AItemMap {
      */
     public String getCountryName() {
         return countryName;
-    }
-
-    /**
-     * Define if during extraction should osmosis clip the areas that can be partialy outside the border poly
-     *
-     * @return
-     */
-    public boolean getClipIncompleteEntities() {
-        return clipIncompleteEntities;
-    }
-
-    public void setAddressRegionLevel(String countryName) {
-        this.countryName = countryName;
     }
 
     public String getPrefLang() {
@@ -332,19 +239,4 @@ public class AItemMap {
         return regionCode;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public String getCycleNode() {
-        return cycleNode;
-    }
-
-    public String getForceType() {
-        return forceType;
-    }
-
-    public String getForceInterval() {
-        return forceInterval;
-    }
 }
