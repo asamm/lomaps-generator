@@ -58,7 +58,7 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
     fun generateAddressDb() {
         val sizeMb = (tempFilteredMapPath.toAbsolutePath().toFile().length() / 1024L / 1024L).toInt()
         val containerType = if (sizeMb <= 450) "ram" else "hdd"
-        val mapId = map.countryName?.let { map.id?.takeIf { it.isNotEmpty() } ?: map.name }
+        val mapId = map.countryName.let { map.id?.takeIf { it.isNotEmpty() } ?: map.fileName }
 
         osmosisBuilder()
             .readPbf(tempFilteredMapPath.toAbsolutePath().toString())

@@ -94,8 +94,8 @@ class MapCompress {
         // change lastChange attribute of generated file this workaround how to set date of map file in Locus
         val filesToCompress: MutableList<File> = ArrayList()
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
-            val mapFile: File = map.getPathMapsforgeGenerate().toFile()
-            require(mapFile.exists()) { "Map file for compression: ${map.getPathMapsforgeGenerate()} does not exist." }
+            val mapFile: File = map.pathMapsforgeGenerate.toFile()
+            require(mapFile.exists()) { "Map file for compression: ${map.pathMapsforgeGenerate} does not exist." }
 
             val versionDate = versionToDate(AppConfig.config.version).time
             // rewrite bytes in header to set new creation date
@@ -117,15 +117,15 @@ class MapCompress {
                 require(map.pathAddressDb.toFile().exists()) {
                     "Address DB file for compression: ${map.pathAddressDb} does not exist."
                 }
-                filesToCompress.add(map.getPathAddressDb().toFile())
+                filesToCompress.add(map.pathAddressDb.toFile())
             }
         }
 
         if (!isForLmClassic && map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
-            require(map.getPathPoiV2Db().toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db()} does not exist."
+            require(map.pathPoiV2Db.toFile().exists()) {
+                "POI DB V2 file for compression: ${map.pathPoiV2Db} does not exist."
             }
-            filesToCompress.add(map.getPathPoiV2Db().toFile())
+            filesToCompress.add(map.pathPoiV2Db.toFile())
         }
 
         // compress file
@@ -147,7 +147,7 @@ class MapCompress {
             return
         }
 
-        Logger.i(TAG, "Compressing mbtiles map: " + map.getPathResultMbtiles())
+        Logger.i(TAG, "Compressing mbtiles map: " + map.pathResultMbtiles)
         val fileToCompress: MutableList<File> = mutableListOf()
         if (map.hasAction(Action.GENERATE_MBTILES)) {
             require(map.pathMbtiles.toFile().exists()) {
@@ -157,10 +157,10 @@ class MapCompress {
         }
 
         if (map.hasAction(Action.POI_DB_V2) && !Utils.isLocalDEV()) {
-            require(map.getPathPoiV2Db().toFile().exists()) {
-                "POI DB V2 file for compression: ${map.getPathPoiV2Db()} does not exist."
+            require(map.pathPoiV2Db.toFile().exists()) {
+                "POI DB V2 file for compression: ${map.pathPoiV2Db} does not exist."
             }
-            fileToCompress.add(map.getPathPoiV2Db().toFile())
+            fileToCompress.add(map.pathPoiV2Db.toFile())
         }
 
         val time = TimeWatch()

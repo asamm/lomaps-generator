@@ -183,7 +183,7 @@ class PlanetPipeline {
     private void mbtilesOnline(ItemMap planet) {
         if (!planet.hasAction(Action.GENERATE_MBTILES_ONLINE)) return;
 
-        Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + planet.getName() + " ================");
+        Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + planet.getFileName() + " ================");
         if (!AppConfig.config.getOverwrite() && planet.getPathGenMlOutdoor().toFile().exists()) {
             Logger.i(TAG, "MapLibre outdoor map already exists: " + planet.getPathGenMlOutdoor());
             return;
@@ -203,7 +203,7 @@ class PlanetPipeline {
     private void pmtiles(ItemMap planet) {
         if (!planet.hasAction(Action.GENERATE_PMTILES_ONLINE)) return;
 
-        Logger.i(TAG, "================ GENERATE PMTILES ONLINE " + planet.getName() + " ================");
+        Logger.i(TAG, "================ GENERATE PMTILES ONLINE " + planet.getFileName() + " ================");
         if (!AppConfig.config.getOverwrite() && planet.getPathGenPmtilesOnline().toFile().exists()) {
             Logger.i(TAG, "PMTiles already exists: " + planet.getPathGenPmtilesOnline());
             return;
@@ -239,7 +239,7 @@ class PlanetPipeline {
     private void uploadToS3(ItemMap planet) {
         if (!planet.hasAction(Action.GENERATE_PMTILES_ONLINE)) return;
 
-        Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + planet.getName() + " ================");
+        Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + planet.getFileName() + " ================");
         if (!planet.getPathGenPmtilesOnline().toFile().exists()) {
             throw new IllegalArgumentException("PMTiles file not found: " + planet.getPathGenPmtilesOnline());
         }

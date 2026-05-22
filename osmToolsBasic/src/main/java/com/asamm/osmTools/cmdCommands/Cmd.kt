@@ -54,8 +54,8 @@ open class Cmd(externalApp: ExternalApp) {
     }
 
     protected fun checkFileLocalPath(map: ItemMap) {
-        require(map.getPathSource().toFile().exists()) {
-            "Extracted map: ${map.getPathSource()} does not exist"
+        require(map.pathSource.toFile().exists()) {
+            "Extracted map: ${map.pathSource} does not exist"
         }
     }
 

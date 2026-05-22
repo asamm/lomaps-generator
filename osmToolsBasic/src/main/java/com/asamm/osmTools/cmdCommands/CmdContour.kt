@@ -40,8 +40,8 @@ class CmdContour(val map: ItemMap) : Cmd(ExternalApp.PYHGTMAP) {
             rename(tempMeter)
         }
 
-        Utils.createParentDirs(map.getPathContour())
-        CmdOsmium().merge(mutableListOf(tempMeter, tempFeet), map.getPathContour())
+        Utils.createParentDirs(map.pathContour)
+        CmdOsmium().merge(mutableListOf(tempMeter, tempFeet), map.pathContour)
 
         Utils.deleteFileQuietly(tempMeter)
         Utils.deleteFileQuietly(tempFeet)

@@ -166,7 +166,7 @@ class UploadDefinitionCreator {
         sai.version.setStoreAdminFiles(createJsonFiles(map, sai.version.supportedApks))
 
         // put polygon definition into item obj.
-        sai.setItemArea(map.itemAreaGeoJson)
+        sai.setItemArea(map.getItemAreaGeoJson())
 
         return sai
     }

@@ -132,13 +132,13 @@ class MapPipeline {
         }
 
         TimeWatch time = new TimeWatch();
-        Logger.i(TAG, "Generate mbtiles: " + map.getName());
+        Logger.i(TAG, "Generate mbtiles: " + map.getFileName());
 
         new MbtilesCreator().createMbtiles(
                 planet.getPathMbtiles(),
                 map.getPathMbtiles(),
                 map.getPathPolygon(),
-                map.getName(),
+                map.getFileName(),
                 1, 14);
 
         Logger.i(TAG, "MbTiles done in " + time.getElapsedTimeSec() + " sec");

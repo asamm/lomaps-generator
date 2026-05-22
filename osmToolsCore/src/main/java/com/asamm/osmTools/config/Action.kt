@@ -39,7 +39,7 @@ enum class Action {
 
     UNKNOWN("unknown");
 
-    private val label: String
+    val label: String
 
     // is this action used in CLI
     private val cli: Boolean
@@ -50,10 +50,6 @@ enum class Action {
     constructor(label: String, isCli: Boolean = false) {
         this.label = label
         this.cli = isCli
-    }
-
-    fun getLabel(): String {
-        return label
     }
 
     /**

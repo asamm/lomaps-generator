@@ -31,11 +31,11 @@ class CmdPoiV2 : Cmd(ExternalApp.POI_V2_TOOL) {
      */
     fun generatePoiV2Db(map: ItemMap) {
         prepareGeoJsonFileWithCoverage(map)
-        Utils.createParentDirs(map.getPathPoiV2Db().toAbsolutePath())
+        Utils.createParentDirs(map.pathPoiV2Db.toAbsolutePath())
         builder()
             .add(AppConfig.config.cmdConfig.poiDbV2Generator.toString())
             .add(tempGeoJsonFile.toAbsolutePath().toString())
-            .add(map.getPathPoiV2Db().toAbsolutePath().toString())
+            .add(map.pathPoiV2Db.toAbsolutePath().toString())
             .execute()
         Utils.deleteFileQuietly(tempGeoJsonFile)
     }
