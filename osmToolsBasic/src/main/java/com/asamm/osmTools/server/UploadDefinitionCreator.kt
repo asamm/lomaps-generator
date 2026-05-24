@@ -4,6 +4,7 @@ import com.asamm.locus.api.v2.server.admin.StoreAdminFile
 import com.asamm.locus.api.v2.server.admin.StoreAdminItem
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.generatorDb.utils.GeomUtils
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.ItemMapPack
 import com.asamm.osmTools.mapConfig.MapSource
@@ -165,8 +166,8 @@ class UploadDefinitionCreator {
         sai.version.setName(AppConfig.config.version)
         sai.version.setStoreAdminFiles(createJsonFiles(map, sai.version.supportedApks))
 
-        // put polygon definition into item obj.
-        sai.setItemArea(map.getItemAreaGeoJson())
+        // put tile-aligned coverage area into item obj.
+        sai.setItemArea(GeomUtils.geomToMiniJson(map.tileCoverageGeometry))
 
         return sai
     }

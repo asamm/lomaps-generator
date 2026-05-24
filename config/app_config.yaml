@@ -1,7 +1,8 @@
 temporaryDir: "_temp"
 mapsForgeDir: "/mnt/work/vectorMaps"
-mbtilesDir: "/mnt/data/vectorMaps" 
+mbtilesDir: "/mnt/data/vectorMaps"
 storeUploaderPath: ""
+maxBaseZoom: 14
 
 loggerConfig:
   logDir: logs

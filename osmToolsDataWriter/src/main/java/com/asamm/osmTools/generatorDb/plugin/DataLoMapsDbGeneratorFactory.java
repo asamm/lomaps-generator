@@ -28,7 +28,6 @@ class DataLoMapsDbGeneratorFactory extends TaskManagerFactory {
     private static final String PARAM_FILE_DB = "-fileDb";
     private static final String PARAM_FILE_CONFIG = "-fileConfig";
     private static final String PARAM_FILE_COUNTRY_GEOM = "-fileCountryGeom";
-    private static final String PARAM_FILE_DATA_GEOM = "-fileDataGeom";
     private static final String PARAM_DATA_COUNTRY_ADMIN_LEVEL = "-countryAdminLevel";
 
 	@Override
@@ -89,8 +88,6 @@ class DataLoMapsDbGeneratorFactory extends TaskManagerFactory {
             confAddress.setFileDatabase(getStringArgument(taskConfig, PARAM_FILE_DB, "").trim());
             // path to address configuration XML file
             confAddress.setFileConfigXml(getStringArgument(taskConfig, PARAM_FILE_CONFIG, "").trim());
-            // path to file with geojson with bounds of map area
-            confAddress.setFileDataGeom(getStringArgument(taskConfig, PARAM_FILE_DATA_GEOM, "").trim());
             //path to file with geojson with country border
             confAddress.setFileCountryGeom(getStringArgument(taskConfig, PARAM_FILE_COUNTRY_GEOM, "").trim());
 

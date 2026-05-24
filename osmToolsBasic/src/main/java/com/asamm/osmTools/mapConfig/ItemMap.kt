@@ -2,19 +2,14 @@ package com.asamm.osmTools.mapConfig
 
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
+import com.asamm.osmTools.mbtilesextract.tiles.TileCalculator
 import com.asamm.osmTools.utils.Logger
-import com.asamm.osmTools.utils.PolyUtils
 import com.asamm.osmTools.utils.Utils
-import net.minidev.json.JSONObject
-import net.minidev.json.parser.JSONParser
-import net.minidev.json.parser.ParseException
-import org.apache.commons.io.FileUtils
 import org.kxml2.io.KXmlParser
+import org.locationtech.jts.geom.Geometry
 import java.io.BufferedReader
-import java.io.File
 import java.io.FileReader
 import java.io.IOException
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 
 class ItemMap(parent: ItemMapPack?) : AItemMap(parent) {
@@ -99,7 +94,6 @@ class ItemMap(parent: ItemMapPack?) : AItemMap(parent) {
 
     val pathPoiV2Db: Path get() = pathResolver.getPath(PathType.POI_V2_DB, "$fileName.poiv2.db")
     val pathPolygon: Path get() = pathResolver.getPath(PathType.POLYGON, "$fileName.poly")
-    val pathJsonPolygon: Path get() = Utils.changeFileExtension(pathPolygon, ".json")
     val pathCountryBoundaryGeoJson: Path get() = Utils.changeFileExtension(pathPolygon, "_country.geojson")
     val pathContour: Path get() = pathResolver.getPath(PathType.CONTOUR, "$fileName.osm.pbf")
     val pathResultMapsforge: Path get() = pathResolver.getPath(PathType.MAPSFORGE_RESULT, "$effectiveName.zip")
@@ -115,6 +109,17 @@ class ItemMap(parent: ItemMapPack?) : AItemMap(parent) {
         PathType.PMTILES_ONLINE,
         "${if (isPlanet) "planet" else fileName}.pmtiles"
     )
+
+    // --- Geometry ---
+
+    /**
+     * Tile-aligned coverage geometry at [AppConfig.config.maxBaseZoom], computed lazily from [pathPolygon].
+     * Instead of the exact polygon boundary, it represents the union of all tiles at the base zoom level
+     * that intersect the map area — this matches the actual data coverage for POI, address, and upload definitions.
+     */
+    val tileCoverageGeometry: Geometry by lazy {
+        TileCalculator().computeTileCoverageGeometry(pathPolygon.toFile(), AppConfig.config.maxBaseZoom)
+    }
 
     // --- Tools ---
 
@@ -141,28 +146,6 @@ class ItemMap(parent: ItemMapPack?) : AItemMap(parent) {
             }
         }
         boundary = Boundaries(minLon, maxLon, minLat, maxLat)
-    }
-
-    /** Read the map polygon definition from GeoJSON, converting from .poly if needed */
-    fun getItemAreaGeoJson(): JSONObject {
-        val jsonFile = pathJsonPolygon.toFile()
-        if (!jsonFile.exists()) {
-            PolyUtils.polyFileToGeoJson(pathPolygon, jsonFile.toPath())
-        }
-
-        val jsonText = try {
-            FileUtils.readFileToString(jsonFile, UTF_8)
-        } catch (e: IOException) {
-            Logger.e(TAG, "Can not read JSON polygon file ${jsonFile.absolutePath}", e)
-            throw IllegalArgumentException("Can not read JSON polygon file ${jsonFile.absolutePath}")
-        }
-
-        return try {
-            JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE).parse(jsonText) as JSONObject
-        } catch (e: ParseException) {
-            Logger.e(TAG, "Can not parse JSON polygon file ${jsonFile.absolutePath}", e)
-            throw IllegalArgumentException("Can not parse JSON polygon file ${jsonFile.absolutePath}")
-        }
     }
 
     override fun toString() =

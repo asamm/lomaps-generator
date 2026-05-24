@@ -51,6 +51,9 @@ data class Config(
 
     var overwrite: Boolean = false,
     var actions: MutableList<Action> = mutableListOf<Action>(),
+
+    /** Maximum tile zoom level used when computing tile-aligned coverage geometry for POI, address, and upload definitions. */
+    var maxBaseZoom: Int = 14,
     var locusStoreEnv: LocusStoreEnv = LocusStoreEnv.PROD,
 
     @Serializable(with = PathSerializer::class)

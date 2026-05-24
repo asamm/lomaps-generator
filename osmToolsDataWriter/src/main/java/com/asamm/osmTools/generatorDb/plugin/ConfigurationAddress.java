@@ -29,11 +29,6 @@ public class ConfigurationAddress extends AConfiguration {
 
 
     /*
-     * File with geometry of data boundary (area of map)
-     */
-    private File fileDataGeom;
-
-       /*
      * Name of country in which is address db
      */
     private String countryName = "";
@@ -60,10 +55,6 @@ public class ConfigurationAddress extends AConfiguration {
                     "invalid parameters, file with country geom not defined");
         }
 
-        if (fileDataGeom == null){
-            throw new IllegalArgumentException(
-                    "invalid parameters, file with data geom not defined");
-        }
     }
 
 
@@ -123,18 +114,6 @@ public class ConfigurationAddress extends AConfiguration {
      */
     public void setFileDatabase(String file) {
         this.fileDb = checkFile(file);
-    }
-
-    /**
-     * Get file with geoJson of area of data. Area of map
-     * @return
-     */
-    public File getFileDataGeom() {
-        return fileDataGeom;
-    }
-
-    public void setFileDataGeom(String fileDataGeom) {
-        this.fileDataGeom = checkFile(fileDataGeom);
     }
 
     public String getCountryName() {

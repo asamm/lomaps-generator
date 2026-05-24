@@ -8,7 +8,6 @@ import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.MapSource;
-import com.asamm.osmTools.mbtilesextract.tiles.TileCalculator;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
 import com.asamm.osmTools.utils.*;
 import com.asamm.osmTools.utils.db.DatabaseData;
@@ -60,7 +59,7 @@ class PostPipeline {
     private void insertMetaData(ItemMap map) throws Exception {
         if (!map.hasAction(Action.GENERATE_MAPSFORGE)) return;
 
-        Geometry geom = new TileCalculator().computeTileCoverageGeometry(map.getPathPolygon().toFile(), 14);
+        Geometry geom = map.getTileCoverageGeometry();
 
         insertMetadata(map, map.getPathAddressPoiDb().toFile(), geom);
         insertMetadata(map, map.getPathAddressDb().toFile(), geom);

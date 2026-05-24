@@ -25,6 +25,7 @@ dependencies {
     implementation 'net.sf.kxml:kxml2:2.2.2'
     implementation 'org.locationtech.jts:jts-core:1.16.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.10"
+    implementation 'net.minidev:json-smart:2.5.2'
 }
 
 sourceSets.main.compileClasspath += configurations.providedCompile

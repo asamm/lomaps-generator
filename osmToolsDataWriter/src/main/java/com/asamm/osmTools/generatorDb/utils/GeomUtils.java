@@ -9,6 +9,9 @@ import org.locationtech.jts.operation.linemerge.LineMerger;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 import org.locationtech.jts.util.GeometricShapeFactory;
 import gnu.trove.set.hash.THashSet;
+import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.jts2geojson.GeoJSONReader;
 import org.wololo.jts2geojson.GeoJSONWriter;
@@ -416,6 +419,20 @@ public class GeomUtils {
         GeoJSONWriter writer = new GeoJSONWriter();
         GeoJSON json = writer.write(geometry);
         return json.toString();
+    }
+
+    /**
+     * Convert a JTS geometry to a {@code net.minidev.json.JSONObject} GeoJSON representation.
+     *
+     * @param geometry geom to convert
+     * @return GeoJSON as a minidev JSONObject
+     */
+    public static JSONObject geomToMiniJson(Geometry geometry) {
+        try {
+            return (JSONObject) new JSONParser(JSONParser.DEFAULT_PERMISSIVE_MODE).parse(geomToGeoJson(geometry));
+        } catch (ParseException e) {
+            throw new IllegalStateException("Failed to parse GeoJSON from geometry", e);
+        }
     }
 
     /**

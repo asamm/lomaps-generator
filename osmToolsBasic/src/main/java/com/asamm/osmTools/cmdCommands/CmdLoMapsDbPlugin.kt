@@ -68,7 +68,6 @@ class CmdLoMapsDbPlugin(val map: ItemMap) : Cmd(ExternalApp.OSMOSIS) {
             .addNotBlank(mapId?.let { "-mapId=$it" })
             .add("-fileDb=$fileDb")
             .add("-fileConfig=${AppConfig.config.poiAddressConfig.addressDbXml.toAbsolutePath()}")
-            .add("-fileDataGeom=${map.pathJsonPolygon.toAbsolutePath()}")
             .add("-fileCountryGeom=${map.pathCountryBoundaryGeoJson.toAbsolutePath()}")
             .execute()
     }
