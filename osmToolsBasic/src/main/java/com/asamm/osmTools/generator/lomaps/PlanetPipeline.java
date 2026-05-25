@@ -39,20 +39,20 @@ class PlanetPipeline {
 
         if (actions.contains(Action.TOURIST))      tourist(planet);
         if (actions.contains(Action.CONTOUR))      contour(planet);
-        if (actions.contains(Action.OVERVIEW_MAP)) overviewMap();
         if (actions.contains(Action.RESIDENTIAL))  residential(planet);
+        if (actions.contains(Action.OVERVIEW_MAP)) overviewMap();
 
         merge(planet, actions);
 
         if (actions.contains(Action.GENERATE_MAPSFORGE)) {
-            generatePlanetMap(planet);
-            extractItems(planet);
+            mapsforgePlanetMap(planet);
+            extractMapsforgeItems(planet);
         }
 
         if (actions.contains(Action.GENERATE_MBTILES_ONLINE)) mbtilesOnline(planet);
 
         if (actions.contains(Action.GENERATE_PMTILES_ONLINE)) {
-            pmtiles(planet);
+            pmtilesPlanetOnline(planet);
             uploadToS3(planet);
         }
 
@@ -164,7 +164,11 @@ class PlanetPipeline {
 
     // ---- MAPSFORGE PLANET ----
 
-    private void generatePlanetMap(ItemMap planet) {
+    /**
+     * Generate mapsforge map with planet coverage
+     * @param planet item for planet map
+     */
+    private void mapsforgePlanetMap(ItemMap planet) {
         if (!AppConfig.config.getOverwrite() && planet.getPathMapsforgeGenerate().toFile().exists()) {
             Logger.i(TAG, "Planet mapsforge map already exists: " + planet.getPathMapsforgeGenerate());
             return;
@@ -174,7 +178,7 @@ class PlanetPipeline {
         MapsforgeTilerRunner.generatePlanetMap(planet);
     }
 
-    private void extractItems(ItemMap planet) {
+    private void extractMapsforgeItems(ItemMap planet) {
         MapsforgeTilerRunner.extractFromPlanetMap(planet.getPathMapsforgeGenerate(), mapSource);
     }
 
@@ -200,7 +204,7 @@ class PlanetPipeline {
 
     // ---- PMTILES ----
 
-    private void pmtiles(ItemMap planet) {
+    private void pmtilesPlanetOnline(ItemMap planet) {
         if (!planet.hasAction(Action.GENERATE_PMTILES_ONLINE)) return;
 
         Logger.i(TAG, "================ GENERATE PMTILES ONLINE " + planet.getFileName() + " ================");

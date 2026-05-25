@@ -1,5 +1,6 @@
 package com.asamm.osmTools.cmdCommands
 
+import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.mapConfig.ItemMap
 import com.asamm.osmTools.mapConfig.MapSource
 import com.asamm.osmTools.utils.Utils
@@ -39,6 +40,7 @@ class CmdExtractOsmium(ms: MapSource, sourceId: String) : Cmd(ExternalApp.OSMIUM
             .add("extract", "-c", configFile.path)
             .add("--strategy", strategy)
             .add("-v")
+            .addNotBlank(if (AppConfig.config.overwrite) "--overwrite" else null)
             .add(map.pathSource.toString())
             .add("--fsync")
             .execute()
