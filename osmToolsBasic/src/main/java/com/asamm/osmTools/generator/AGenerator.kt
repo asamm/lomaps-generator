@@ -18,6 +18,13 @@ import java.util.*
  */
 abstract class AGenerator {
 
+    companion object {
+        private val TAG: String = AGenerator::class.java.simpleName
+
+        /** Maximum number of maps extracted in a single osmium batch (memory limitation). */
+        const val EXTRACT_BATCH_SIZE = 20
+    }
+
     // ACTION EXTRACT
     @Throws(IOException::class, InterruptedException::class)
     fun actionExtractOsm(mp: ItemMapPack, ms: MapSource) {
@@ -251,10 +258,5 @@ abstract class AGenerator {
         return mapTableBySourceId
     }
 
-    companion object {
-        private val TAG: String = AGenerator::class.java.simpleName
 
-        /** Maximum number of maps extracted in a single osmium batch (memory limitation). */
-        const val EXTRACT_BATCH_SIZE = 15
-    }
 }
