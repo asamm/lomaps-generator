@@ -340,7 +340,7 @@ class LoMapsCommand : CliktCommand(
             val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
             LocalDate.parse(dateStr, formatter)
             return true
-        } catch (e: DateTimeParseException) {
+        } catch (_: DateTimeParseException) {
             Logger.e("Command", "Invalid date format. Use yyyy.MM.dd")
             return false
         }
