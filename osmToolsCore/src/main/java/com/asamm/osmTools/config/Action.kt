@@ -1,71 +1,25 @@
 package com.asamm.osmTools.config
 
-enum class Action {
+enum class Action(val label: String) {
 
     @Deprecated("Do not use this action")
-    DOWNLOAD("download", true),
+    DOWNLOAD("download"),
 
     EXTRACT_OSM_PLANET("extract"),
-
-    TOURIST("tourist", true),
-
+    TOURIST("tourist"),
     RESIDENTIAL("residential"),
-
-    CONTOUR("contour", true),
-
+    CONTOUR("contour"),
     OVERVIEW_MAP("overview_map"),
-
-    GENERATE_MBTILES_ONLINE("generate_mbtiles_online", true),
-
-    GENERATE_PMTILES_ONLINE("generate_pmtiles_online", true),
-
-    UPLOAD_MAPTILER("upload_maptiler", true),
-
-    GENERATE_MAPSFORGE("generate_mapsforge",true),
-
-    GENERATE_MBTILES("generate_mbtiles",true),
-
-    POI_DB_V2("poi_db", false),
-
-    ADDRESS_POI_DB("address_poi_db", true),
-
+    GENERATE_MBTILES_ONLINE("generate_mbtiles_online"),
+    GENERATE_PMTILES_ONLINE("generate_pmtiles_online"),
+    UPLOAD_MAPTILER("upload_maptiler"),
+    GENERATE_MAPSFORGE("generate_mapsforge"),
+    GENERATE_MBTILES("generate_mbtiles"),
+    POI_DB_V2("poi_db"),
+    ADDRESS_POI_DB("address_poi_db"),
     COMPRESS("compress"),
-
-    UPLOAD("upload", true),
-
+    UPLOAD("upload"),
     CREATE_JSON("create_json"),
-
     STORE_GEO_DB("storeGeoDb"),
-
     UNKNOWN("unknown");
-
-    val label: String
-
-    // is this action used in CLI
-    private val cli: Boolean
-
-    /**
-     * Define action with label and if it is used in CLI
-     */
-    constructor(label: String, isCli: Boolean = false) {
-        this.label = label
-        this.cli = isCli
-    }
-
-    /**
-     * Get list of actions those can be used in CLI commands
-     */
-    companion object {
-        @JvmStatic
-        fun getCliActions(): List<Action> {
-            return Action.entries
-                .filter { it.cli }
-        }
-
-        @JvmStatic
-        fun getActionByLabel(label: String): Action {
-            return Action.entries.find { it.label == label } ?: UNKNOWN
-        }
-    }
-
 }

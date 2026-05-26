@@ -6,6 +6,7 @@ import com.asamm.osmTools.generator.lomaps.MapsforgeTilerRunner
 import com.asamm.osmTools.config.Action
 import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
+import com.asamm.osmTools.config.LoMapsMode
 import com.asamm.osmTools.elevation.ElevationPlanetBuilder
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder
 import com.asamm.osmTools.generator.lomaps.GenLoMaps
@@ -38,7 +39,7 @@ class OsmToolsCommand : CliktCommand(
     // verbose mode
     val verbose by option("-d", "--debug", help = "Prints more detailed information").flag()
 
-    // verbose mode
+    // replace files if exist
     val overwrite by option("-ow", "--overwrite", help = "Overwrite output file if exists").flag()
 
     // set Locus Store environment (where to upload maps)
@@ -79,7 +80,7 @@ class OsmToolsCommand : CliktCommand(
             javaClass.classLoader.getResourceAsStream("version.properties")?.use { props.load(it) }
             props.getProperty("version") ?: "unknown"
         } catch (e: Exception) {
-            "unknown"
+            "unknown error" + e.message
         }
     }
 
@@ -197,7 +198,7 @@ class TerrainRgbCommand : CliktCommand(
 }
 
 
-// NATURAL EARTH SUBCOMMAND
+// Overview SUBCOMMAND
 
 class OverviewMapCommand : CliktCommand(
     name = "overview_map",
@@ -228,7 +229,7 @@ class LoMapsCommand : CliktCommand(
         "--version",
         help = "Name of map version. This is used for versioning of map in Locus Store"
     ).default("")
-        .validate { it ->
+        .validate {
             require(validateDate(it)) {
                 "Invalid date format. Use yyyy.MM.dd"
             }
@@ -244,26 +245,19 @@ class LoMapsCommand : CliktCommand(
             defaultConfigFile
         }
 
-    // split action by comma and convert to enum
-    val actions by option(
-        help = "Action to perform. Possible values: ${
-            Action.getCliActions().map { it.label }.joinToString(", ")
-        }"
+    val mode: LoMapsMode by option(
+        "-m", "--mode",
+        help = "Generation mode. '${LoMapsMode.OFFLINE.label}' generates offline vector maps for Locus Store. " +
+               "'${LoMapsMode.ONLINE.label}' generates online planet-level tile maps."
     )
-        .convert { input ->
-            input.split(",").map {
-                val action = Action.getActionByLabel(it.trim().lowercase())
-                // if action is UNKNOWN, end program and print warning
-                require(action != Action.UNKNOWN) {
-                    // print warning and possible actions but not the UNKNOWN
-                    "Unknown action '$it'. Possible values: ${
-                        Action.getCliActions().filter { it != Action.UNKNOWN }.map { it.label }.joinToString(", ")
-                    }"
-                }
-                action
-            }.toMutableList()
-        }
-        .default(mutableListOf())
+        .convert { LoMapsMode.fromLabel(it) }
+        .required()
+
+    val release: Boolean by option(
+        "-r", "--release",
+        help = "Release the generated output. For '${LoMapsMode.OFFLINE.label}': uploads maps to Locus Store. " +
+               "For '${LoMapsMode.ONLINE.label}': publishes PMTiles to S3 and the tile server. Default: false."
+    ).flag(default = false)
 
     val hgtDir: File by option("-hgt", "--hgt_dir", help = "Path to elevation hgt file").file(mustExist = true)
         .defaultLazy {
@@ -292,30 +286,39 @@ class LoMapsCommand : CliktCommand(
     ).file()
         .defaultLazy { AppConfig.config.planetDir.toFile() }
 
-    // path to a locus store uploader
-    val storeUploaderFile: File by option(
+    // path to a locus store uploader — required only when --release is set with mode=offline
+    val storeUploaderFile: File? by option(
         "-su",
         "--store_uploader",
-        help = "Path to java .jar file script for LoMaps store uploader"
+        help = "Path to java .jar file script for LoMaps store uploader. " +
+               "Required when --release is set with mode '${LoMapsMode.OFFLINE.label}'."
     )
         .file(mustExist = true)
-        .defaultLazy { AppConfig.config.storeUploaderPath.toFile() }
 
     override fun run() {
 
-        // Set required actions based on the command line arguments
-        ConfigUtils.addAdditionalActions(actions)
+        // Resolve the full action list for the selected mode (base actions + injected dependencies)
+        val extraActions = if (release) listOf(Action.UPLOAD) else emptyList()
+        val actions = ConfigUtils.resolveActions(mode, extraActions)
 
         // Set actions to the configuration
         AppConfig.config.actions = actions
         AppConfig.config.version = version
         AppConfig.config.mapsForgeDir = mapsforgeDir.toPath()
+        AppConfig.config.mbtilesDir = mbtilesDir.toPath()
+        AppConfig.config.planetDir = planetDir.toPath()
+
 
         // Set path to the configuration file
         AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
 
-        // Set path to the store uploader
-        AppConfig.config.storeUploaderPath = storeUploaderFile.toPath()
+        // Store uploader is required when releasing offline maps
+        if (release && mode == LoMapsMode.OFFLINE) {
+            require(storeUploaderFile != null) {
+                "Option --store_uploader is required when --release is set with mode '${LoMapsMode.OFFLINE.label}'"
+            }
+        }
+        storeUploaderFile?.let { AppConfig.config.storeUploaderPath = it.toPath() }
 
         // Set path to the hgt directory
         AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()

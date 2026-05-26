@@ -9,50 +9,59 @@ object ConfigUtils {
 
 
     /**
-     * Define that actions will be performed based on command line definition of actions in[cliActions]
-     * For specific CLI actions, additional actions are added
+     * Resolves the full ordered action list for [mode] by starting from its base actions,
+     * appending any [extraActions] (e.g. [Action.UPLOAD] when the --upload flag is set),
+     * and then injecting all required dependencies.
      */
-    fun addAdditionalActions(cliActions: MutableList<Action>) {
+    fun resolveActions(mode: LoMapsMode, extraActions: List<Action> = emptyList()): MutableList<Action> {
+        val actions = (mode.baseActions() + extraActions).toMutableList()
+        expandActionDependencies(actions)
+        return actions
+    }
 
-        for (index in cliActions.size - 1 downTo 0) {
-            when (cliActions[index]) {
+    /**
+     * Inserts implicit dependency actions directly before the action that requires them.
+     * Iterates in reverse so that earlier insertions do not shift the indices of later ones.
+     */
+    private fun expandActionDependencies(actions: MutableList<Action>) {
+        for (index in actions.size - 1 downTo 0) {
+            when (actions[index]) {
+
                 Action.GENERATE_MAPSFORGE -> {
-                    cliActions.addAll(index, listOf(
-                        // TODO uncomment
-                        //Action.OVERVIEW_MAP,
-                        Action.RESIDENTIAL))
-                    if (!cliActions.contains(Action.POI_DB_V2)) {
-                        cliActions.addAll(index, listOf(Action.POI_DB_V2))
+                    actions.addAll(index, listOf(Action.RESIDENTIAL))
+                    if (!actions.contains(Action.POI_DB_V2)) {
+                        actions.addAll(index, listOf(Action.POI_DB_V2))
                     }
                 }
 
                 Action.ADDRESS_POI_DB -> {
-                    if (!cliActions.contains(Action.EXTRACT_OSM_PLANET)) {
-                        cliActions.addAll(index, listOf(Action.EXTRACT_OSM_PLANET))
+                    if (!actions.contains(Action.EXTRACT_OSM_PLANET)) {
+                        actions.addAll(index, listOf(Action.EXTRACT_OSM_PLANET))
                     }
                 }
 
                 Action.GENERATE_MBTILES -> {
-                    if (!Utils.isLocalDEV() && !cliActions.contains(Action.POI_DB_V2)) {
-                        cliActions.addAll(index, listOf(Action.OVERVIEW_MAP,Action.POI_DB_V2))
+                    if (!Utils.isLocalDEV() && !actions.contains(Action.POI_DB_V2)) {
+                        actions.addAll(index, listOf(Action.OVERVIEW_MAP, Action.POI_DB_V2))
                     }
                 }
 
                 Action.GENERATE_MBTILES_ONLINE, Action.GENERATE_PMTILES_ONLINE -> {
-                    cliActions.addAll(index, listOf(Action.OVERVIEW_MAP))
+                    if (!actions.contains(Action.OVERVIEW_MAP)) {
+                        actions.addAll(index, listOf(Action.OVERVIEW_MAP))
+                    }
                 }
 
                 Action.UPLOAD -> {
-                    cliActions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
+                    actions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
                 }
 
                 else -> {}
             }
         }
-
-        // if actions contains compress and not create_json add it
-        if (cliActions.contains(Action.COMPRESS) && !cliActions.contains(Action.CREATE_JSON)) {
-            cliActions.add(Action.CREATE_JSON)
+        // guard: COMPRESS always needs CREATE_JSON
+        if (actions.contains(Action.COMPRESS) && !actions.contains(Action.CREATE_JSON)) {
+            actions.add(Action.CREATE_JSON)
         }
     }
 
