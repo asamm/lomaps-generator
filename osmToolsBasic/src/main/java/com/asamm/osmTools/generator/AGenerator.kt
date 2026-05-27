@@ -211,11 +211,8 @@ abstract class AGenerator {
 
         // fill hash table with values in first step proccess map in mappack
         for (map in mp.maps) {
-            if (!map.hasAction(Action.GENERATE_MAPSFORGE)
-                && !map.hasAction(Action.ADDRESS_POI_DB)
-                && !map.hasAction(Action.STORE_GEO_DB)
-            ) {
-                //Logger.i(TAG, "prepareCountriesForSource, skip map: " + map.getNameReadable());
+            if (!map.hasAction(Action.ADDRESS_POI_DB) && !map.hasAction(Action.STORE_GEO_DB)) {
+                Logger.i(TAG, "prepareCountriesForSource, skip map: " + map.nameReadable)
                 continue
             }
 

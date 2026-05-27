@@ -46,14 +46,21 @@ object ConfigUtils {
                     }
                 }
 
-                Action.GENERATE_MBTILES_ONLINE, Action.GENERATE_PMTILES_ONLINE -> {
+                Action.GENERATE_MBTILES_ONLINE, Action.GENERATE_PMTILES -> {
                     if (!actions.contains(Action.OVERVIEW_MAP)) {
                         actions.addAll(index, listOf(Action.OVERVIEW_MAP))
                     }
                 }
 
+                Action.UPLOAD_S3 -> {
+                    if (!actions.contains(Action.GENERATE_PMTILES)) {
+                        actions.addAll(index, listOf(Action.GENERATE_PMTILES))
+                    }
+                }
+
                 Action.UPLOAD -> {
-                    actions.addAll(index, listOf(Action.COMPRESS, Action.CREATE_JSON))
+                    if (!actions.contains(Action.COMPRESS))    actions.add(index, Action.COMPRESS)
+                    if (!actions.contains(Action.CREATE_JSON)) actions.add(index, Action.CREATE_JSON)
                 }
 
                 else -> {}

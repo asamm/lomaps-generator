@@ -13,6 +13,10 @@ kotlin {
     jvmToolchain(21)
 }
 
+dependencies {
+    implementation("org.locationtech.jts:jts-core:1.20.0")
+}
+
 tasks.test {
     useJUnitPlatform()
 }

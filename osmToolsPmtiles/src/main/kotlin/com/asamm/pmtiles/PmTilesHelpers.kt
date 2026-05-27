@@ -1,5 +1,6 @@
 package com.asamm.pmtiles
 
+import kotlin.math.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -330,6 +331,38 @@ fun tileIdToZxy(tileId: Long): Triple<Int, Long, Long> {
         s = s shl 1
     }
     return Triple(z, x, y)
+}
+
+// ─── Mercator tile math ───────────────────────────────────────────────────────
+
+/**
+ * Converts a longitude to the tile X index at [zoom].
+ * Result is clamped to the valid range [0, 2^zoom - 1].
+ */
+internal fun lonToTileX(lon: Double, zoom: Int): Int {
+    val n = 1 shl zoom
+    return floor((lon + 180.0) / 360.0 * n).toInt().coerceIn(0, n - 1)
+}
+
+/**
+ * Converts a latitude to the tile Y index at [zoom] (Y=0 at north pole).
+ * Result is clamped to the valid range [0, 2^zoom - 1].
+ */
+internal fun latToTileY(lat: Double, zoom: Int): Int {
+    val n = 1 shl zoom
+    val latRad = Math.toRadians(lat)
+    return floor((1.0 - ln(tan(latRad) + 1.0 / cos(latRad)) / PI) / 2.0 * n)
+        .toInt().coerceIn(0, n - 1)
+}
+
+/** Converts a tile X index to its western longitude edge at [zoom]. */
+internal fun tileXToLon(x: Int, zoom: Int): Double =
+    x.toDouble() / (1 shl zoom) * 360.0 - 180.0
+
+/** Converts a tile Y index to its northern latitude edge at [zoom]. */
+internal fun tileYToLat(y: Int, zoom: Int): Double {
+    val n = PI - 2.0 * PI * y / (1 shl zoom)
+    return Math.toDegrees(atan(sinh(n)))
 }
 
 // ─── Directory lookup ─────────────────────────────────────────────────────────

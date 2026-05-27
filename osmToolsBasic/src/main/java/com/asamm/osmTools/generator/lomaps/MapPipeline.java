@@ -3,6 +3,7 @@ package com.asamm.osmTools.generator.lomaps;
 import com.asamm.osmTools.cmdCommands.CmdLoMapsDbPlugin;
 import com.asamm.osmTools.cmdCommands.CmdPlanetiler;
 import com.asamm.osmTools.cmdCommands.CmdPoiV2;
+import com.asamm.osmTools.mbtilesextract.mbtiles.PmTilesBatchExtractor;
 import com.asamm.osmTools.config.Action;
 import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.generator.AGenerator;
@@ -11,12 +12,12 @@ import com.asamm.osmTools.generatorDb.plugin.ConfigurationCountry;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.ItemMapPack;
 import com.asamm.osmTools.mapConfig.MapSource;
-import com.asamm.osmTools.mbtilesextract.mbtiles.MbtilesCreator;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.TimeWatch;
 import com.asamm.osmTools.utils.Utils;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -55,16 +56,16 @@ class MapPipeline {
         // ADDRESS/POI DB — country-border prep per pack, then generation per map
         if (actions.contains(Action.ADDRESS_POI_DB)) {
             forEachPack(mp -> {
-                generator.actionCountryBorder(mp, mapSource, ConfigurationCountry.StorageType.GEOJSON);
-                forEachMap(mp, map -> {
-                    addressPoiDatabase(map);
-                });
+                if (packHasAction(mp, Action.ADDRESS_POI_DB)) {
+                    generator.actionCountryBorder(mp, mapSource, ConfigurationCountry.StorageType.GEOJSON);
+                }
+                forEachMap(mp, this::addressPoiDatabase);
             });
         }
 
-        // MBTILES — per map
+        // MBTILES — collected from all packs, then extracted in one batch pass
         if (actions.contains(Action.GENERATE_MBTILES)) {
-            forEachPack(mp -> forEachMap(mp, this::generateMbtiles));
+            generateMbtilesBatch();
         }
 
         // POI V2 — per map
@@ -111,37 +112,41 @@ class MapPipeline {
 
     // ---- MBTILES ----
 
-    private void generateMbtiles(ItemMap map) {
-        if (!map.hasAction(Action.GENERATE_MBTILES)) return;
-
-        if (!AppConfig.config.getOverwrite() && map.getPathMbtiles().toFile().exists()) {
-            Logger.i(TAG, "MBtiles already exists, skipping: " + map.getPathMbtiles());
-            return;
+    private void generateMbtilesBatch() throws Exception {
+        // Ensure planet PMTiles exists first
+        if (!planet.getPathPmtiles().toFile().exists()) {
+            TimeWatch time = new TimeWatch();
+            Logger.i(TAG, "Generating planet PMTiles: " + planet.getPathPmtiles());
+            new CmdPlanetiler().generateLoMapsPlanetPmtiles(
+                    planet.getPathSource(), planet.getPathPmtiles(), planet.getPathPolygon());
+            Logger.i(TAG, "Planet PMTiles done in " + time.getElapsedTimeSec() + " sec");
         }
 
-        // Ensure planet mbtiles exists first
-        if (!planet.getPathMbtiles().toFile().exists()) {
-            TimeWatch time = new TimeWatch();
-            Logger.i(TAG, "Generating planet MbTiles: " + planet.getPathMbtiles());
+        // Collect all maps that need MBTiles generation
+        Logger.i(TAG, "================ GENERATE MBTILES ================");
+        List<PmTilesBatchExtractor.MapSpec> specs = new ArrayList<>();
+        forEachPack(mp -> forEachMap(mp, map -> {
+            if (!map.hasAction(Action.GENERATE_MBTILES)) return;
+            if (!AppConfig.config.getOverwrite() && map.getPathMbtiles().toFile().exists()) {
+                Logger.i(TAG, "MBtiles already exists, skipping: " + map.getPathMbtiles());
+                return;
+            }
+            specs.add(new PmTilesBatchExtractor.MapSpec(
+                    map.getPathMbtiles(),
+                    map.getPathPolygon(),
+                    map.getFileName(),
+                    1, 14));
+        }));
 
-            new CmdPlanetiler().generateLoMapsOpenMapTiles(
-                    planet.getPathSource(), planet.getPathMbtiles(), planet.getPathPolygon());
-
-            Logger.i(TAG, "Planet MbTiles done in " + time.getElapsedTimeSec() + " sec");
+        if (specs.isEmpty()) {
+            Logger.i(TAG, "All MBTiles already up-to-date, nothing to extract");
             return;
         }
 
         TimeWatch time = new TimeWatch();
-        Logger.i(TAG, "Generate mbtiles: " + map.getFileName());
-
-        new MbtilesCreator().createMbtiles(
-                planet.getPathMbtiles(),
-                map.getPathMbtiles(),
-                map.getPathPolygon(),
-                map.getFileName(),
-                1, 14);
-
-        Logger.i(TAG, "MbTiles done in " + time.getElapsedTimeSec() + " sec");
+        // Extract maps
+        new PmTilesBatchExtractor().extractBatch(planet.getPathPmtiles(), specs);
+        Logger.i(TAG, "Batch MBTiles done in " + time.getElapsedTimeSec() + " sec");
     }
 
     // ---- POI V2 ----
@@ -160,6 +165,17 @@ class MapPipeline {
     }
 
     // ---- ITERATION HELPERS ----
+
+    /** Returns true if any map (at any depth) inside [mp] has the given [action]. */
+    private boolean packHasAction(ItemMapPack mp, Action action) {
+        for (int i = 0; i < mp.getMapsCount(); i++) {
+            if (mp.getMap(i).hasAction(action)) return true;
+        }
+        for (int i = 0; i < mp.getMapPackCount(); i++) {
+            if (packHasAction(mp.getMapPack(i), action)) return true;
+        }
+        return false;
+    }
 
     private void forEachPack(PackConsumer consumer) throws Exception {
         Iterator<ItemMapPack> it = mapSource.getMapPacksIterator();

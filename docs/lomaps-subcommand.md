@@ -129,8 +129,8 @@ Steps are grouped by pipeline phase. All planet-level steps run before per-map s
 | Step | Action | Triggered by |
 |---|---|---|
 | 10 | Insert metadata | `address_poi_db` or `generate_mapsforge` |
-| 11 | Create upload JSON | dependency of `upload` (when `--release`) |
-| 12 | Compress maps | dependency of `upload` (when `--release`) |
+| 11 | Create upload JSON | base (always) |
+| 12 | Compress maps | base (always) |
 | 13 | Upload to Locus Store | `--release` flag |
 
 ### `online` pipeline
@@ -139,8 +139,9 @@ Steps are grouped by pipeline phase. All planet-level steps run before per-map s
 |---|---|---|
 | 1 | Tourist data enrichment | base |
 | 2 | Contour line generation | base |
-| 3 | Overview map | dependency of `generate_pmtiles_online` |
-| 4 | PMTiles generation & S3 publish | base + `--release` |
+| 3 | Overview map | dependency of `generate_pmtiles` |
+| 4 | Planet PMTiles generation | base (`generate_pmtiles`) |
+| 5 | Upload PMTiles to S3 | `--release` flag (`upload_s3`) |
 
 ---
 

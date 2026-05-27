@@ -53,12 +53,6 @@ open class Cmd(externalApp: ExternalApp) {
         FileUtils.forceMkdir(pathToWrite.toFile().parentFile)
     }
 
-    protected fun checkFileLocalPath(map: ItemMap) {
-        require(map.pathSource.toFile().exists()) {
-            "Extracted map: ${map.pathSource} does not exist"
-        }
-    }
-
     companion object {
 
         private fun resolveBaseArgs(app: ExternalApp): List<String> = when (app) {
@@ -89,8 +83,8 @@ open class Cmd(externalApp: ExternalApp) {
                 } else {
                     listOf(
                         "java",
-                        "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
-                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}",
+//                        "-Xmx${AppConfig.config.cmdConfig.planetilerRamXmx}",
+//                        "-Xmn${AppConfig.config.cmdConfig.planetilerRamXmn}",
                         "-jar",
                         ConfigUtils.getCheckPath(AppConfig.config.cmdConfig.planetiler).toString()
                     )

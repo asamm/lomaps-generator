@@ -30,7 +30,7 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
             .execute()
     }
 
-    fun generateLoMapsOpenMapTiles(input: Path, output: Path, poly: Path) {
+    fun generateLoMapsPlanetPmtiles(input: Path, output: Path, poly: Path) {
         builder()
             .add(
                 "--osm-path", input.toString(),
@@ -42,11 +42,11 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
                 "--download",
                 "--poly", poly.toString()
             )
-            .apply {
-                if (!Utils.isLocalDEV()) {
-                    add("--nodemap-type=array", "--storage=mmap")
-                }
-            }
+//            .apply {
+//                if (!Utils.isLocalDEV()) {
+//                    add("--nodemap-type=array", "--storage=mmap")
+//                }
+//            }
             .add("lomaps_contour_minzoom=13")
             .execute()
     }

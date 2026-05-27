@@ -51,6 +51,7 @@ dependencies {
     }
     implementation(project(":maptiler-api"))
     implementation(project(":osmToolsElevation"))
+    implementation(project(":osmToolsPmtiles"))
     // GeoTools for reading SHP and CRS handling (Natural Earth / overview map)
     implementation("org.geotools:gt-shapefile:33.2") {
         exclude group: "javax.media", module: "jai_core"

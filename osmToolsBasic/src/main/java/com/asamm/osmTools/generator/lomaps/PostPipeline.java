@@ -1,7 +1,6 @@
 package com.asamm.osmTools.generator.lomaps;
 
 import com.asamm.locus.features.loMaps.LoMapsDbConst;
-import com.asamm.osmTools.Main;
 import com.asamm.osmTools.cmdCommands.CmdUpload;
 import com.asamm.osmTools.compress.MapCompress;
 import com.asamm.osmTools.config.Action;
@@ -9,7 +8,7 @@ import com.asamm.osmTools.config.AppConfig;
 import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.server.UploadDefinitionCreator;
-import com.asamm.osmTools.utils.*;
+import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.db.DatabaseData;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
@@ -36,13 +35,13 @@ class PostPipeline {
         if (actions.contains(Action.ADDRESS_POI_DB) || actions.contains(Action.GENERATE_MAPSFORGE)) {
             insertMetaDataForAllMaps();
         }
-        if (actions.contains(Action.CREATE_JSON)){
+        if (actions.contains(Action.CREATE_JSON)) {
             createJson();
         }
         if (actions.contains(Action.COMPRESS)) {
             compress();
         }
-        if (actions.contains(Action.UPLOAD)){
+        if (actions.contains(Action.UPLOAD)) {
             upload();
         }
     }
@@ -57,7 +56,7 @@ class PostPipeline {
     }
 
     private void insertMetaData(ItemMap map) throws Exception {
-        if (!map.hasAction(Action.GENERATE_MAPSFORGE)) return;
+        if (!map.hasAction(Action.GENERATE_MAPSFORGE) || map.isPlanet()) return;
 
         Geometry geom = map.getTileCoverageGeometry();
 
@@ -102,7 +101,7 @@ class PostPipeline {
 
     private void upload() {
         Logger.i(TAG, "================ UPLOAD ================");
-        Logger.i(TAG,"Upload data....");
+        Logger.i(TAG, "Upload data....");
         new CmdUpload().upload(1);
     }
 }

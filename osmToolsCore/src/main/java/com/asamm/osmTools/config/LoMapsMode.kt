@@ -12,15 +12,17 @@ enum class LoMapsMode(val label: String) {
     /**
      * Generates offline vector maps for Locus Store.
      *
-     * Upload is optional and controlled by the `--release` CLI flag.
+     * JSON manifest and compression always run. Upload is optional and controlled by `--release`.
      */
     OFFLINE("offline"),
 
     /**
      * Generates online planet-level tile maps (always runs on the full planet).
      *
+     * Upload is optional and controlled by the `--release` CLI flag.
+     *
      * Pipeline (after dependency expansion):
-     * tourist → contour → overview_map → generate_pmtiles_online
+     * tourist → contour → overview_map → generate_pmtiles [→ upload_s3 if --release]
      */
     ONLINE("online");
 
@@ -32,11 +34,13 @@ enum class LoMapsMode(val label: String) {
             Action.ADDRESS_POI_DB,
             Action.GENERATE_MAPSFORGE,
             Action.GENERATE_MBTILES,
+            Action.CREATE_JSON,
+            Action.COMPRESS,
         )
         ONLINE -> listOf(
             Action.TOURIST,
             Action.CONTOUR,
-            Action.GENERATE_PMTILES_ONLINE,
+            Action.GENERATE_PMTILES,
         )
     }
 

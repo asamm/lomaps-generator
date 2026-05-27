@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Sequential pipeline for all planet-level processing steps.
- *
+ * <p>
  * Steps run in fixed order; each step self-checks whether its action is present
  * or whether its output already exists (skip-if-exists logic stays inside each method).
  */
@@ -37,9 +37,9 @@ class PlanetPipeline {
     void run(List<Action> actions) {
         Logger.i(TAG, "================ PROCESS PLANET MAP ================");
 
-        if (actions.contains(Action.TOURIST))      tourist(planet);
-        if (actions.contains(Action.CONTOUR))      contour(planet);
-        if (actions.contains(Action.RESIDENTIAL))  residential(planet);
+        if (actions.contains(Action.TOURIST)) tourist(planet);
+        if (actions.contains(Action.CONTOUR)) contour(planet);
+        if (actions.contains(Action.RESIDENTIAL)) residential(planet);
         if (actions.contains(Action.OVERVIEW_MAP)) overviewMap();
 
         merge(planet, actions);
@@ -51,8 +51,11 @@ class PlanetPipeline {
 
         if (actions.contains(Action.GENERATE_MBTILES_ONLINE)) mbtilesOnline(planet);
 
-        if (actions.contains(Action.GENERATE_PMTILES_ONLINE)) {
+        if (actions.contains(Action.GENERATE_PMTILES)) {
             pmtilesPlanetOnline(planet);
+        }
+
+        if (actions.contains(Action.UPLOAD_S3)) {
             uploadToS3(planet);
         }
 
@@ -166,6 +169,7 @@ class PlanetPipeline {
 
     /**
      * Generate mapsforge map with planet coverage
+     *
      * @param planet item for planet map
      */
     private void mapsforgePlanetMap(ItemMap planet) {
@@ -173,12 +177,13 @@ class PlanetPipeline {
             Logger.i(TAG, "Planet mapsforge map already exists: " + planet.getPathMapsforgeGenerate());
             return;
         }
-
+        Logger.i(TAG, "================ GENERATE MAPSFORGE " + planet.getFileName() + " ================");
         Logger.i(TAG, "Generating planet mapsforge map: " + planet.getPathMapsforgeGenerate());
         MapsforgeTilerRunner.generatePlanetMap(planet);
     }
 
     private void extractMapsforgeItems(ItemMap planet) {
+        Logger.i(TAG, "================ EXTRACT MAPSFORGE ================");
         MapsforgeTilerRunner.extractFromPlanetMap(planet.getPathMapsforgeGenerate(), mapSource);
     }
 
@@ -187,7 +192,7 @@ class PlanetPipeline {
     private void mbtilesOnline(ItemMap planet) {
         if (!planet.hasAction(Action.GENERATE_MBTILES_ONLINE)) return;
 
-        Logger.i(TAG, "================ GENERATE MBTILES ONLINE " + planet.getFileName() + " ================");
+        Logger.i(TAG, "================ GENERATE MBTILES FOR MAPTILER " + planet.getFileName() + " ================");
         if (!AppConfig.config.getOverwrite() && planet.getPathGenMlOutdoor().toFile().exists()) {
             Logger.i(TAG, "MapLibre outdoor map already exists: " + planet.getPathGenMlOutdoor());
             return;
@@ -205,60 +210,58 @@ class PlanetPipeline {
     // ---- PMTILES ----
 
     private void pmtilesPlanetOnline(ItemMap planet) {
-        if (!planet.hasAction(Action.GENERATE_PMTILES_ONLINE)) return;
+        if (!planet.hasAction(Action.GENERATE_PMTILES)) return;
 
-        Logger.i(TAG, "================ GENERATE PMTILES ONLINE " + planet.getFileName() + " ================");
-        if (!AppConfig.config.getOverwrite() && planet.getPathGenPmtilesOnline().toFile().exists()) {
-            Logger.i(TAG, "PMTiles already exists: " + planet.getPathGenPmtilesOnline());
+        Logger.i(TAG, "================ GENERATE PMTILES " + planet.getFileName() + " ================");
+        if (!AppConfig.config.getOverwrite() && planet.getPathPmtiles().toFile().exists()) {
+            Logger.i(TAG, "PMTiles already exists: " + planet.getPathPmtiles());
             return;
         }
 
-        generatePlanetMbtiles(planet);
+        generatePlanetPmtiles(planet);
 
-        TimeWatch time = new TimeWatch();
-        Logger.i(TAG, "Converting MBtiles to PMTiles: " + planet.getPathGenPmtilesOnline());
-
-        CmdPmtiles cmdPmtiles = new CmdPmtiles();
-        cmdPmtiles.convertToPmtiles(planet.getPathMbtiles(), planet.getPathGenPmtilesOnline());
-        cmdPmtiles.verifyPmtiles(planet.getPathGenPmtilesOnline());
-
-        Logger.i(TAG, "PMTiles done in " + time.getElapsedTimeSec() + " sec");
+        new CmdPmtiles().verifyPmtiles(planet.getPathPmtiles());
     }
 
-    private void generatePlanetMbtiles(ItemMap planet) {
-        if (!planet.hasAction(Action.GENERATE_MBTILES)) return;
-        if (!AppConfig.config.getOverwrite() && planet.getPathMbtiles().toFile().exists()) return;
+    /**
+     * Generates planet-level PMTiles directly via planetiler.
+     * Used as the source for both S3 publishing (online) and per-map MBTiles extraction (offline).
+     */
+    void generatePlanetPmtiles(ItemMap planet) {
+        if (!AppConfig.config.getOverwrite() && planet.getPathPmtiles().toFile().exists()) return;
+
+        Logger.i(TAG, "================ GENERATE PMTILES " + planet.getFileName() + " ================");
 
         TimeWatch time = new TimeWatch();
-        Logger.i(TAG, "Generating Planet MbTiles: " + planet.getPathMbtiles());
+        Logger.i(TAG, "Generating Planet PMTiles: " + planet.getPathPmtiles());
 
-        new CmdPlanetiler().generateLoMapsOpenMapTiles(
-                planet.getPathSource(), planet.getPathMbtiles(), planet.getPathPolygon());
+        new CmdPlanetiler().generateLoMapsPlanetPmtiles(
+                planet.getPathSource(), planet.getPathPmtiles(), planet.getPathPolygon());
 
-        Logger.i(TAG, "Planet MbTiles done in " + time.getElapsedTimeSec() + " sec");
+        Logger.i(TAG, "Planet PMTiles done in " + time.getElapsedTimeSec() + " sec");
     }
 
     // ---- S3 UPLOAD ----
 
     private void uploadToS3(ItemMap planet) {
-        if (!planet.hasAction(Action.GENERATE_PMTILES_ONLINE)) return;
+        if (!planet.hasAction(Action.UPLOAD_S3)) return;
 
         Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + planet.getFileName() + " ================");
-        if (!planet.getPathGenPmtilesOnline().toFile().exists()) {
-            throw new IllegalArgumentException("PMTiles file not found: " + planet.getPathGenPmtilesOnline());
+        if (!planet.getPathPmtiles().toFile().exists()) {
+            throw new IllegalArgumentException("PMTiles file not found: " + planet.getPathPmtiles());
         }
 
         try (S3Client s3Client = S3Client.Companion.fromAppConfig()) {
             OnlineLoMapsConfig cfg = AppConfig.config.getOnlineLoMapsConfig();
             boolean isDev = Utils.isLocalDEV();
-            String latestPrefix   = isDev ? cfg.getS3pmtilesPathDev()         : cfg.getS3pmtilesPath();
+            String latestPrefix = isDev ? cfg.getS3pmtilesPathDev() : cfg.getS3pmtilesPath();
             String versionsPrefix = isDev ? cfg.getS3pmtilesVersionsPathDev() : cfg.getS3pmtilesVersionsPath();
 
             new OnlinePlanetVersionsManager(s3Client, versionsPrefix, latestPrefix, cfg.getS3pmtilesVersionsKeep())
                     .publish(
-                            planet.getPathGenPmtilesOnline().toFile(),
+                            planet.getPathPmtiles().toFile(),
                             AppConfig.config.getVersion(),
-                            planet.getPathGenPmtilesOnline().getFileName().toString());
+                            planet.getPathPmtiles().getFileName().toString());
         }
     }
 
@@ -271,19 +274,5 @@ class PlanetPipeline {
         }
         new MapTilerUploader().uploadAndInitializeMapTiles(planet.getPathGenMlOutdoor().toFile());
         Logger.i(TAG, "Tiles uploaded");
-    }
-
-    // ---- HELPERS ----
-
-    private boolean containsContours(java.nio.file.Path sourcePath) {
-        CmdOsmium cmd = new CmdOsmium();
-        String meter = "w" + AppConfig.config.getContourConfig().getWayIdMeter();
-        String feet  = "w" + AppConfig.config.getContourConfig().getWayIdFeet();
-        return cmd.containsId(sourcePath, meter) || cmd.containsId(sourcePath, feet);
-    }
-
-    private boolean containsTourist(java.nio.file.Path sourcePath) {
-        String touristId = "w" + AppConfig.config.getTouristConfig().getWayId();
-        return new CmdOsmium().containsId(sourcePath, touristId);
     }
 }

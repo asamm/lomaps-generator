@@ -114,7 +114,8 @@ java -jar OsmToolsBasic_0.7.6.jar lomaps --version 2025.06.16 --config_file conf
 	- `generate_mapsforge` - generate mapsforge maps for android
     - `generate_mbtiles` - generate mbtiles maps for iOS
     - `generate_mbtiles_online` - generate tourist, contours as additional source for standard openmaptiles
-    - `generate_pmtiles_online` - generate pmtiles maps for Asamm Map server and upload to S3 storage
+    - `generate_pmtiles` - generate planet PMTiles (source for both offline MBTiles and online S3 upload)
+    - `upload_s3` - upload planet PMTiles to S3 storage (depends on `generate_pmtiles`)
     - `upload_maptiler` - upload generated online mbtiles to maptiler cloud
 	- `upload` - upload maps to the Locus Store
 - `--version` - used date in format yyyy.mm.dd (it's name of version in Locus Store and reflect how old are data used for generation

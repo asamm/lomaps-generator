@@ -105,8 +105,8 @@ class ItemMap(parent: ItemMapPack?) : AItemMap(parent) {
         PathType.MBTILES_ONLINE_OUTDOOR,
         "${if (isPlanet) "planet" else fileName}_lm_outdoor.mbtiles"
     )
-    val pathGenPmtilesOnline: Path get() = pathResolver.getPath(
-        PathType.PMTILES_ONLINE,
+    val pathPmtiles: Path get() = pathResolver.getPath(
+        PathType.PMTILES,
         "${if (isPlanet) "planet" else fileName}.pmtiles"
     )
 

@@ -298,7 +298,10 @@ class LoMapsCommand : CliktCommand(
     override fun run() {
 
         // Resolve the full action list for the selected mode (base actions + injected dependencies)
-        val extraActions = if (release) listOf(Action.UPLOAD) else emptyList()
+        val extraActions = if (release) when (mode) {
+            LoMapsMode.OFFLINE -> listOf(Action.UPLOAD)
+            LoMapsMode.ONLINE  -> listOf(Action.UPLOAD_S3)
+        } else emptyList()
         val actions = ConfigUtils.resolveActions(mode, extraActions)
 
         // Set actions to the configuration

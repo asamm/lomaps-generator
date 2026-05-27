@@ -5,13 +5,6 @@ import java.nio.file.Path
 
 class CmdPmtiles : Cmd(ExternalApp.PMTILES) {
 
-    fun convertToPmtiles(inputMbtiles: Path, outputPmtiles: Path) {
-        FileUtils.forceMkdir(outputPmtiles.parent.toFile())
-        builder()
-            .add("convert", inputMbtiles.toString(), outputPmtiles.toString())
-            .execute()
-    }
-
     fun verifyPmtiles(pmtiles: Path) {
         builder()
             .add("verify", pmtiles.toString())
@@ -19,16 +12,18 @@ class CmdPmtiles : Cmd(ExternalApp.PMTILES) {
     }
 
     /**
-     * Extract a zoom-filtered subset of [input] into [output].
+     * Extract a zoom-filtered, optionally region-clipped subset of [input] into [output].
      *
-     * Equivalent to: `pmtiles extract <input> <output> --minzoom=N --maxzoom=N`
+     * Output format is determined by the [output] extension (.pmtiles or .mbtiles).
+     * [region] must be a GeoJSON file when provided.
      */
-    fun extract(input: Path, output: Path, minZoom: Int, maxZoom: Int) {
+    fun extract(input: Path, output: Path, minZoom: Int, maxZoom: Int, region: Path? = null) {
         prepareDirectory(output)
         builder()
             .add("extract", input.toString(), output.toString())
             .add("--minzoom=$minZoom")
             .add("--maxzoom=$maxZoom")
+            .apply { region?.let { add("--region=$it") } }
             .execute()
     }
 }

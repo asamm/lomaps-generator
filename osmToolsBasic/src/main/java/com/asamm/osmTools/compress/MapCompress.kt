@@ -57,6 +57,8 @@ class MapCompress {
     }
 
     fun compressMap(map: ItemMap) {
+        if (map.isPlanet) return
+
         if (map.hasAction(Action.GENERATE_MAPSFORGE)) {
             compressMapsforge(map, isForLmClassic = true)
             compressMapsforge(map, isForLmClassic = false)
@@ -134,7 +136,8 @@ class MapCompress {
             if (isForLmClassic) map.pathResultMapsforgeClassic.toFile() else map.pathResultMapsforge.toFile()
         )
 
-        Logger.i(TAG, "Compression done in " + time.elapsedTimeSec + " sec")
+        val resultFile = if (isForLmClassic) map.pathResultMapsforgeClassic else map.pathResultMapsforge
+        Logger.i(TAG, "Compression done in ${time.elapsedTimeSec} sec → ${resultFile.fileName}")
     }
 
     private fun compressMbtiles(map: ItemMap) {
