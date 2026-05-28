@@ -130,6 +130,13 @@ class PlanetPipeline {
         }
         toMerge.add(planetLatest);
 
+        if (actions.contains(Action.CONTOUR) && itemMap.hasAction(Action.CONTOUR)) {
+            if (!itemMap.getPathContour().toFile().exists()) {
+                throw new IllegalStateException("Contour file not found: " + itemMap.getPathContour());
+            }
+            toMerge.add(itemMap.getPathContour());
+        }
+
         if (actions.contains(Action.TOURIST) && itemMap.hasAction(Action.TOURIST)) {
             if (!itemMap.getPathTourist().toFile().exists()) {
                 throw new IllegalStateException("Tourist routes file not found: " + itemMap.getPathTourist());
@@ -137,11 +144,12 @@ class PlanetPipeline {
             toMerge.add(itemMap.getPathTourist());
         }
 
-        if (actions.contains(Action.CONTOUR) && itemMap.hasAction(Action.CONTOUR)) {
-            if (!itemMap.getPathContour().toFile().exists()) {
-                throw new IllegalStateException("Contour file not found: " + itemMap.getPathContour());
+        if (actions.contains(Action.RESIDENTIAL) && itemMap.hasAction(Action.RESIDENTIAL)) {
+            if (!itemMap.getPathResidential().toFile().exists()) {
+                throw new IllegalStateException("Residential PBF not found: " + itemMap.getPathResidential() +
+                        ". Run the residential build step first.");
             }
-            toMerge.add(itemMap.getPathContour());
+            toMerge.add(itemMap.getPathResidential());
         }
 
         if (itemMap.hasAction(Action.OVERVIEW_MAP)) {
@@ -151,14 +159,6 @@ class PlanetPipeline {
                         ". Run the overview map build step first.");
             }
             toMerge.add(cfg.getOutputPbf().toAbsolutePath());
-        }
-
-        if (actions.contains(Action.RESIDENTIAL) && itemMap.hasAction(Action.RESIDENTIAL)) {
-            if (!itemMap.getPathResidential().toFile().exists()) {
-                throw new IllegalStateException("Residential PBF not found: " + itemMap.getPathResidential() +
-                        ". Run the residential build step first.");
-            }
-            toMerge.add(itemMap.getPathResidential());
         }
 
         Utils.createParentDirs(itemMap.getPathSource());

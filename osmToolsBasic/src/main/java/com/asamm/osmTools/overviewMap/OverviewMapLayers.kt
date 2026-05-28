@@ -79,7 +79,11 @@ object OverviewMapLayers {
 
     // ---- OCEANS ----
 
-    private val OCEAN_TAGS = mapOf("ne_natural" to "water", "ne_water" to "ocean")
+    private val OCEAN_TAGS = mapOf(
+        "ne_natural" to "water",
+        "ne_water" to "ocean",
+       // "natural" to "sea",          // backward compat for themes without ne_water rules
+    )
 
     private val ne110mOcean = LayerDefinition(
         layerName = "ne_110m_ocean",
@@ -92,7 +96,7 @@ object OverviewMapLayers {
         layerName = "ne_50m_ocean",
         source = DataSource.GPKG,
         staticTags = OCEAN_TAGS,
-        minZoom = 3, maxZoom = 4,
+        minZoom = 0, maxZoom = 4,
     )
 
     private val ne10mOcean = LayerDefinition(
@@ -462,12 +466,12 @@ object OverviewMapLayers {
         // Ecoregions
         ecoregions2017,
         // Oceans
-        ne110mOcean,
+        //ne110mOcean,
         ne50mOcean, ne10mOcean,
         // Ocean center lines (polygon → centerline for labels)
-        ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
+        //ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
         // Geography region center lines
-        ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
+        //ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
         // Lakes
         ne50mLakes, ne10mLakes,
 
@@ -491,8 +495,8 @@ object OverviewMapLayers {
         // Roads
         bmRoadFerries,
         // bathymetry
-        bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
+        //bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
         //bmBathymetry6000,
-        bmBathymetry7000,bmBathymetry8000,bmBathymetry9000,bmBathymetry10000,
+        //bmBathymetry7000,bmBathymetry8000,bmBathymetry9000,bmBathymetry10000,
     )
 }

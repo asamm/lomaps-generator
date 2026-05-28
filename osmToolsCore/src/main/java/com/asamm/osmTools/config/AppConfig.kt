@@ -219,6 +219,8 @@ class MapsforgeConfig(
     var mapDescription: String,
 
     var mapMetaDataDescription: String,
+
+    var zoomInterval:String = "3,1,4,8,5,9"
 )
 
 @Serializable

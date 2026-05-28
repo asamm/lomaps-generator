@@ -31,6 +31,7 @@ enum class LoMapsMode(val label: String) {
         OFFLINE -> listOf(
             Action.TOURIST,
             Action.CONTOUR,
+            Action.OVERVIEW_MAP,
             Action.ADDRESS_POI_DB,
             Action.GENERATE_MAPSFORGE,
             Action.GENERATE_MBTILES,

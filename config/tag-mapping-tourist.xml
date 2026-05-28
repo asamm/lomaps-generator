@@ -8,7 +8,7 @@
 	<!-- NATURAL EARTH OVERVIEW MAP TAGS -->
 	<pois>
 
-		<osm-tag key="ne_min_zoom" value="0" zoom-appear="0" />
+		<osm-tag key="ne_min_zoom" value="0" zoom-appear="0" >
 		<osm-tag key="ne_min_zoom" value="1" zoom-appear="1" />
 		<osm-tag key="ne_min_zoom" value="2" zoom-appear="2" />
 		<osm-tag key="ne_min_zoom" value="3" zoom-appear="3" />
@@ -18,7 +18,17 @@
 		<osm-tag key="ne_min_zoom" value="7" zoom-appear="7" />
 		<osm-tag key="ne_min_zoom" value="8" zoom-appear="8" />
 		<osm-tag key="ne_min_zoom" value="9" zoom-appear="9" />
-		<osm-tag key="ne_max_zoom" value="%h" />
+
+		<osm-tag key="ne_max_zoom" value="0" zoom-disappear="0" />
+		<osm-tag key="ne_max_zoom" value="1" zoom-disappear="1" />
+		<osm-tag key="ne_max_zoom" value="2" zoom-disappear="2" />
+		<osm-tag key="ne_max_zoom" value="3" zoom-disappear="3" />
+		<osm-tag key="ne_max_zoom" value="4" zoom-disappear="4" />
+		<osm-tag key="ne_max_zoom" value="5" zoom-disappear="5" />
+		<osm-tag key="ne_max_zoom" value="6" zoom-disappear="6" />
+		<osm-tag key="ne_max_zoom" value="7" zoom-disappear="7" />
+		<osm-tag key="ne_max_zoom" value="8" zoom-disappear="8" />
+		<osm-tag key="ne_max_zoom" value="9" zoom-disappear="9" />
 
 		<osm-tag key="ne_place" value="country" zoom-appear="0" />
 		<osm-tag key="ne_place" value="city" zoom-appear="5" />
@@ -383,27 +393,27 @@
 
 		<!-- LOW ZOOMS OVERVIEW MAP -->
 	<ways>
-		<osm-tag key="ne_min_zoom" value="0" zoom-appear="0" zoom-disappear="8"/>
-		<osm-tag key="ne_min_zoom" value="1" zoom-appear="1" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="2" zoom-appear="2" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="3" zoom-appear="3" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="4" zoom-appear="4" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="5" zoom-appear="5" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="6" zoom-appear="6" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="7" zoom-appear="7" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="8" zoom-appear="8" zoom-disappear="8" />
-		<osm-tag key="ne_min_zoom" value="9" zoom-appear="9" zoom-disappear="8" />
+		<osm-tag key="ne_min_zoom" value="0" zoom-appear="0" >
+		<osm-tag key="ne_min_zoom" value="1" zoom-appear="1" />
+		<osm-tag key="ne_min_zoom" value="2" zoom-appear="2" />
+		<osm-tag key="ne_min_zoom" value="3" zoom-appear="3" />
+		<osm-tag key="ne_min_zoom" value="4" zoom-appear="4" />
+		<osm-tag key="ne_min_zoom" value="5" zoom-appear="5" />
+		<osm-tag key="ne_min_zoom" value="6" zoom-appear="6" />
+		<osm-tag key="ne_min_zoom" value="7" zoom-appear="7" />
+		<osm-tag key="ne_min_zoom" value="8" zoom-appear="8" />
+		<osm-tag key="ne_min_zoom" value="9" zoom-appear="9" />
 
-		<osm-tag key="ne_max_zoom" value="0" zoom-appear="0" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="1" zoom-appear="1" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="2" zoom-appear="2" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="3" zoom-appear="3" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="4" zoom-appear="4" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="5" zoom-appear="5" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="6" zoom-appear="6" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="7" zoom-appear="7" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="8" zoom-appear="8" zoom-disappear="8" />
-		<osm-tag key="ne_max_zoom" value="9" zoom-appear="9" zoom-disappear="8" />
+		<osm-tag key="ne_max_zoom" value="0" zoom-disappear="0" />
+		<osm-tag key="ne_max_zoom" value="1" zoom-disappear="1" />
+		<osm-tag key="ne_max_zoom" value="2" zoom-disappear="2" />
+		<osm-tag key="ne_max_zoom" value="3" zoom-disappear="3" />
+		<osm-tag key="ne_max_zoom" value="4" zoom-disappear="4" />
+		<osm-tag key="ne_max_zoom" value="5" zoom-disappear="5" />
+		<osm-tag key="ne_max_zoom" value="6" zoom-disappear="6" />
+		<osm-tag key="ne_max_zoom" value="7" zoom-disappear="7" />
+		<osm-tag key="ne_max_zoom" value="8" zoom-disappear="8" />
+		<osm-tag key="ne_max_zoom" value="9" zoom-disappear="9" />
 
 		<osm-tag key="depth" value="%h" zoom-appear="0" zoom-disappear="8" />
 		<osm-tag key="ne_bathymetry" value="yes" zoom-appear="0" zoom-disappear="8" />

@@ -58,6 +58,7 @@ object MapsforgeTilerRunner {
             labelPosition = true,
             simplificationFactor = 0.5,
             bboxEnlargement = 5,
+            zoomIntervalConfig = ZoomIntervalConfig.parse(AppConfig.config.mapsforgeConfig.zoomInterval),
             comment = AppConfig.config.mapsforgeConfig.mapDescription,
             threads = Runtime.getRuntime().availableProcessors(),
             preferredLanguages = map.prefLang?.takeIf { it.isNotEmpty() }?.split(","),
