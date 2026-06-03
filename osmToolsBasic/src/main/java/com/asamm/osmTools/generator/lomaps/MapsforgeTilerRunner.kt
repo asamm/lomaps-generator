@@ -70,15 +70,17 @@ object MapsforgeTilerRunner {
         runWriter(config)
     }
 
+
     @JvmStatic
-    fun generateOverviewMap() {
+    fun generateOverviewMap(planet: ItemMap) {
         val cfg = AppConfig.config.overviewMapConfig
-        require(cfg.outputPbf.toFile().exists()) {
-            "Overview PBF not found: ${cfg.outputPbf}. Run the overview map build step first."
+        require(planet.pathSource.toFile().exists()) {
+            "Merged planet PBF not found: ${planet.pathSource}. Run the merge step first."
         }
+        // Output next to the overview PBF, same directory, same base name.
         val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map")).absolute()
         val config = MapWriterConfig(
-            input = cfg.outputPbf.absolute(),
+            input = planet.pathSource,
             output = outputMap,
             bbox = BoundingBox(
                 minLat = -MercatorUtils.WEB_MERCATOR_MAX_LAT,
@@ -86,16 +88,17 @@ object MapsforgeTilerRunner {
                 maxLat = MercatorUtils.WEB_MERCATOR_MAX_LAT,
                 maxLon = 180.0,
             ),
-            tagConfFile = AppConfig.config.mapsforgeConfig.tagMapping.toAbsolutePath(),
+            tagConfFile = AppConfig.config.overviewMapConfig.tagMapping.toAbsolutePath(),
             labelPosition = true,
             simplificationFactor = 0.5,
             bboxEnlargement = 5,
             comment = AppConfig.config.mapsforgeConfig.mapDescription,
             threads = Runtime.getRuntime().availableProcessors(),
-            zoomIntervalConfig = ZoomIntervalConfig.parse("3,1,4,8,5,9"),
+            zoomIntervalConfig = ZoomIntervalConfig.parse(AppConfig.config.overviewMapConfig.zoomInterval),
+            oceanPolygons = true,
             nodeMapType = "sparsearray",
             workDir = AppConfig.config.temporaryDir,
-            downloadDir = AppConfig.config.planetConfig.planetilerDownloadDir, // same download folder as planetiler
+            downloadDir = AppConfig.config.planetConfig.planetilerDownloadDir,
         )
         runWriter(config)
     }

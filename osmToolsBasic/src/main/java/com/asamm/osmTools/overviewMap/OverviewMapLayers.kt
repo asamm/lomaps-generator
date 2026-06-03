@@ -60,52 +60,6 @@ object OverviewMapLayers {
         return s.ifEmpty { null }
     }
 
-    // LAND
-    private val LAND_TAGS = mapOf("ne_natural" to "land")
-
-    private val ne110mLand = LayerDefinition(
-        layerName = "ne_110m_land",
-        source = DataSource.GPKG,
-        staticTags = LAND_TAGS,
-        minZoom = 0, maxZoom = 4,
-    )
-
-    private val ne50mLand = LayerDefinition(
-        layerName = "ne_50m_land",
-        source = DataSource.GPKG,
-        staticTags = LAND_TAGS,
-        minZoom = 4, maxZoom = 9,
-    )
-
-    // ---- OCEANS ----
-
-    private val OCEAN_TAGS = mapOf(
-        "ne_natural" to "water",
-        "ne_water" to "ocean",
-       // "natural" to "sea",          // backward compat for themes without ne_water rules
-    )
-
-    private val ne110mOcean = LayerDefinition(
-        layerName = "ne_110m_ocean",
-        source = DataSource.GPKG,
-        staticTags = OCEAN_TAGS,
-        minZoom = 0, maxZoom = 2,
-    )
-
-    private val ne50mOcean = LayerDefinition(
-        layerName = "ne_50m_ocean",
-        source = DataSource.GPKG,
-        staticTags = OCEAN_TAGS,
-        minZoom = 0, maxZoom = 4,
-    )
-
-    private val ne10mOcean = LayerDefinition(
-        layerName = "ne_10m_ocean",
-        source = DataSource.GPKG,
-        staticTags = OCEAN_TAGS,
-        minZoom = 5, maxZoom = 9,
-    )
-
     // OCEAN CENTER LINES
 
     private fun geographyCenterLineMapper(f: FeatureAttributes): Map<String, String> = buildMap {
@@ -121,7 +75,7 @@ object OverviewMapLayers {
         layerName = "ne_110m_geography_marine_polys",
         source = DataSource.GPKG,
         staticTags = mapOf("ne_geography_marine" to "yes"),
-        minZoom = 0, maxZoom = 4,
+        minZoom = 0, maxZoom = 3,
         attributeMapper = ::geographyCenterLineMapper,
         toCenterLine = true
     )
@@ -130,7 +84,7 @@ object OverviewMapLayers {
         layerName = "ne_50m_geography_marine_polys",
         source = DataSource.GPKG,
         staticTags = mapOf("ne_geography_marine" to "yes"),
-        minZoom = 5, maxZoom = 9,
+        minZoom = 4, maxZoom = 9,
         attributeMapper = ::geographyCenterLineMapper,
         toCenterLine = true,
     )
@@ -150,7 +104,7 @@ object OverviewMapLayers {
         layerName = "ne_110m_geography_regions_polys",
         source = DataSource.GPKG,
         staticTags = mapOf("ne_geography_regions" to "yes"),
-        minZoom = 0, maxZoom = 4,
+        minZoom = 0, maxZoom = 3,
         attributeMapper = ::geographyCenterLineMapper,
         toCenterLine = true
     )
@@ -159,16 +113,16 @@ object OverviewMapLayers {
         layerName = "ne_50m_geography_regions_polys",
         source = DataSource.GPKG,
         staticTags = mapOf("ne_geography_regions" to "yes"),
-        minZoom = 5, maxZoom = 9,
+        minZoom = 4, maxZoom = 9,
         attributeMapper = ::geographyCenterLineMapper,
         toCenterLine = true,
     )
-
+    // TODO consider 10m marine names
 //    private val ne10mRegionsCenterLines = LayerDefinition(
 //        layerName = "ne_10m_geography_regions_polys",
 //        source = DataSource.GPKG,
 //        staticTags = mapOf("geography_regions" to "yes"),
-//        minZoom = 4, maxZoom = 9,
+//        minZoom = 6, maxZoom = 9,
 //        attributeMapper = ::geographyCenterLineMapper,
 //        toCenterLine = true,
 //    )
@@ -181,11 +135,19 @@ object OverviewMapLayers {
         f.str("name")?.let { put("name", it) }
     }
 
+    private val ne110mLakes = LayerDefinition(
+        layerName = "ne_110m_lakes",
+        source = DataSource.GPKG,
+        staticTags = LAKE_TAGS,
+        minZoom = 0, maxZoom = 3,
+        attributeMapper = ::lakesMapper,
+    )
+
     private val ne50mLakes = LayerDefinition(
         layerName = "ne_50m_lakes",
         source = DataSource.GPKG,
         staticTags = LAKE_TAGS,
-        minZoom = 2, maxZoom = 4,
+        minZoom = 4, maxZoom = 6,
         attributeMapper = ::lakesMapper,
     )
 
@@ -193,7 +155,7 @@ object OverviewMapLayers {
         layerName = "ne_10m_lakes",
         source = DataSource.GPKG,
         staticTags = LAKE_TAGS,
-        minZoom = 5, maxZoom = 9,
+        minZoom = 7, maxZoom = 9,
         attributeMapper = ::lakesMapper,
     )
 
@@ -271,7 +233,7 @@ object OverviewMapLayers {
     // ---- COUNTRY BOUNDARIES ----
 
     private val COUNTRY_BOUNDARY_TAGS = mapOf(
-        "boundary" to "ne_administrative",
+        "ne_boundary" to "administrative",
         "admin_level" to "2",
     )
 
@@ -279,27 +241,27 @@ object OverviewMapLayers {
         layerName = "ne_110m_admin_0_boundary_lines_land",
         source = DataSource.GPKG,
         staticTags = COUNTRY_BOUNDARY_TAGS,
-        minZoom = 0, maxZoom = 1,
+        minZoom = 0, maxZoom = 3,
     )
 
     private val ne50mBoundary = LayerDefinition(
         layerName = "ne_50m_admin_0_boundary_lines_land",
         source = DataSource.GPKG,
         staticTags = COUNTRY_BOUNDARY_TAGS,
-        minZoom = 2, maxZoom = 4,
+        minZoom = 4, maxZoom = 6,
     )
 
     private val ne10mBoundary = LayerDefinition(
         layerName = "ne_10m_admin_0_boundary_lines_land",
         source = DataSource.GPKG,
         staticTags = COUNTRY_BOUNDARY_TAGS,
-        minZoom = 5, maxZoom = 9,
+        minZoom = 7, maxZoom = 9,
     )
 
     // ---- STATE/PROVINCE BOUNDARIES ----
 
     private val STATE_BOUNDARY_TAGS = mapOf(
-        "boundary" to "ne_administrative",
+        "ne_boundary" to "administrative",
         "admin_level" to "4",
     )
 
@@ -307,7 +269,7 @@ object OverviewMapLayers {
         layerName = "ne_10m_admin_1_states_provinces_lines",
         source = DataSource.GPKG,
         staticTags = STATE_BOUNDARY_TAGS,
-        minZoom = 3, maxZoom = 9,
+        minZoom = 4, maxZoom = 9,
     )
 
     // ---- RIVERS ----
@@ -359,15 +321,6 @@ object OverviewMapLayers {
         minZoom = 5, maxZoom = 9,
     )
 
-    // ---- URBAN AREAS ----
-
-    private val ne50mUrban = LayerDefinition(
-        layerName = "ne_50m_urban_areas",
-        source = DataSource.GPKG,
-        staticTags = mapOf("ne_landuse" to "residential"),
-        minZoom = 4, maxZoom = 9,
-    )
-
     // ---- POPULATED PLACES ----
 
     private fun populatedPlaceMapper(f: FeatureAttributes): Map<String, String> = buildMap {
@@ -377,16 +330,18 @@ object OverviewMapLayers {
         // Determine place type based on scalerank and population
         val scalerank = (f.get("SCALERANK") as? Number)?.toInt() ?: 10
         val popMax = (f.get("POP_MAX") as? Number)?.toLong() ?: 0
+        val capital = if (f.get("FEATURECLA") == "Admin-0 capital") "yes" else null
 
         val placeType = when {
             scalerank <= 3 || popMax > 500_000 -> "city"
             popMax > 50_000 -> "town"
             else -> "village"
         }
-        put("ne_place", placeType)
 
-        if (popMax > 0) {
-            put("population", popMax.toString())
+        put("ne_place", placeType)
+        put("rank", scalerank.toString())
+        if (capital != null) {
+            put("capital", capital)
         }
     }
 
@@ -394,7 +349,7 @@ object OverviewMapLayers {
         layerName = "ne_10m_populated_places",
         source = DataSource.GPKG,
         staticTags = emptyMap(),
-        minZoom = 2, maxZoom = 9,
+        minZoom = 4, maxZoom = 9,
         attributeMapper = ::populatedPlaceMapper,
     )
 
@@ -420,14 +375,14 @@ object OverviewMapLayers {
         f.str("name")?.let { put("name", it) }
         f.str("featurecla")?.let {
             when (it) {
-                "Ferry" -> put("ne_route", "ferry")
+                "Ferry" -> put("route", "ne_ferry")
                 "Road" -> {
                     f.str("type")?.let { type ->
                         when (type) {
-                            "Expressway" -> put("ne_highway", "motorway")
-                            "Road" -> put("ne_highway", "primary")
-                            "Track", "Other Highway" -> put("ne_highway", "other")
-                            else -> put("ne_highway", "other")
+                            "Expressway" -> put("highway", "ne_motorway")
+                            "Road" -> put("highway", "ne_primary")
+                            "Track", "Other Highway" -> put("highway", "ne_other")
+                            else -> put("highway", "ne_other")
                         }
                     }
                 }
@@ -439,41 +394,22 @@ object OverviewMapLayers {
         layerName = "Road_Ferries-beta2",
         source = DataSource.BASE_MAP_SHP,
         staticTags = emptyMap(),
-        minZoom = 5, maxZoom = 9,
+        minZoom = 4, maxZoom = 9,
         attributeMapper = ::roadMapper,
     )
-
-
-    // --- RAILROADS ---
-    private val RAILS_TAGS = mapOf("ne_railway" to "rail")
-
-    private fun railsMapper(f: FeatureAttributes): Map<String, String> = buildMap {
-        val scalerank = (f.get("scalerank") as? Number)?.toInt()
-
-        when (scalerank) {
-            4, 5 -> put("rank", "1")
-            6 -> put("rank", "2")
-            7 -> put("rank", "3")
-            8 -> put("rank", "4")
-            9, 10 -> put("rank", "5")
-            else -> put("rank", "4")
-        }
-    }
 
     // ---- ALL LAYERS ----
 
     val ALL: List<LayerDefinition> = listOf(
         // Ecoregions
         ecoregions2017,
-        // Oceans
-        //ne110mOcean,
-        ne50mOcean, ne10mOcean,
+        // Ocean fill polygons are generated by the mapsforge tiler (naturalEarthOcean = true)
         // Ocean center lines (polygon → centerline for labels)
-        //ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
+        ne110mOcenCenterLines, ne50mOceanCenterLines, //ne10mOceanCenterLines,
         // Geography region center lines
-        //ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
+        ne110mRegionsCenterLines, ne50mRegionsCenterLines, // ,ne10mRegionsCenterLines,
         // Lakes
-        ne50mLakes, ne10mLakes,
+        ne110mLakes,ne50mLakes, ne10mLakes,
 
         // Country names
         ne110mCountry,
@@ -484,19 +420,17 @@ object OverviewMapLayers {
         // Rivers
         ne110mRivers, ne50mRivers,
         // Glaciated areas
-        ne50mGlaciers, ne10mGlaciers,
+        //ne50mGlaciers, ne10mGlaciers,
 
-        // Urban areas
-        ne50mUrban,
         // Populated places
         ne10mPopulatedPlaces,
 
         // Base map SHP
         // Roads
-        bmRoadFerries,
+        //bmRoadFerries,
         // bathymetry
-        //bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
+        bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
         //bmBathymetry6000,
-        //bmBathymetry7000,bmBathymetry8000,bmBathymetry9000,bmBathymetry10000,
+        bmBathymetry7000,bmBathymetry8000,bmBathymetry9000,bmBathymetry10000,
     )
 }

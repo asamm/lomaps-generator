@@ -22,19 +22,19 @@ import java.util.List;
  * Steps run in fixed order; each step self-checks whether its action is present
  * or whether its output already exists (skip-if-exists logic stays inside each method).
  */
-class PlanetPipeline {
+public class PlanetPipeline {
 
     private static final String TAG = PlanetPipeline.class.getSimpleName();
 
     private final MapSource mapSource;
     private final ItemMap planet;
 
-    PlanetPipeline(MapSource mapSource, ItemMap planet) {
+    public PlanetPipeline(MapSource mapSource, ItemMap planet) {
         this.mapSource = mapSource;
         this.planet = planet;
     }
 
-    void run(List<Action> actions) {
+    public void run(List<Action> actions) {
         Logger.i(TAG, "================ PROCESS PLANET MAP ================");
 
         if (actions.contains(Action.TOURIST)) tourist(planet);

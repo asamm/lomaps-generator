@@ -8,10 +8,11 @@ import com.asamm.osmTools.config.AppConfig
 import com.asamm.osmTools.config.ConfigUtils
 import com.asamm.osmTools.config.LoMapsMode
 import com.asamm.osmTools.elevation.ElevationPlanetBuilder
-import com.asamm.osmTools.overviewMap.OverviewMapBuilder
 import com.asamm.osmTools.generator.lomaps.GenLoMaps
+import com.asamm.osmTools.generator.lomaps.PlanetPipeline
 import com.asamm.osmTools.generator.GenStoreRegionDB
 import com.asamm.osmTools.generator.PlanetUpdater
+import com.asamm.osmTools.mapConfig.ConfigXmlParser
 import com.asamm.osmTools.utils.Logger
 import com.asamm.slack.SlackUtils
 import com.asamm.store.LocusStoreEnv
@@ -202,13 +203,55 @@ class TerrainRgbCommand : CliktCommand(
 
 class OverviewMapCommand : CliktCommand(
     name = "overview_map",
-    help = "Download non OSM data (Natural Earth, Shadedrelief data and convert to OSM PBF " +
-            "for simplified global map (zoom 0-9)"
+    help = "Generate a global overview Mapsforge map (zoom 1–9) from the merged planet PBF. " +
+            "Runs tourist, contour, and NE overview-map preparation steps, merges all sources " +
+            "into the planet PBF, then writes the overview .map file."
 ) {
-    override fun run() {
-        OverviewMapBuilder().buildOverviewOsmPbf()
 
-        MapsforgeTilerRunner.generateOverviewMap()
+    private val version: String by option(
+        "-v", "--version",
+        help = "Map version string in yyyy.MM.dd format"
+    ).default("")
+        .validate { require(validateDate(it)) { "Invalid date format. Use yyyy.MM.dd" } }
+
+    private val configFile: File by option(
+        "-cf", "--config_file",
+        help = "Path to the map-config XML (defines the planet ItemMap). Defaults to config.xml."
+    ).file(mustExist = true)
+        .defaultLazy {
+            val default = File("config.xml")
+            require(default.exists()) {
+                "Default config file '$default' not found. Specify --config_file."
+            }
+            default
+        }
+
+    private val hgtDir: File by option(
+        "-hgt", "--hgt_dir",
+        help = "Path to the folder with HGT elevation data (required for contour generation)."
+    ).file(mustExist = true)
+        .defaultLazy {
+            val default = File("hgt")
+            require(default.exists()) {
+                "Default HGT directory '$default' not found. Specify --hgt_dir."
+            }
+            default
+        }
+
+    override fun run() {
+        AppConfig.config.version = version
+        AppConfig.config.mapsforgeConfig.mapConfigXml = configFile.toPath()
+        AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()
+
+        val mapSource = ConfigXmlParser.parseConfigXml(configFile)
+        val planet = mapSource.getMapById(AppConfig.config.planetConfig.planetExtendedId)
+            ?: error("Planet map '${AppConfig.config.planetConfig.planetExtendedId}' not found in ${configFile.name}")
+
+        // Prepare and merge all sources that feed the overview map.
+        val actions = listOf(Action.TOURIST, Action.CONTOUR, Action.OVERVIEW_MAP)
+        PlanetPipeline(mapSource, planet).run(actions)
+
+        MapsforgeTilerRunner.generateOverviewMap(planet)
     }
 }
 
@@ -229,11 +272,7 @@ class LoMapsCommand : CliktCommand(
         "--version",
         help = "Name of map version. This is used for versioning of map in Locus Store"
     ).default("")
-        .validate {
-            require(validateDate(it)) {
-                "Invalid date format. Use yyyy.MM.dd"
-            }
-        }
+        .validate { require(validateDate(it)) { "Invalid date format. Use yyyy.MM.dd" } }
 
     // path to a configuration file where are defined maps for generation
     val configFile: File by option("-cf", "--config_file", help = "Path to configuration file").file(mustExist = true)
@@ -335,18 +374,15 @@ class LoMapsCommand : CliktCommand(
         Logger.i(TAG, "== Map generation finished ==")
     }
 
-    /**
-     * Validate date format
-     */
-    private fun validateDate(dateStr: String): Boolean {
-        try {
-            val formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
-            LocalDate.parse(dateStr, formatter)
-            return true
-        } catch (_: DateTimeParseException) {
-            Logger.e("Command", "Invalid date format. Use yyyy.MM.dd")
-            return false
-        }
+}
+
+private fun validateDate(dateStr: String): Boolean {
+    if (dateStr.isEmpty()) return true
+    return try {
+        LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy.MM.dd"))
+        true
+    } catch (_: DateTimeParseException) {
+        false
     }
 }
 

@@ -220,7 +220,7 @@ class MapsforgeConfig(
 
     var mapMetaDataDescription: String,
 
-    var zoomInterval:String = "3,1,4,8,5,9"
+    var zoomInterval:String = "2,0,3,5,4,6,8,7,9,10,10,11,14,12,21"
 )
 
 @Serializable
@@ -308,6 +308,11 @@ class OverviewMapConfig(
     @Serializable(with = PathSerializer::class)
     val outputPbf: Path = Path.of("_planet/overview/planet_overview.osm.pbf"),
 
+    @Serializable(with = PathSerializer::class)
+    var tagMapping: Path = Path.of("config/tag-mapping-overview-map.xml"),
+
+    var zoomInterval:String = "2,0,3,5,4,6,8,7,9",
+
     /** Start node ID for NE features (must not conflict with existing ranges) */
     val startNodeId: Long,
 
@@ -316,7 +321,10 @@ class OverviewMapConfig(
 
     /** Start relation ID for NE features */
     val startRelationId: Long,
-)
+) {
+    /** Canonical path to the extracted Natural Earth GeoPackage file. */
+    val gpkgFile: Path get() = dataDir.resolve("natural_earth/natural_earth_vector.gpkg")
+}
 
 @Serializable
 class ResidentialConfig(
