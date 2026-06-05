@@ -278,6 +278,7 @@ object OverviewMapLayers {
 
     private fun riverMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         f.str("name")?.let { put("name", it) }
+        f.str("scale_rank")?.let { put("rank", it) }
     }
 
     private fun riverFilter(f: FeatureAttributes): Boolean {
@@ -298,9 +299,17 @@ object OverviewMapLayers {
         layerName = "ne_50m_rivers_lake_centerlines",
         source = DataSource.GPKG,
         staticTags = RIVER_TAGS,
-        minZoom = 4, maxZoom = 9,
+        minZoom = 4, maxZoom = 6,
         attributeMapper = ::riverMapper,
         filter = ::riverFilter,
+    )
+
+    private val bm10mRivers = LayerDefinition(
+        layerName = "Rivers",
+        source = DataSource.BASE_MAP_SHP,
+        staticTags = RIVER_TAGS,
+        minZoom = 7, maxZoom = 9,
+        attributeMapper = ::riverMapper,
     )
 
     // ---- GLACIATED AREAS ----
@@ -319,6 +328,15 @@ object OverviewMapLayers {
         source = DataSource.GPKG,
         staticTags = GLACIER_TAGS,
         minZoom = 5, maxZoom = 9,
+    )
+
+    // ---- URBAN AREAS ----
+    private val RESIDENTIAL_TAGS = mapOf("ne_landuse" to "residential")
+    private val bmUrbanAreas = LayerDefinition(
+        layerName = "Urban-Areas",
+        source = DataSource.BASE_MAP_SHP,
+        staticTags = RESIDENTIAL_TAGS,
+        minZoom = 7, maxZoom = 9,
     )
 
     // ---- POPULATED PLACES ----
@@ -371,18 +389,25 @@ object OverviewMapLayers {
 
     // ROADS & FERRY
 
+    // Keep only Expressway roads; drop all other road types. Ferries are kept.
+    private fun roadFilter(f: FeatureAttributes): Boolean {
+        return when (f.str("featurecla")) {
+            "Ferry" -> true
+            "Road" -> f.str("type") == "Expressway"
+            else -> false
+        }
+    }
+
     private fun roadMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         f.str("name")?.let { put("name", it) }
         f.str("featurecla")?.let {
             when (it) {
-                "Ferry" -> put("route", "ne_ferry")
+                "Ferry" -> put("ne_route", "ferry")
                 "Road" -> {
                     f.str("type")?.let { type ->
                         when (type) {
-                            "Expressway" -> put("highway", "ne_motorway")
-                            "Road" -> put("highway", "ne_primary")
-                            "Track", "Other Highway" -> put("highway", "ne_other")
-                            else -> put("highway", "ne_other")
+                            "Expressway" -> put("ne_highway", "motorway")
+                            else -> put("ne_highway", "other")
                         }
                     }
                 }
@@ -394,8 +419,9 @@ object OverviewMapLayers {
         layerName = "Road_Ferries-beta2",
         source = DataSource.BASE_MAP_SHP,
         staticTags = emptyMap(),
-        minZoom = 4, maxZoom = 9,
+        minZoom = 4, maxZoom = 6,
         attributeMapper = ::roadMapper,
+        filter = ::roadFilter,
     )
 
     // ---- ALL LAYERS ----
@@ -418,16 +444,19 @@ object OverviewMapLayers {
         // State boundaries
         ne10mStateBoundary,
         // Rivers
-        ne110mRivers, ne50mRivers,
+        ne110mRivers, ne50mRivers, bm10mRivers,
         // Glaciated areas
         //ne50mGlaciers, ne10mGlaciers,
+
+        // urban areas
+        bmUrbanAreas,
 
         // Populated places
         ne10mPopulatedPlaces,
 
         // Base map SHP
         // Roads
-        //bmRoadFerries,
+        bmRoadFerries,
         // bathymetry
         bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
         //bmBathymetry6000,
