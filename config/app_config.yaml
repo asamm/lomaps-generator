@@ -1,6 +1,6 @@
 temporaryDir: "_temp"
-mapsForgeDir: "/mnt/work/vectorMaps"
-mbtilesDir: "/mnt/data/vectorMaps"
+mapsForgeDir: "/osm_tools/vectorMapsNew"
+mbtilesDir: "/osm_tools/vectorMapsNew" 
 storeUploaderPath: ""
 maxBaseZoom: 14
 
@@ -9,16 +9,16 @@ loggerConfig:
   maxFiles: 10
 
 touristConfig:
-  nodeId:       1200000000000
-  wayId:        1300000000000
-  lomapsToolsPy: "/osm_tools/lomaps_tools/lomaps_tools.py"
+  nodeId:       340000000000
+  wayId:        345000000000
+  lomapsToolsPy: "/osm_tools/lomaps_tools/lomaps_tools/lomaps_tools.py"
 
 contourConfig:
-  hgtDir: "/mnt/work/hgt/vectorMaps"
-  nodeIdMeter:  1800000000000
-  wayIdMeter:   1700000000000
-  nodeIdFeet:   1500000000000
-  wayIdFeet:    1400000000000
+  hgtDir: "/osm_tools/hgt/vectorMaps"
+  nodeIdMeter:  300000000000
+  wayIdMeter:   330000000000
+  nodeIdFeet:   320000000000
+  wayIdFeet:    335000000000
   stepMeter: 20
   stepFeet: 50
   stepCategoryMeter: "100,50"
@@ -29,18 +29,43 @@ contourConfig:
   tempMetersFile: "_contours/planet_meter.osm.pbf"
   tempFeetFile: "_contours/planet_feet.osm.pbf"
 
+residentialConfig:
+  sourceGpkg: "_planet/residential/planet_residential.gpkg"
+  layerName: "lm_landuse_union"
+  startNodeId: 350000000000
+  startWayId:  355000000000
+
+onlineLoMapsConfig:
+  s3region: "ams3"
+  s3bucket: "tile-storage"
+  s3endpoint: "https://ams3.digitaloceanspaces.com"
+  s3pmtilesPath: "pmtiles"
+  s3pmtilesPathDev: "pmtiles-dev" # Custom path for development, it is used to upload test files
+  s3terrainRgbPath: "pmtiles"
+  s3terrainRgbPathDev: "pmtiles-dev"
+  s3bathymetryRgbPath: "pmtiles"
+  s3bathymetryRgbPathDev: "pmtiles-dev"
+  s3pmtilesVersionsPath: "pmtiles/versions" # Prefix where versioned copies of planet.pmtiles are stored
+  s3pmtilesVersionsPathDev: "pmtiles-dev/versions"
+  s3pmtilesVersionsKeep: 3 # How many most recent versions to retain   
+ 
+overviewMapConfig:
+  startNodeId: 361000000000
+  startWayId:  362000000000
+  startRelationId: 363000000000
 
 planetConfig:
   planetLatestPath: "/osm_tools/vectorMaps/_planet/orig/planet-latest.osm.pbf"
   planetLatestURL: "http://ftp.snt.utwente.nl/pub/misc/openstreetmap/planet-latest.osm.pbf"
   planetExtendedId: "planet-extended"  
   planetilerDownloadDir: "data_planetiler"
-  lomapsOutdoorsLayers: ["lm_transportation","contour","cycling","hiking","ski","outdoor_poi","barrier","power"]
+  lomapsOutdoorsLayers: ["lm_transportation","contour","cycling","hiking","ski","snowmobile","outdoor_poi","barrier","power"]
+
 
 cmdConfig:
-  planetiler: "/osm_tools/planetiler-openmaptiles/planetiler-openmaptiles-3.15.1-SNAPSHOT-with-deps.jar"
-  planetilerRamXmx: "36G"
-  planetilerRamXmn: "16G"
+  planetiler: "/osm_tools/planetiler-openmaptiles/planetiler-openmaptiles-3.16.1-SNAPSHOT-with-deps.jar"
+  planetilerRamXmx: "72G"
+  planetilerRamXmn: "32G"
   osmosis: "osmosis/bin/osmosis"
   poiDbV2Init: "/home/lopoints-offline/init_procedure.sh"
   poiDbV2Generator: "/home/lopoints-offline/generate_procedure.sh"
@@ -63,13 +88,15 @@ mbtilesConfig:
   mapDescription: *lomaps_short_desc
   mapAttribution: *lomaps_attribution
 
-residentialConfig:
-  sourceGpkg: "/mnt/work/residential/planet_residential.gpkg"
-  layerName: "residential"
-  startNodeId: 2000000000000
-  startWayId:  2100000000000
-  startRelationId: 2200000000000
-
+terrainRgbConfig:
+  planetFile: "_planet/terrain_rgb/planet_terrain_rgb.pmtiles" #Do not change
+  mapterhornRawFile: "_planet/terrain_rgb/mapterhorn_raw.pmtiles"
+  maxZoom: 11
+  bathymetryPlanetFile: "_planet/bathymetry/planet_bathymetry_rgb.pmtiles"
+  gebcoElevationUrl: "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2025/ice_surface_elevation/netcdf/gebco_2025.zip"
+  gebcoTidUrl: "https://dap.ceda.ac.uk/bodc/gebco/global/gebco_2025/type_identifier_grid/netcdf/gebco_2025_tid.zip"
+  bathymetryMaxZoom: 7
+  
 mapsforgeConfig:
   mapConfigXml: "config/config.xml"
   tagMapping: "config/tag-mapping-tourist.xml"

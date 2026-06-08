@@ -2,7 +2,7 @@
 <maps>
 	
 	<mapPack regionId="wo" name="_world" dir="_world" sourceId="planet-extended" type="extract">
-		<map regionId="wo" file="planet-extended" name="planet-extended" id="planet-extended" type="tourist|contour|residential|generate_mbtiles|generate_mbtiles_online" />
+		<map regionId="wo" file="planet-extended" name="planet-extended" id="planet-extended" type="tourist|contour|residential|overview_map|generate_pmtiles|generate_mapsforge" />
 		<map regionId="wo.af" file="africa" name="Africa" id="africa" />
 		<map regionId="wo.am" file="americas" name="Americas" id="americas" />
 		<map regionId="wo.at" file="antarctica" name="Antarctica" id="antarctica" />
@@ -11,7 +11,7 @@
 		<map regionId="wo.oc" file="oceania" name="Oceania" id="oceania" />
 	</mapPack> 
 
-	<mapPack parentRegionId="wo.eu" name="Europe" dir="europe" prefLang="en,zxx" sourceId="europe" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.eu" name="Europe" dir="europe" prefLang="en,zxx" sourceId="europe" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		
 		<map regionId="wo.eu.france" file="_france" name="France (complete)" countryname="France" id="_france" type="extract" />
 		
@@ -147,7 +147,7 @@
 
 
 	
-	<mapPack parentRegionId="wo.af" name="Africa" dir="africa" prefLang="en,zxx" sourceId="africa" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.af" name="Africa" dir="africa" prefLang="en,zxx" sourceId="africa" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		
 		<map regionId="wo.af.algeria" file="algeria" name="Algeria" />
 		<map regionId="wo.af.angola" file="angola" name="Angola" />
@@ -210,7 +210,7 @@
 	
 
 
-	<mapPack parentRegionId="wo.am" name="Americas" dir="americas" prefLang="en,zxx" sourceId="americas" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.am" name="Americas" dir="americas" prefLang="en,zxx" sourceId="americas" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		
 		<map regionId="wo.am.canada" file="_canada" name="_canada" id="_canada" type="extract" />
 		<map regionId="wo.am.caribbean" file="_caribbean" name="_caribbean" id="_caribbean" type="extract" />
@@ -244,7 +244,7 @@
 		<map regionId="wo.am.uruguay" file="uruguay" name="Uruguay" />
 		<map regionId="wo.am.venezuela" file="venezuela" name="Venezuela" />
 
-		<mapPack parentRegionId="wo.am" sourceId="_caribbean" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.am" sourceId="_caribbean" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.am.anguilla" file="anguilla" name="Anguilla" />
 			<map regionId="wo.am.antigua_and_barbuda" file="antigua_and_barbuda" name="Antigua and Barbuda" />
 			<map regionId="wo.am.aruba" file="aruba" name="Aruba" />
@@ -271,7 +271,7 @@
 			<map regionId="wo.am.virgin_islands_us" file="virgin_islands_us" name="United States Virgin Islands" />
 		</mapPack>	
 		
-		<mapPack parentRegionId="wo.am.brazil" name="Brazil" countryname="Brazil" dir="brazil" sourceId="_brazil" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.am.brazil" name="Brazil" countryname="Brazil" dir="brazil" sourceId="_brazil" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		    <map regionId="wo.am.brazil.acre" file="acre" name="Acre" />
         	<map regionId="wo.am.brazil.alagoas" file="alagoas" name="Alagoas" />
         	<map regionId="wo.am.brazil.amapa" file="amapa" name="Amapa" />
@@ -301,7 +301,7 @@
         	<map regionId="wo.am.brazil.tocantins" file="tocantins" name="Tocantins" />
 		</mapPack>
 
-		<mapPack parentRegionId="wo.am.canada" name="Canada" countryname="Canada" dir="canada" sourceId="_canada"  type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.am.canada" name="Canada" countryname="Canada" dir="canada" sourceId="_canada"  type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.am.canada.alberta" file="alberta" name="Alberta" />
 			<map regionId="wo.am.canada.british_columbia" file="british_columbia" name="British Columbia" />
 			<map regionId="wo.am.canada.manitoba" file="manitoba" name="Manitoba" />
@@ -320,7 +320,7 @@
 
 
 
-		<mapPack parentRegionId="wo.am.united_states" name="United States" countryname="United States" dir="united_states" sourceId="_united_states" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.am.united_states" name="United States" countryname="United States" dir="united_states" sourceId="_united_states" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.am.united_states.alabama" file="alabama" name="Alabama" />
 			<map regionId="wo.am.united_states.alaska" file="alaska" name="Alaska" /> 
 			<map regionId="wo.am.united_states.arizona" file="arizona" name="Arizona" />
@@ -375,7 +375,7 @@
 		</mapPack>
 	</mapPack>
 	
-	<mapPack parentRegionId="wo.as" name="Asia" dir="asia" prefLang="en,zxx" sourceId="asia" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.as" name="Asia" dir="asia" prefLang="en,zxx" sourceId="asia" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 
 		<map regionId="wo.as.japan" file="_japan" name="_japan" id="_japan" type="extract" />
 		<map regionId="wo.as.china" file="_china" name="_china" id="_china" type="extract" />
@@ -432,14 +432,14 @@
 		<map regionId="wo.as.vietnam" file="vietnam" name="Vietnam" />
 		<map regionId="wo.as.yemen" file="yemen" name="Yemen" />
 
-		<mapPack parentRegionId="wo.as.japan" name="Japan" countryname="Japan" dir="japan" sourceId="_japan" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.as.japan" name="Japan" countryname="Japan" dir="japan" sourceId="_japan" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.as.japan" file="hokkaido" name="Hokkaido" />
 			<map regionId="wo.as.japan" file="honshu" name="Honshu" />
 			<map regionId="wo.as.japan" file="kyushu" name="Kyushu" />
 			<map regionId="wo.as.japan" file="shikoku" name="Shikoku" />
 		</mapPack>
 
-		<mapPack parentRegionId="wo.as.china" name="China" countryname="China" dir="china" sourceId="_china" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.as.china" name="China" countryname="China" dir="china" sourceId="_china" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.as.china.anhui" file="anhui" name="Anhui" />
 			<map regionId="wo.as.china.beijing" file="beijing" name="Beijing" />
 			<map regionId="wo.as.china.chongqing" file="chongqing" name="Chongqing" />
@@ -474,7 +474,7 @@
 			<map regionId="wo.as.china.zhejiang" file="zhejiang" name="Zhejiang" />
 		</mapPack>
 
-		<mapPack parentRegionId="wo.as.india" name="India" countryname="India" dir="india" sourceId="_india" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.as.india" name="India" countryname="India" dir="india" sourceId="_india" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 			<map regionId="wo.as.india.andaman_and_nicobar_islands" file="andaman_and_nicobar_islands" name="Andaman and Nicobar Islands" />
 			<map regionId="wo.as.india.andhra_pradesh" file="andhra_pradesh" name="Andhra Pradesh" />
 			<map regionId="wo.as.india.arunachal_pradesh" file="arunachal_pradesh" name="Arunachal Pradesh" />
@@ -511,7 +511,7 @@
 			<map regionId="wo.as.india.west_bengal" file="west_bengal" name="West Bengal" />
 		</mapPack>
 
-		<mapPack parentRegionId="wo.as.russia" name="Russia" countryname="Russia" dir="russia" sourceId="_russia" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+		<mapPack parentRegionId="wo.as.russia" name="Russia" countryname="Russia" dir="russia" sourceId="_russia" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 								
 				<map regionId="wo.as.russia.adygea" file="adygea" name="Adygea" />
 				<map regionId="wo.as.russia.altai_krai" file="altai_krai" name="Altai Krai" />
@@ -601,7 +601,7 @@
 			</mapPack>
 	</mapPack>
 	
-	<mapPack parentRegionId="wo.oc" name="Oceania" dir="oceania" prefLang="en,zxx" sourceId="oceania" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.oc" name="Oceania" dir="oceania" prefLang="en,zxx" sourceId="oceania" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		<map regionId="wo.oc.american_samoa" file="american_samoa" name="American Samoa" />
 		<map regionId="wo.oc.cocos_islands" file="cocos_islands" name="Cocos Islands" />
 		<map regionId="wo.oc.cook_islands" file="cook_islands" name="Cook Islands" />
@@ -645,7 +645,7 @@
 		</mapPack>
 	</mapPack>
 	<!--
-	<mapPack parentRegionId="wo.oc	" name="Antarctica" dir="antarctica" prefLang="en,zxx" sourceId="antarctica" type="extract|address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+	<mapPack parentRegionId="wo.oc	" name="Antarctica" dir="antarctica" prefLang="en,zxx" sourceId="antarctica" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
 		<map regionId="wo.oc" file="antarctica_coast" name="Antarctica coast"/> 
 		<map regionId="wo.oc" file="bouvet_island" name="Bouvet Island"/> 
 		<map regionId="wo.oc" file="heard_island_and_mcdonald_islands" name="Heard Island and McDonald Islands" />
