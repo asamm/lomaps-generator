@@ -236,7 +236,7 @@ public class PlanetPipeline {
         Logger.i(TAG, "Generating Planet PMTiles: " + planet.getPathPmtiles());
 
         new CmdPlanetiler().generateLoMapsPlanetPmtiles(
-                planet.getPathSource(), planet.getPathPmtiles(), planet.getPathPolygon());
+                planet.getPathSource(), planet.getPathPmtiles());
 
         Logger.i(TAG, "Planet PMTiles done in " + time.getElapsedTimeSec() + " sec");
     }
@@ -244,8 +244,7 @@ public class PlanetPipeline {
     // ---- S3 UPLOAD ----
 
     private void uploadToS3(ItemMap planet) {
-        if (!planet.hasAction(Action.UPLOAD_S3)) return;
-
+        // Driven solely by the --release flag (which injects UPLOAD_S3 into the action list 
         Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + planet.getFileName() + " ================");
         if (!planet.getPathPmtiles().toFile().exists()) {
             throw new IllegalArgumentException("PMTiles file not found: " + planet.getPathPmtiles());
