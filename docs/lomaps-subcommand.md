@@ -3,7 +3,7 @@
 Generates LoMaps vector maps for the Locus Store (offline mode) or online planet-level tile maps (online mode).
 
 ```
-OsmToolsBasic [global options] lomaps --mode <offline|online> [options]
+java -jar OsmToolsBasic.jar [global options] lomaps --mode <offline|online> [options]
 ```
 
 ---
@@ -145,23 +145,52 @@ Steps are grouped by pipeline phase. All planet-level steps run before per-map s
 
 ---
 
+## Config reference
+
+Beyond the CLI options, the run is driven by `config/app_config.yaml` (kotlinx-serialization). Keys with a code default are optional in YAML; keys without one are required. CLI options override the corresponding YAML value where noted in the options table above.
+
+| Key | Req. / default | Purpose |
+|---|---|---|
+| `mapsForgeDir` | default `./_mapsforge` | Offline map working/result root (CLI `-mf`) |
+| `mbtilesDir` | default `./_mbtiles` | MBTiles working root (CLI `-mb`) |
+| `planetDir` | default `./_planet` | Planet-data working root (CLI `-pd`) — **not** in committed YAML |
+| `temporaryDir` | default `_temp` | Scratch dir |
+| `mapsforgeConfig.tagMapping` | required | Tourist tag-mapping XML |
+| `mapsforgeConfig.zoomInterval` | default `2,0,…,12,21` | Mapsforge zoom intervals |
+| `planetConfig.*` | required | Planet file path/URL, planetiler dir, `planetExtendedId`, outdoor layers |
+| `touristConfig.*` / `contourConfig.*` | required | Tourist & contour generation (`hgtDir` via CLI `-hgt`) |
+| `poiAddressConfig.*` / `residentialConfig.*` | required | Address/POI DB and residential-layer inputs |
+| `cmdConfig.*` | required | External tools (planetiler, osmosis, POI-V2 scripts; osmium/pyhgtmap/gdal resolved from PATH) |
+| `storeUploaderPath` | default `""` | Store-uploader jar (CLI `-su`; needed for offline `--release`) |
+
+**Online mode (`--mode online`) also uses:**
+
+| Key | Req. / default | Purpose |
+|---|---|---|
+| `onlineLoMapsConfig.*` | required | S3 target + `s3pmtilesPath[Dev]`, version retention — **not** in committed YAML |
+| `maptilerCloudConfig.*` | required | MapTiler tileset metadata |
+
+> Sections absent from the committed `config/app_config.yaml` (`planetDir`, `onlineLoMapsConfig`) fall back to code defaults or must be added; the full production config is kept on the NAS (see README).
+
+---
+
 ## Examples
 
 ```bash
 # Generate offline maps for the current version (no upload)
-OsmToolsBasic lomaps --mode offline --version 2026.05.25
+java -jar OsmToolsBasic.jar lomaps --mode offline --version 2026.05.25
 
 # Generate and release offline maps to Locus Store
-OsmToolsBasic lomaps --mode offline --version 2026.05.25 --release \
+java -jar OsmToolsBasic.jar lomaps --mode offline --version 2026.05.25 --release \
   --store_uploader /tools/store-uploader.jar
 
 # Generate and release offline maps, overwrite existing files, target DEV store
-OsmToolsBasic -ow -e DEV lomaps --mode offline --version 2026.05.25 --release \
+java -jar OsmToolsBasic.jar -ow -e DEV lomaps --mode offline --version 2026.05.25 --release \
   --store_uploader /tools/store-uploader.jar
 
 # Generate and publish online planet tiles
-OsmToolsBasic lomaps --mode online --version 2026.05.25 --release
+java -jar OsmToolsBasic.jar lomaps --mode online --version 2026.05.25 --release
 
 # Generate online tiles without publishing (dry run)
-OsmToolsBasic lomaps --mode online --version 2026.05.25
+java -jar OsmToolsBasic.jar lomaps --mode online --version 2026.05.25
 ```

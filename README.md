@@ -89,45 +89,57 @@ To make the S3 credentials available every time you open a terminal, add them to
 
 --- 
 
+## Usage
+
+The tool is a single jar (`OsmToolsBasic.jar`) with several subcommands:
+
+```
+java -jar OsmToolsBasic.jar [global options] <subcommand> [subcommand options]
+```
+
+### Global options
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--debug` | `-d` | false | Verbose/debug logging |
+| `--overwrite` | `-ow` | false | Overwrite output files if they exist |
+| `--ls_environment` | `-e` | `PROD` | Locus Store environment (`PROD`, `DEV`) |
+
+### Subcommands
+
+| Subcommand | Purpose | Docs |
+|---|---|---|
+| `lomaps` | Generate LoMaps vector maps (offline) or online planet tiles | [docs/lomaps-subcommand.md](docs/lomaps-subcommand.md) |
+| `overview_map` | Generate the global overview Mapsforge map (zoom 1–9) | [docs/overview-map-subcommand.md](docs/overview-map-subcommand.md) |
+| `terrain_rgb` | Prepare terrain-RGB / bathymetry elevation tiles, HGT, S3 upload | [docs/terrain-rgb-subcommand.md](docs/terrain-rgb-subcommand.md) |
+| `update_planet` | Download / incrementally update the OSM planet file | [docs/update-planet-subcommand.md](docs/update-planet-subcommand.md) |
+| `clean_old` | Delete intermediate folders from previous generations | [docs/clean-old-subcommand.md](docs/clean-old-subcommand.md) |
+| `storegeo` | (legacy) Generate Locus Store region boundaries | [docs/storegeo-subcommand.md](docs/storegeo-subcommand.md) |
+
+`--help` is available on the root command and every subcommand:
+
+```
+java -jar OsmToolsBasic.jar lomaps --help
+```
+
 ## Generation
 
 ### Required configuration
-For every generation is requited to increase a Locus Store version of generated LoMaps (every version has an internal Locus Store id). Edit file:
-`config/default_store_item_definition.json` and increase by one the value `version.code`
- 
+For every generation it is required to increase the Locus Store version of generated LoMaps (every version has an internal Locus Store id). Edit
+`config/default_store_item_definition.json` and increase the `version.code` value by one.
 
 ### Start generation
-To start generation run:
+Generation is driven by `lomaps --mode <offline|online>` — the mode expands to a fixed action pipeline (the old per-step `--actions` flag has been removed). Add `--release` to upload the result. Example:
 
 ```
-java -jar OsmToolsBasic_0.7.6.jar lomaps --version 2025.06.16 --config_file config/config_2025.xml --hgt_dir /mnt/backup/hgt/vectorMaps/hgt/  --actions contour,tourist,extract,generate_mbtiles_online   --store_uploader /osm_tools/locusStoreUploader/locusStoreUploader_0.3.1.jar  
+java -jar OsmToolsBasic.jar lomaps --mode offline --version 2025.06.16 \
+  --config_file config/config_2025.xml \
+  --hgt_dir /mnt/backup/hgt/vectorMaps/hgt/ \
+  --release --store_uploader /osm_tools/locusStoreUploader/locusStoreUploader.jar
 ```
 
-##### Parameters
-- `--config_file` path to `config.xml` file - if not set, the generator will search for `config.xml` in current folder
-- `--actions`: generation of LoMaps has several phases and generator can perform only specific ones. The letter defines action to perform during generation, when:
-	- `extract` - extracts planet files into regions and countries
-	- `contour` - contour lines (create map with contour lines)
-	- `tourist` - marked trails - crate map with the marked trails
-    - `address_poi_db` - create address database (and also POI V1 database for LM Classic)
-    - `poi_db` - create POI database
-	- `generate_mapsforge` - generate mapsforge maps for android
-    - `generate_mbtiles` - generate mbtiles maps for iOS
-    - `generate_mbtiles_online` - generate tourist, contours as additional source for standard openmaptiles
-    - `generate_pmtiles` - generate planet PMTiles (source for both offline MBTiles and online S3 upload)
-    - `upload_s3` - upload planet PMTiles to S3 storage (depends on `generate_pmtiles`)
-    - `upload_maptiler` - upload generated online mbtiles to maptiler cloud
-	- `upload` - upload maps to the Locus Store
-- `--version` - used date in format yyyy.mm.dd (it's name of version in Locus Store and reflect how old are data used for generation
-- `--hgt_dir` - path to folder with elevation data
-- `--store_uploader` - path to the .jar file of locus store uploader
+See [docs/lomaps-subcommand.md](docs/lomaps-subcommand.md) for all options and the full offline/online pipelines.
 
-Sub command `type` - possible values
-  - `lomaps` - generate lomaps
-  - `storegeo` - used for generation country boundaries for Locus Store regions definition. It's very likely obsolete now
-
-
-  
 
 ## Locus Store Uploader
 Generated maps are uploded into Locus Store using [locus-store-uploader](https://github.com/asamm/locus-store-uploader) - tool. This script is included in LoMaps generator folder. 
