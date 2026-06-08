@@ -30,7 +30,7 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
             .execute()
     }
 
-    fun generateLoMapsPlanetPmtiles(input: Path, output: Path, poly: Path) {
+    fun generateLoMapsPlanetPmtiles(input: Path, output: Path) {
         builder()
             .add(
                 "--osm-path", input.toString(),
@@ -40,7 +40,7 @@ class CmdPlanetiler : Cmd(ExternalApp.PLANETILER) {
                 "--download_dir=${AppConfig.config.planetConfig.planetilerDownloadDir}",
                 "--tmpdir=${AppConfig.config.temporaryDir}",
                 "--download",
-                "--poly", poly.toString()
+                "--bounds=world"
             )
 //            .apply {
 //                if (!Utils.isLocalDEV()) {
