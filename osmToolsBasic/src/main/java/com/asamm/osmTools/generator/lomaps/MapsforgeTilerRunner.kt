@@ -77,17 +77,39 @@ object MapsforgeTilerRunner {
         require(planet.pathSource.toFile().exists()) {
             "Merged planet PBF not found: ${planet.pathSource}. Run the merge step first."
         }
+
+        // if local DEV set bbox to albania
+        if (Utils.isLocalDEV()){
+            val bbox = BoundingBox(
+                minLat = 39.6,
+                minLon = 19.0,
+                maxLat = 42.7,
+                maxLon = 21.1,
+            )
+        }
+
         // Output next to the overview PBF, same directory, same base name.
         val outputMap = Path.of(cfg.outputPbf.toString().replace(".osm.pbf", ".osm.map")).absolute()
         val config = MapWriterConfig(
             input = planet.pathSource,
             output = outputMap,
-            bbox = BoundingBox(
-                minLat = -MercatorUtils.WEB_MERCATOR_MAX_LAT,
-                minLon = -180.0,
-                maxLat = MercatorUtils.WEB_MERCATOR_MAX_LAT,
-                maxLon = 180.0,
-            ),
+            // TODO remove local DEV section
+            bbox = if (Utils.isLocalDEV()) {
+                BoundingBox(
+                    minLat = 39.6,
+                    minLon = 19.0,
+                    maxLat = 42.7,
+                    maxLon = 21.1,
+                )
+            } else {
+                BoundingBox(
+                    minLat = -MercatorUtils.WEB_MERCATOR_MAX_LAT,
+                    minLon = -180.0,
+                    maxLat = MercatorUtils.WEB_MERCATOR_MAX_LAT,
+                    maxLon = 180.0,
+                )
+            },
+
             tagConfFile = AppConfig.config.overviewMapConfig.tagMapping.toAbsolutePath(),
             labelPosition = true,
             simplificationFactor = 0.5,
