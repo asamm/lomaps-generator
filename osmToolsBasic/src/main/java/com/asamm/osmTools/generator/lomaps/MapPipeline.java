@@ -118,7 +118,7 @@ class MapPipeline {
             TimeWatch time = new TimeWatch();
             Logger.i(TAG, "Generating planet PMTiles: " + planet.getPathPmtiles());
             new CmdPlanetiler().generateLoMapsPlanetPmtiles(
-                    planet.getPathSource(), planet.getPathPmtiles(), planet.getPathPolygon());
+                    planet.getPathSource(), planet.getPathPmtiles());
             Logger.i(TAG, "Planet PMTiles done in " + time.getElapsedTimeSec() + " sec");
         }
 
