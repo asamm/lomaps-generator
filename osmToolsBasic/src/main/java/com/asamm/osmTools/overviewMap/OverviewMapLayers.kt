@@ -388,40 +388,47 @@ object OverviewMapLayers {
     // --- BASE MAP SHP ---
 
     // ROADS & FERRY
+    // Both layers read the same source file but are split into separate zoom intervals:
+    // Expressway roads at z4-6, ferries at z7-8.
 
-    // Keep only Expressway roads; drop all other road types. Ferries are kept.
+    private const val ROAD_FERRIES_SOURCE = "Road_Ferries-beta2"
+
+    // ROADS — keep only Expressway roads; drop all other road types and ferries.
     private fun roadFilter(f: FeatureAttributes): Boolean {
-        return when (f.str("featurecla")) {
-            "Ferry" -> true
-            "Road" -> f.str("type") == "Expressway"
-            else -> false
-        }
+        return f.str("featurecla") == "Road" && f.str("type") == "Expressway"
     }
 
     private fun roadMapper(f: FeatureAttributes): Map<String, String> = buildMap {
         f.str("name")?.let { put("name", it) }
-        f.str("featurecla")?.let {
-            when (it) {
-                "Ferry" -> put("ne_route", "ferry")
-                "Road" -> {
-                    f.str("type")?.let { type ->
-                        when (type) {
-                            "Expressway" -> put("ne_highway", "motorway")
-                            else -> put("ne_highway", "other")
-                        }
-                    }
-                }
-            }
-        }
+        put("ne_highway", "motorway")
     }
 
-    private val bmRoadFerries = LayerDefinition(
-        layerName = "Road_Ferries-beta2",
+    private val bmRoads = LayerDefinition(
+        layerName = ROAD_FERRIES_SOURCE,
         source = DataSource.BASE_MAP_SHP,
         staticTags = emptyMap(),
         minZoom = 4, maxZoom = 6,
         attributeMapper = ::roadMapper,
         filter = ::roadFilter,
+    )
+
+    // FERRIES — keep only ferry features; drop all roads.
+    private fun ferryFilter(f: FeatureAttributes): Boolean {
+        return f.str("featurecla") == "Ferry"
+    }
+
+    private fun ferryMapper(f: FeatureAttributes): Map<String, String> = buildMap {
+        f.str("name")?.let { put("name", it) }
+        put("ne_route", "ferry")
+    }
+
+    private val bmFerries = LayerDefinition(
+        layerName = ROAD_FERRIES_SOURCE,
+        source = DataSource.BASE_MAP_SHP,
+        staticTags = emptyMap(),
+        minZoom = 7, maxZoom = 8,
+        attributeMapper = ::ferryMapper,
+        filter = ::ferryFilter,
     )
 
     // ---- ALL LAYERS ----
@@ -456,7 +463,8 @@ object OverviewMapLayers {
 
         // Base map SHP
         // Roads
-        bmRoadFerries,
+        bmRoads,
+        bmFerries,
         // bathymetry
         bmBathymetry200,bmBathymetry1000,bmBathymetry2000,bmBathymetry3000,bmBathymetry4000,bmBathymetry5000,
         //bmBathymetry6000,
