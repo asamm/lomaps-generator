@@ -47,8 +47,9 @@ onlineLoMapsConfig:
   s3bathymetryRgbPathDev: "pmtiles-dev"
   s3pmtilesVersionsPath: "pmtiles/versions" # Prefix where versioned copies of planet.pmtiles are stored
   s3pmtilesVersionsPathDev: "pmtiles-dev/versions"
-  s3pmtilesVersionsKeep: 3 # How many most recent versions to retain   
- 
+  s3pmtilesVersionsKeep: 3 # How many most recent versions to retain
+  # devBbox: [-25.0, 34.0, 45.0, 72.0] # [minLon, minLat, maxLon, maxLat] — when set, DEV uploads clip planet files to this bbox (Europe example)
+
 overviewMapConfig:
   startNodeId: 361000000000
   startWayId:  362000000000

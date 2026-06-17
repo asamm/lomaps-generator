@@ -13,11 +13,38 @@ import com.asamm.pmtiles.PmTilesExtract
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.use
+import java.nio.file.Path
 
 class ElevationPlanetBuilder {
 
     private companion object {
         const val TAG = "TerrainRgbPlanetBuilder"
+
+        /**
+         * When ENV=DEV and [devBbox] is configured, extracts the bbox region from [sourcePath]
+         * into a temp file and returns it. The caller must delete the temp file after use.
+         * Returns null when no extraction is needed (PROD or no bbox configured).
+         */
+        fun extractForDevBbox(sourcePath: Path, devBbox: List<Double>): Path {
+            val tmpFile = AppConfig.config.temporaryDir.resolve("dev_bbox_${sourcePath.fileName}")
+            tmpFile.parent?.toFile()?.mkdirs()
+
+            Logger.i(TAG, "Extracting DEV bbox $devBbox from $sourcePath → $tmpFile")
+
+            PmTilesExtract.extractBbox(
+                input = sourcePath,
+                output = tmpFile,
+                minLon = devBbox[0],
+                minLat = devBbox[1],
+                maxLon = devBbox[2],
+                maxLat = devBbox[3],
+                listener = PmTilesExtract.ProgressListener { copied, total, _ ->
+                    Logger.i(TAG, "DEV bbox extract: $copied/$total tiles")
+                }
+            )
+
+            return tmpFile
+        }
     }
 
         /**
@@ -215,6 +242,7 @@ class ElevationPlanetBuilder {
 
     /**
      * Uploads the terrain RGB (land elevation) PMTiles planet file to S3.
+     * When ENV=DEV and devBbox is configured, a bbox-clipped temp file is uploaded instead.
      */
     fun uploadTerrainRgbToS3() {
         val cfg = AppConfig.config.terrainRgbConfig
@@ -230,18 +258,24 @@ class ElevationPlanetBuilder {
 
         S3Client.fromAppConfig().use { s3Client ->
             val onlineCfg = AppConfig.config.onlineLoMapsConfig
-            val s3key = if (Utils.isLocalDEV()) {
-                onlineCfg.s3terrainRgbPathDev
-            } else {
-                onlineCfg.s3terrainRgbPath
-            } + "/" + cfg.planetFile.fileName
+            val isDev = Utils.isLocalDEV()
+            val s3key = if (isDev) onlineCfg.s3terrainRgbPathDev else onlineCfg.s3terrainRgbPath
+            val s3KeyWithFile = "$s3key/${cfg.planetFile.fileName}"
 
-            s3Client.uploadFile(planetFile, s3key)
+            val tmpPath = if (isDev) onlineCfg.devBbox?.let { extractForDevBbox(cfg.planetFile, it) } else null
+            val uploadFile = tmpPath ?: cfg.planetFile
+
+            try {
+                s3Client.uploadFile(uploadFile.toFile(), s3KeyWithFile)
+            } finally {
+                tmpPath?.deleteIfExists()
+            }
         }
     }
 
     /**
      * Uploads the bathymetry terrain RGB (ocean floor) PMTiles planet file to S3.
+     * When ENV=DEV and devBbox is configured, a bbox-clipped temp file is uploaded instead.
      */
     fun uploadBathymetryToS3() {
         val cfg = AppConfig.config.terrainRgbConfig
@@ -257,13 +291,18 @@ class ElevationPlanetBuilder {
 
         S3Client.fromAppConfig().use { s3Client ->
             val onlineCfg = AppConfig.config.onlineLoMapsConfig
-            val s3key = if (Utils.isLocalDEV()) {
-                onlineCfg.s3bathymetryRgbPathDev
-            } else {
-                onlineCfg.s3bathymetryRgbPath
-            } + "/" + cfg.bathymetryPlanetFile.fileName
+            val isDev = Utils.isLocalDEV()
+            val s3key = if (isDev) onlineCfg.s3bathymetryRgbPathDev else onlineCfg.s3bathymetryRgbPath
+            val s3KeyWithFile = "$s3key/${cfg.bathymetryPlanetFile.fileName}"
 
-            s3Client.uploadFile(bathymetryFile, s3key)
+            val tmpPath = if (isDev) onlineCfg.devBbox?.let { extractForDevBbox(cfg.bathymetryPlanetFile, it) } else null
+            val uploadFile = tmpPath ?: cfg.bathymetryPlanetFile
+
+            try {
+                s3Client.uploadFile(uploadFile.toFile(), s3KeyWithFile)
+            } finally {
+                tmpPath?.deleteIfExists()
+            }
         }
     }
 }

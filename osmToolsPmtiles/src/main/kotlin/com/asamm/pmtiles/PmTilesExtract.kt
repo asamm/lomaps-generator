@@ -181,6 +181,37 @@ object PmTilesExtract {
     }
 
     /**
+     * Convenience overload of [extract] that accepts a bounding box in WGS84 degrees instead of
+     * a JTS geometry. All zoom levels present in the source are included.
+     *
+     * @param input    Source PMTiles file.
+     * @param output   Destination PMTiles file (created/overwritten).
+     * @param minLon   West longitude in degrees.
+     * @param minLat   South latitude in degrees.
+     * @param maxLon   East longitude in degrees.
+     * @param maxLat   North latitude in degrees.
+     * @param listener Optional progress callback.
+     */
+    fun extractBbox(
+        input: Path,
+        output: Path,
+        minLon: Double,
+        minLat: Double,
+        maxLon: Double,
+        maxLat: Double,
+        listener: ProgressListener? = null,
+    ): ExtractResult? {
+        val area = GEOM_FACTORY.createPolygon(arrayOf(
+            Coordinate(minLon, minLat),
+            Coordinate(minLon, maxLat),
+            Coordinate(maxLon, maxLat),
+            Coordinate(maxLon, minLat),
+            Coordinate(minLon, minLat),
+        ))
+        return extract(input, output, Int.MAX_VALUE, area, listener)
+    }
+
+    /**
      * Streams every tile from [input] that passes the zoom range and optional area filter
      * to [tileAction], without writing any output file.
      *

@@ -11,6 +11,7 @@ import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
 import com.asamm.osmTools.residential.ResidentialBuilder;
 import com.asamm.osmTools.utils.*;
+import com.asamm.pmtiles.PmTilesExtract;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -244,7 +245,7 @@ public class PlanetPipeline {
     // ---- S3 UPLOAD ----
 
     private void uploadToS3(ItemMap planet) {
-        // Driven solely by the --release flag (which injects UPLOAD_S3 into the action list 
+        // Driven solely by the --release flag (which injects UPLOAD_S3 into the action list
         Logger.i(TAG, "================ UPLOAD PMTILES ONLINE TO S3 " + planet.getFileName() + " ================");
         if (!planet.getPathPmtiles().toFile().exists()) {
             throw new IllegalArgumentException("PMTiles file not found: " + planet.getPathPmtiles());
@@ -256,12 +257,45 @@ public class PlanetPipeline {
             String latestPrefix = isDev ? cfg.getS3pmtilesPathDev() : cfg.getS3pmtilesPath();
             String versionsPrefix = isDev ? cfg.getS3pmtilesVersionsPathDev() : cfg.getS3pmtilesVersionsPath();
 
-            new OnlinePlanetVersionsManager(s3Client, versionsPrefix, latestPrefix, cfg.getS3pmtilesVersionsKeep())
-                    .publish(
-                            planet.getPathPmtiles().toFile(),
-                            AppConfig.config.getVersion(),
-                            planet.getPathPmtiles().getFileName().toString());
+            Path uploadFile = planet.getPathPmtiles();
+            Path tempFile = null;
+
+            if (isDev && cfg.getDevBbox() != null) {
+                tempFile = extractForDevBbox(planet.getPathPmtiles(), cfg.getDevBbox());
+                uploadFile = tempFile;
+            }
+
+            try {
+                new OnlinePlanetVersionsManager(s3Client, versionsPrefix, latestPrefix, cfg.getS3pmtilesVersionsKeep())
+                        .publish(
+                                uploadFile.toFile(),
+                                AppConfig.config.getVersion(),
+                                planet.getPathPmtiles().getFileName().toString());
+            } finally {
+                if (tempFile != null) {
+                    tempFile.toFile().delete();
+                }
+            }
         }
+    }
+
+    private Path extractForDevBbox(Path sourcePath, java.util.List<Double> devBbox) {
+        Path tmpFile = AppConfig.config.getTemporaryDir().resolve("dev_bbox_" + sourcePath.getFileName());
+        Utils.createParentDirs(tmpFile);
+
+        Logger.i(TAG, "Extracting DEV bbox " + devBbox + " from " + sourcePath + " → " + tmpFile);
+
+        PmTilesExtract.INSTANCE.extractBbox(
+                sourcePath,
+                tmpFile,
+                devBbox.get(0),
+                devBbox.get(1),
+                devBbox.get(2),
+                devBbox.get(3),
+                (copied, total, bytes) -> Logger.i(TAG, "DEV bbox extract: " + copied + "/" + total + " tiles")
+        );
+
+        return tmpFile;
     }
 
     // ---- MAPTILER UPLOAD ----

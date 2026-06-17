@@ -183,6 +183,9 @@ class OnlineLoMapsConfig(
     var s3terrainRgbPathDev: String,
     var s3bathymetryRgbPath: String,
     var s3bathymetryRgbPathDev: String,
+    // [minLon, minLat, maxLon, maxLat] — when set and ENV=DEV, planet PMTiles files are clipped
+    // to this bounding box before upload to keep DEV S3 storage small.
+    var devBbox: List<Double>? = null,
 )
 
 @Serializable
