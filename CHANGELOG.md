@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-06-17
+
+### Changed
+- uploader of online PMTiles uses custom bbox dev settings for upload a smaller tile set to S3 for testing, instead of the whole planet.
+
 ## [1.0.0] - 2026-06-08
 
 Major reworking of how maps are generated. Highlights:
