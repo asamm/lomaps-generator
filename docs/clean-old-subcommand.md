@@ -3,7 +3,7 @@
 Deletes intermediate generation folders from previous runs to free disk space.
 
 ```
-java -jar OsmToolsBasic.jar [global options] clean_old [-cf <config.xml>]
+java -jar OsmToolsBasic.jar [global options] clean_old [-cf <config/config.xml>]
 ```
 
 ---
@@ -23,7 +23,7 @@ Missing paths are logged and skipped; failures are non-fatal. Static data (polyg
 
 | Flag | Short | Default | Description |
 |---|---|---|---|
-| `--config_file` | `-cf` | `config.xml` | Map-config XML defining the maps |
+| `--config_file` | `-cf` | `config/config.xml` | Map-config XML defining the maps |
 
 ## Config reference
 
@@ -40,7 +40,7 @@ Loaded from `config/app_config.yaml` (kotlinx-serialization). Folder roots for t
 ## Example
 
 ```bash
-# Purge previous generation for maps in config.xml
+# Purge previous generation for maps in config/config.xml
 java -jar OsmToolsBasic.jar clean_old
 
 # Use a specific config file

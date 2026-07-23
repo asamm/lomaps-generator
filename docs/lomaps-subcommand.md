@@ -65,7 +65,7 @@ Path to the Locus Store uploader `.jar` file.
 Path to the map configuration XML file that defines which maps are generated.
 
 - **Required:** no
-- **Default:** `config.xml` in the working directory
+- **Default:** `config/config.xml` in the working directory
 
 ### `--hgt_dir` `-hgt`
 

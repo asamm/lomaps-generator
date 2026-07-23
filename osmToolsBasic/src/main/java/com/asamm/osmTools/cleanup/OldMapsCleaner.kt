@@ -27,6 +27,7 @@ class OldMapsCleaner {
         PathType.POI_V2_DB,
         PathType.MBTILES_GENERATE,
         PathType.MBTILES_ONLINE_OUTDOOR,
+        PathType.PMTILES
     )
 
     fun purgePreviousMapGeneration() {

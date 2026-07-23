@@ -93,7 +93,7 @@ dependencies {
 }
 
 //def versionCode = "1.0.0-SNAPSHOT"
-def versionCode = "1.0.0"
+def versionCode = "1.0.1-SNAPSHOT"
 def newArchiveName = "OsmToolsBasic.jar"
 
 // Generate version.properties file with current version
@@ -156,6 +156,153 @@ tasks.register('createPlanetUpdateShScript') {
     }
 }
 
+tasks.register('createOnlineReleaseShScript') {
+    dependsOn jar
+    doLast {
+        def jarFile = layout.buildDirectory.file("libs/${newArchiveName}").get().asFile
+        def scriptFile = layout.buildDirectory.file("libs/generate_online_release.sh").get().asFile
+        scriptFile.text = """#!/bin/bash
+        set -euo pipefail
+        # Export paths to find pyhgtmap / pyosmium tools
+        export PATH=\$PATH:/home/osmtools/.local/bin
+        # Get the absolute path of the directory where the script is located
+        SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+        # Change the current working directory to the script's directory
+        cd "\$SCRIPT_DIR" || exit 1
+
+        # Defaults
+        VERSION="\$(date +%Y.%m.%d)"                              # map version, yyyy.MM.dd (default: today)
+        HGT_DIR="\${HGT_DIR:-/osm_tools/hgt/vectorMaps/hgt/}"     # HGT elevation data (override via env)
+
+        usage() {
+            echo "Usage: \$(basename "\$0") [VERSION] [options]"
+            echo ""
+            echo "Generate online LoMaps planet tiles and publish them to S3."
+            echo "Pipeline: update_planet -> lomaps --mode online --release"
+            echo ""
+            echo "Arguments:"
+            echo "  VERSION             Map version in yyyy.MM.dd format (default: today, \$VERSION)"
+            echo ""
+            echo "Options:"
+            echo "  -v, --version VER   Set the map version explicitly"
+            echo "  -h, --help          Show this help and exit"
+            echo ""
+            echo "Environment:"
+            echo "  HGT_DIR             HGT elevation dir (default: /osm_tools/hgt/vectorMaps/hgt/)"
+        }
+
+        # Parse arguments
+        while [[ \$# -gt 0 ]]; do
+            case "\$1" in
+                -h|--help)    usage; exit 0 ;;
+                -v|--version) VERSION="\$2"; shift 2 ;;
+                -*)           echo "Unknown option: \$1" >&2; usage >&2; exit 1 ;;
+                *)            VERSION="\$1"; shift ;;
+            esac
+        done
+
+        echo "== Online release for version \$VERSION =="
+
+        # 1) refresh the OSM planet file
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" update_planet
+        # 2) generate online planet tiles and publish to S3
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" lomaps --mode online --version "\$VERSION" \\
+            --hgt_dir "\$HGT_DIR" \\
+            --release
+        """.stripIndent()
+        scriptFile.setExecutable(true)
+    }
+}
+
+tasks.register('createCleanOldShScript') {
+    dependsOn jar
+    doLast {
+        def jarFile = layout.buildDirectory.file("libs/${newArchiveName}").get().asFile
+        def scriptFile = layout.buildDirectory.file("libs/clean_old.sh").get().asFile
+        scriptFile.text = """#!/bin/bash
+        set -euo pipefail
+        # Get the absolute path of the directory where the script is located
+        SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+        # Change the current working directory to the script's directory
+        cd "\$SCRIPT_DIR" || exit 1
+        # Purge intermediate folders from the previous generation (incl. PMTiles)
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" clean_old
+        """.stripIndent()
+        scriptFile.setExecutable(true)
+    }
+}
+
+tasks.register('createOfflineReleaseShScript') {
+    dependsOn jar
+    doLast {
+        def jarFile = layout.buildDirectory.file("libs/${newArchiveName}").get().asFile
+        def scriptFile = layout.buildDirectory.file("libs/generate_offline_release.sh").get().asFile
+        scriptFile.text = """#!/bin/bash
+        set -euo pipefail
+        # Export paths to find pyhgtmap / pyosmium tools
+        export PATH=\$PATH:/home/osmtools/.local/bin
+        # Get the absolute path of the directory where the script is located
+        SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+        # Change the current working directory to the script's directory
+        cd "\$SCRIPT_DIR" || exit 1
+
+        # Defaults
+        VERSION="\$(date +%Y.%m.%d)"                                                      # map version, yyyy.MM.dd (default: today)
+        CONFIG_FILE="\${CONFIG_FILE:-\$SCRIPT_DIR/config/config.xml}"                       # map-config XML (override via env)
+        HGT_DIR="\${HGT_DIR:-\$SCRIPT_DIR/hgt/}"                                            # HGT elevation data (override via env)
+        STORE_UPLOADER="\${STORE_UPLOADER:-\$SCRIPT_DIR/locusStoreUploader/locusStoreUploader.jar}"  # store uploader jar (override via env)
+
+        usage() {
+            echo "Usage: \$(basename "\$0") [VERSION] [options]"
+            echo ""
+            echo "Generate offline LoMaps maps and upload them to Locus Store."
+            echo "Pipeline: update_planet -> lomaps --mode offline --release"
+            echo ""
+            echo "Arguments:"
+            echo "  VERSION             Map version in yyyy.MM.dd format (default: today, \$VERSION)"
+            echo ""
+            echo "Options:"
+            echo "  -v, --version VER   Set the map version explicitly"
+            echo "  -h, --help          Show this help and exit"
+            echo ""
+            echo "Environment:"
+            echo "  CONFIG_FILE         Map-config XML (default: \$SCRIPT_DIR/config/config.xml)"
+            echo "  HGT_DIR             HGT elevation dir (default: \$SCRIPT_DIR/hgt/)"
+            echo "  STORE_UPLOADER      Store uploader jar (default: \$SCRIPT_DIR/locusStoreUploader/locusStoreUploader.jar)"
+        }
+
+        # Parse arguments
+        while [[ \$# -gt 0 ]]; do
+            case "\$1" in
+                -h|--help)    usage; exit 0 ;;
+                -v|--version) VERSION="\$2"; shift 2 ;;
+                -*)           echo "Unknown option: \$1" >&2; usage >&2; exit 1 ;;
+                *)            VERSION="\$1"; shift ;;
+            esac
+        done
+
+        echo "== Offline release for version \$VERSION =="
+
+        # 1) refresh the OSM planet file
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" update_planet
+        # 2) generate offline maps and upload to Locus Store
+        java -jar "\$SCRIPT_DIR/${jarFile.name}" lomaps --mode offline --version "\$VERSION" \\
+            --config_file "\$CONFIG_FILE" \\
+            --hgt_dir "\$HGT_DIR" \\
+            --release --store_uploader "\$STORE_UPLOADER"
+        """.stripIndent()
+        scriptFile.setExecutable(true)
+    }
+}
+
 tasks.register('buildWithPlanetUpdateShScript') {
     dependsOn jar, createPlanetUpdateShScript
+}
+
+tasks.register('buildWithOnlineReleaseShScript') {
+    dependsOn jar, createCleanOldShScript, createOnlineReleaseShScript
+}
+
+tasks.register('buildWithOfflineReleaseShScript') {
+    dependsOn jar, createOfflineReleaseShScript
 }

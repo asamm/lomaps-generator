@@ -133,7 +133,7 @@ Generation is driven by `lomaps --mode <offline|online>` — the mode expands to
 
 ```
 java -jar OsmToolsBasic.jar lomaps --mode offline --version 2025.06.16 \
-  --config_file config/config_2025.xml \
+  --config_file config/config.xml \
   --hgt_dir /mnt/backup/hgt/vectorMaps/hgt/ \
   --release --store_uploader /osm_tools/locusStoreUploader/locusStoreUploader.jar
 ```
