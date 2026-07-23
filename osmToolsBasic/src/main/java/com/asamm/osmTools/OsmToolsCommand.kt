@@ -109,9 +109,9 @@ class CleanOldGenerationCommand : CliktCommand(
 ) {
 
     // path to a configuration file where are defined maps for generation
-    val configFile: File by option("-cf", "--config_file", help = "Path to configuration file").file(mustExist = true)
+    val configFile: File by option("-cf", "--config_file", help = "Path to configuration file. Defaults to config/config.xml.").file(mustExist = true)
         .defaultLazy {
-            val defaultConfigFile = File("config.xml")
+            val defaultConfigFile = File("config/config.xml")
             require(defaultConfigFile.exists()) {
                 "Default config file '$defaultConfigFile' doesn't exist. Please specify path to config file"
             }
@@ -275,9 +275,9 @@ class LoMapsCommand : CliktCommand(
         .validate { require(validateDate(it)) { "Invalid date format. Use yyyy.MM.dd" } }
 
     // path to a configuration file where are defined maps for generation
-    val configFile: File by option("-cf", "--config_file", help = "Path to configuration file").file(mustExist = true)
+    val configFile: File by option("-cf", "--config_file", help = "Path to configuration file. Defaults to config/config.xml.").file(mustExist = true)
         .defaultLazy {
-            val defaultConfigFile = File("config.xml")
+            val defaultConfigFile = File("config/config.xml")
             require(defaultConfigFile.exists()) {
                 "Default config file '$defaultConfigFile' doesn't exist. Please specify path to config file"
             }
