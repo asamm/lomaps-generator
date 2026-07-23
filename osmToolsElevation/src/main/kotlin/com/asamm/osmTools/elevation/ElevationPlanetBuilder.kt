@@ -8,6 +8,7 @@ import com.asamm.osmTools.elevation.mapterhorn.MapterhornDownloader
 import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.S3Client
 import com.asamm.osmTools.utils.Utils
+import com.asamm.store.LocusStoreEnv
 import com.asamm.pmtiles.PmTilesCluster
 import com.asamm.pmtiles.PmTilesExtract
 import kotlin.io.path.deleteIfExists
@@ -258,7 +259,7 @@ class ElevationPlanetBuilder {
 
         S3Client.fromAppConfig().use { s3Client ->
             val onlineCfg = AppConfig.config.onlineLoMapsConfig
-            val isDev = Utils.isLocalDEV()
+            val isDev = Utils.isLocalDEV() || AppConfig.config.locusStoreEnv == LocusStoreEnv.DEV
             val s3key = if (isDev) onlineCfg.s3terrainRgbPathDev else onlineCfg.s3terrainRgbPath
             val s3KeyWithFile = "$s3key/${cfg.planetFile.fileName}"
 
@@ -291,7 +292,7 @@ class ElevationPlanetBuilder {
 
         S3Client.fromAppConfig().use { s3Client ->
             val onlineCfg = AppConfig.config.onlineLoMapsConfig
-            val isDev = Utils.isLocalDEV()
+            val isDev = Utils.isLocalDEV() || AppConfig.config.locusStoreEnv == LocusStoreEnv.DEV
             val s3key = if (isDev) onlineCfg.s3bathymetryRgbPathDev else onlineCfg.s3bathymetryRgbPath
             val s3KeyWithFile = "$s3key/${cfg.bathymetryPlanetFile.fileName}"
 
