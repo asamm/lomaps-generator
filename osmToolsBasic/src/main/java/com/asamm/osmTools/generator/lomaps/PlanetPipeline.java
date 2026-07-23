@@ -12,6 +12,7 @@ import com.asamm.osmTools.overviewMap.OverviewMapBuilder;
 import com.asamm.osmTools.residential.ResidentialBuilder;
 import com.asamm.osmTools.utils.*;
 import com.asamm.pmtiles.PmTilesExtract;
+import com.asamm.store.LocusStoreEnv;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -253,7 +254,7 @@ public class PlanetPipeline {
 
         try (S3Client s3Client = S3Client.Companion.fromAppConfig()) {
             OnlineLoMapsConfig cfg = AppConfig.config.getOnlineLoMapsConfig();
-            boolean isDev = Utils.isLocalDEV();
+            boolean isDev = Utils.isLocalDEV() || AppConfig.config.getLocusStoreEnv() == LocusStoreEnv.DEV;
             String latestPrefix = isDev ? cfg.getS3pmtilesPathDev() : cfg.getS3pmtilesPath();
             String versionsPrefix = isDev ? cfg.getS3pmtilesVersionsPathDev() : cfg.getS3pmtilesVersionsPath();
 
