@@ -56,8 +56,9 @@ generation script:
 ```bash
 #!/bin/bash
 set -euo pipefail
-# Export paths to find pyhgtmap / pyosmium tools
-export PATH=$PATH:/home/osmtools/.local/bin
+# Export paths to find pyhgtmap / pyosmium and the go-pmtiles CLI.
+# systemd user units do not source ~/.bashrc, so tool dirs must be added here.
+export PATH=$PATH:/home/osmtools/.local/bin:/home/osmtools/install/go-pmtiles
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 

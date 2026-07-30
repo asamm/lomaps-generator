@@ -163,8 +163,9 @@ tasks.register('createOnlineReleaseShScript') {
         def scriptFile = layout.buildDirectory.file("libs/generate_online_release.sh").get().asFile
         scriptFile.text = """#!/bin/bash
         set -euo pipefail
-        # Export paths to find pyhgtmap / pyosmium tools
-        export PATH=\$PATH:/home/osmtools/.local/bin
+        # Export paths to find pyhgtmap / pyosmium and the go-pmtiles CLI.
+        # systemd user units do not source ~/.bashrc, so tool dirs must be added here.
+        export PATH=\$PATH:/home/osmtools/.local/bin:/home/osmtools/install/go-pmtiles
         # Get the absolute path of the directory where the script is located
         SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
         # Change the current working directory to the script's directory
@@ -239,8 +240,9 @@ tasks.register('createOfflineReleaseShScript') {
         def scriptFile = layout.buildDirectory.file("libs/generate_offline_release.sh").get().asFile
         scriptFile.text = """#!/bin/bash
         set -euo pipefail
-        # Export paths to find pyhgtmap / pyosmium tools
-        export PATH=\$PATH:/home/osmtools/.local/bin
+        # Export paths to find pyhgtmap / pyosmium and the go-pmtiles CLI.
+        # systemd user units do not source ~/.bashrc, so tool dirs must be added here.
+        export PATH=\$PATH:/home/osmtools/.local/bin:/home/osmtools/install/go-pmtiles
         # Get the absolute path of the directory where the script is located
         SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
         # Change the current working directory to the script's directory
