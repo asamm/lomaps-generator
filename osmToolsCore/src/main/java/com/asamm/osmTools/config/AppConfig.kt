@@ -238,7 +238,7 @@ class TerrainRgbConfig(
     /** URL of the Mapterhorn download index JSON used to resolve the planet file download URL and MD5. */
     val mapterhornIndexUrl: String = "https://download.mapterhorn.com/download_urls.json",
 
-    val mapterhornPlanetEntryName: String = "6-30-21.pmtiles",  // for production planet.pmtiles
+    val mapterhornPlanetEntryName: String = "planet.pmtiles",  // for production planet.pmtiles
 
     /** Raw Mapterhorn planet file as downloaded (before zoom-level filtering). */
     @Serializable(with = PathSerializer::class)
