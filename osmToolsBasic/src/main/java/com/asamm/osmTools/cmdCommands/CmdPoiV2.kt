@@ -14,15 +14,19 @@ class CmdPoiV2 : Cmd(ExternalApp.POI_V2_TOOL) {
      * Initialize PostgreSQL POI database — runs only once per process.
      */
     fun initPoiGeneratorDB() {
-        if (dbInitialized) return
+        initDbOnce
+    }
+
+    private fun executeInitDbScript() {
         builder()
             .add(AppConfig.config.cmdConfig.poiDbV2Init.toString())
             .execute()
-        dbInitialized = true
     }
 
     companion object {
-        private var dbInitialized = false
+
+        /** Init script runs on first access and never again — [lazy] is thread-safe by default. */
+        private val initDbOnce: Unit by lazy { CmdPoiV2().executeInitDbScript() }
     }
 
     /**
