@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - uploader of online PMTiles uses custom bbox dev settings for upload a smaller tile set to S3 for testing, instead of the whole planet.
+- POI V2 database initialization is lazy — the init script runs once per process instead of relying on a mutable flag.
 
 ## [1.0.0] - 2026-06-08
 
