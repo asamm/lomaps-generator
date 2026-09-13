@@ -16,14 +16,20 @@ import java.nio.file.Path
 import java.util.concurrent.Executors
 
 /**
- * Extracts per-map MBTiles from a planet PMTiles file for all supplied specs in a single traversal.
+ * Extracts per-map MBTiles from a planet PMTiles file, processing the specs in chunks.
  *
- * Algorithm:
+ * Per chunk:
  *  1. Compute per-map tile ID sets in parallel (polygon intersection at each zoom level).
- *  2. Build a union tile ID set + reverse index: tileId → list of spec indices.
- *  3. Open all MBTiles output connections.
+ *  2. Fold them into a reverse index: tileId → list of spec indices.
+ *  3. Open the chunk's MBTiles output connections.
  *  4. Traverse planet PMTiles once; dispatch each tile to every matching connection.
  *  5. Write metadata and close connections in parallel (each runs index creation + VACUUM).
+ *
+ * The reverse index is boxed (`HashMap<Long, MutableList<Int>>`) and costs on the order of
+ * 100 bytes per unique tile id, so it dominates heap usage: a whole-planet run at z14 reaches
+ * hundreds of millions of entries — tens of GB — if every map is indexed at once. Chunking
+ * bounds that at the cost of one planet traversal per chunk. See
+ * [com.asamm.osmTools.config.MbtilesConfig.batchChunkSize].
  */
 class PmTilesBatchExtractor {
 
@@ -49,35 +55,58 @@ class PmTilesBatchExtractor {
     )
 
     /**
-     * Extracts MBTiles for all [specs] from [planetPmtiles] in a single PMTiles traversal.
+     * Extracts MBTiles for all [specs] from [planetPmtiles], in chunks of
+     * [com.asamm.osmTools.config.MbtilesConfig.batchChunkSize] maps per planet traversal.
      */
     fun extractBatch(planetPmtiles: Path, specs: List<MapSpec>) {
         if (specs.isEmpty()) return
 
-        Logger.i(TAG, "Batch MBTiles extraction: ${specs.size} maps from ${planetPmtiles.fileName}")
+        val chunkSize = AppConfig.config.mbtilesConfig.batchChunkSize.coerceAtLeast(1)
+        val chunks = specs.chunked(chunkSize)
 
-        // Phase 1: read polygon geometries + compute tile ID sets in parallel
-        data class SpecData(val geom: Geometry, val tileIds: Set<Long>)
+        Logger.i(
+            TAG, "Batch MBTiles extraction: ${specs.size} maps from ${planetPmtiles.fileName} " +
+                    "in ${chunks.size} chunk(s) of up to $chunkSize maps"
+        )
 
-        val specData: List<SpecData> = specs.parallelStream().map { spec ->
-            val geom = PolyReader().read(spec.pathPolygon.toFile())
-            val tileIds = PmTilesExtract.computeAreaTileIds(geom, spec.minZoom, spec.maxZoom)
-            SpecData(geom, tileIds)
-        }.toList()
+        chunks.forEachIndexed { index, chunk ->
+            Logger.i(TAG, "Chunk ${index + 1}/${chunks.size}: ${chunk.size} maps")
+            extractChunk(planetPmtiles, chunk)
+        }
 
-        // Phase 2: build union tile ID set + reverse index (tileId → spec indices)
-        val unionTileIds = HashSet<Long>()
+        Logger.i(TAG, "Batch extraction complete: ${specs.size} MBTiles written")
+    }
+
+    /**
+     * Runs the full five-phase extraction for one chunk of [specs]. Everything allocated here
+     * becomes garbage when the call returns, which is what keeps peak heap bounded.
+     */
+    private fun extractChunk(planetPmtiles: Path, specs: List<MapSpec>) {
+
+        // Phase 1: read polygon geometries + compute tile ID sets in parallel.
+        // Parallel writes target distinct indices; the terminal operation establishes
+        // happens-before for the reads that follow.
+        val geoms = arrayOfNulls<Geometry>(specs.size)
+        val tileIdSets = arrayOfNulls<Set<Long>>(specs.size)
+
+        specs.indices.toList().parallelStream().forEach { i ->
+            val geom = PolyReader().read(specs[i].pathPolygon.toFile())
+            geoms[i] = geom
+            tileIdSets[i] = PmTilesExtract.computeAreaTileIds(geom, specs[i].minZoom, specs[i].maxZoom)
+        }
+
+        // Phase 2: fold the per-map sets into the reverse index (tileId → spec indices).
+        // Each set is released as soon as it is folded in, so the per-map sets and the index
+        // are not both fully resident. The index key set doubles as the union tile id set.
         val reverseIndex = HashMap<Long, MutableList<Int>>()
 
         for (i in specs.indices) {
-            for (tileId in specData[i].tileIds) {
-                if (unionTileIds.add(tileId)) {
-                    reverseIndex[tileId] = mutableListOf(i)
-                } else {
-                    reverseIndex.getValue(tileId).add(i)
-                }
+            for (tileId in tileIdSets[i]!!) {
+                reverseIndex.getOrPut(tileId) { mutableListOf() }.add(i)
             }
+            tileIdSets[i] = null
         }
+        val unionTileIds: Set<Long> = reverseIndex.keys
 
         Logger.i(TAG, "Union tile set: ${unionTileIds.size} unique tile IDs across ${specs.size} maps")
 
@@ -126,7 +155,7 @@ class PmTilesBatchExtractor {
                     try {
                         connections[i].use { mbtiles ->
                             mbtiles.insertMetadata(
-                                buildMetadata(specs[i], specData[i].geom, metaSourceInfo)
+                                buildMetadata(specs[i], geoms[i]!!, metaSourceInfo)
                             )
                         }
                         Logger.d(TAG, "Closed ${specs[i].pathMbtiles.fileName}")
@@ -140,7 +169,7 @@ class PmTilesBatchExtractor {
             closePool.shutdown()
         }
 
-        Logger.i(TAG, "Batch extraction complete: ${specs.size} MBTiles written")
+        Logger.i(TAG, "Chunk complete: ${specs.size} MBTiles written")
     }
 
     private fun buildMetadata(

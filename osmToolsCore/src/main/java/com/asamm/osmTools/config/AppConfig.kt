@@ -207,7 +207,16 @@ data class PoiAddressConfig(
 class MbtilesConfig(
     var mapDescription: String,
 
-    var mapAttribution: String
+    var mapAttribution: String,
+
+    /**
+     * Number of maps extracted from the planet PMTiles in one pass.
+     *
+     * The extractor holds a tile-id → map index in memory for the whole chunk, so peak heap
+     * grows linearly with this value; wall time grows with the number of chunks, since each
+     * one re-traverses the planet file. Raise it if the heap allows, lower it on OOM.
+     */
+    var batchChunkSize: Int = 64
 )
 
 @Serializable

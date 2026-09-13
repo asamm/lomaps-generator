@@ -88,6 +88,9 @@ poiAddressConfig:
 mbtilesConfig:
   mapDescription: *lomaps_short_desc
   mapAttribution: *lomaps_attribution
+  # Maps extracted from the planet PMTiles per pass. May cause heap space.
+  # Lower it if the batch extraction runs out of heap, raise it when there is memory to spare.
+  batchChunkSize: 64
 
 terrainRgbConfig:
   planetFile: "_planet/terrain_rgb/planet_terrain_rgb.pmtiles" #Do not change

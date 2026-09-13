@@ -55,6 +55,9 @@ class Mbtiles private constructor(
         private const val TILES_SHALLOW_TABLE = "tiles_shallow"
         private const val TILES_SHALLOW_COL_DATA_ID = TILES_DATA_COL_DATA_ID
 
+        /** Page cache limit per write connection, in KiB. Applied as a negative `PRAGMA cache_size`. */
+        private const val WRITE_CACHE_KIB = 64 * 1024  // 64 MB
+
         private const val METADATA_TABLE = "metadata"
         private const val METADATA_COL_NAME = "name"
         private const val METADATA_COL_VALUE = "value"
@@ -64,7 +67,10 @@ class Mbtiles private constructor(
             val sqliteConfig = SQLiteConfig()
             sqliteConfig.setJournalMode(SQLiteConfig.JournalMode.OFF)
             sqliteConfig.setSynchronous(SQLiteConfig.SynchronousMode.OFF)
-            sqliteConfig.setCacheSize(1000000) // 1GB
+            // Negative value = size in KiB (page-size independent). Positive would mean
+            // *pages*, which at the default 4 KiB page size made this a 4 GB per-connection
+            // limit — unusable when hundreds of connections are open at once (batch extract).
+            sqliteConfig.setCacheSize(-WRITE_CACHE_KIB)
             sqliteConfig.setLockingMode(SQLiteConfig.LockingMode.EXCLUSIVE)
             sqliteConfig.setTempStore(SQLiteConfig.TempStore.MEMORY)
             sqliteConfig.setApplicationId(MBTILES_APPLICATION_ID)
@@ -368,6 +374,12 @@ class Mbtiles private constructor(
 
         private var tileInsertedCounter = 1
 
+        /** Tile bytes buffered in the JDBC batch since the last flush. */
+        private var pendingBytes = 0L
+
+        /** Rows buffered in the JDBC batch since the last flush. */
+        private var pendingRows = 0
+
         private val insertTileShallowStatement: PreparedStatement = connection.prepareStatement(
             """
             INSERT INTO $TILES_SHALLOW_TABLE ($TILES_COL_Z, $TILES_COL_X, $TILES_COL_Y, $TILES_SHALLOW_COL_DATA_ID)
@@ -411,7 +423,15 @@ class Mbtiles private constructor(
                 insertTileShallowStatement.addBatch()
                 tileInsertedCounter++
 
-                if (tileInsertedCounter % 1000 == 0) {
+                // Flush on accumulated blob size rather than on a row count: the JDBC batch
+                // retains every tile blob until it is executed, and z14 vector tiles vary from
+                // a few hundred bytes to tens of KB. A row-count trigger therefore bounds the
+                // buffer at anywhere between ~1 MB and ~50 MB per connection — which is what
+                // made hundreds of concurrent writers exhaust the heap. The row cap only
+                // guards against pathologically small tiles keeping the batch open forever.
+                pendingBytes += tile.bytes.size.toLong()
+                pendingRows++
+                if (pendingBytes >= MAX_BATCH_BYTES || pendingRows >= MAX_BATCH_ROWS) {
                     flushBatch()
                 }
             } catch (e: SQLException) {
@@ -428,6 +448,9 @@ class Mbtiles private constructor(
 
                 insertTileDataStatement.clearBatch()
                 insertTileShallowStatement.clearBatch()
+
+                pendingBytes = 0
+                pendingRows = 0
             } catch (e: SQLException) {
                 throw IllegalStateException(
                     "Problem when executing batch, stmt ${insertTileShallowStatement.toString()}", e
@@ -437,6 +460,14 @@ class Mbtiles private constructor(
 
         override fun close() {
             flushBatch()
+        }
+
+        companion object {
+            /** Max tile bytes buffered per connection before the batch is executed. */
+            private const val MAX_BATCH_BYTES = 4L * 1024 * 1024  // 4 MB
+
+            /** Upper bound on buffered rows, so tiny tiles still flush regularly. */
+            private const val MAX_BATCH_ROWS = 2000
         }
     }
 
