@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    DEV map definition used by generate_offline_release_DEV.sh.
+
+    A deliberately small subset of config.xml: the _world extract pack (needed so the
+    continent source extracts exist) plus a handful of small European countries, so a
+    DEV run finishes in minutes instead of days. Every line below is copied verbatim
+    from config.xml - add or remove <map> entries as needed, but keep the attributes
+    identical to the production config so DEV exercises the same code paths.
+-->
+
+<maps>
+
+	<mapPack regionId="wo" name="_world" dir="_world" sourceId="planet-extended" type="extract">
+		<map regionId="wo" file="planet-extended" name="planet-extended" id="planet-extended" type="tourist|contour|residential|overview_map|generate_pmtiles|generate_mapsforge" />
+		<map regionId="wo.eu" file="europe" name="Europe" id="europe" />
+	</mapPack>
+
+	<mapPack parentRegionId="wo.eu" name="Europe" coastline="yes" dir="europe" prefLang="en" sourceId="europe" type="address_poi_db|poi_db|generate_mbtiles|generate_mapsforge">
+
+		<!--<map regionId="wo.eu.netherlands" file="_netherlands" name="Netherlands (complete)" fileGen="netherlands/_netherlands" id="_netherlands" />	-->
+
+		<map regionId="wo.eu.andorra" file="andorra" name="Andorra" />
+		<map regionId="wo.eu.czech_republic" file="czech_republic" name="Czech republic" />
+		<map regionId="wo.eu.greece" file="greece" name="Greece" />
+		<map regionId="wo.eu.slovakia" file="slovakia" name="Slovakia" />
+
+		<!--
+		<mapPack parentRegionId="wo.eu.netherlands" name="Netherlands" coastline="yes" countryname="Netherlands" cyclo_node="NLBE" dir="netherlands" sourceId="_netherlands" >
+
+			<map regionId="wo.eu.netherlands.groningen" file="groningen" name="Groningen" />
+		</mapPack>
+	-->
+	</mapPack>
+</maps>
