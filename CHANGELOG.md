@@ -1,12 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2026-09-15
 
-### Fixed
-- Batch MBTiles extraction no longer exhausts the heap on a full planet run. The maps are
-  processed in chunks (`mbtilesConfig.batchChunkSize`, default 64) instead of indexing all of
-  them at once
+Release scripts are now generated from a single shared template (including a new
+`generate_offline_release_DEV.sh` with a trimmed `config/config_dev.xml` for DEV runs), and
+batch MBTiles extraction is chunked so a full planet run no longer exhausts the heap.
 
 ## [1.0.1] - 2026-06-17
 
