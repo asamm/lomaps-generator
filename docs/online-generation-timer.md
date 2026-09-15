@@ -50,41 +50,7 @@ This produces two scripts in `osmToolsBasic/build/libs/` next to `OsmToolsBasic.
 - `generate_online_release.sh` — refreshes the planet, generates online tiles,
   and publishes to S3.
 
-The service runs them as two sequential actions (see section 3). The main
-generation script:
-
-```bash
-#!/bin/bash
-set -euo pipefail
-# Export paths to find pyhgtmap / pyosmium and the go-pmtiles CLI.
-# systemd user units do not source ~/.bashrc, so tool dirs must be added here.
-export PATH=$PATH:/home/osmtools/.local/bin:/home/osmtools/install/go-pmtiles
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR" || exit 1
-
-# Defaults
-VERSION="$(date +%Y.%m.%d)"                              # map version, yyyy.MM.dd (default: today)
-HGT_DIR="${HGT_DIR:-/osm_tools/hgt/vectorMaps/hgt/}"     # HGT elevation data (override via env)
-
-usage() { ...; }   # -h/--help prints usage
-
-# Parse arguments: [VERSION] | -v/--version VER | -h/--help
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -h|--help)    usage; exit 0 ;;
-        -v|--version) VERSION="$2"; shift 2 ;;
-        -*)           echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
-        *)            VERSION="$1"; shift ;;
-    esac
-done
-
-# 1) refresh the OSM planet file
-java -jar "$SCRIPT_DIR/OsmToolsBasic.jar" update_planet
-# 2) generate online planet tiles and publish to S3
-java -jar "$SCRIPT_DIR/OsmToolsBasic.jar" lomaps --mode online --version "$VERSION" \
-    --hgt_dir "$HGT_DIR" \
-    --release
-```
+The service runs them as two sequential actions (see section 3).
 
 Deploy the jar and the generated script into the `osmtools` install directory
 (e.g. `/home/osmtools/lomaps-generator/`). It resolves the jar relative to its
@@ -96,16 +62,17 @@ own location, so it can live anywhere as long as `OsmToolsBasic.jar` sits beside
 ./generate_online_release.sh                  # version = today
 ./generate_online_release.sh 2026.07.23       # explicit version (positional)
 ./generate_online_release.sh -v 2026.07.23    # explicit version (flag)
-./generate_online_release.sh --help           # usage
+./generate_online_release.sh -s               # reuse the planet file, skip update_planet
+./generate_online_release.sh --help           # usage, including the resolved defaults
 ```
 
-> **S3 credentials** — `--release` uploads to S3, which needs `S3_ACCESS_KEY` /
-> `S3_SECRET_KEY`. Provide them via the service unit's `EnvironmentFile`
-> (see section 3).
+> **S3 credentials** — `S3_ACCESS_KEY` / `S3_SECRET_KEY` are required for *every*
+> subcommand, not only the S3 upload. Provide them via the service unit's
+> `EnvironmentFile` (see section 3). The script checks for them before it starts.
 
-> The related task `createPlanetUpdateShScript` / `buildWithPlanetUpdateShScript`
-> generates only the `update_planet` wrapper — use it if you refresh the planet
-> on a separate schedule.
+See [docs/release-scripts.md](release-scripts.md) for every generated script, its
+arguments, the `JAVA_OPTS` / `HGT_DIR` / `CONFIG_FILE` overrides and the
+`-Plomaps.*` build-time defaults.
 
 ---
 
