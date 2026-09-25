@@ -177,6 +177,7 @@ def shJava = 'java $JAVA_OPTS -jar "$SCRIPT_DIR/' + newArchiveName + '"'
  *   flags      extra switches, as [opts:, var:, set:, value:, help:, varHelp:]
  *              help describes the switch, varHelp the variable it sets (default: help)
  *   requireEnv environment variables that must be set before running (default: S3 keys)
+ *   requireTools binaries that must be resolvable on the PATH before running, as ['pmtiles', ...]
  *   preRun     shell lines emitted after parsing, before the banner
  *   run        shell lines doing the actual work
  *   parseArgs  false for scripts that take no arguments
@@ -198,6 +199,18 @@ def renderShScript = { Map spec ->
     o << '# systemd user units do not source ~/.bashrc, so tool dirs are added explicitly.'
     o << 'export PATH=$PATH:' + shToolPaths
     o << ''
+    // Fail here rather than hours in: the jar resolves these tools lazily, so a PATH that did not
+    // reach the JVM used to surface only once the stage needing the tool was finally reached.
+    if (spec.requireTools) {
+        o << '# Verify the tools above are reachable now, not hours into the run.'
+        o << 'for _tool in ' + spec.requireTools.join(' ') + '; do'
+        o << '    if ! command -v "$_tool" >/dev/null 2>&1; then'
+        o << '        echo "Required tool [$_tool] is not on the PATH: $PATH" >&2'
+        o << '        exit 1'
+        o << '    fi'
+        o << 'done'
+        o << ''
+    }
     o << '# Run from the directory holding this script, with the jar next to it.'
     o << 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
     o << 'cd "$SCRIPT_DIR" || exit 1'
@@ -307,6 +320,7 @@ registerShScriptTask('createCleanOldShScript', 'clean_old.sh', [
 registerShScriptTask('createOnlineReleaseShScript', 'generate_online_release.sh', [
     summary : ['Generate online LoMaps planet tiles and publish them to S3.',
                'Pipeline: update_planet -> lomaps --mode online --release'],
+    requireTools: ['pmtiles'],
     settings: [[name: 'HGT_DIR', value: shHgtDirOnline, help: 'HGT elevation dir']],
     flags   : [shSkipPlanetUpdateFlag],
     banner  : 'Online release for version $VERSION',
@@ -321,6 +335,7 @@ registerShScriptTask('createOnlineReleaseShScript', 'generate_online_release.sh'
 registerShScriptTask('createOfflineReleaseShScript', 'generate_offline_release.sh', [
     summary : ['Generate offline LoMaps maps and upload them to Locus Store.',
                'Pipeline: update_planet -> lomaps --mode offline --release'],
+    requireTools: ['pmtiles'],
     settings: [
         [name: 'CONFIG_FILE',    value: shConfigFile,    help: 'Map-config XML'],
         [name: 'HGT_DIR',        value: shHgtDirOffline, help: 'HGT elevation dir'],
@@ -344,6 +359,7 @@ registerShScriptTask('createOfflineReleaseDevShScript', 'generate_offline_releas
                'points any upload at the Locus Store DEV instance.',
                'Neither the planet update nor the upload runs unless explicitly requested.'],
     exports : ['ENV=DEV   # picked up by Utils.isLocalDEV()'],
+    requireTools: ['pmtiles'],
     settings: [
         [name: 'CONFIG_FILE',    value: shConfigFileDev, help: 'DEV map-config XML'],
         [name: 'HGT_DIR',        value: shHgtDirOffline, help: 'HGT elevation dir'],

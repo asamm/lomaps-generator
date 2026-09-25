@@ -1,11 +1,24 @@
 package com.asamm.osmTools.config
 
 import com.asamm.osmTools.config.AppConfig.config
+import com.asamm.osmTools.utils.Logger
 import com.asamm.osmTools.utils.Utils
 import java.io.File
 import java.nio.file.Path
 
+/**
+ * Thrown when an external tool cannot be resolved.
+ *
+ * [summary] and [detail] are kept apart from the PATH dump so that
+ * [ConfigUtils.verifyExternalTools] can aggregate many failures and still print the PATH once,
+ * while a single uncaught throw carries it as part of its message.
+ */
+class ExternalToolException(val summary: String, val detail: String = "") :
+    Exception(summary + detail + ConfigUtils.pathInfo())
+
 object ConfigUtils {
+
+    private val TAG: String = ConfigUtils::class.java.simpleName
 
 
     /**
@@ -76,14 +89,14 @@ object ConfigUtils {
      * Check that pyhgtmap util is installed and available in the path
      */
     fun getCheckPyhgtmapPath(): String {
-        val pyhgtmap = "pyhgtmap"
-        val command = checkApps(listOf(pyhgtmap))
+        val lookup = resolveApp(listOf("pyhgtmap"))
 
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception("pyhgtmap not installed. Please install it using 'pip install pyhgtmap'")
+        if (!lookup.found) {
+            throw ExternalToolException(
+                "pyhgtmap not installed. Please install it using 'pip install pyhgtmap'.", lookup.diagnostics()
+            )
         }
-        return command
+        return lookup.command
     }
 
     fun getCheckOsmiumPath(): String {
@@ -92,13 +105,12 @@ object ConfigUtils {
                 "osmium"
             )
 
-        val command = checkApps(osmiumPaths)
+        val lookup = resolveApp(osmiumPaths)
 
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception("Omium not found in locatios: $osmiumPaths")
+        if (!lookup.found) {
+            throw ExternalToolException("osmium not found in locations: $osmiumPaths", lookup.diagnostics())
         }
-        return command
+        return lookup.command
     }
 
     // Function to check if Python VENV is installed "near" the script location
@@ -119,13 +131,12 @@ object ConfigUtils {
         val pythonCommands =
             if (isWindows()) listOf("python3.exe", "python.exe", "python") else listOf("python", "python3")
 
-        val command = checkApps(pythonCommands)
+        val lookup = resolveApp(pythonCommands)
 
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception("Python not found. Tried commands: $pythonCommands")
+        if (!lookup.found) {
+            throw ExternalToolException("Python not found. Tried commands: $pythonCommands", lookup.diagnostics())
         }
-        return command
+        return lookup.command
     }
 
     // Function to check if ogr2ogr is installed and return its path
@@ -133,38 +144,47 @@ object ConfigUtils {
         // First try to find "python", if not found, try "python3"
         val ogrCommands = if (isWindows()) listOf("ogr2ogr.exe", "ogr2ogr") else listOf("ogr2ogr")
 
-        val command = checkApps(ogrCommands, "--version", "GDAL")
+        val lookup = resolveApp(ogrCommands, "--version", "GDAL")
 
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception("Ogr2ogr not found. Tried commands: $ogrCommands . Please install ogr2ogr")
+        if (!lookup.found) {
+            throw ExternalToolException(
+                "ogr2ogr not found. Tried commands: $ogrCommands. Please install ogr2ogr.", lookup.diagnostics()
+            )
         }
-        return command
+        return lookup.command
     }
 
 
+    /**
+     * Resolve the go-pmtiles CLI on the PATH.
+     *
+     * The PATH is the one the JVM inherited, which is not an interactive shell's: a service manager
+     * gives its jobs a minimal PATH and does not source ~/.bashrc. When the binary lives outside the
+     * default system directories, the environment that starts the generator has to add it — that is
+     * what the `export PATH=...` line in the generated wrapper scripts is for.
+     */
     fun getCheckPmtilesPath(): String {
         val pmtilesCommands = if (isWindows()) listOf("pmtiles.exe", "pmtiles") else listOf("pmtiles")
+        val lookup = resolveApp(pmtilesCommands, "version", "pmtiles")
 
-        val command = checkApps(pmtilesCommands, "version", "pmtiles")
-
-        if (command.isEmpty()) {
-            // If none of the commands succeeded, throw an exception
-            throw Exception(
-                "PMTiles not found. Tried commands: $pmtilesCommands . " +
-                        "Please install PMTiles CLI https://docs.protomaps.com/pmtiles/cli"
+        if (!lookup.found) {
+            throw ExternalToolException(
+                "PMTiles CLI not found. Tried commands: $pmtilesCommands. Install it " +
+                        "(https://docs.protomaps.com/pmtiles/cli) and make sure the directory holding the " +
+                        "binary is on the PATH of whatever starts the generator.",
+                lookup.diagnostics()
             )
         }
-        return command
+        return lookup.command
     }
 
     fun getCheckGdalPath(tool: String): String {
         val cmds = if (isWindows()) listOf("$tool.exe", tool) else listOf(tool)
-        val command = checkApps(cmds, "--version", "GDAL")
-        if (command.isEmpty()) {
-            throw Exception("$tool not found. Tried: $cmds. Please install GDAL.")
+        val lookup = resolveApp(cmds, "--version", "GDAL")
+        if (!lookup.found) {
+            throw ExternalToolException("$tool not found. Tried: $cmds. Please install GDAL.", lookup.diagnostics())
         }
-        return command
+        return lookup.command
     }
 
     /**
@@ -173,14 +193,94 @@ object ConfigUtils {
      */
     fun getCheckRioRgbifyPath(): String {
         val rioCommands = if (isWindows()) listOf("rio.exe", "rio") else listOf("rio")
-        val command = checkApps(rioCommands, "--version", "")
-        if (command.isEmpty()) {
-            throw Exception(
-                "rio not found. Tried commands: $rioCommands . " +
-                        "Please install via: pip install rio-rgbify"
+        val lookup = resolveApp(rioCommands, "--version", "")
+        if (!lookup.found) {
+            throw ExternalToolException(
+                "rio not found. Tried commands: $rioCommands. Please install via: pip install rio-rgbify",
+                lookup.diagnostics()
             )
         }
-        return command
+        return lookup.command
+    }
+
+    /**
+     * Actions whose pipeline stage shells out to planetiler.
+     * [Action.GENERATE_MBTILES] reaches it through `MapPipeline.generateMbtilesBatch`,
+     * the other two through `PlanetPipeline`.
+     */
+    private val PLANETILER_ACTIONS = setOf(
+        Action.GENERATE_PMTILES,
+        Action.GENERATE_MBTILES_ONLINE,
+        Action.GENERATE_MBTILES,
+    )
+
+    /**
+     * Resolve every external tool the selected [actions] need, before any work starts.
+     *
+     * Each tool is otherwise resolved lazily, the first time its stage runs. That turned a missing
+     * CLI into a failure hours into a run: the planet PMTiles generation completed after 3h13m and
+     * only then did the pmtiles CLI lookup fail, discarding the whole run. Every check runs here even
+     * if an earlier one failed, so a single run reports all missing tools rather than one per attempt.
+     *
+     * The check is deliberately stricter than the pipeline: stages skip themselves when their output
+     * already exists, so a tool required by [actions] may never actually be invoked. Use
+     * `--skip_tool_check` on a machine that legitimately reuses such output without the tool installed.
+     */
+    fun verifyExternalTools(actions: List<Action>) {
+
+        val checks = linkedMapOf<String, () -> Unit>()
+
+        // Used by nearly every stage: the planet sources are merged with osmium before anything else.
+        checks["osmium"] = { config.cmdConfig.osmium }
+
+        // osmosis only backs the LoMaps db plugin, reached from MapPipeline.addressPoiDatabase.
+        if (Action.ADDRESS_POI_DB in actions) {
+            checks["osmosis"] = { getCheckPath(config.cmdConfig.osmosis.toAbsolutePath()) }
+        }
+        if (Action.TOURIST in actions) {
+            checks["lomaps_tools.py"] = { getCheckPath(config.touristConfig.lomapsToolsPy) }
+            checks["python (for lomaps_tools.py)"] = { findPythonPath(config.touristConfig.lomapsToolsPy) }
+        }
+        if (Action.CONTOUR in actions) {
+            checks["pyhgtmap"] = { config.cmdConfig.pyghtmap }
+            checks["hgt directory"] = { getCheckPath(config.contourConfig.hgtDir) }
+        }
+        if (actions.any { it in PLANETILER_ACTIONS }) {
+            checks["planetiler"] = { getCheckPath(config.cmdConfig.planetiler) }
+        }
+        if (Action.GENERATE_PMTILES in actions) {
+            checks["pmtiles CLI"] = { getCheckPmtilesPath() }
+        }
+        if (Action.POI_DB_V2 in actions && !Utils.isLocalDEV()) {
+            checks["poi db v2 init script"] = { getCheckPath(config.cmdConfig.poiDbV2Init) }
+            checks["poi db v2 generator script"] = { getCheckPath(config.cmdConfig.poiDbV2Generator) }
+        }
+        if (Action.UPLOAD in actions) {
+            checks["locus store uploader"] = { getCheckPath(config.storeUploaderPath) }
+        }
+
+        val failures = mutableListOf<String>()
+        for ((name, check) in checks) {
+            try {
+                check()
+                Logger.d(TAG, "External tool available: $name")
+            } catch (e: ExternalToolException) {
+                // Taken apart so the PATH dump is not repeated once per failing tool.
+                failures += "$name -> ${e.summary}${e.detail}"
+            } catch (e: Exception) {
+                failures += "$name -> ${e.message}"
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw Exception(
+                "${failures.size} of ${checks.size} required external tools are not available. " +
+                        "Aborting before any work starts (pass --skip_tool_check to run anyway):" +
+                        failures.joinToString(prefix = "\n  - ", separator = "\n  - ") +
+                        pathInfo()
+            )
+        }
+        Logger.i(TAG, "All ${checks.size} required external tools resolved.")
     }
 
     /**
@@ -196,17 +296,43 @@ object ConfigUtils {
     }
 
     /**
-     * Check if any of the provided commands can be executed successfully and contain expected output.
+     * Outcome of an external-tool lookup: the command that worked, plus why every other
+     * candidate was rejected.
+     *
+     * The rejection reasons matter more than they look. A tool that is installed but
+     * unreachable — absent from the PATH of a systemd unit, hidden behind `ProtectHome=`,
+     * not executable by the service user, or failing to fork — is indistinguishable from a
+     * tool that was never installed unless the real failure is carried out of the lookup.
      */
-    fun checkApps(commands: List<String>, argument: String = "--version", expectedOutput: String = ""): String {
+    data class AppLookup(val command: String, val rejections: List<String>) {
+
+        val found: Boolean get() = command.isNotEmpty()
+
+        /** Rejection reasons, indented and ready to append to an error message. */
+        fun diagnostics(): String =
+            rejections.joinToString(prefix = "\n  ", separator = "\n  ")
+    }
+
+    /** The PATH these lookups resolved against, as one indented line. */
+    fun pathInfo(): String = "\n  PATH=${System.getenv("PATH") ?: "<unset>"}"
+
+    /**
+     * Try each of [commands] in turn and return the first that runs and whose output looks right.
+     * Unlike a bare "not found", the result also reports why the others were rejected.
+     */
+    fun resolveApp(
+        commands: List<String>,
+        argument: String = "--version",
+        expectedOutput: String = ""
+    ): AppLookup {
+        val rejections = mutableListOf<String>()
+
         for (command in commands) {
             try {
-                // Use ProcessBuilder to run the "python --version" or "python3 --version" command
                 val process = ProcessBuilder(command, argument)
                     .redirectErrorStream(true)
                     .start()
 
-                // Wait for the process to complete and check if Python is found
                 val output = process.inputStream.bufferedReader().readText()
                 process.waitFor()
 
@@ -218,12 +344,17 @@ object ConfigUtils {
                     output.contains(fileNameWithoutExtension, ignoreCase = true) -> true
                     else -> output.isNotBlank() && process.exitValue() == 0
                 }
-                if (valid) return command
-            } catch (_: Exception) {
-                // Ignore and try the next command
+                if (valid) return AppLookup(command, rejections)
+
+                rejections += "'$command $argument' ran (exit ${process.exitValue()}) but its output did not look " +
+                        "like $command: " + (output.trim().take(200).ifEmpty { "<no output>" })
+            } catch (e: Exception) {
+                // Usually "error=2, No such file or directory" when the binary is not on the PATH,
+                // but also permission denied, exec format errors and fork failures.
+                rejections += "'$command $argument' could not be started: ${e.message}"
             }
         }
-        return ""
+        return AppLookup("", rejections)
     }
 
     // Helper function to check if the system is Windows

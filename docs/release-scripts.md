@@ -27,9 +27,16 @@ Or just what you need — `buildWithPlanetUpdateShScript`, `buildWithOnlineRelea
 `buildWithOfflineReleaseShScript`, `buildWithOfflineReleaseDevShScript`. All output lands
 in `osmToolsBasic/build/libs/` next to `OsmToolsBasic.jar`.
 
-Deploy the jar and the scripts into the install directory (e.g.
-`/home/osmtools/lomaps-generator/`). Each script resolves the jar relative to its own
-location, so the directory can live anywhere as long as `OsmToolsBasic.jar` sits beside it.
+Deploy `OsmToolsBasic.jar`, the `lib/` directory and the scripts together into the install
+directory — the jar's manifest `Class-Path` refers to `lib/*.jar`, so it will not run without
+it. Each script resolves the jar relative to its own location, so the directory can live
+anywhere as long as `OsmToolsBasic.jar` sits beside the scripts. For the scheduled online
+release that directory is `/osm_tools/vectorMaps/`, matching the unit in
+[docs/online-generation-timer.md](online-generation-timer.md).
+
+> **Redeploy the scripts, not just the jar.** They carry the `export PATH` for the tool
+> directories and the fail-fast tool check; a stale script next to a fresh jar is how a
+> release failed on a missing `pmtiles` CLI three hours into the run.
 
 ---
 

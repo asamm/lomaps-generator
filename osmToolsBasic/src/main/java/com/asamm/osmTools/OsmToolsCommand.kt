@@ -325,6 +325,13 @@ class LoMapsCommand : CliktCommand(
     ).file()
         .defaultLazy { AppConfig.config.planetDir.toFile() }
 
+    val skipToolCheck: Boolean by option(
+        "--skip_tool_check",
+        help = "Skip the start-up check that every external tool required by the selected actions is " +
+               "available. Use it when a stage will be skipped because its output already exists and " +
+               "the tool it would need is not installed."
+    ).flag(default = false)
+
     // path to a locus store uploader — required only when --release is set with mode=offline
     val storeUploaderFile: File? by option(
         "-su",
@@ -366,6 +373,15 @@ class LoMapsCommand : CliktCommand(
         AppConfig.config.contourConfig.hgtDir = hgtDir.toPath()
 
         Logger.i(TAG, "Configuration : ${AppConfig.config.toYaml()}")
+
+        // Resolve every external tool this action list needs while failing still costs nothing.
+        // Left lazy, a missing CLI surfaces only when its stage runs — which has already thrown
+        // away multi-hour planetiler runs.
+        if (skipToolCheck) {
+            Logger.w(TAG, "--skip_tool_check is set, external tools are not verified up front.")
+        } else {
+            ConfigUtils.verifyExternalTools(actions)
+        }
 
         val genLoMaps = GenLoMaps()
         genLoMaps.process()

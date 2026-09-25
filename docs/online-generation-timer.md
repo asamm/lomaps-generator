@@ -52,9 +52,19 @@ This produces two scripts in `osmToolsBasic/build/libs/` next to `OsmToolsBasic.
 
 The service runs them as two sequential actions (see section 3).
 
-Deploy the jar and the generated script into the `osmtools` install directory
-(e.g. `/home/osmtools/lomaps-generator/`). It resolves the jar relative to its
-own location, so it can live anywhere as long as `OsmToolsBasic.jar` sits beside it.
+Deploy into `/osm_tools/vectorMaps/` — the directory the unit's `WorkingDirectory=`
+and both `ExecStart=` lines point at (section 3). Copy **all** of:
+
+- `OsmToolsBasic.jar`
+- `lib/` — the jar's manifest `Class-Path` refers to `lib/*.jar`, so it will not run without it
+- `clean_old.sh` and `generate_online_release.sh`
+
+Each script resolves the jar relative to its own location, so the directory can be moved
+as long as the unit follows and the jar sits beside the scripts.
+
+> **Redeploy the scripts, not just the jar.** They carry the `export PATH` for the tool
+> directories and the fail-fast tool check; a stale script next to a fresh jar is how a
+> release failed on a missing `pmtiles` CLI three hours into the run.
 
 **Manual runs** — the script takes an optional version (default: today's date):
 
@@ -107,6 +117,8 @@ After=network-online.target
 Type=oneshot
 WorkingDirectory=/osm_tools/vectorMaps
 EnvironmentFile=/home/osmtools/.config/lomaps-generator.env
+# PATH is pinned here, not inherited — see the note below
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/osmtools/.local/bin:/home/osmtools/install/go-pmtiles
 # Action 1 — clean the previous generation
 ExecStart=/osm_tools/vectorMaps/clean_old.sh
 # Action 2 — generate online tiles and release to S3
@@ -118,8 +130,40 @@ TimeoutStartSec=0
 > With `Type=oneshot`, multiple `ExecStart=` lines run **sequentially**; if the
 > clean step fails, the service fails and generation does **not** run.
 
-> No `User=` — a user unit already runs as `osmtools`, with that account's PATH
-> and tools (osmium, java, pyhgtmap, …).
+> No `User=` — a user unit already runs as `osmtools`.
+
+### Why `Environment=PATH=` is there
+
+A user unit runs *as* `osmtools`, but **not with that account's interactive PATH**.
+The systemd user manager does not source `~/.bashrc` or `~/.profile`; it starts from
+whatever PAM handed it. Check what your services actually inherit:
+
+```bash
+systemctl --user show-environment
+```
+
+On this server that PATH contains `/usr/bin`, `/bin` and `/home/osmtools/.local/bin`,
+but **not** `/home/osmtools/install/go-pmtiles`. So `osmium` and `java` resolve while
+`pmtiles` does not — which is how a release once failed on the pmtiles CLI after the
+planetiler stage had already run for 3h13m.
+
+Worse, that inherited PATH is not stable. If the manager was started from an interactive
+desktop login (look for `DISPLAY`, `SESSION_MANAGER` or `PULSE_SCRIPT` in the output above),
+it carries that session's PATH. After a reboot where nobody logs in, the manager starts with
+less, and `pyhgtmap` and `rio` can disappear the same way.
+
+The generated wrapper scripts do export the tool directories themselves, and they now fail
+fast if a tool is missing. But that is one line in one generated file that has to survive
+every redeploy. Pinning `Environment=PATH=` in the unit covers **both** `ExecStart=` actions
+regardless, and is what the unit example above does. Verify it took effect with:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user show -p Environment lomaps-online.service
+```
+
+Keep the list in sync with `lomaps.toolPaths` in `osmToolsBasic/build.gradle`, which feeds
+the same directories into the generated scripts.
 
 ---
 
@@ -167,6 +211,17 @@ systemctl --user start lomaps-online.service
 # follow logs of the last/current run
 journalctl --user -u lomaps-online.service -f
 ```
+
+**Check the service environment without generating anything.** `--help` is handled after
+the wrapper's tool check, so this exercises the real PATH a service gets and exits in
+milliseconds:
+
+```bash
+systemd-run --user --pipe --wait /osm_tools/vectorMaps/generate_online_release.sh --help
+```
+
+Usage text means every required tool is reachable. Otherwise the script reports which tool
+is missing and prints the PATH it had.
 
 ### One-time: keep the timer alive without a login
 
