@@ -61,7 +61,8 @@ object MapsforgeTilerRunner {
             zoomIntervalConfig = ZoomIntervalConfig.parse(AppConfig.config.mapsforgeConfig.zoomInterval),
             comment = AppConfig.config.mapsforgeConfig.mapDescription,
             threads = Runtime.getRuntime().availableProcessors(),
-            preferredLanguages = map.prefLang?.takeIf { it.isNotEmpty() }?.split(","),
+            preferredLanguages = map.prefLang.ifBlank { AppConfig.config.mapsforgeConfig.prefLang }
+                .takeIf { it.isNotBlank() }?.split(","),
             nodeMapType = "sparsearray",
             oceanPolygons = true,
             workDir = AppConfig.config.temporaryDir,

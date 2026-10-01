@@ -232,7 +232,10 @@ class MapsforgeConfig(
 
     var mapMetaDataDescription: String,
 
-    var zoomInterval:String = "2,0,3,5,4,6,8,7,9,10,10,11,14,12,21"
+    var zoomInterval:String = "2,0,3,5,4,6,8,7,9,10,10,11,14,12,21",
+
+    /** Default preferred languages (comma-separated) used when map does not define own `prefLang`. */
+    var prefLang: String = "en"
 )
 
 @Serializable
