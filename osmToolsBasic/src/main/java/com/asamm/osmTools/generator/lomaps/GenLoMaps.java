@@ -9,6 +9,7 @@ import com.asamm.osmTools.mapConfig.ItemMap;
 import com.asamm.osmTools.mapConfig.MapSource;
 import com.asamm.osmTools.utils.Logger;
 import com.asamm.osmTools.utils.Utils;
+import com.asamm.store.LocusStoreEnv;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -39,7 +40,8 @@ public class GenLoMaps extends AGenerator {
             return;
         }
 
-        if (!Utils.isLocalDEV()) {
+        // DEV store runs reuse the existing planet; refreshing it is opt-in via the release script (-u)
+        if (!Utils.isLocalDEV() && AppConfig.config.getLocusStoreEnv() != LocusStoreEnv.DEV) {
             new PlanetUpdater().update();
         }
 

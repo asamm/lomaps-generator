@@ -354,11 +354,11 @@ registerShScriptTask('createOfflineReleaseShScript', 'generate_offline_release.s
 
 registerShScriptTask('createOfflineReleaseDevShScript', 'generate_offline_release_DEV.sh', [
     summary : ['Generate offline LoMaps maps against the DEV environment.',
-               'Map definitions come from config_dev.xml, ENV=DEV turns on the local dev',
-               'shortcuts (reduced bbox, no POI V2 db, no Slack) and the global -e DEV flag',
-               'points any upload at the Locus Store DEV instance.',
+               'Map definitions come from config_dev.xml and the global -e DEV flag points',
+               'any upload at the Locus Store DEV instance (and DEV S3 paths, no Slack).',
+               'Maps are generated exactly as in production (full bbox, POI V2 db) - ENV=DEV',
+               'is intentionally NOT set, it is reserved for local development.',
                'Neither the planet update nor the upload runs unless explicitly requested.'],
-    exports : ['ENV=DEV   # picked up by Utils.isLocalDEV()'],
     requireTools: ['pmtiles'],
     settings: [
         [name: 'CONFIG_FILE',    value: shConfigFileDev, help: 'DEV map-config XML'],

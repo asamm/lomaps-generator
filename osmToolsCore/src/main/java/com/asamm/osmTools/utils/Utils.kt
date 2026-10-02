@@ -22,7 +22,12 @@ object Utils {
 
     private const val TAG = "Utils"
 
-    /** Returns `true` when the `ENV` environment variable is set to `"DEV"`. */
+    /**
+     * True when running on a developer machine (`ENV=DEV`): enables local shortcuts such as a reduced
+     * bbox, skipping POI V2 db and planet update. Not to be confused with
+     * [com.asamm.osmTools.config.AppConfig.locusStoreEnv] `DEV`, which targets the Locus Store / S3 DEV
+     * environment while generating maps exactly as in production.
+     */
     @JvmStatic
     fun isLocalDEV(): Boolean = System.getenv("ENV") == "DEV"
 

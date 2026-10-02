@@ -101,19 +101,23 @@ Put them in `gradle.properties` to make them permanent for a machine.
 ## 4. The DEV script
 
 `generate_offline_release_DEV.sh` runs the offline pipeline against the development
-environment. It differs from the production offline script in four ways:
+environment. Maps are generated exactly as in production (full bounding box, POI V2
+database). It differs from the production offline script in three ways:
 
-1. **`export ENV=DEV`** — picked up by `Utils.isLocalDEV()`, which switches on the local dev
-   shortcuts: a reduced bounding box for Mapsforge tiling, no POI V2 database, no Slack
-   notifications.
-2. **`-e DEV`** — the global `--ls_environment` option, so anything published goes to the
-   Locus Store DEV instance rather than production. It is a *global* option and therefore
-   sits before the `lomaps` subcommand.
-3. **`config_dev.xml`** — a small subset of the map definitions (see `config/config_dev.xml`),
+1. **`-e DEV`** — the global `--ls_environment` option, so anything published goes to the
+   Locus Store DEV instance (and DEV S3 paths) rather than production, and no Slack
+   notifications are sent. It is a *global* option and therefore sits before the `lomaps`
+   subcommand.
+2. **`config_dev.xml`** — a small subset of the map definitions (see `config/config_dev.xml`),
    so a run finishes in minutes. The script checks the file exists before starting and exits
    with a clear message if it does not.
-4. **Nothing destructive by default** — neither the planet update nor the store upload runs
+3. **Nothing destructive by default** — neither the planet update nor the store upload runs
    unless asked for.
+
+> **Two different "DEV"s.** `-e DEV` (Locus Store DEV) is what this script uses. `ENV=DEV`
+> (`Utils.isLocalDEV()`) is reserved for local development on a developer machine: it turns on
+> shortcuts — a reduced Mapsforge bounding box, no POI V2 database, no planet update — that
+> produce incomplete maps, so the script deliberately does not set it.
 
 ```bash
 ./generate_offline_release_DEV.sh                       # generate only, version = today
